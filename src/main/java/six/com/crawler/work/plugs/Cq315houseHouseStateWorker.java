@@ -14,11 +14,12 @@ import org.jsoup.nodes.Element;
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.PageType;
+import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.utils.JsonUtils;
 import six.com.crawler.common.utils.UrlUtils;
 import six.com.crawler.schedule.AbstractSchedulerManager;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.WorkQueue;
 
@@ -27,7 +28,7 @@ import six.com.crawler.work.WorkQueue;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年11月4日 下午4:51:31
  */
-public class Cq315houseHouseStateWorker extends HtmlCommonWorker {
+public class Cq315houseHouseStateWorker extends AbstractCrawlWorker {
 
 	RedisWorkQueue suiteInfoQueue;
 	Map<String, String> stateMap;
@@ -54,6 +55,10 @@ public class Cq315houseHouseStateWorker extends HtmlCommonWorker {
 		stateMap.put("524288", "524288");
 	}
 
+	protected void beforeDown(Page page) {
+
+	}
+
 	@Override
 	public void onComplete(Page p) {
 
@@ -61,12 +66,12 @@ public class Cq315houseHouseStateWorker extends HtmlCommonWorker {
 
 	@Override
 	public void insideOnError(Exception t, Page p) {
-		
+
 	}
 
 	private String getState(long value, List<Map<String, Object>> stateList) {
-		for (int i=stateList.size()-1;i>=0;i--){
-			Map<String, Object> state=stateList.get(i);
+		for (int i = stateList.size() - 1; i >= 0; i--) {
+			Map<String, Object> state = stateList.get(i);
 			int showType = (int) state.get("showType");
 			int val = (int) state.get("val");
 			String name = (String) state.get("name");
@@ -100,7 +105,7 @@ public class Cq315houseHouseStateWorker extends HtmlCommonWorker {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected void beforePaser(Page doingPage) throws Exception {
+	protected void beforeExtract(Page doingPage) {
 		String html = doingPage.getPageSrc();
 		Document doc = Jsoup.parse(html);
 		List<String> tempProjectName = doingPage.getMetaMap().get("projectName");
@@ -125,7 +130,7 @@ public class Cq315houseHouseStateWorker extends HtmlCommonWorker {
 		List<String> logicLayers = new ArrayList<>();
 
 		String stateUrl = "http://www.cq315house.com/315web/webservice/jsonstatus.ashx";
-		Page statePage=new Page(doingPage.getSiteCode(), 1, stateUrl, stateUrl);
+		Page statePage = new Page(doingPage.getSiteCode(), 1, stateUrl, stateUrl);
 		statePage.setReferer(doingPage.getFinalUrl());
 		statePage.setType(PageType.JSON.value());
 		getDowner().down(statePage);
@@ -151,17 +156,18 @@ public class Cq315houseHouseStateWorker extends HtmlCommonWorker {
 				String houseNum = logicLayer + "-" + rn;
 				String physicalLayer = room.get("y").toString();// 物理层
 				String unitNum = room.get("unitnumber").toString();// 单元号
-				Object stateOb=room.get("status");
-				String state=null;
-				long tempState=0;
-				if(stateOb instanceof Double){
-					String stateStr=stateOb.toString();
-					Double d=Double.valueOf(stateStr);
-					tempState =d.longValue();;// 状态
-					
-				}else{
-					String stateStr=stateOb.toString();
-					tempState=Long.valueOf(stateStr);
+				Object stateOb = room.get("status");
+				String state = null;
+				long tempState = 0;
+				if (stateOb instanceof Double) {
+					String stateStr = stateOb.toString();
+					Double d = Double.valueOf(stateStr);
+					tempState = d.longValue();
+					;// 状态
+
+				} else {
+					String stateStr = stateOb.toString();
+					tempState = Long.valueOf(stateStr);
 				}
 				state = getState(tempState, stateList);
 				if (null == state) {
@@ -202,9 +208,8 @@ public class Cq315houseHouseStateWorker extends HtmlCommonWorker {
 
 	}
 
-
 	@Override
-	protected void afterPaser(Page doingPage) throws Exception {
+	protected void afterExtract(Page doingPage, ResultContext result) {
 
 	}
 

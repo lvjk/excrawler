@@ -7,10 +7,11 @@ import org.jsoup.select.Elements;
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.PageType;
+import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.utils.UrlUtils;
 import six.com.crawler.schedule.AbstractSchedulerManager;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.WorkQueue;
 
@@ -19,7 +20,7 @@ import six.com.crawler.work.WorkQueue;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年2月22日 下午4:59:10
  */
-public class TmsfPresaleUrlWorker extends HtmlCommonWorker {
+public class TmsfPresaleUrlWorker extends AbstractCrawlWorker {
 
 	RedisWorkQueue presaleInfoQueue;
 	RedisWorkQueue houseInfoQueue;
@@ -35,10 +36,9 @@ public class TmsfPresaleUrlWorker extends HtmlCommonWorker {
 	private String housetypeTemplate = "<<housetype>>";
 	private String presaleJsonUrlTemplate = "http://www.tmsf.com/newhouse/NewPropertyHz_createPresellInfo.jspx?"
 			+ "sid=" + sidTemplate + "&presellid=" + presaleidTemplate + "&propertyid=" + propertyidTemplate;
-	private String houseJsonUrlTemplate = "http://www.tmsf.com/newhouse/NewPropertyHz_showbox.jspx?"
-			+ "buildingid=" + buildingidTemplate + "&presellid=" + presaleidTemplate + "&sid=" + sidTemplate + "&area="
-			+ areaTemplate + "&allprice=" + allpriceTemplate + "&housestate=" + housestateTemplate + "&housetype="
-			+ housetypeTemplate;
+	private String houseJsonUrlTemplate = "http://www.tmsf.com/newhouse/NewPropertyHz_showbox.jspx?" + "buildingid="
+			+ buildingidTemplate + "&presellid=" + presaleidTemplate + "&sid=" + sidTemplate + "&area=" + areaTemplate
+			+ "&allprice=" + allpriceTemplate + "&housestate=" + housestateTemplate + "&housetype=" + housetypeTemplate;
 	private String propertyidCss = "input[id=propertyid]";
 	private String presaleIdCss = "div[id=presell_dd]>div>a";
 	private String buildingIdCss = "div[id=building_dd]>div>a";
@@ -59,7 +59,12 @@ public class TmsfPresaleUrlWorker extends HtmlCommonWorker {
 	}
 
 	@Override
-	protected void beforePaser(Page doingPage) throws Exception {
+	protected void beforeDown(Page doingPage) {
+
+	}
+
+	@Override
+	protected void beforeExtract(Page doingPage) {
 		Element sidElement = doingPage.getDoc().select(sidCss).first();
 		String sid = "";
 		if (null != sidElement) {
@@ -137,7 +142,7 @@ public class TmsfPresaleUrlWorker extends HtmlCommonWorker {
 	}
 
 	@Override
-	protected void afterPaser(Page doingPage) throws Exception {
+	protected void afterExtract(Page doingPage, ResultContext result) {
 
 	}
 

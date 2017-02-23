@@ -12,6 +12,7 @@ import org.jsoup.nodes.Element;
 
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
+import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.http.HttpMethod;
 import six.com.crawler.common.ocr.ImageDistinguish;
@@ -20,7 +21,7 @@ import six.com.crawler.common.utils.JsUtils;
 import six.com.crawler.common.utils.JsonUtils;
 import six.com.crawler.common.utils.UrlUtils;
 import six.com.crawler.schedule.AbstractSchedulerManager;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.WorkQueue;
 import six.com.crawler.work.downer.PostContentType;
 
@@ -29,7 +30,7 @@ import six.com.crawler.work.downer.PostContentType;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年11月10日 下午3:00:49
  */
-public class Cq315houseHouseInfoWorker extends HtmlCommonWorker {
+public class Cq315houseHouseInfoWorker extends AbstractCrawlWorker {
 
 	private ImageDistinguish imageDistinguish;
 	private Map<String, String> fieldMap;
@@ -39,7 +40,6 @@ public class Cq315houseHouseInfoWorker extends HtmlCommonWorker {
 		super(name, manager, job, site, stored);
 		imageDistinguish = getManager().getImageDistinguish();
 	}
-
 
 	@Override
 	protected void insideInit() {
@@ -68,9 +68,13 @@ public class Cq315houseHouseInfoWorker extends HtmlCommonWorker {
 
 	}
 
+	protected void beforeDown(Page page) {
+
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
-	protected void beforePaser(Page doingPage) throws Exception {
+	protected void beforeExtract(Page doingPage) {
 		String validCodeUrlCss = "img[id=imgRandom]";
 		String html = doingPage.getPageSrc();
 		Document doc = Jsoup.parse(html);
@@ -86,13 +90,13 @@ public class Cq315houseHouseInfoWorker extends HtmlCommonWorker {
 		String txtCode = null;
 		String Button1 = formElement.select("input[id=Button1]").first().attr("value");
 		String hfTableNum = null;
-		
-		Page validCodePage=new Page(doingPage.getSiteCode(), 1, validCodeUrl, validCodeUrl);
+
+		Page validCodePage = new Page(doingPage.getSiteCode(), 1, validCodeUrl, validCodeUrl);
 		validCodePage.setReferer(doingPage.getFinalUrl());
-		byte[] imageBytes=getDowner().downBytes(validCodePage);
+		byte[] imageBytes = getDowner().downBytes(validCodePage);
 		BufferedImage croppedImage = ImageUtils.loadImage(imageBytes);
-//		ImageUtils.writeImage(new File("F:/test/cq315image",
-//		System.currentTimeMillis() + ".gif"), croppedImage);
+		// ImageUtils.writeImage(new File("F:/test/cq315image",
+		// System.currentTimeMillis() + ".gif"), croppedImage);
 		try {
 			String result = imageDistinguish.distinguish(croppedImage);
 			txtCode = JsUtils.eval(result, result);
@@ -107,13 +111,13 @@ public class Cq315houseHouseInfoWorker extends HtmlCommonWorker {
 		postMap.put("txtCode", txtCode);
 		postMap.put("Button1", Button1);
 		postMap.put("hfTableNum", hfTableNum);
-		Page formPage=new Page(doingPage.getSiteCode(), 1, formAction, formAction);
+		Page formPage = new Page(doingPage.getSiteCode(), 1, formAction, formAction);
 		formPage.setMethod(HttpMethod.POST);
 		formPage.setParameters(postMap);
 		formPage.setPostContentType(PostContentType.FORM);
 		formPage.setReferer(doingPage.getFinalUrl());
 		getDowner().down(formPage);
-		
+
 		String formHtml = formPage.getPageSrc();
 		Document formDoc = Jsoup.parse(formHtml);
 		Element scriptElement = formDoc.select("form>script").first();
@@ -135,8 +139,8 @@ public class Cq315houseHouseInfoWorker extends HtmlCommonWorker {
 		if (StringUtils.isBlank(houseInfoUrl)) {
 			throw new RuntimeException("don't found houseInfoUrl");
 		}
-		
-		Page dataPage=new Page(doingPage.getSiteCode(), 1, houseInfoUrl, houseInfoUrl);
+
+		Page dataPage = new Page(doingPage.getSiteCode(), 1, houseInfoUrl, houseInfoUrl);
 		dataPage.setReferer(doingPage.getFinalUrl());
 		getDowner().down(dataPage);
 		String houseInHtml = dataPage.getPageSrc();
@@ -174,7 +178,7 @@ public class Cq315houseHouseInfoWorker extends HtmlCommonWorker {
 	}
 
 	@Override
-	protected void afterPaser(Page doingPage) throws Exception {
+	protected void afterExtract(Page page, ResultContext resultContext) {
 
 	}
 }

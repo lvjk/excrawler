@@ -6,13 +6,13 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
-
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
+import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.utils.JsonUtils;
 import six.com.crawler.schedule.AbstractSchedulerManager;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.WorkQueue;
 
 /**
@@ -20,7 +20,7 @@ import six.com.crawler.work.WorkQueue;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年2月22日 下午1:10:41
  */
-public class TmsfPresaleInfoWorker extends HtmlCommonWorker {
+public class TmsfPresaleInfoWorker extends AbstractCrawlWorker {
 
 	Map<String, String> jsonKeyMap;
 
@@ -45,15 +45,20 @@ public class TmsfPresaleInfoWorker extends HtmlCommonWorker {
 		jsonKeyMap.put("openingDate", "presell.openingdate");
 	}
 
+	@Override
+	protected void beforeDown(Page doingPage) {
+
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
-	protected void beforePaser(Page doingPage) throws Exception {
+	protected void beforeExtract(Page doingPage) {
 		String presaleJson = doingPage.getPageSrc();
 		Map<String, Object> map = JsonUtils.toObject(presaleJson, Map.class);
 		for (String field : jsonKeyMap.keySet()) {
 			String jsonKey = jsonKeyMap.get(field);
 			Map<String, Object> presellMap = (Map<String, Object>) map.get("presell");
-			String buildings=presellMap.get("located")!=null?presellMap.get("located").toString():null;
+			String buildings = presellMap.get("located") != null ? presellMap.get("located").toString() : null;
 			String[] jsonKeys = StringUtils.split(jsonKey, ".");
 			Map<String, Object> tempJsonMap = (Map<String, Object>) map.get(jsonKeys[0]);
 			Object jsonValue = tempJsonMap.get(jsonKeys[1]);
@@ -63,7 +68,7 @@ public class TmsfPresaleInfoWorker extends HtmlCommonWorker {
 	}
 
 	@Override
-	protected void afterPaser(Page doingPage) throws Exception {
+	protected void afterExtract(Page doingPage, ResultContext result) {
 
 	}
 

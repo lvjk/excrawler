@@ -60,7 +60,6 @@ public class DBStoreProcessorForID extends StoreAbstarct implements AutoCloseabl
 		datasource.setUsername(dbUser);
 		datasource.setPassword(dbPasswd);
 		datasource.setMaxActive(1);
-
 		tableName = worker.getJobSnapshot().getTableName();
 		insertSqlTemplate = worker.getJob().getParameter(JobConTextConstants.INSERT_SQL_TEMPLATE, String.class);
 		insertSql = JobTableUtils.buildInsertSql(insertSqlTemplate, tableName);
@@ -113,13 +112,8 @@ public class DBStoreProcessorForID extends StoreAbstarct implements AutoCloseabl
 				if (null != list && !list.isEmpty()) {
 					value = list.get(0);
 				}
-				if (getMainResultKeys().contains(resultKey)) {
-					keyValues.add(value);
-				}
 				parameter.add(value);
 			}
-			String id = getAbstractWorker().getResultID(keyValues);
-			parameter.add(0, id);
 			storeCount+=doSql(insertSql, parameter);
 		} else {
 			List<String> mainResultList = resultContext.getResult(getMainResultKey());
@@ -131,13 +125,8 @@ public class DBStoreProcessorForID extends StoreAbstarct implements AutoCloseabl
 				for (String resultKey : resultKeys) {
 					resultList = resultContext.getResult(resultKey);
 					value = resultList.get(i);
-					if (getMainResultKeys().contains(resultKey)) {
-						keyValues.add(value);
-					}
 					parameter.add(value);
 				}
-				String id = getAbstractWorker().getResultID(keyValues);
-				parameter.add(0, id);
 				storeCount+=doSql(insertSql, parameter);
 			}
 		}

@@ -17,7 +17,7 @@ import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.utils.TelPhoneUtils;
 import six.com.crawler.common.utils.UrlUtils;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 
 /**
  * @author six
@@ -25,7 +25,7 @@ import six.com.crawler.work.HtmlCommonWorker;
  */
 public class Extracter {
 
-	private HtmlCommonWorker worker;
+	private AbstractCrawlWorker worker;
 	private List<ExtractItem> paserItems;
 	private Map<String, ExtractPath> paserPathMap;
 	private int defaultEmptyExtractCountMax = 3;
@@ -38,7 +38,7 @@ public class Extracter {
 		charSet.add('\t');
 	}
 
-	public Extracter(HtmlCommonWorker worker, List<ExtractItem> paserItems) {
+	public Extracter(AbstractCrawlWorker worker, List<ExtractItem> paserItems) {
 		this.worker = worker;
 		this.paserItems = paserItems;
 		paserPathMap = new HashMap<>();
@@ -328,7 +328,7 @@ public class Extracter {
 		}
 	}
 
-	public HtmlCommonWorker getAbstractWorker() {
+	public AbstractCrawlWorker getAbstractWorker() {
 		return worker;
 	}
 

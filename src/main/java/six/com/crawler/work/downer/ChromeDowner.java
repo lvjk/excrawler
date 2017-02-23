@@ -21,7 +21,7 @@ import six.com.crawler.common.entity.HttpProxy;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.http.HttpResult;
 import six.com.crawler.common.utils.WebDriverUtils;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.downer.exception.DownerException;
 
 /**
@@ -40,7 +40,7 @@ public class ChromeDowner extends AbstractDowner {
 	
 	private String lastRequestUrl;
 
-	public ChromeDowner(HtmlCommonWorker worker) {
+	public ChromeDowner(AbstractCrawlWorker worker) {
 		super(worker);
 		DesiredCapabilities cap = DesiredCapabilities.chrome();
 		HashMap<String, Object> settings = new HashMap<String, Object>();

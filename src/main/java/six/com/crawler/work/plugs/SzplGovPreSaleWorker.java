@@ -8,19 +8,19 @@ import org.openqa.selenium.WebElement;
 
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
+import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.utils.WebDriverUtils;
 import six.com.crawler.schedule.AbstractSchedulerManager;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.WorkQueue;
-
 
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年10月28日 上午10:37:57
  */
-public class SzplGovPreSaleWorker extends HtmlCommonWorker {
+public class SzplGovPreSaleWorker extends AbstractCrawlWorker {
 
 	String 许可证号Xpath = "//td[@valign='top']/table/tbody/tr[2]/td[2]";
 	String 项目名称Xpath = "//td[@valign='top']/table/tbody/tr[2]/td[4]";
@@ -47,8 +47,6 @@ public class SzplGovPreSaleWorker extends HtmlCommonWorker {
 	@Override
 	protected void insideInit() {
 	}
-
-
 
 	private List<WebElement> find用途Element(WebDriver webDriver) {
 		String 用途Xpath = 用途trXpath + "/td[1]";
@@ -121,19 +119,12 @@ public class SzplGovPreSaleWorker extends HtmlCommonWorker {
 	}
 
 	@Override
-	public void onComplete(Page p) {
-		
+	protected void beforeDown(Page doingPage) {
+
 	}
 
 	@Override
-	public void insideOnError(Exception t, Page p) {
-	
-	}
-
-	@Override
-	protected void beforePaser(Page doingPage) throws Exception {
-
-
+	protected void beforeExtract(Page doingPage) {
 		WebDriver driver = getDowner().getWebDriver();
 		WebElement 许可证号WebElement = WebDriverUtils.findElement(driver, 许可证号Xpath, findElementTimeout);
 		String 许可证号 = 许可证号WebElement.getText();
@@ -229,12 +220,21 @@ public class SzplGovPreSaleWorker extends HtmlCommonWorker {
 		doingPage.getMetaMap().put("houseNum", 套数list);
 		doingPage.getMetaMap().put("remark", 备注list);
 
-	
 	}
 
 	@Override
-	protected void afterPaser(Page doingPage) throws Exception {
-		
+	protected void afterExtract(Page doingPage, ResultContext result) {
+
+	}
+
+	@Override
+	public void onComplete(Page p) {
+
+	}
+
+	@Override
+	public void insideOnError(Exception t, Page p) {
+
 	}
 
 }

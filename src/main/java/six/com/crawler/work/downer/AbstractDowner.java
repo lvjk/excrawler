@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import six.com.crawler.common.entity.HttpProxy;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.http.HttpResult;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.downer.exception.DownerException;
 
 /**
@@ -21,10 +21,10 @@ public abstract class AbstractDowner implements Downer, AutoCloseable {
 
 	protected final static Logger LOG = LoggerFactory.getLogger(AbstractDowner.class);
 
-	protected HtmlCommonWorker worker;
+	protected AbstractCrawlWorker worker;
 	private HttpProxy httpProxy;
 
-	public AbstractDowner(HtmlCommonWorker worker) {
+	public AbstractDowner(AbstractCrawlWorker worker) {
 		this.worker = worker;
 	}
 
@@ -34,7 +34,7 @@ public abstract class AbstractDowner implements Downer, AutoCloseable {
 		return insideDown(page);
 	}
 	
-	public HtmlCommonWorker getHtmlCommonWorker(){
+	public AbstractCrawlWorker getHtmlCommonWorker(){
 		return worker;
 	}
 	

@@ -13,11 +13,12 @@ import org.jsoup.select.Elements;
 
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
+import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.utils.JsoupUtils;
 import six.com.crawler.common.utils.JsoupUtils.TableResult;
 import six.com.crawler.schedule.AbstractSchedulerManager;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.WorkQueue;
 
 /**
@@ -25,13 +26,10 @@ import six.com.crawler.work.WorkQueue;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年11月3日 上午9:19:32
  */
-public class SzplGovSuiteDetailWorker extends HtmlCommonWorker {
+public class SzplGovSuiteDetailWorker extends AbstractCrawlWorker {
 
-	
-	
-	private Map<String,String> fieldMap = new HashMap<String,String>();
-	
-	
+	private Map<String, String> fieldMap = new HashMap<String, String>();
+
 	public SzplGovSuiteDetailWorker(String name, AbstractSchedulerManager manager, Job job, Site site,
 			WorkQueue stored) {
 		super(name, manager, job, site, stored);
@@ -39,40 +37,33 @@ public class SzplGovSuiteDetailWorker extends HtmlCommonWorker {
 
 	@Override
 	protected void insideInit() {
-		fieldMap.put("项目名称","projectName");
-		fieldMap.put("楼名","floorName");
-		fieldMap.put("constructionPlanPermit","constructionPlanPermit");
-		fieldMap.put("constructionPermit","constructionPermit");
-		fieldMap.put("座号","floorNo");
-		fieldMap.put("房号","houseNo");
-		fieldMap.put("项目楼栋情况","projectFloor");
-		fieldMap.put("户型","houseType");
-		fieldMap.put("合同号","contractNo");
-		fieldMap.put("拟售价格","preSalePrice");
-		fieldMap.put("楼层","floor");
-		fieldMap.put("用途","useage");
-		fieldMap.put("建筑面积_预售","presalebuildArea");
-		fieldMap.put("户内面积_预售","presaleInnerArea");
-		fieldMap.put("分摊面积_预售","presaleShareArea");
-		fieldMap.put("建筑面积_竣工","buildArea");
-		fieldMap.put("户内面积_竣工","InnerArea");
-		fieldMap.put("分摊面积_竣工","shareArea");
-	}
-
-	
-	@Override
-	public void onComplete(Page p) {
-		
+		fieldMap.put("项目名称", "projectName");
+		fieldMap.put("楼名", "floorName");
+		fieldMap.put("constructionPlanPermit", "constructionPlanPermit");
+		fieldMap.put("constructionPermit", "constructionPermit");
+		fieldMap.put("座号", "floorNo");
+		fieldMap.put("房号", "houseNo");
+		fieldMap.put("项目楼栋情况", "projectFloor");
+		fieldMap.put("户型", "houseType");
+		fieldMap.put("合同号", "contractNo");
+		fieldMap.put("拟售价格", "preSalePrice");
+		fieldMap.put("楼层", "floor");
+		fieldMap.put("用途", "useage");
+		fieldMap.put("建筑面积_预售", "presalebuildArea");
+		fieldMap.put("户内面积_预售", "presaleInnerArea");
+		fieldMap.put("分摊面积_预售", "presaleShareArea");
+		fieldMap.put("建筑面积_竣工", "buildArea");
+		fieldMap.put("户内面积_竣工", "InnerArea");
+		fieldMap.put("分摊面积_竣工", "shareArea");
 	}
 
 	@Override
-	public void insideOnError(Exception t, Page p) {
-		
+	protected void beforeDown(Page doingPage) {
+
 	}
 
 	@Override
-	protected void beforePaser(Page doingPage) throws Exception {
-
+	protected void beforeExtract(Page doingPage) {
 		String html = doingPage.getPageSrc();
 		Document document = Jsoup.parse(html);
 		Elements temp = document.select("tr[class=a1]");
@@ -109,17 +100,28 @@ public class SzplGovSuiteDetailWorker extends HtmlCommonWorker {
 				index++;
 			}
 			list.add(tableResult.getValue());
-			String mapKey=fieldMap.get(tableResult.getKey());
-			if(StringUtils.isBlank(mapKey)){
-				mapKey=tableResult.getKey();
+			String mapKey = fieldMap.get(tableResult.getKey());
+			if (StringUtils.isBlank(mapKey)) {
+				mapKey = tableResult.getKey();
 			}
 			doingPage.getMetaMap().put(mapKey, list);
 		}
-	
+
 	}
 
 	@Override
-	protected void afterPaser(Page doingPage) throws Exception {
-		
+	protected void afterExtract(Page doingPage, ResultContext result) {
+
 	}
+
+	@Override
+	public void onComplete(Page p) {
+
+	}
+
+	@Override
+	public void insideOnError(Exception t, Page p) {
+
+	}
+
 }

@@ -12,11 +12,12 @@ import org.jsoup.nodes.Element;
 
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
+import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.utils.JsoupUtils;
 import six.com.crawler.common.utils.JsoupUtils.TableResult;
 import six.com.crawler.schedule.AbstractSchedulerManager;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.WorkQueue;
 
 /**
@@ -24,7 +25,7 @@ import six.com.crawler.work.WorkQueue;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年12月14日 下午3:16:39
  */
-public class ShFangDiHouseInfoWorker extends HtmlCommonWorker {
+public class ShFangDiHouseInfoWorker extends AbstractCrawlWorker {
 
 	Map<String, String> fieldMap = new HashMap<String, String>();
 
@@ -34,17 +35,8 @@ public class ShFangDiHouseInfoWorker extends HtmlCommonWorker {
 	}
 
 	@Override
-	public void onComplete(Page p) {
-	}
-
-	@Override
-	public void insideOnError(Exception t, Page p) {
-
-	}
-
-	@Override
 	protected void insideInit() {
-		//            名义层/实际层
+		// 名义层/实际层
 		fieldMap.put("名义层/实际层", "floor");
 		fieldMap.put("室号", "houseID");
 		fieldMap.put("房屋类型", "houseType");
@@ -60,8 +52,12 @@ public class ShFangDiHouseInfoWorker extends HtmlCommonWorker {
 		fieldMap.put("状态", "status");
 	}
 
+	protected void beforeDown(Page doingPage) {
+
+	}
+
 	@Override
-	protected void beforePaser(Page doingPage) throws Exception {
+	protected void beforeExtract(Page doingPage) {
 		String tableXpath = "table[id=Table1]>tbody>tr>td>table";
 		Document doc = doingPage.getDoc();
 		if (null == doc) {
@@ -69,7 +65,7 @@ public class ShFangDiHouseInfoWorker extends HtmlCommonWorker {
 			doc = Jsoup.parse(html);
 		}
 		Element tableElement = doc.select(tableXpath).first();
-		if(null==tableElement){
+		if (null == tableElement) {
 			return;
 		}
 		List<TableResult> results = JsoupUtils.paserTable(tableElement);
@@ -104,7 +100,16 @@ public class ShFangDiHouseInfoWorker extends HtmlCommonWorker {
 	}
 
 	@Override
-	protected void afterPaser(Page doingPage) throws Exception {
+	protected void afterExtract(Page doingPage, ResultContext result) {
+
+	}
+
+	@Override
+	public void onComplete(Page p) {
+	}
+
+	@Override
+	public void insideOnError(Exception t, Page p) {
 
 	}
 

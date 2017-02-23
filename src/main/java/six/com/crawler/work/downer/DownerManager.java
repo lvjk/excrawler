@@ -2,7 +2,7 @@ package six.com.crawler.work.downer;
 
 import java.util.concurrent.locks.StampedLock;
 
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 
 /**
  * @author 作者
@@ -32,7 +32,7 @@ public class DownerManager {
 		static DownerManager DownerManager = new DownerManager();
 	}
 
-	public Downer buildDowner(DownerType downerType, HtmlCommonWorker worker) {
+	public Downer buildDowner(DownerType downerType, AbstractCrawlWorker worker) {
 		Downer downer = null;
 		if (downerType == DownerType.OKHTTP) {
 			downer = new OkHttpDowner(worker);

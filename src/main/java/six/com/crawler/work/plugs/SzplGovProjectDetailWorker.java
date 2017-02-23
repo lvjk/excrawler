@@ -14,13 +14,14 @@ import org.openqa.selenium.WebElement;
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.PageType;
+import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.utils.JsoupUtils;
 import six.com.crawler.common.utils.UrlUtils;
 import six.com.crawler.common.utils.WebDriverUtils;
 import six.com.crawler.common.utils.JsoupUtils.TableResult;
 import six.com.crawler.schedule.AbstractSchedulerManager;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.WorkQueue;
 
@@ -29,17 +30,15 @@ import six.com.crawler.work.WorkQueue;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年10月31日 上午10:06:39
  */
-public class SzplGovProjectDetailWorker extends HtmlCommonWorker {
+public class SzplGovProjectDetailWorker extends AbstractCrawlWorker {
 
-	Map<String,String> fieldMap = new HashMap<String,String>();
+	Map<String, String> fieldMap = new HashMap<String, String>();
 	RedisWorkQueue suiteQueue;
 
 	public SzplGovProjectDetailWorker(String name, AbstractSchedulerManager manager, Job job, Site site,
 			WorkQueue stored) {
 		super(name, manager, job, site, stored);
 	}
-
-	
 
 	private void doSuite(WebDriver driver, Page page) {
 		String 项目名称Xpath = "//table[@id='DataList1']/tbody/tr[@bgcolor='#F5F9FC']/td[1]";
@@ -57,7 +56,6 @@ public class SzplGovProjectDetailWorker extends HtmlCommonWorker {
 		WebElement 建设工程规划许可证Elment = null;
 		WebElement 建筑工程施工许可证Elment = null;
 		WebElement 套房信息UlrElment = null;
-
 		String 项目名称 = null;
 		String 楼名 = null;
 		String 建设工程规划许可证 = null;
@@ -127,13 +125,13 @@ public class SzplGovProjectDetailWorker extends HtmlCommonWorker {
 			boolean isAdd = false;
 			for (String field : fieldMap.keySet()) {
 				if (result.getKey().contains(field)) {
-					key =fieldMap.get(field);
+					key = fieldMap.get(field);
 					isAdd = true;
 					break;
 				}
 			}
 			if (isAdd) {
-				list=metaMap.computeIfAbsent(key, mapKey -> new ArrayList<>());
+				list = metaMap.computeIfAbsent(key, mapKey -> new ArrayList<>());
 				if (list.size() > 0) {
 					value = list.remove(0) + ";" + result.getValue();
 				}
@@ -146,59 +144,63 @@ public class SzplGovProjectDetailWorker extends HtmlCommonWorker {
 
 	@Override
 	protected void insideInit() {
-		suiteQueue = new RedisWorkQueue(getManager().getRedisManager(),
-				"szpl_gov_suite_state");
-		fieldMap.put("项目名称","projectName");
-		fieldMap.put("宗地号","landId");
-		fieldMap.put("宗地位置","address");
-		fieldMap.put("受让日期","farminDate");
-		fieldMap.put("所在区域","district");
-		fieldMap.put("权属来源","ownerSource");
-		fieldMap.put("批准机关","approvalAuthority");
-		fieldMap.put("合同文号","contractNumber");
-		fieldMap.put("使用年限","durableYears");
-		fieldMap.put("补充协议","sideAgreement");
-		fieldMap.put("用地规划许可证","presellId");
-		fieldMap.put("房屋用途","houseUse");
-		fieldMap.put("土地用途","landUse");
-		fieldMap.put("土地等级","landGrade");
-		fieldMap.put("基地面积","baseArea");
-		fieldMap.put("宗地面积","landArea");
-		fieldMap.put("总建筑面积","totalBuildArea");
-		fieldMap.put("预售总套数","preSaletotalNum");
-		fieldMap.put("预售总面积","preSaletotalArea");
-		fieldMap.put("现售总套数","saletotalNum");
-		fieldMap.put("现售总面积","saletotalArea");
-		fieldMap.put("售楼电话","saleCall");
-		fieldMap.put("价款监管机构","priceRegulator");
-		fieldMap.put("账户名称","accountName");
-		fieldMap.put("账号","account");
-		fieldMap.put("工程监管机构","projectregulator");
-		fieldMap.put("物业管理公司","propertyCompany");
-		fieldMap.put("管理费","managementCost");
-		fieldMap.put("备注","remark");
+		suiteQueue = new RedisWorkQueue(getManager().getRedisManager(), "szpl_gov_suite_state");
+		fieldMap.put("项目名称", "projectName");
+		fieldMap.put("宗地号", "landId");
+		fieldMap.put("宗地位置", "address");
+		fieldMap.put("受让日期", "farminDate");
+		fieldMap.put("所在区域", "district");
+		fieldMap.put("权属来源", "ownerSource");
+		fieldMap.put("批准机关", "approvalAuthority");
+		fieldMap.put("合同文号", "contractNumber");
+		fieldMap.put("使用年限", "durableYears");
+		fieldMap.put("补充协议", "sideAgreement");
+		fieldMap.put("用地规划许可证", "presellId");
+		fieldMap.put("房屋用途", "houseUse");
+		fieldMap.put("土地用途", "landUse");
+		fieldMap.put("土地等级", "landGrade");
+		fieldMap.put("基地面积", "baseArea");
+		fieldMap.put("宗地面积", "landArea");
+		fieldMap.put("总建筑面积", "totalBuildArea");
+		fieldMap.put("预售总套数", "preSaletotalNum");
+		fieldMap.put("预售总面积", "preSaletotalArea");
+		fieldMap.put("现售总套数", "saletotalNum");
+		fieldMap.put("现售总面积", "saletotalArea");
+		fieldMap.put("售楼电话", "saleCall");
+		fieldMap.put("价款监管机构", "priceRegulator");
+		fieldMap.put("账户名称", "accountName");
+		fieldMap.put("账号", "account");
+		fieldMap.put("工程监管机构", "projectregulator");
+		fieldMap.put("物业管理公司", "propertyCompany");
+		fieldMap.put("管理费", "managementCost");
+		fieldMap.put("备注", "remark");
 	}
 
 	@Override
-	public void onComplete(Page p) {
-		
+	protected void beforeDown(Page doingPage) {
+
 	}
 
 	@Override
-	public void insideOnError(Exception t, Page p) {
-		
-	}
-
-	@Override
-	protected void beforePaser(Page doingPage) throws Exception {
+	protected void beforeExtract(Page doingPage) {
 		WebDriver webDriver = getDowner().getWebDriver();
 		doPoject(webDriver, doingPage);
 		doSuite(webDriver, doingPage);
 	}
 
 	@Override
-	protected void afterPaser(Page doingPage) throws Exception {
-		
+	protected void afterExtract(Page doingPage, ResultContext result) {
+
+	}
+
+	@Override
+	public void onComplete(Page p) {
+
+	}
+
+	@Override
+	public void insideOnError(Exception t, Page p) {
+
 	}
 
 }

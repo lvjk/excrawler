@@ -15,30 +15,31 @@ import org.jsoup.select.Elements;
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.PageType;
+import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.http.HttpMethod;
 import six.com.crawler.common.utils.UrlUtils;
 import six.com.crawler.schedule.AbstractSchedulerManager;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.WorkQueue;
 
-/** 
-* @author  作者 
-* @E-mail: 359852326@qq.com 
-* @date 创建时间：2017年1月12日 下午4:08:24 
-*/
-public class TjfdcPresaleInfoWorker extends HtmlCommonWorker{
+/**
+ * @author 作者
+ * @E-mail: 359852326@qq.com
+ * @date 创建时间：2017年1月12日 下午4:08:24
+ */
+public class TjfdcPresaleInfoWorker extends AbstractCrawlWorker {
 
 	private RedisWorkQueue tjfdcBuildingInfoQueue;
-	String nextPageXpath="a[id=LouDongList1_SplitPageIconModule1_lbnNextPage]";
-	String loudongNameXpath="div[id=divLouDongList]>div>table>tbody>tr>td:eq(0)>span";
-	String loudongNoXpath="div[id=divLouDongList]>div>table>tbody>tr>td:eq(1)>a";
-	String presalePermitXpath="div[id=divLouDongList]>div>table>tbody>tr>td:eq(2)>span";
-	String openTimeXpath="div[id=divLouDongList]>div>table>tbody>tr>td:eq(3)>span";
-	String nonResidentialRiceXpath="div[id=divLouDongList]>div>table>tbody>tr>td:eq(4)>span";
-	String esidenceRiceXpath="div[id=divLouDongList]>div>table>tbody>tr>td:eq(5)>span";
-	String totalhousesXpath="div[id=divLouDongList]>div>table>tbody>tr>td:eq(6)>span";
+	String nextPageXpath = "a[id=LouDongList1_SplitPageIconModule1_lbnNextPage]";
+	String loudongNameXpath = "div[id=divLouDongList]>div>table>tbody>tr>td:eq(0)>span";
+	String loudongNoXpath = "div[id=divLouDongList]>div>table>tbody>tr>td:eq(1)>a";
+	String presalePermitXpath = "div[id=divLouDongList]>div>table>tbody>tr>td:eq(2)>span";
+	String openTimeXpath = "div[id=divLouDongList]>div>table>tbody>tr>td:eq(3)>span";
+	String nonResidentialRiceXpath = "div[id=divLouDongList]>div>table>tbody>tr>td:eq(4)>span";
+	String esidenceRiceXpath = "div[id=divLouDongList]>div>table>tbody>tr>td:eq(5)>span";
+	String totalhousesXpath = "div[id=divLouDongList]>div>table>tbody>tr>td:eq(6)>span";
 	String formCss = "form[name=form1]";
 	String __EVENTARGUMENT_Css = "input[id=__EVENTARGUMENT]";
 	String __VIEWSTATE_Css = "input[id=__VIEWSTATE]";
@@ -48,74 +49,71 @@ public class TjfdcPresaleInfoWorker extends HtmlCommonWorker{
 	String txtJD_Css = "input[id=txtJD]";
 	String txtWD_Css = "input[id=txtWD]";
 	String txtProName_Css = "input[id=txtProName]";
-	
+
 	public TjfdcPresaleInfoWorker(String name, AbstractSchedulerManager manager, Job job, Site site, WorkQueue stored) {
 		super(name, manager, job, site, stored);
 	}
 
 	@Override
-	protected void insideOnError(Exception t, Page doingPage) {
-		
-	}
-
-	@Override
 	protected void insideInit() {
-		tjfdcBuildingInfoQueue= new RedisWorkQueue(getManager().getRedisManager(),"tjfdc_building_info");
+		tjfdcBuildingInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "tjfdc_building_info");
+	}
+
+	protected void beforeDown(Page doingPage) {
+
 	}
 
 	@Override
-	protected void beforePaser(Page doingPage) throws Exception {
+	protected void beforeExtract(Page doingPage){
 
-		String html=doingPage.getPageSrc();
+		String html = doingPage.getPageSrc();
 		Document doc = Jsoup.parse(html);
 
-		List<String> projectNames=doingPage.getMeta("projectName");
-		String projectName=projectNames.get(0);
-		projectNames=new ArrayList<>();
-		List<String> loudongNames=new ArrayList<>();
-		List<String> loudongNos=new ArrayList<>();
-		List<String> presalePermits=new ArrayList<>();
-		List<String> openTimes=new ArrayList<>();
-		List<String> nonResidentialRices=new ArrayList<>();
-		List<String> residenceRices=new ArrayList<>();
-		List<String> totalhousess=new ArrayList<>();
-		
-		Elements loudongNameElements=doc.select(loudongNameXpath);
-		if(null!=loudongNameElements&&loudongNameElements.size()>0){
-			Elements loudongNoElements=doc.select(loudongNoXpath);
-			Elements presalePermitElements=doc.select(presalePermitXpath);
-			Elements openTimeElements=doc.select(openTimeXpath);
-			Elements nonResidentialRiceElements=doc.select(nonResidentialRiceXpath);
-			Elements esidenceRiceElements=doc.select(esidenceRiceXpath);
-			Elements totalhousesElements=doc.select(totalhousesXpath);
+		List<String> projectNames = doingPage.getMeta("projectName");
+		String projectName = projectNames.get(0);
+		projectNames = new ArrayList<>();
+		List<String> loudongNames = new ArrayList<>();
+		List<String> loudongNos = new ArrayList<>();
+		List<String> presalePermits = new ArrayList<>();
+		List<String> openTimes = new ArrayList<>();
+		List<String> nonResidentialRices = new ArrayList<>();
+		List<String> residenceRices = new ArrayList<>();
+		List<String> totalhousess = new ArrayList<>();
 
-			Element formElement =doc.select(formCss).first();
+		Elements loudongNameElements = doc.select(loudongNameXpath);
+		if (null != loudongNameElements && loudongNameElements.size() > 0) {
+			Elements loudongNoElements = doc.select(loudongNoXpath);
+			Elements presalePermitElements = doc.select(presalePermitXpath);
+			Elements openTimeElements = doc.select(openTimeXpath);
+			Elements nonResidentialRiceElements = doc.select(nonResidentialRiceXpath);
+			Elements esidenceRiceElements = doc.select(esidenceRiceXpath);
+			Elements totalhousesElements = doc.select(totalhousesXpath);
+
+			Element formElement = doc.select(formCss).first();
 			String action = formElement.attr("action");
 			action = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), action);
-			
+
 			String __EVENTARGUMENT = doc.select(__EVENTARGUMENT_Css).first().attr("value");
-			String __VIEWSTATE =doc.select(__VIEWSTATE_Css).first().attr("value");
+			String __VIEWSTATE = doc.select(__VIEWSTATE_Css).first().attr("value");
 			String __VIEWSTATEGENERATOR = doc.select(__VIEWSTATEGENERATOR_Css).first().attr("value");
-			String __EVENTVALIDATION =doc.select(__EVENTVALIDATION_Css).first().attr("value");
+			String __EVENTVALIDATION = doc.select(__EVENTVALIDATION_Css).first().attr("value");
 			String hidDoing = doc.select(hidDoing_Css).first().attr("value");
 			String txtJD = doc.select(txtJD_Css).first().attr("value");
-			String txtWD =doc.select(txtWD_Css).first().attr("value");
+			String txtWD = doc.select(txtWD_Css).first().attr("value");
 			String txtProName = doc.select(txtProName_Css).first().attr("value");
-			
-			
-			for(int i=0;i<loudongNameElements.size();i++){
-				Element loudongNameElement=loudongNameElements.get(i);
-				Element loudongNoElement=loudongNoElements.get(i);
-				Element presalePermitElement=presalePermitElements.get(i);
-				Element openTimeElement=openTimeElements.get(i);
-				Element nonResidentialRiceElement=nonResidentialRiceElements.get(i);
-				Element esidenceRiceElement=esidenceRiceElements.get(i);
-				Element totalhousesElement=totalhousesElements.get(i);
-				
-				
+
+			for (int i = 0; i < loudongNameElements.size(); i++) {
+				Element loudongNameElement = loudongNameElements.get(i);
+				Element loudongNoElement = loudongNoElements.get(i);
+				Element presalePermitElement = presalePermitElements.get(i);
+				Element openTimeElement = openTimeElements.get(i);
+				Element nonResidentialRiceElement = nonResidentialRiceElements.get(i);
+				Element esidenceRiceElement = esidenceRiceElements.get(i);
+				Element totalhousesElement = totalhousesElements.get(i);
+
 				String __EVENTTARGET = loudongNoElement.attr("href");
 				__EVENTTARGET = StringUtils.substringBetween(__EVENTTARGET, "javascript:__doPostBack('", "','')");
-				Map<String, Object> parameters=new HashMap<String, Object>();
+				Map<String, Object> parameters = new HashMap<String, Object>();
 				parameters.put("__EVENTTARGET", __EVENTTARGET);
 				parameters.put("__EVENTARGUMENT", __EVENTARGUMENT);
 				parameters.put("__VIEWSTATE", __VIEWSTATE);
@@ -125,21 +123,21 @@ public class TjfdcPresaleInfoWorker extends HtmlCommonWorker{
 				parameters.put("txtJD", txtJD);
 				parameters.put("txtWD", txtWD);
 				parameters.put("txtProName", txtProName);
-				Page newPage=new Page(doingPage.getSiteCode(),1,action,action);
+				Page newPage = new Page(doingPage.getSiteCode(), 1, action, action);
 				newPage.setMethod(HttpMethod.POST);
 				newPage.setParameters(parameters);
 				newPage.setReferer(doingPage.getFinalUrl());
 				newPage.setType(PageType.DATA.value());
 				tjfdcBuildingInfoQueue.push(newPage);
-				
-				String loudongName=loudongNameElement.text();
-				String loudongNo=loudongNoElement.text();
-				String presalePermit=presalePermitElement.text();
-				String openTime=openTimeElement.text();
-				String nonResidentialRice=nonResidentialRiceElement.text();
-				String residenceRice=esidenceRiceElement.text();
-				String totalhouses=totalhousesElement.text();
-				
+
+				String loudongName = loudongNameElement.text();
+				String loudongNo = loudongNoElement.text();
+				String presalePermit = presalePermitElement.text();
+				String openTime = openTimeElement.text();
+				String nonResidentialRice = nonResidentialRiceElement.text();
+				String residenceRice = esidenceRiceElement.text();
+				String totalhouses = totalhousesElement.text();
+
 				projectNames.add(projectName);
 				loudongNames.add(loudongName);
 				loudongNos.add(loudongNo);
@@ -147,14 +145,14 @@ public class TjfdcPresaleInfoWorker extends HtmlCommonWorker{
 				openTimes.add(openTime);
 				nonResidentialRices.add(nonResidentialRice);
 				residenceRices.add(residenceRice);
-				totalhousess.add(totalhouses);	
+				totalhousess.add(totalhouses);
 			}
-			Element nextPageElement=doc.select(nextPageXpath).first();
-			if(null!=nextPageElement){
+			Element nextPageElement = doc.select(nextPageXpath).first();
+			if (null != nextPageElement) {
 				String __EVENTTARGET = nextPageElement.attr("href");
-				if(StringUtils.isNotBlank(__EVENTTARGET)){
+				if (StringUtils.isNotBlank(__EVENTTARGET)) {
 					__EVENTTARGET = StringUtils.substringBetween(__EVENTTARGET, "javascript:__doPostBack('", "','')");
-					Map<String, Object> parameters=new HashMap<String, Object>();
+					Map<String, Object> parameters = new HashMap<String, Object>();
 					parameters.put("__EVENTTARGET", __EVENTTARGET);
 					parameters.put("__EVENTARGUMENT", __EVENTARGUMENT);
 					parameters.put("__VIEWSTATE", __VIEWSTATE);
@@ -164,16 +162,16 @@ public class TjfdcPresaleInfoWorker extends HtmlCommonWorker{
 					parameters.put("txtJD", txtJD);
 					parameters.put("txtWD", txtWD);
 					parameters.put("txtProName", txtProName);
-					Page nextPage=new Page(doingPage.getSiteCode(),doingPage.getPageNum()+1,action,action);
+					Page nextPage = new Page(doingPage.getSiteCode(), doingPage.getPageNum() + 1, action, action);
 					nextPage.setMethod(HttpMethod.POST);
 					nextPage.setParameters(parameters);
 					nextPage.setReferer(doingPage.getFinalUrl());
-					nextPage.getMetaMap().put("projectName",Arrays.asList(projectName));
+					nextPage.getMetaMap().put("projectName", Arrays.asList(projectName));
 					nextPage.setType(PageType.DATA.value());
-					getWorkQueue().push(nextPage);	
+					getWorkQueue().push(nextPage);
 				}
 			}
-			
+
 			doingPage.getMetaMap().put("projectName", projectNames);
 			doingPage.getMetaMap().put("loudongName", loudongNames);
 			doingPage.getMetaMap().put("loudongNo", loudongNos);
@@ -183,17 +181,21 @@ public class TjfdcPresaleInfoWorker extends HtmlCommonWorker{
 			doingPage.getMetaMap().put("residenceRice", residenceRices);
 			doingPage.getMetaMap().put("totalhouses", totalhousess);
 
-		}	
+		}
 	}
 
 	@Override
-	protected void afterPaser(Page doingPage) throws Exception {
-		
+	protected void afterExtract(Page doingPage, ResultContext result) {
+
 	}
 
 	@Override
 	protected void onComplete(Page doingPage) {
-		
+
 	}
 
+	@Override
+	protected void insideOnError(Exception t, Page doingPage) {
+
+	}
 }

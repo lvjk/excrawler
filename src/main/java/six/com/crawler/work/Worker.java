@@ -1,11 +1,9 @@
 package six.com.crawler.work;
 
-import java.util.List;
 
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.JobSnapshot;
 import six.com.crawler.common.entity.WorkerSnapshot;
-import six.com.crawler.common.utils.MD5Utils;
 import six.com.crawler.schedule.AbstractSchedulerManager;
 
 /**
@@ -25,15 +23,6 @@ public interface Worker extends WorkerLifecycle {
 	 * @return
 	 */
 	AbstractSchedulerManager getManager();
-
-	public default String getResultID(List<String> keyValues) {
-		StringBuilder newValue = new StringBuilder();
-		for (String value : keyValues) {
-			newValue.append(value);
-		}
-		String id = MD5Utils.MD5(newValue.toString());
-		return id;
-	}
 
 	/**
 	 * 获取 worker name

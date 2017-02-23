@@ -8,50 +8,51 @@ import six.com.crawler.common.entity.PageType;
 import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.entity.Site;
 import six.com.crawler.schedule.AbstractSchedulerManager;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.WorkQueue;
 
-/** 
-* @author  作者 
-* @E-mail: 359852326@qq.com 
-* @date 创建时间：2016年11月22日 上午11:01:31 
-*/
-public class ChongqihouseWorker extends HtmlCommonWorker{
+/**
+ * @author 作者
+ * @E-mail: 359852326@qq.com
+ * @date 创建时间：2016年11月22日 上午11:01:31
+ */
+public class ChongqihouseWorker extends AbstractCrawlWorker {
 
 	public ChongqihouseWorker(String name, AbstractSchedulerManager manager, Job job, Site site, WorkQueue stored) {
 		super(name, manager, job, site, stored);
 	}
 
-
 	@Override
 	protected void insideInit() {
-		
+
 	}
 
 	@Override
 	public void onComplete(Page p) {
-		
+
 	}
 
 	@Override
 	public void insideOnError(Exception t, Page p) {
-	
+
 	}
 
-
 	@Override
-	protected void beforePaser(Page doingPage) throws Exception {
-		
+	protected void beforeDown(Page doingPage) {
+
 	}
 
+	@Override
+	protected void beforeExtract(Page doingPage) {
+
+	}
 
 	@Override
-	protected void afterPaser(Page page) throws Exception {
-		ResultContext resultContext = page.getResultContext();
+	protected void afterExtract(Page page, ResultContext resultContext) {
 		// 将page中的新data urls保存到处理队列
 		List<String> newDataUrlsResult = resultContext.takeResult("dataUrl");
 		if (null != newDataUrlsResult) {
-			int duplicateDoneSize=0;
+			int duplicateDoneSize = 0;
 			for (String newUrl : newDataUrlsResult) {
 				Page newPage = new Page(page.getSiteCode(), 1, page.getFirstUrl(), newUrl);
 				// 将当前page的url 赋值给新page 的Referer
@@ -61,11 +62,11 @@ public class ChongqihouseWorker extends HtmlCommonWorker{
 				newPage.setMetaMap(page.getMetaMap());
 				if (!getWorkQueue().duplicateKey(newPage.getPageKey())) {
 					getWorkQueue().push(newPage);
-				}else{
+				} else {
 					duplicateDoneSize++;
 				}
 			}
-			if(duplicateDoneSize==0){
+			if (duplicateDoneSize == 0) {
 				List<String> nextUrlsResult = resultContext.takeResult("nextUrl");
 				if (null != nextUrlsResult && nextUrlsResult.size() > 0) {
 					String nextUrl = nextUrlsResult.get(0);

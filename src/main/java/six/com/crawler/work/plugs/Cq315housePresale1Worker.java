@@ -12,12 +12,13 @@ import org.slf4j.LoggerFactory;
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.PageType;
+import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.http.HttpMethod;
 import six.com.crawler.common.utils.JsonUtils;
 import six.com.crawler.common.utils.UrlUtils;
 import six.com.crawler.schedule.AbstractSchedulerManager;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.WorkQueue;
 import six.com.crawler.work.WorkerLifecycleState;
@@ -27,18 +28,17 @@ import six.com.crawler.work.WorkerLifecycleState;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年11月4日 下午5:18:21
  */
-public class Cq315housePresale1Worker extends HtmlCommonWorker {
+public class Cq315housePresale1Worker extends AbstractCrawlWorker {
 
 	final static Logger LOG = LoggerFactory.getLogger(Cq315housePresale1Worker.class);
 	private String referer = "http://www.cq315house.com/315web/HtmlPage/PresaleCertDetail.htm#";
-	private String pageSizeTemplate="<<pageSize>>";
-	private String pageIndexTemplate="<<pageIndex>>";
+	private String pageSizeTemplate = "<<pageSize>>";
+	private String pageIndexTemplate = "<<pageIndex>>";
 	String jsonTemplateUrl = "http://www.cq315house.com/315web/webservice/GetMyData913.ashx"
-			+ "?projectname=&kfs=&projectaddr=&pagesize="+pageSizeTemplate
-			+ "&pageindex="+pageIndexTemplate
+			+ "?projectname=&kfs=&projectaddr=&pagesize=" + pageSizeTemplate + "&pageindex=" + pageIndexTemplate
 			+ "&presalecert=";
 	RedisWorkQueue presale2Queue;
-	private int pageIndex = 83;//83没有数据
+	private int pageIndex = 83;// 83没有数据
 	private int pageSize = 100;
 	Map<String, String> fieldMap;
 
@@ -47,16 +47,17 @@ public class Cq315housePresale1Worker extends HtmlCommonWorker {
 		super(name, manager, job, site, stored);
 	}
 
-	private Page buildPage(int pageIndex,int pageSize){
-		String jsonUrl=StringUtils.replace(jsonTemplateUrl, pageIndexTemplate, String.valueOf(pageIndex));
-		jsonUrl=StringUtils.replace(jsonUrl, pageSizeTemplate, String.valueOf(pageSize));
+	private Page buildPage(int pageIndex, int pageSize) {
+		String jsonUrl = StringUtils.replace(jsonTemplateUrl, pageIndexTemplate, String.valueOf(pageIndex));
+		jsonUrl = StringUtils.replace(jsonUrl, pageSizeTemplate, String.valueOf(pageSize));
 		Page page = new Page(getSite().getCode(), 1, jsonUrl, jsonUrl);
 		page.setReferer(referer);
 		page.setMethod(HttpMethod.GET);
 		page.setType(PageType.JSON.value());
 		return page;
 	}
-	protected void insideInit(){
+
+	protected void insideInit() {
 		presale2Queue = new RedisWorkQueue(getManager().getRedisManager(), "cq315house_presale_2");
 		fieldMap = new HashMap<>();
 		fieldMap.put("F_PROJECT_NAME", "projectName");
@@ -65,23 +66,26 @@ public class Cq315housePresale1Worker extends HtmlCommonWorker {
 		fieldMap.put("F_ENTERPRISE_NAME", "company");
 		fieldMap.put("F_PRESALE_CERT", "presalePermit");
 		fieldMap.put("F_BLOCK", "forSaleUnit");
-		Page firstPage = buildPage(pageIndex, pageSize);//初始化第一页
+		Page firstPage = buildPage(pageIndex, pageSize);// 初始化第一页
 		getWorkQueue().clear();
 		getWorkQueue().push(firstPage);
 	}
 
+	protected void beforeDown(Page doingPage) {
+
+	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected void beforePaser(Page doingPage) throws Exception {
+	protected void beforeExtract(Page doingPage) {
 		String jsonData = doingPage.getPageSrc();
 		if (StringUtils.isBlank(jsonData) && pageIndex == 1) {
 			compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.STOPED);
 			throw new RuntimeException("get jsonData is blank");
 		}
-		if (("[]".equals(jsonData)||StringUtils.isBlank(jsonData)) && pageIndex > 1) {
+		if (("[]".equals(jsonData) || StringUtils.isBlank(jsonData)) && pageIndex > 1) {
 			compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.WAITED);
-		}else{
+		} else {
 			String proxyJsonKey = "json";
 			jsonData = "{'" + proxyJsonKey + "':" + jsonData + "}";
 			Map<String, Object> jsonMap = JsonUtils.toObject(jsonData, Map.class);
@@ -116,15 +120,15 @@ public class Cq315housePresale1Worker extends HtmlCommonWorker {
 	}
 
 	@Override
-	protected void afterPaser(Page doingPage) throws Exception {
+	protected void afterExtract(Page doingPage, ResultContext result) {
 
 	}
 
 	@Override
 	protected void insideOnError(Exception t, Page doingPage) {
-		
+
 	}
-	
+
 	@Override
 	public void onComplete(Page p) {
 		pageIndex++;

@@ -12,10 +12,11 @@ import org.jsoup.select.Elements;
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.PageType;
+import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.http.HttpMethod;
 import six.com.crawler.schedule.AbstractSchedulerManager;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.WorkQueue;
 
@@ -24,7 +25,7 @@ import six.com.crawler.work.WorkQueue;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年2月21日 下午5:46:17
  */
-public class TmsfProjectInfoWorker extends HtmlCommonWorker {
+public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 
 	int longitudeMax = 135;
 	int longitudeMin = 73;
@@ -41,7 +42,12 @@ public class TmsfProjectInfoWorker extends HtmlCommonWorker {
 	}
 
 	@Override
-	protected void beforePaser(Page doingPage) throws Exception {
+	protected void beforeDown(Page doingPage) {
+
+	}
+
+	@Override
+	protected void beforeExtract(Page doingPage) {
 		String html = doingPage.getPageSrc();
 		Document doc = Jsoup.parse(html);
 		Elements mapDivs = doc.select(mapDivCss);
@@ -77,10 +83,10 @@ public class TmsfProjectInfoWorker extends HtmlCommonWorker {
 	}
 
 	@Override
-	protected void afterPaser(Page doingPage) throws Exception {
-		List<String> result=doingPage.getResultContext().takeResult("presaleUrl");
-		if(null!=result&&result.size()>0){
-			String presaleUrl =result.get(0);
+	protected void afterExtract(Page doingPage, ResultContext resultContext) {
+		List<String> result = resultContext.takeResult("presaleUrl");
+		if (null != result && result.size() > 0) {
+			String presaleUrl = result.get(0);
 			Page presalePage = new Page(doingPage.getSiteCode(), 1, presaleUrl, presaleUrl);
 			presalePage.setReferer(doingPage.getFinalUrl());
 			presalePage.setMethod(HttpMethod.GET);
@@ -97,7 +103,7 @@ public class TmsfProjectInfoWorker extends HtmlCommonWorker {
 	@Override
 	protected void insideInit() {
 		projectPresaleUrlQueue = new RedisWorkQueue(getManager().getRedisManager(), "tmsf_presale_url");
-		projectHouseUrlQueue=new RedisWorkQueue(getManager().getRedisManager(), "tmsf_house_url");
+		projectHouseUrlQueue = new RedisWorkQueue(getManager().getRedisManager(), "tmsf_house_url");
 	}
 
 	@Override

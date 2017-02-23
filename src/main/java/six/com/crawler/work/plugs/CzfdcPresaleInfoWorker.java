@@ -14,7 +14,7 @@ import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.utils.WebDriverUtils;
 import six.com.crawler.schedule.AbstractSchedulerManager;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.WorkQueue;
 import six.com.crawler.work.WorkerLifecycleState;
 
@@ -23,7 +23,7 @@ import six.com.crawler.work.WorkerLifecycleState;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年11月25日 下午3:26:15
  */
-public class CzfdcPresaleInfoWorker extends HtmlCommonWorker {
+public class CzfdcPresaleInfoWorker extends AbstractCrawlWorker {
 
 	String presaleListXpath = "//table[@id='pageTable']/tbody/tr/td[@class='tb_middle'][1]/span";
 	String nextPageXpath = "//table[@id='pageTable']/tbody/tr/td/table/tbody/tr/td/a[contains(text(),'下一页')]";
@@ -40,9 +40,13 @@ public class CzfdcPresaleInfoWorker extends HtmlCommonWorker {
 	protected void insideInit() {
 		mainWindows = getDowner().getWindowHandle();
 	}
-	
+
+	protected void beforeDown(Page doingPage) {
+
+	}
+
 	@Override
-	protected void beforePaser(Page doingPage) throws Exception {
+	protected void beforeExtract(Page doingPage) {
 		final WebDriver webDriver = getDowner().getWebDriver();
 		String lastNewWindows = WebDriverUtils.getOtherWindows(webDriver, mainWindows, findElementTimeout);
 		if (StringUtils.isNotBlank(lastNewWindows)) {
@@ -96,31 +100,27 @@ public class CzfdcPresaleInfoWorker extends HtmlCommonWorker {
 						return;
 					}
 				}
-				ResultContext resultContext=getExtracter().extract(doingPage);
+				ResultContext resultContext = getExtracter().extract(doingPage);
 				getStore().store(resultContext);
 				break;
 			}
 		}
-	
+
 	}
 
 	@Override
-	protected void afterPaser(Page doingPage) throws Exception {
-		
+	protected void afterExtract(Page doingPage, ResultContext result) {
+
 	}
 
 	@Override
 	protected void insideOnError(Exception t, Page doingPage) {
-		
+
 	}
 
 	@Override
 	public void onComplete(Page p) {
 
 	}
-
-
-
-	
 
 }

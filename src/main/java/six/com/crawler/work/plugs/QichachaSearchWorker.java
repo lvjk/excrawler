@@ -15,12 +15,13 @@ import six.com.crawler.common.RedisManager;
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.PageType;
+import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.utils.ThreadUtils;
 import six.com.crawler.common.utils.UrlUtils;
 import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.work.Constants;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.WorkQueue;
 
@@ -29,7 +30,7 @@ import six.com.crawler.work.WorkQueue;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年11月10日 下午5:20:38
  */
-public class QichachaSearchWorker extends HtmlCommonWorker {
+public class QichachaSearchWorker extends AbstractCrawlWorker {
 
 	protected final static Logger LOG = LoggerFactory.getLogger(QichachaSearchWorker.class);
 	RedisWorkQueue qichachaQueue;
@@ -78,8 +79,12 @@ public class QichachaSearchWorker extends HtmlCommonWorker {
 		getWorkQueue().push(doingPage);
 	}
 
+	protected void beforeDown(Page doingPage) {
+
+	}
+
 	@Override
-	protected void beforePaser(Page doingPage) throws Exception {
+	protected void beforeExtract(Page doingPage) {
 		// WebDriver webDriver = doingPage.getWebDriver();
 		// 处理省份选项
 		String isDoingProvince = null;
@@ -176,9 +181,9 @@ public class QichachaSearchWorker extends HtmlCommonWorker {
 	}
 
 	@Override
-	protected void afterPaser(Page doingPage) throws Exception {
-		List<String> dataUrlList = doingPage.getResultContext().takeResult("companyInfoUrl");
-		List<String> list = doingPage.getResultContext().takeResult("city");
+	protected void afterExtract(Page doingPage, ResultContext resultContext) {
+		List<String> dataUrlList = resultContext.takeResult("companyInfoUrl");
+		List<String> list = resultContext.takeResult("city");
 		if (null == dataUrlList || dataUrlList.isEmpty()) {
 			hasNextPage = false;
 		} else {

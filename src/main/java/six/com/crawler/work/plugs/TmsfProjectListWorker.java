@@ -9,22 +9,22 @@ import org.jsoup.select.Elements;
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.PageType;
+import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.http.HttpMethod;
 import six.com.crawler.common.utils.UrlUtils;
 import six.com.crawler.schedule.AbstractSchedulerManager;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.WorkQueue;
 import six.com.crawler.work.WorkerLifecycleState;
-
 
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年2月21日 下午2:20:30
  */
-public class TmsfProjectListWorker extends HtmlCommonWorker {
+public class TmsfProjectListWorker extends AbstractCrawlWorker {
 
 	String siteidFlag = "<<siteid>>";
 	String propertyidFlag = "<<propertyid>>";
@@ -38,7 +38,7 @@ public class TmsfProjectListWorker extends HtmlCommonWorker {
 			+ "ordertype=&" + "priceorder=&" + "openorder=&" + "view720data=&" + "page=" + pageIndexTemplate + "&"
 			+ "bbs=&" + "avanumorder=&" + "comnumorder=";
 	int pageIndex = 1;
-	int pageCount=-1;
+	int pageCount = -1;
 	String refererUrl;
 
 	public TmsfProjectListWorker(String name, AbstractSchedulerManager manager, Job job, Site site, WorkQueue stored) {
@@ -63,10 +63,15 @@ public class TmsfProjectListWorker extends HtmlCommonWorker {
 	}
 
 	@Override
-	protected void beforePaser(Page doingPage) throws Exception {
+	protected void beforeDown(Page doingPage) {
+
+	}
+
+	@Override
+	protected void beforeExtract(Page doingPage) {
 		String html = doingPage.getPageSrc();
 		Document doc = Jsoup.parse(html);
-		if(pageCount==-1){
+		if (pageCount == -1) {
 			Element pageCountElement = doc.select(pageCountCss).first();
 			String pageCountElementText = pageCountElement.text();
 			String[] pageCountParams = StringUtils.split(pageCountElementText, "/");
@@ -87,9 +92,9 @@ public class TmsfProjectListWorker extends HtmlCommonWorker {
 			projectInfoQueue.push(projectPage);
 		}
 		pageIndex++;
-		if(pageIndex>pageCount){
+		if (pageIndex > pageCount) {
 			compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.WAITED);
-		}else{
+		} else {
 			Page page = buildPage(pageIndex, doingPage.getFinalUrl());// 初始化第一页
 			getWorkQueue().push(page);
 		}
@@ -97,7 +102,7 @@ public class TmsfProjectListWorker extends HtmlCommonWorker {
 	}
 
 	@Override
-	protected void afterPaser(Page doingPage) throws Exception {
+	protected void afterExtract(Page doingPage, ResultContext result) {
 
 	}
 
@@ -105,7 +110,6 @@ public class TmsfProjectListWorker extends HtmlCommonWorker {
 	protected void insideOnError(Exception t, Page doingPage) {
 
 	}
-	
 
 	@Override
 	protected void onComplete(Page doingPage) {

@@ -19,7 +19,7 @@ import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.utils.UrlUtils;
 import six.com.crawler.common.utils.WebDriverUtils;
 import six.com.crawler.schedule.AbstractSchedulerManager;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.WorkQueue;
 import six.com.crawler.work.WorkerLifecycleState;
@@ -29,7 +29,7 @@ import six.com.crawler.work.WorkerLifecycleState;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年11月4日 下午2:12:53
  */
-public class ShFangDiProjectListWorker extends HtmlCommonWorker {
+public class ShFangDiProjectListWorker extends AbstractCrawlWorker {
 
 	String searchPageUlr = "http://www.fangdi.com.cn/complexPro.asp";
 	String nextXpath = "//table[@id='Table7']/tbody/tr/td/a";
@@ -46,10 +46,14 @@ public class ShFangDiProjectListWorker extends HtmlCommonWorker {
 			WorkQueue stored) {
 		super(name, manager, job, site, stored);
 	}
-	
-	@Override
-	protected void beforePaser(Page doingPage) throws Exception {
 
+	@Override
+	protected void beforeDown(Page doingPage) {
+
+	}
+
+	@Override
+	protected void beforeExtract(Page doingPage) {
 		WebDriver webDriver = getDowner().getWebDriver();
 		if (null == districtQueue) {
 			districtQueue = new LinkedBlockingQueue<String>();
@@ -99,13 +103,13 @@ public class ShFangDiProjectListWorker extends HtmlCommonWorker {
 	}
 
 	@Override
-	protected void afterPaser(Page doingPage) throws Exception {
-		
+	protected void afterExtract(Page doingPage, ResultContext resultContext) {
+
 	}
 
 	@Override
 	protected void insideOnError(Exception t, Page doingPage) {
-		
+
 	}
 
 	private WebElement getNextWebElement(WebDriver webDriver) {
@@ -121,7 +125,7 @@ public class ShFangDiProjectListWorker extends HtmlCommonWorker {
 		return nextWebElement;
 	}
 
-	private void doWoerk(Page doingPage){
+	private void doWoerk(Page doingPage) {
 		WebDriver webDriver = getDowner().getWebDriver();
 		String 状态Xpath = "//center/table[6]/tbody/tr[@valign='middle']/td[1]";
 		String 项目名称Xpath = "//center/table[6]/tbody/tr[@valign='middle']/td[2]";
@@ -195,19 +199,18 @@ public class ShFangDiProjectListWorker extends HtmlCommonWorker {
 		doingPage.getMetaMap().put("totalNum", 总套数List);
 		doingPage.getMetaMap().put("totalArea", 总面积List);
 		doingPage.getMetaMap().put("district", 所在区县List);
-		ResultContext resultContext=getExtracter().extract(doingPage);
+		ResultContext resultContext = getExtracter().extract(doingPage);
 		getStore().store(resultContext);
 	}
 
 	@Override
 	protected void insideInit() {
-		projectInfoQueue = new RedisWorkQueue(getManager().getRedisManager(),
-				"sh_fangdi_project_info");
+		projectInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "sh_fangdi_project_info");
 	}
 
 	@Override
 	public void onComplete(Page p) {
-		
+
 	}
 
 }

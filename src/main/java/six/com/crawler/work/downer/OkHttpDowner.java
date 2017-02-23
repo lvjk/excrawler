@@ -17,7 +17,7 @@ import six.com.crawler.common.http.HttpResult;
 import six.com.crawler.common.exception.AbstractHttpException;
 import six.com.crawler.common.utils.UrlUtils;
 import six.com.crawler.common.utils.AutoCharsetDetectorUtils.ContentType;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.downer.exception.DownerException;
 import six.com.crawler.work.downer.exception.ExecuteRequestDownHtmlProcessorException;
 
@@ -31,7 +31,7 @@ public class OkHttpDowner extends AbstractDowner {
 
 	private HttpClient httpClient;
 
-	public OkHttpDowner(HtmlCommonWorker worker) {
+	public OkHttpDowner(AbstractCrawlWorker worker) {
 		super(worker);
 		httpClient = worker.getManager().getHttpClient();
 	}

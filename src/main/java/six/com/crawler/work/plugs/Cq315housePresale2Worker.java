@@ -9,19 +9,21 @@ import java.util.Map;
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.PageType;
+import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.utils.JsonUtils;
 import six.com.crawler.common.utils.UrlUtils;
 import six.com.crawler.schedule.AbstractSchedulerManager;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.WorkQueue;
+
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年11月10日 上午9:38:59
  */
-public class Cq315housePresale2Worker extends HtmlCommonWorker {
+public class Cq315housePresale2Worker extends AbstractCrawlWorker {
 
 	RedisWorkQueue suiteStateQueue;
 	Map<String, String> fieldMap;
@@ -58,9 +60,13 @@ public class Cq315housePresale2Worker extends HtmlCommonWorker {
 
 	}
 
+	protected void beforeDown(Page doingPage) {
+
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
-	protected void beforePaser(Page doingPage) throws Exception {
+	protected void beforeExtract(Page doingPage) {
 		String jsonData = doingPage.getPageSrc();
 		String proxyJsonKey = "json";
 		jsonData = "{'" + proxyJsonKey + "':" + jsonData + "}";
@@ -111,6 +117,7 @@ public class Cq315housePresale2Worker extends HtmlCommonWorker {
 	}
 
 	@Override
-	protected void afterPaser(Page doingPage) throws Exception {}
+	protected void afterExtract(Page doingPage, ResultContext result) {
+	}
 
 }

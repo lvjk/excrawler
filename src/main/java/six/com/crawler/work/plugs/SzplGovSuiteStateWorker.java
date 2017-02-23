@@ -16,12 +16,13 @@ import org.slf4j.LoggerFactory;
 
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
+import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.utils.ThreadUtils;
 import six.com.crawler.common.utils.UrlUtils;
 import six.com.crawler.common.utils.WebDriverUtils;
 import six.com.crawler.schedule.AbstractSchedulerManager;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.WorkQueue;
 
@@ -30,7 +31,7 @@ import six.com.crawler.work.WorkQueue;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年11月1日 下午4:29:31
  */
-public class SzplGovSuiteStateWorker extends HtmlCommonWorker {
+public class SzplGovSuiteStateWorker extends AbstractCrawlWorker {
 
 	final static Logger LOG = LoggerFactory.getLogger(SzplGovSuiteStateWorker.class);
 	RedisWorkQueue suiteInfoQueue;
@@ -52,8 +53,7 @@ public class SzplGovSuiteStateWorker extends HtmlCommonWorker {
 
 	@Override
 	protected void insideInit() {
-		suiteInfoQueue = new RedisWorkQueue(getManager().getRedisManager(),
-				"szpl_gov_suite_info_detail");
+		suiteInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "szpl_gov_suite_info_detail");
 		saleStateBtXpathList = new ArrayList<>();
 		saleStateBtXpathList.add(preSaleBtXpath);
 		saleStateBtXpathList.add(nowSaleBtXpath);
@@ -71,17 +71,12 @@ public class SzplGovSuiteStateWorker extends HtmlCommonWorker {
 	}
 
 	@Override
-	public void onComplete(Page p) {
+	protected void beforeDown(Page doingPage) {
 
 	}
 
 	@Override
-	protected void insideOnError(Exception t, Page doingPage) {
-
-	}
-
-	@Override
-	protected void beforePaser(Page doingPage) throws Exception {
+	protected void beforeExtract(Page doingPage) {
 		WebDriver webDriver = getDowner().getWebDriver();
 		List<String> 项目名称list = doingPage.getMetaMap().remove("projectName");
 		List<String> 楼名list = doingPage.getMetaMap().remove("floorName");
@@ -211,7 +206,17 @@ public class SzplGovSuiteStateWorker extends HtmlCommonWorker {
 	}
 
 	@Override
-	protected void afterPaser(Page doingPage) throws Exception {
+	protected void afterExtract(Page doingPage, ResultContext result) {
+
+	}
+
+	@Override
+	public void onComplete(Page p) {
+
+	}
+
+	@Override
+	protected void insideOnError(Exception t, Page doingPage) {
 
 	}
 

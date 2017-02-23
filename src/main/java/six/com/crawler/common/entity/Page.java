@@ -65,8 +65,6 @@ public class Page implements Serializable {
 	// transient 标记字段不会被序列化
 	private transient Document doc;// page Document
 	// transient 标记字段不会被序列化
-	private ResultContext resultContext;// 页面处理结果Map
-	// transient 标记字段不会被序列化
 	private transient String errMsg;// 页面处理错误信息
 	// transient 标记字段不会被序列化
 	private transient Throwable err;// 页面处理错误异常对象
@@ -302,14 +300,6 @@ public class Page implements Serializable {
 			newDataUrl = new ArrayList<>();
 		}
 		return newDataUrl;
-	}
-
-	public ResultContext getResultContext() {
-		return resultContext;
-	}
-
-	public void setResultContext(ResultContext resultContext) {
-		this.resultContext = resultContext;
 	}
 
 	public String getPageKey() {

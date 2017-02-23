@@ -20,18 +20,17 @@ import six.com.crawler.common.utils.ThreadUtils;
 import six.com.crawler.common.utils.UrlUtils;
 import six.com.crawler.common.utils.WebDriverUtils;
 import six.com.crawler.schedule.AbstractSchedulerManager;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.WorkQueue;
 import six.com.crawler.work.WorkerLifecycleState;
-
 
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年12月20日 上午10:50:04
  */
-public class XiAnFang99PresaleWorker extends HtmlCommonWorker {
+public class XiAnFang99PresaleWorker extends AbstractCrawlWorker {
 
 	private String openAllPath = "//table/tbody/tr/td/img[@class='cursor']";
 	private String nextPagePath = "//div[@id='pager_presale']/a[contains(text(),'>')]";
@@ -44,28 +43,23 @@ public class XiAnFang99PresaleWorker extends HtmlCommonWorker {
 	}
 
 	@Override
-	public void onComplete(Page p) {
-
-	}
-
-
-
-	@Override
 	protected void insideInit() {
-		projectInfoQueue = new RedisWorkQueue(getManager().getRedisManager(),
-				"xianfang99_project_info_1");
-		buildingInfoQueue = new RedisWorkQueue(getManager().getRedisManager(),
-				"xianfang99_house_info");
+		projectInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "xianfang99_project_info_1");
+		buildingInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "xianfang99_house_info");
 	}
 
-	
 	@Override
-	protected void beforePaser(Page doingPage) throws Exception {
+	protected void beforeDown(Page doingPage) {
+
+	}
+
+	@Override
+	protected void beforeExtract(Page doingPage) {
 		WebDriver webDriver = getDowner().getWebDriver();
 		List<WebElement> openAllWebElements = WebDriverUtils.findElements(webDriver, openAllPath, findElementTimeout);
 		if (null != openAllWebElements) {
-			for(int i=0;i<openAllWebElements.size();i++){
-				WebElement openAllWebElement =openAllWebElements.get(i);
+			for (int i = 0; i < openAllWebElements.size(); i++) {
+				WebElement openAllWebElement = openAllWebElements.get(i);
 				String display = openAllWebElement.getCssValue("display");
 				if (!"none".equals(display)) {
 					WebDriverUtils.click(webDriver, openAllWebElement, null, findElementTimeout);
@@ -111,36 +105,26 @@ public class XiAnFang99PresaleWorker extends HtmlCommonWorker {
 				}
 				Elements tempTable2 = presaleInfo.select(otherProsaleInfoCss);
 				tempTable2.add(0, tempTable1);
-				paserPresaleTable(doingPage,preject, tempTable2);
+				paserPresaleTable(doingPage, preject, tempTable2);
 			}
 		}
-		ResultContext resultContext=getExtracter().extract(doingPage);
+		ResultContext resultContext = getExtracter().extract(doingPage);
 		getStore().store(resultContext);
 		WebElement nextPageElements = WebDriverUtils.findElement(webDriver, nextPagePath, findElementTimeout);
 		if (null == nextPageElements) {
 			compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.STOPED);
 		} else {
 			String disabled = nextPageElements.getAttribute("disabled");
-			if ("disabled".equals(disabled)||"true".equals(disabled)) {
+			if ("disabled".equals(disabled) || "true".equals(disabled)) {
 				compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.STOPED);
 			} else {
 				WebDriverUtils.click(webDriver, nextPageElements, nextPagePath, findElementTimeout);
 			}
 		}
-	
+
 	}
 
-	@Override
-	protected void afterPaser(Page doingPage) throws Exception {
-		
-	}
-
-	@Override
-	protected void insideOnError(Exception t, Page doingPage) {
-		
-	}
-
-	private void paserPresaleTable(Page doingPage,String projectName, Elements presaleTable) {
+	private void paserPresaleTable(Page doingPage, String projectName, Elements presaleTable) {
 		String presaleCodeCss = "tbody>tr:eq(1)>td:eq(0)>a";
 		String loudongNameCss = "tbody>tr:eq(1)>td:eq(1)>a";
 		String developerCss = "tbody>tr:eq(1)>td:eq(2)";
@@ -173,19 +157,18 @@ public class XiAnFang99PresaleWorker extends HtmlCommonWorker {
 				saleLoudongInfoPage.getMetaMap().put("saleLoudong", Arrays.asList(tempSaleLoudong));
 				buildingInfoQueue.push(saleLoudongInfoPage);
 			}
-			
-			String presaleSuperviseBank="";
-			Element presaleSuperviseBankElement=table.select(presaleSuperviseBankCss).first();
-			if(null!=presaleSuperviseBankElement){
-				presaleSuperviseBank=presaleSuperviseBankElement.text();
+
+			String presaleSuperviseBank = "";
+			Element presaleSuperviseBankElement = table.select(presaleSuperviseBankCss).first();
+			if (null != presaleSuperviseBankElement) {
+				presaleSuperviseBank = presaleSuperviseBankElement.text();
 			}
-			
-			String presaleSuperviseAccount="";
-			Element presaleSuperviseAccountElement=table.select(presaleSuperviseAccountCss).first();
-			if(null!=presaleSuperviseAccountElement){
-				presaleSuperviseAccount=presaleSuperviseAccountElement.text();
+
+			String presaleSuperviseAccount = "";
+			Element presaleSuperviseAccountElement = table.select(presaleSuperviseAccountCss).first();
+			if (null != presaleSuperviseAccountElement) {
+				presaleSuperviseAccount = presaleSuperviseAccountElement.text();
 			}
-			
 
 			doingPage.getMetaMap().get("projectName").add(projectName);
 			doingPage.getMetaMap().get("presalePermit").add(presalePermit);
@@ -200,6 +183,19 @@ public class XiAnFang99PresaleWorker extends HtmlCommonWorker {
 		}
 	}
 
-	
+	@Override
+	protected void afterExtract(Page doingPage, ResultContext result) {
+
+	}
+
+	@Override
+	public void onComplete(Page p) {
+
+	}
+
+	@Override
+	protected void insideOnError(Exception t, Page doingPage) {
+
+	}
 
 }

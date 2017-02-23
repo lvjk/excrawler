@@ -20,6 +20,7 @@ import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.entity.Site;
+import six.com.crawler.common.utils.MD5Utils;
 import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.work.downer.Downer;
 import six.com.crawler.work.downer.DownerManager;
@@ -30,11 +31,11 @@ import six.com.crawler.work.store.StoreAbstarct;
 
 /**
  * @author six
- * @date 2016年1月15日 下午6:45:26 html 通用性 work
+ * @date 2016年1月15日 下午6:45:26 爬虫抽象层
  */
-public abstract class HtmlCommonWorker extends AbstractWorker {
+public abstract class AbstractCrawlWorker extends AbstractWorker {
 
-	final static Logger LOG = LoggerFactory.getLogger(HtmlCommonWorker.class);
+	final static Logger LOG = LoggerFactory.getLogger(AbstractCrawlWorker.class);
 	// 上次处理数据时间
 	protected int findElementTimeout = 1000;
 	private Site site; // 站点
@@ -52,103 +53,10 @@ public abstract class HtmlCommonWorker extends AbstractWorker {
 	// 主要的结果key
 	private Set<String> mainResultKeys;
 
-	public HtmlCommonWorker(String name, AbstractSchedulerManager manager, Job job, Site site, WorkQueue workQueue) {
+	public AbstractCrawlWorker(String name, AbstractSchedulerManager manager, Job job, Site site, WorkQueue workQueue) {
 		super(name, manager, job);
 		this.workQueue = workQueue;
 		this.site = site;
-	}
-
-	protected abstract void insideInit();
-
-	protected abstract void beforePaser(Page doingPage) throws Exception;
-
-	protected abstract void afterPaser(Page doingPage) throws Exception;
-
-	protected abstract void onComplete(Page doingPage);
-
-	protected abstract void insideOnError(Exception e, Page doingPage);
-
-	@Override
-	protected void insideWork() throws Exception {
-		doingPage = workQueue.pull();
-		if (null != doingPage) {
-			try {
-				LOG.info("processor page:" + doingPage.getOriginalUrl());
-				setHttpProxyForDowner();
-				downer.down(doingPage);
-				beforePaser(doingPage);
-				ResultContext resultContext = extracter.extract(doingPage);
-				List<String> mainResultList = resultContext.getResult(mainResultKey);
-				List<String> collectionDateList = new ArrayList<>();
-				List<String> originUrlList = new ArrayList<>();
-				for (int i = 0; i < mainResultList.size(); i++) {
-					collectionDateList
-							.add(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
-					originUrlList.add(doingPage.getFinalUrl());
-				}
-				resultContext.addResult(Constants.COLLECTION_DATE_FIELD, collectionDateList);
-				resultContext.addResult(Constants.ORIGIN_URL, originUrlList);
-				doPrimaryKey(resultContext);
-				doingPage.setResultContext(resultContext);
-				afterPaser(doingPage);
-				store.store(resultContext);
-				workQueue.finish(doingPage);// 完成page处理
-				onComplete(doingPage);
-				LOG.info("finished processor page:" + doingPage.getOriginalUrl());
-			} catch (Exception e) {
-				throw new RuntimeException("process page err:" + doingPage.getOriginalUrl(), e);
-			}
-		} else {
-			// 没有处理数据时 设置 state == WorkerLifecycleState.SUSPEND
-			compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.WAITED);
-		}
-	}
-
-	private void doPrimaryKey(ResultContext resultContext) {
-		List<String> keyValues = new ArrayList<>();
-		List<String> mainResultList = resultContext.getResult(mainResultKey);
-		List<String> resultList = null;
-		int size = mainResultList.size();
-		List<String> ids = new ArrayList<>();
-		for (int i = 0; i < size; i++) {
-			keyValues.clear();
-			for (String mainKey : mainResultKeys) {
-				resultList = resultContext.getResult(mainKey);
-				String value = resultList.get(i);
-				keyValues.add(value);
-			}
-			String id = getResultID(keyValues);
-			ids.add(id);
-		}
-		resultContext.addResult(Constants.RESULT_ID_KEY, ids);
-	}
-
-	public void setHttpProxyForDowner() {
-		HttpProxy httpProxy = null;
-		if (null != downer) {
-			if (getJob().getHttpProxyType() == HttpProxyType.ENABLE_ONE && null == downer.getHttpProxy()) {
-				httpProxy = getManager().getHttpPorxyService().getHttpProxy(site.getCode());
-				downer.setHttpProxy(httpProxy);
-			} else if (getJob().getHttpProxyType() == HttpProxyType.ENABLE_MANY) {
-				httpProxy = getManager().getHttpPorxyService().getHttpProxy(site.getCode());
-				downer.setHttpProxy(httpProxy);
-			} else {
-				downer.setHttpProxy(httpProxy);
-			}
-		}
-	}
-
-	protected void onError(Exception e) {
-		if (null != doingPage) {
-			if (doingPage.getRetryProcess() < Constants.WOKER_PROCESS_PAGE_MAX_RETRY_COUNT) {
-				doingPage.setRetryProcess(doingPage.getRetryProcess() + 1);
-				workQueue.retryPush(doingPage);
-			} else {
-				workQueue.pushErr(doingPage);
-			}
-			LOG.error("processor err page[" + doingPage.getRetryProcess() + "] :" + doingPage.getFinalUrl(), e);
-		}
-		insideOnError(e, doingPage);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -215,6 +123,157 @@ public abstract class HtmlCommonWorker extends AbstractWorker {
 			}
 		}
 		insideInit();
+	}
+
+	@Override
+	protected void insideWork() throws Exception {
+		doingPage = workQueue.pull();
+		if (null != doingPage) {
+			try {
+				LOG.info("processor page:" + doingPage.getOriginalUrl());
+				// 1.设置下载器代理
+				setHttpProxyForDowner();
+				// 2. 下载数据
+				downer.down(doingPage);
+				// 3. 抽取前操作
+				beforeExtract(doingPage);
+				// 4.抽取结果
+				ResultContext resultContext = extracter.extract(doingPage);
+				// 5.设置默认字段
+				setDefaultResult(resultContext);
+				// 6.抽取后操作
+				afterExtract(doingPage, resultContext);
+				if(null!=store){
+					// 7.存储数据
+					int storeCount = store.store(resultContext);
+					getWorkerSnapshot().setTotalResultCount(getWorkerSnapshot().getTotalResultCount() + storeCount);
+				}
+				// 8.记录操作数据
+				workQueue.finish(doingPage);// 完成page处理
+				// 9.完成操作
+				onComplete(doingPage);
+				LOG.info("finished processor page:" + doingPage.getOriginalUrl());
+			} catch (Exception e) {
+				throw new RuntimeException("process page err:" + doingPage.getOriginalUrl(), e);
+			}
+		} else {
+			// 没有处理数据时 设置 state == WorkerLifecycleState.SUSPEND
+			compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.WAITED);
+		}
+	}
+
+	/**
+	 * 内部初始化
+	 */
+	protected abstract void insideInit();
+
+	/**
+	 * 下载前处理
+	 * 
+	 * @param doingPage
+	 */
+	protected abstract void beforeDown(Page doingPage);
+
+	/**
+	 * 抽取数据前
+	 * 
+	 * @param doingPage
+	 */
+	protected abstract void beforeExtract(Page doingPage);
+
+	/**
+	 * 抽取数据后
+	 * 
+	 * @param doingPage
+	 * @param resultContext
+	 */
+	protected abstract void afterExtract(Page doingPage, ResultContext resultContext);
+
+	/**
+	 * 完成操作
+	 * 
+	 * @param doingPage
+	 */
+	protected abstract void onComplete(Page doingPage);
+
+	/**
+	 * 异常处理
+	 * 
+	 * @param e
+	 * @param doingPage
+	 */
+	protected abstract void insideOnError(Exception e, Page doingPage);
+
+	/**
+	 * 设置爬虫默认字段
+	 * 
+	 * @param resultContext
+	 */
+	private void setDefaultResult(ResultContext resultContext) {
+		List<String> mainResultList = resultContext.getResult(mainResultKey);
+		if (null != mainResultList) {
+			List<String> collectionDateList = new ArrayList<>();
+			List<String> originUrlList = new ArrayList<>();
+			for (int i = 0; i < mainResultList.size(); i++) {
+				collectionDateList.add(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
+				originUrlList.add(doingPage.getFinalUrl());
+			}
+			resultContext.addResult(Constants.COLLECTION_DATE_FIELD, collectionDateList);
+			resultContext.addResult(Constants.ORIGIN_URL, originUrlList);
+
+			List<String> keyValues = new ArrayList<>();
+			List<String> resultList = null;
+			int size = mainResultList.size();
+			List<String> ids = new ArrayList<>();
+			for (int i = 0; i < size; i++) {
+				keyValues.clear();
+				for (String mainKey : mainResultKeys) {
+					resultList = resultContext.getResult(mainKey);
+					String value = resultList.get(i);
+					keyValues.add(value);
+				}
+				String id = getResultID(keyValues);
+				ids.add(id);
+			}
+			resultContext.addResult(Constants.RESULT_ID_KEY, ids);
+		}
+	}
+
+	public void setHttpProxyForDowner() {
+		HttpProxy httpProxy = null;
+		if (null != downer) {
+			if (getJob().getHttpProxyType() == HttpProxyType.ENABLE_ONE && null == downer.getHttpProxy()) {
+				httpProxy = getManager().getHttpPorxyService().getHttpProxy(site.getCode());
+				downer.setHttpProxy(httpProxy);
+			} else if (getJob().getHttpProxyType() == HttpProxyType.ENABLE_MANY) {
+				httpProxy = getManager().getHttpPorxyService().getHttpProxy(site.getCode());
+				downer.setHttpProxy(httpProxy);
+			} else {
+				downer.setHttpProxy(httpProxy);
+			}
+		}
+	}
+
+	protected void onError(Exception e) {
+		if (null != doingPage) {
+			if (doingPage.getRetryProcess() < Constants.WOKER_PROCESS_PAGE_MAX_RETRY_COUNT) {
+				doingPage.setRetryProcess(doingPage.getRetryProcess() + 1);
+				workQueue.retryPush(doingPage);
+			} else {
+				workQueue.pushErr(doingPage);
+			}
+			LOG.error("processor err page[" + doingPage.getRetryProcess() + "] :" + doingPage.getFinalUrl(), e);
+		}
+		insideOnError(e, doingPage);
+	}
+
+	private String getResultID(List<String> keyValues) {
+		StringBuilder newValue = new StringBuilder();
+		for (String value : keyValues) {
+			newValue.append(value);
+		}
+		String id = MD5Utils.MD5(newValue.toString());
+		return id;
 	}
 
 	public WorkQueue getWorkQueue() {

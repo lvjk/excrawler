@@ -17,7 +17,7 @@ import six.com.crawler.common.http.HttpMethod;
 import six.com.crawler.common.http.HttpResult;
 import six.com.crawler.common.utils.UrlUtils;
 import six.com.crawler.common.utils.AutoCharsetDetectorUtils.ContentType;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.downer.exception.DownerException;
 import six.com.crawler.work.downer.exception.ExecuteRequestDownHtmlProcessorException;
 
@@ -32,7 +32,7 @@ public class ApacheHttpDowner extends AbstractDowner {
 
 	private HttpClient httpClient;
 
-	public ApacheHttpDowner(HtmlCommonWorker worker) {
+	public ApacheHttpDowner(AbstractCrawlWorker worker) {
 		super(worker);
 		httpClient = worker.getManager().getHttpClient();
 	}

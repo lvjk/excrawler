@@ -37,7 +37,7 @@ import six.com.crawler.common.service.SiteService;
 @SuppressWarnings("deprecation")
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(StartMain.class)
-@WebIntegrationTest("spider.home:F:/six/git/spider_last")
+@WebIntegrationTest("spider.home:F:/six/git/exCrawler")
 public  class BaseTest extends AbstractJUnit4SpringContextTests {
 
 	protected final static Logger LOG = LoggerFactory.getLogger(BaseTest.class);

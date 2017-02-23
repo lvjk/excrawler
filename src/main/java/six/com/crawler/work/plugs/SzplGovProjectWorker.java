@@ -14,7 +14,7 @@ import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.utils.WebDriverUtils;
 import six.com.crawler.schedule.AbstractSchedulerManager;
-import six.com.crawler.work.HtmlCommonWorker;
+import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.WorkQueue;
 import six.com.crawler.work.WorkerLifecycleState;
@@ -24,10 +24,10 @@ import six.com.crawler.work.WorkerLifecycleState;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年10月28日 上午10:20:51
  */
-public class SzplGovProjectWorker extends HtmlCommonWorker {
+public class SzplGovProjectWorker extends AbstractCrawlWorker {
 
 	final static Logger LOG = LoggerFactory.getLogger(SzplGovProjectWorker.class);
-			
+
 	String nextXpath = "//div[@id='AspNetPager1']/div[@class='mypaper']/a";
 	RedisWorkQueue preSaleQueue;
 	RedisWorkQueue projectQueue;
@@ -35,21 +35,26 @@ public class SzplGovProjectWorker extends HtmlCommonWorker {
 	public SzplGovProjectWorker(String name, AbstractSchedulerManager manager, Job job, Site site, WorkQueue stored) {
 		super(name, manager, job, site, stored);
 	}
-	
+
 	@Override
-	public void onComplete(Page p) {
-		
+	protected void insideInit() {
+		preSaleQueue = new RedisWorkQueue(getManager().getRedisManager(), "szpl_gov_pre_sale");
+		projectQueue = new RedisWorkQueue(getManager().getRedisManager(), "szpl_gov_project_detail");
 	}
 
 	@Override
-	protected void beforePaser(Page doingPage) throws Exception {
+	protected void beforeDown(Page doingPage) {
 
+	}
+
+	@Override
+	protected void beforeExtract(Page doingPage) {
 		String 预售证号_url = "预售证号_url";
 		String 项目名称_url = "项目名称_url";
-		ResultContext resultContext=getExtracter().extract(doingPage);
+		ResultContext resultContext = getExtracter().extract(doingPage);
 		getStore().store(resultContext);
 		// 获取预售许可详细信息url
-		List<String> 预售证号_urls = doingPage.getResultContext().takeResult(预售证号_url);
+		List<String> 预售证号_urls = resultContext.getResult(预售证号_url);
 		if (null != 预售证号_urls) {
 			Page page = null;
 			for (String url : 预售证号_urls) {
@@ -62,7 +67,7 @@ public class SzplGovProjectWorker extends HtmlCommonWorker {
 			}
 		}
 		// 获取项目详细信息url
-		List<String> 项目名称_urls = doingPage.getResultContext().takeResult(项目名称_url);
+		List<String> 项目名称_urls = resultContext.takeResult(项目名称_url);
 		if (null != 项目名称_urls) {
 			Page page = null;
 			for (String url : 项目名称_urls) {
@@ -81,25 +86,21 @@ public class SzplGovProjectWorker extends HtmlCommonWorker {
 			compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.WAITED);
 		}
 
-	
 	}
 
 	@Override
-	protected void afterPaser(Page doingPage) throws Exception {
-		
+	protected void afterExtract(Page doingPage, ResultContext result) {
+
 	}
 
 	@Override
 	protected void insideOnError(Exception t, Page doingPage) {
-		
+
 	}
 
 	@Override
-	protected void insideInit() {
-		preSaleQueue = new RedisWorkQueue(getManager().getRedisManager(),
-				"szpl_gov_pre_sale");
-		projectQueue = new RedisWorkQueue(getManager().getRedisManager(),
-				"szpl_gov_project_detail");
+	public void onComplete(Page p) {
+
 	}
 
 	private WebElement findNextWebElement(WebDriver webDriver) {
