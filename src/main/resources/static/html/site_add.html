@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Site Add</title>
+<script type="text/javascript" src="../js/import.inc.js"></script>
+<script type="text/javascript" src="../js/job_add.js"></script>
+</head>
+<body>
+	<div class="tab-pane fade in active" id="tab2">
+		<form class="form-horizontal" role="form" action="#">
+			<fieldset>
+				<legend>编辑站点信息</legend>
+				<div class="form-group">
+					<label class="col-sm-2 control-label" for="name">站点Code</label>
+					<div class="col-sm-4">
+						<input class="form-control" id="name" type="text"
+							placeholder="" />
+					</div>
+					<label class="col-sm-2 control-label" for="siteCode">站点Host</label>
+					<div class="col-sm-4">
+						<input class="form-control" id="siteCode" type="text"
+							placeholder="" />
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-2 control-label" for="triggerTime">触发时间</label>
+					<div class="col-sm-4">
+						<input class="form-control" id="triggerTime" type="text"
+							placeholder="20160601120000" />
+					</div>
+					<label class="col-sm-2 control-label" for=cycleTime>循环周期</label>
+					<div class="col-sm-4">
+						<input class="form-control" id="cycleTime" type="text"
+							placeholder="30(分)" />
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-2 control-label" for="needNodes">所需节点数</label>
+					<div class="col-sm-4">
+						<select class="form-control selectpicker" id="needNodes">
+							<option value="1">1 个节点执行</option>
+							<option value="2">2 个节点执行</option>
+							<option value="3">3 个节点执行</option>
+							<option value="4">4 个节点执行</option>
+							<option value="5">5 个节点执行</option>
+						</select>
+					</div>
+					<label class="col-sm-2 control-label" for="threads">建议线程数</label>
+					<div class="col-sm-4">
+						<select class="form-control selectpicker" id="threads">
+							<option value="1">1 个线程执行</option>
+							<option value="2">2 个线程执行</option>
+							<option value="3">3 个线程执行</option>
+							<option value="4">4 个线程执行</option>
+							<option value="5">5 个线程执行</option>
+						</select>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-2 control-label" for="level">任务级别</label>
+					<div class="col-sm-4">
+						<select class="form-control selectpicker" id="level">
+							<option value="1">1 级任务</option>
+							<option value="2">2 级任务</option>
+							<option value="3">3 级任务</option>
+							<option value="4">4 级任务</option>
+							<option value="5">5 级任务</option>
+						</select>
+					</div>
+				</div>
+				<div class="form-group">
+					<div class="col-sm-8"></div>
+					<div class="col-sm-2">
+						<button type="button" id="saveBtn" class="btn btn-default">提交</button>
+					</div>
+				</div>
+			</fieldset>
+		</form>
+	</div>
+</body>
+</html>
