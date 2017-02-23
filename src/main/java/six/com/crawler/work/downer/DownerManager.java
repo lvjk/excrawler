@@ -1,6 +1,7 @@
 package six.com.crawler.work.downer;
 
 import java.util.concurrent.locks.StampedLock;
+
 import six.com.crawler.work.HtmlCommonWorker;
 
 /**

@@ -26,7 +26,6 @@ import six.com.crawler.work.downer.DownerManager;
 import six.com.crawler.work.downer.DownerType;
 import six.com.crawler.work.extract.ExtractItem;
 import six.com.crawler.work.extract.Extracter;
-import six.com.crawler.work.constants.Constants;
 import six.com.crawler.work.store.StoreAbstarct;
 
 /**
@@ -42,9 +41,7 @@ public abstract class HtmlCommonWorker extends AbstractWorker {
 	private Downer downer;// 下载器
 	// 解析处理程序
 	private Extracter extracter;
-
 	private Page doingPage;
-
 	protected WorkQueue workQueue; // 队列
 	// 存儲处理程序
 	private StoreAbstarct store;
@@ -54,8 +51,6 @@ public abstract class HtmlCommonWorker extends AbstractWorker {
 	private String mainResultKey;
 	// 主要的结果key
 	private Set<String> mainResultKeys;
-
-	final static String RESULT_ID_KEY = "id";
 
 	public HtmlCommonWorker(String name, AbstractSchedulerManager manager, Job job, Site site, WorkQueue workQueue) {
 		super(name, manager, job);
@@ -125,7 +120,7 @@ public abstract class HtmlCommonWorker extends AbstractWorker {
 			String id = getResultID(keyValues);
 			ids.add(id);
 		}
-		resultContext.addResult(RESULT_ID_KEY, ids);
+		resultContext.addResult(Constants.RESULT_ID_KEY, ids);
 	}
 
 	public void setHttpProxyForDowner() {
