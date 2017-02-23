@@ -59,7 +59,7 @@ public class Cq315houseHouseInfoWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	public void onComplete(Page p) {
+	public void onComplete(Page p,ResultContext resultContext) {
 
 	}
 

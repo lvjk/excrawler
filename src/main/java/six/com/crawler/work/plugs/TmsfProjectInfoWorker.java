@@ -1,7 +1,6 @@
 package six.com.crawler.work.plugs;
 
 import java.util.Arrays;
-import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
@@ -17,6 +16,7 @@ import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.http.HttpMethod;
 import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.work.AbstractCrawlWorker;
+import six.com.crawler.work.Constants;
 import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.WorkQueue;
 
@@ -39,6 +39,12 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 
 	public TmsfProjectInfoWorker(String name, AbstractSchedulerManager manager, Job job, Site site, WorkQueue stored) {
 		super(name, manager, job, site, stored);
+	}
+
+	@Override
+	protected void insideInit() {
+		projectPresaleUrlQueue = new RedisWorkQueue(getManager().getRedisManager(), "tmsf_presale_url");
+		projectHouseUrlQueue = new RedisWorkQueue(getManager().getRedisManager(), "tmsf_house_url");
 	}
 
 	@Override
@@ -84,15 +90,6 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void afterExtract(Page doingPage, ResultContext resultContext) {
-		List<String> result = resultContext.takeResult("presaleUrl");
-		if (null != result && result.size() > 0) {
-			String presaleUrl = result.get(0);
-			Page presalePage = new Page(doingPage.getSiteCode(), 1, presaleUrl, presaleUrl);
-			presalePage.setReferer(doingPage.getFinalUrl());
-			presalePage.setMethod(HttpMethod.GET);
-			presalePage.setType(PageType.DATA.value());
-			projectPresaleUrlQueue.push(presalePage);
-		}
 	}
 
 	@Override
@@ -101,14 +98,15 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	protected void insideInit() {
-		projectPresaleUrlQueue = new RedisWorkQueue(getManager().getRedisManager(), "tmsf_presale_url");
-		projectHouseUrlQueue = new RedisWorkQueue(getManager().getRedisManager(), "tmsf_house_url");
-	}
-
-	@Override
-	protected void onComplete(Page doingPage) {
-
+	protected void onComplete(Page doingPage, ResultContext resultContext) {
+		String presaleUrl = resultContext.getExtractResult("presaleUrl").get(0);
+		String projectId = resultContext.getOutResults().get(0).get(Constants.DEFAULT_RESULT_ID);
+		Page presalePage = new Page(doingPage.getSiteCode(), 1, presaleUrl, presaleUrl);
+		presalePage.setReferer(doingPage.getFinalUrl());
+		presalePage.setMethod(HttpMethod.GET);
+		presalePage.setType(PageType.DATA.value());
+		presalePage.getMetaMap().put("projectid", Arrays.asList(projectId));
+		projectPresaleUrlQueue.push(presalePage);
 	}
 
 }

@@ -194,7 +194,7 @@ public class SzplGovProjectDetailWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	public void onComplete(Page p) {
+	public void onComplete(Page p,ResultContext resultContext) {
 
 	}
 

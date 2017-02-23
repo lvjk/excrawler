@@ -42,7 +42,7 @@ public class XiAnFang99ProjectInfoWorker extends AbstractCrawlWorker{
 	}
 
 	@Override
-	protected void onComplete(Page doingPage) {
+	protected void onComplete(Page doingPage,ResultContext resultContext) {
 		
 	}
 

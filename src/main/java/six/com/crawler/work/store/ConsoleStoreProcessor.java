@@ -1,9 +1,8 @@
 package six.com.crawler.work.store;
 
-
 import java.util.List;
+import java.util.Map;
 
-import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.work.AbstractWorker;
 
 /**
@@ -12,13 +11,13 @@ import six.com.crawler.work.AbstractWorker;
  */
 public class ConsoleStoreProcessor extends StoreAbstarct {
 
-	public ConsoleStoreProcessor(AbstractWorker worker,List<String> resultKeys) {
-		super(worker,resultKeys);
+	public ConsoleStoreProcessor(AbstractWorker worker, List<String> resultKeys) {
+		super(worker, resultKeys);
 	}
 
 	@Override
-	protected int insideStore(ResultContext resultContext){
-		System.out.println(resultContext);
+	protected int insideStore(List<Map<String, String>> results) {
+		System.out.println(results);
 		return 1;
 	}
 

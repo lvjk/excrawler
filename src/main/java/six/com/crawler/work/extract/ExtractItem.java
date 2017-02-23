@@ -15,8 +15,8 @@ public class ExtractItem implements Serializable {
 	private String jobName;// job名字
 	private String pathName;// 名字
 	/**
-	 * url类型 1 string 字符类型2 text 文本类型3 phone 电话类型4 number 数字类型5 date 日期类型6
-	 * 数据表格形式7 PRESETRESULT 预先设置的值8 meta 页面meta 信息9
+	 * string字符类型2 1 url类型 2  text 文本类型3 phone 电话类型4 number 数字类型5 date 日期类型6
+	 * meta 页面meta 信息7
 	 */
 	private ExtractItemType type;// 类型
 	private String resultKey;// 结果 key

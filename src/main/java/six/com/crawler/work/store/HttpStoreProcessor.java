@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import okhttp3.Request;
 import six.com.crawler.common.constants.JobConTextConstants;
-import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.exception.AbstractHttpException;
 import six.com.crawler.common.http.HttpClient;
 import six.com.crawler.common.http.HttpConstant;
@@ -30,7 +29,7 @@ public class HttpStoreProcessor extends StoreAbstarct {
 	protected final static Logger LOG = LoggerFactory.getLogger(HttpStoreProcessor.class);
 
 	private HttpClient httpClient;
-	List<ResultContext> tempCache;
+	List<Map<String, String>> tempCache;
 	int batchSize;
 	String sendHttpUlr;
 	HttpMethod method;
@@ -51,15 +50,16 @@ public class HttpStoreProcessor extends StoreAbstarct {
 	}
 
 	@Override
-	protected int insideStore(ResultContext resultContext) throws StoreException {
-		tempCache.add(resultContext);
+	protected int insideStore(List<Map<String, String>> results) throws StoreException {
+		tempCache.addAll(results);
 		if (tempCache.size() >= batchSize) {
 			Map<String, String> headMap = HttpConstant.headMap;
 			PostContentType postContentType = PostContentType.JSON;
 			Map<String, Object> parameters = new HashMap<>();
 			String json = JsonUtils.toJson(tempCache);
 			parameters.put("content", json);
-			Request request = httpClient.buildRequest(sendHttpUlr, null, method, headMap, postContentType, parameters,null);
+			Request request = httpClient.buildRequest(sendHttpUlr, null, method, headMap, postContentType, parameters,
+					null);
 			HttpResult result;
 			try {
 				result = httpClient.executeRequest(request);

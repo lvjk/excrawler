@@ -160,11 +160,11 @@ public class ShFangDiBuildingInfoWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void afterExtract(Page doingPage, ResultContext resultContext) {
-		List<String> houseInfoUrlList = resultContext.takeResult("房间信息url_5");
+		List<String> houseInfoUrlList = resultContext.getExtractResult("房间信息url_5");
 		if (null != houseInfoUrlList && !houseInfoUrlList.isEmpty()) {
-			List<String> projectNamelist = resultContext.takeResult("projectName");
-			List<String> presalePremitList = resultContext.getResult("presalePermit");
-			List<String> louDongNameList = resultContext.getResult("louDongName");
+			List<String> projectNamelist = resultContext.getExtractResult("projectName");
+			List<String> presalePremitList = resultContext.getExtractResult("presalePermit");
+			List<String> louDongNameList = resultContext.getExtractResult("louDongName");
 			String projectName = null;
 			String presalePremit = null;
 			String louDongName = null;
@@ -204,7 +204,7 @@ public class ShFangDiBuildingInfoWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	public void onComplete(Page p) {
+	public void onComplete(Page p,ResultContext resultContext) {
 
 	}
 

@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -13,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import com.alibaba.druid.pool.DruidDataSource;
 
 import six.com.crawler.common.constants.JobConTextConstants;
-import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.utils.DbHelper;
 import six.com.crawler.common.utils.JobTableUtils;
 import six.com.crawler.work.AbstractWorker;
@@ -23,11 +23,11 @@ import six.com.crawler.work.AbstractWorker;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年12月9日 上午11:15:34
  */
-public class DBStoreProcessorForID extends StoreAbstarct implements AutoCloseable {
+public class DataBaseStore extends StoreAbstarct implements AutoCloseable {
 
 	final static String checkTableIsCreateSql = "select table_name  " + " from INFORMATION_SCHEMA.tables  "
 			+ " where TABLE_NAME=?";
-	final static Logger LOG = LoggerFactory.getLogger(DBStoreProcessorForID.class);
+	final static Logger LOG = LoggerFactory.getLogger(DataBaseStore.class);
 	private String insertSqlTemplate;
 	private String insertSql;
 	private String createTableSqlTemplate;
@@ -39,7 +39,7 @@ public class DBStoreProcessorForID extends StoreAbstarct implements AutoCloseabl
 	int batchSize = 1;
 	private DruidDataSource datasource;
 
-	public DBStoreProcessorForID(AbstractWorker worker, List<String> resultKeys) {
+	public DataBaseStore(AbstractWorker worker, List<String> resultKeys) {
 		super(worker, resultKeys);
 		String everySendSizeStr = worker.getJob().getParameter(JobConTextConstants.BATCH_SIZE, String.class);
 		if (null != everySendSizeStr) {
@@ -100,34 +100,16 @@ public class DBStoreProcessorForID extends StoreAbstarct implements AutoCloseabl
 	}
 
 	@Override
-	protected int insideStore(ResultContext resultContext) throws StoreException {
+	protected int insideStore(List<Map<String, String>> results) throws StoreException {
 		int storeCount = 0;
-		List<Object> parameter = new ArrayList<>();
-		List<String> list = null;
-		String value = "";
-		List<String> keyValues = new ArrayList<>(getMainResultKeys().size());
-		if (!getResultIsList()) {
-			for (String resultKey : resultKeys) {
-				list = resultContext.getResult(resultKey);
-				if (null != list && !list.isEmpty()) {
-					value = list.get(0);
+		if(null!=results){
+			List<Object> parameters=new ArrayList<>();
+			for(Map<String, String> dataMap:results){
+				for (String resultKey : getResultList()) {
+					String param=dataMap.get(resultKey);
+					parameters.add(param);
 				}
-				parameter.add(value);
-			}
-			storeCount+=doSql(insertSql, parameter);
-		} else {
-			List<String> mainResultList = resultContext.getResult(getMainResultKey());
-			List<String> resultList = null;
-			int size = mainResultList.size();
-			for (int i = 0; i < size; i++) {
-				parameter.clear();
-				keyValues.clear();
-				for (String resultKey : resultKeys) {
-					resultList = resultContext.getResult(resultKey);
-					value = resultList.get(i);
-					parameter.add(value);
-				}
-				storeCount+=doSql(insertSql, parameter);
+				storeCount+=doSql(insertSql, parameters);
 			}
 		}
 		return storeCount;

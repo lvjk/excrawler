@@ -54,7 +54,7 @@ public class SzplGovProjectWorker extends AbstractCrawlWorker {
 		ResultContext resultContext = getExtracter().extract(doingPage);
 		getStore().store(resultContext);
 		// 获取预售许可详细信息url
-		List<String> 预售证号_urls = resultContext.getResult(预售证号_url);
+		List<String> 预售证号_urls = resultContext.getExtractResult(预售证号_url);
 		if (null != 预售证号_urls) {
 			Page page = null;
 			for (String url : 预售证号_urls) {
@@ -67,7 +67,7 @@ public class SzplGovProjectWorker extends AbstractCrawlWorker {
 			}
 		}
 		// 获取项目详细信息url
-		List<String> 项目名称_urls = resultContext.takeResult(项目名称_url);
+		List<String> 项目名称_urls = resultContext.getExtractResult(项目名称_url);
 		if (null != 项目名称_urls) {
 			Page page = null;
 			for (String url : 项目名称_urls) {
@@ -99,7 +99,7 @@ public class SzplGovProjectWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	public void onComplete(Page p) {
+	public void onComplete(Page p,ResultContext resultContext) {
 
 	}
 

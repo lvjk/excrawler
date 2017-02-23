@@ -3,8 +3,10 @@ package six.com.crawler.work;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -26,7 +28,7 @@ import six.com.crawler.work.downer.Downer;
 import six.com.crawler.work.downer.DownerManager;
 import six.com.crawler.work.downer.DownerType;
 import six.com.crawler.work.extract.ExtractItem;
-import six.com.crawler.work.extract.Extracter;
+import six.com.crawler.work.extract.CssSelectExtracter;
 import six.com.crawler.work.store.StoreAbstarct;
 
 /**
@@ -41,7 +43,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 	private Site site; // 站点
 	private Downer downer;// 下载器
 	// 解析处理程序
-	private Extracter extracter;
+	private CssSelectExtracter extracter;
 	private Page doingPage;
 	protected WorkQueue workQueue; // 队列
 	// 存儲处理程序
@@ -74,16 +76,18 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 			}
 		}
 		List<ExtractItem> extractItems = getManager().getJobService().queryPaserItem(getJob().getName());
-		extracter = new Extracter(this, extractItems);
+		extracter = new CssSelectExtracter(this, extractItems);
 		String resultStoreClass = getJob().getResultStoreClass();
 		if (StringUtils.isNotBlank(resultStoreClass) && !"null".equalsIgnoreCase(resultStoreClass)) {
+			outResultKey = new ArrayList<>();
+			outResultKey.add(Constants.DEFAULT_RESULT_ID);
 			for (ExtractItem paserPath : extractItems) {
 				if (paserPath.getOutput() == 1) {
 					outResultKey.add(paserPath.getResultKey());
 				}
 			}
-			outResultKey.add(Constants.COLLECTION_DATE_FIELD);
-			outResultKey.add(Constants.ORIGIN_URL);
+			outResultKey.add(Constants.DEFAULT_RESULT_COLLECTION_DATE);
+			outResultKey.add(Constants.DEFAULT_RESULT_ORIGIN_URL);
 			Class<?> storeClz = null;
 			try {
 				storeClz = Class.forName(resultStoreClass);
@@ -139,11 +143,11 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 				beforeExtract(doingPage);
 				// 4.抽取结果
 				ResultContext resultContext = extracter.extract(doingPage);
-				// 5.设置默认字段
-				setDefaultResult(resultContext);
-				// 6.抽取后操作
+				// 5.抽取后操作
 				afterExtract(doingPage, resultContext);
-				if(null!=store){
+				// 6.组装数据和设置默认字段
+				assembleExtractResult(resultContext);
+				if (null != store) {
 					// 7.存储数据
 					int storeCount = store.store(resultContext);
 					getWorkerSnapshot().setTotalResultCount(getWorkerSnapshot().getTotalResultCount() + storeCount);
@@ -151,7 +155,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 				// 8.记录操作数据
 				workQueue.finish(doingPage);// 完成page处理
 				// 9.完成操作
-				onComplete(doingPage);
+				onComplete(doingPage, resultContext);
 				LOG.info("finished processor page:" + doingPage.getOriginalUrl());
 			} catch (Exception e) {
 				throw new RuntimeException("process page err:" + doingPage.getOriginalUrl(), e);
@@ -159,6 +163,46 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		} else {
 			// 没有处理数据时 设置 state == WorkerLifecycleState.SUSPEND
 			compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.WAITED);
+		}
+	}
+
+	/**
+	 * 对抽取出来的结果进行组装
+	 * 
+	 * @param resultContext
+	 * @return
+	 */
+	private void assembleExtractResult(ResultContext resultContext) {
+		List<String> mainResultList = resultContext.getExtractResult(mainResultKey);
+		if (null != mainResultList) {
+			int size = mainResultList.size();
+			String nowTime = DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1);
+			for (int i = 0; i < size; i++) {
+				Map<String, String> dataMap = new HashMap<>();
+				List<String> primaryKeysValue = new ArrayList<>();
+				for (String resultKey : outResultKey) {
+					if(!Constants.DEFAULT_RESULT_KEY_SET.contains(resultKey)){
+						List<String> tempResultList = resultContext.getExtractResult(resultKey);
+						String result = "";
+						if (i < tempResultList.size()) {
+							result = tempResultList.get(i);
+						} else {
+							if (mainResultKeys.contains((resultKey))) {
+								throw new RuntimeException("main key[" + resultKey + "] don't have result");
+							}
+						}
+						if (mainResultKeys.contains(resultKey)) {
+							primaryKeysValue.add(result);
+						}
+						dataMap.put(resultKey,result);
+					}
+				}
+				String id = getResultID(primaryKeysValue);
+				dataMap.put(Constants.DEFAULT_RESULT_ID, id);
+				dataMap.put(Constants.DEFAULT_RESULT_COLLECTION_DATE, nowTime);
+				dataMap.put(Constants.DEFAULT_RESULT_ORIGIN_URL, doingPage.getFinalUrl());
+				resultContext.addoutResult(dataMap);
+			}
 		}
 	}
 
@@ -194,7 +238,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 	 * 
 	 * @param doingPage
 	 */
-	protected abstract void onComplete(Page doingPage);
+	protected abstract void onComplete(Page doingPage, ResultContext resultContext);
 
 	/**
 	 * 异常处理
@@ -203,41 +247,6 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 	 * @param doingPage
 	 */
 	protected abstract void insideOnError(Exception e, Page doingPage);
-
-	/**
-	 * 设置爬虫默认字段
-	 * 
-	 * @param resultContext
-	 */
-	private void setDefaultResult(ResultContext resultContext) {
-		List<String> mainResultList = resultContext.getResult(mainResultKey);
-		if (null != mainResultList) {
-			List<String> collectionDateList = new ArrayList<>();
-			List<String> originUrlList = new ArrayList<>();
-			for (int i = 0; i < mainResultList.size(); i++) {
-				collectionDateList.add(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
-				originUrlList.add(doingPage.getFinalUrl());
-			}
-			resultContext.addResult(Constants.COLLECTION_DATE_FIELD, collectionDateList);
-			resultContext.addResult(Constants.ORIGIN_URL, originUrlList);
-
-			List<String> keyValues = new ArrayList<>();
-			List<String> resultList = null;
-			int size = mainResultList.size();
-			List<String> ids = new ArrayList<>();
-			for (int i = 0; i < size; i++) {
-				keyValues.clear();
-				for (String mainKey : mainResultKeys) {
-					resultList = resultContext.getResult(mainKey);
-					String value = resultList.get(i);
-					keyValues.add(value);
-				}
-				String id = getResultID(keyValues);
-				ids.add(id);
-			}
-			resultContext.addResult(Constants.RESULT_ID_KEY, ids);
-		}
-	}
 
 	public void setHttpProxyForDowner() {
 		HttpProxy httpProxy = null;
@@ -284,7 +293,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		return downer;
 	}
 
-	public Extracter getExtracter() {
+	public CssSelectExtracter getExtracter() {
 		return extracter;
 	}
 

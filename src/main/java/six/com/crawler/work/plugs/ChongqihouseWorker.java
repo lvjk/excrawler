@@ -28,7 +28,7 @@ public class ChongqihouseWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	public void onComplete(Page p) {
+	public void onComplete(Page p,ResultContext resultContext) {
 
 	}
 
@@ -50,7 +50,7 @@ public class ChongqihouseWorker extends AbstractCrawlWorker {
 	@Override
 	protected void afterExtract(Page page, ResultContext resultContext) {
 		// 将page中的新data urls保存到处理队列
-		List<String> newDataUrlsResult = resultContext.takeResult("dataUrl");
+		List<String> newDataUrlsResult = resultContext.getExtractResult("dataUrl");
 		if (null != newDataUrlsResult) {
 			int duplicateDoneSize = 0;
 			for (String newUrl : newDataUrlsResult) {
@@ -67,7 +67,7 @@ public class ChongqihouseWorker extends AbstractCrawlWorker {
 				}
 			}
 			if (duplicateDoneSize == 0) {
-				List<String> nextUrlsResult = resultContext.takeResult("nextUrl");
+				List<String> nextUrlsResult = resultContext.getExtractResult("nextUrl");
 				if (null != nextUrlsResult && nextUrlsResult.size() > 0) {
 					String nextUrl = nextUrlsResult.get(0);
 					Page nextPage = new Page(page.getSiteCode(), page.getPageNum() + 1, page.getFirstUrl(), nextUrl);

@@ -43,8 +43,8 @@ public class ShFangDiProjectInfoWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void afterExtract(Page doingPage, ResultContext result) {
-		List<String> projectNamelist = result.getResult("projectName");
-		List<String> preSaleInfoUrlList = result.takeResult("预售信息url_2");
+		List<String> projectNamelist = result.getExtractResult("projectName");
+		List<String> preSaleInfoUrlList = result.getExtractResult("预售信息url_2");
 		if (null != preSaleInfoUrlList) {
 			String preSaleInfoUrl = preSaleInfoUrlList.get(0);
 			Page preSaleInfoPage = new Page(doingPage.getSiteCode(), 1, preSaleInfoUrl, preSaleInfoUrl);
@@ -56,7 +56,7 @@ public class ShFangDiProjectInfoWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	public void onComplete(Page p) {
+	public void onComplete(Page p,ResultContext resultContext) {
 	}
 
 	@Override

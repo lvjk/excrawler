@@ -43,7 +43,7 @@ public class XiAnFang99ProjectUrlWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void afterExtract(Page doingPage, ResultContext resultContext) {
-		List<String> projectInfoUrls = resultContext.getResult("项目信息url_1");
+		List<String> projectInfoUrls = resultContext.getExtractResult("项目信息url_1");
 		if (null != projectInfoUrls && projectInfoUrls.size() > 0) {
 			String url = projectInfoUrls.get(0);
 			Page newPage = new Page(doingPage.getSiteCode(), 1, url, url);
@@ -57,7 +57,7 @@ public class XiAnFang99ProjectUrlWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	public void onComplete(Page p) {
+	public void onComplete(Page p,ResultContext resultContext) {
 	}
 
 	@Override

@@ -75,7 +75,7 @@ public class QichachaSearchWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	public void onComplete(Page doingPage) {
+	public void onComplete(Page doingPage,ResultContext resultContext) {
 		getWorkQueue().push(doingPage);
 	}
 
@@ -182,8 +182,8 @@ public class QichachaSearchWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void afterExtract(Page doingPage, ResultContext resultContext) {
-		List<String> dataUrlList = resultContext.takeResult("companyInfoUrl");
-		List<String> list = resultContext.takeResult("city");
+		List<String> dataUrlList = resultContext.getExtractResult("companyInfoUrl");
+		List<String> list = resultContext.getExtractResult("city");
 		if (null == dataUrlList || dataUrlList.isEmpty()) {
 			hasNextPage = false;
 		} else {

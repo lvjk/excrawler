@@ -105,7 +105,7 @@ public class ShFangDiHouseInfoWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	public void onComplete(Page p) {
+	public void onComplete(Page p,ResultContext resultContext) {
 	}
 
 	@Override

@@ -81,8 +81,8 @@ public class ShFangDiSaleInfoWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void afterExtract(Page doingPage, ResultContext resultContext) {
-		List<String> projectNamelist = resultContext.getResult("projectName");
-		List<String> presalePremitList = resultContext.getResult("presalePermit");
+		List<String> projectNamelist = resultContext.getExtractResult("projectName");
+		List<String> presalePremitList = resultContext.getExtractResult("presalePermit");
 		String projectName = null;
 		String presalePremit = null;
 		if (null != projectNamelist && !projectNamelist.isEmpty()) {
@@ -91,7 +91,7 @@ public class ShFangDiSaleInfoWorker extends AbstractCrawlWorker {
 		if (null != presalePremitList && !presalePremitList.isEmpty()) {
 			presalePremit = presalePremitList.get(0);
 		}
-		List<String> loudongNameList = resultContext.getResult("louDongName");
+		List<String> loudongNameList = resultContext.getExtractResult("louDongName");
 		if (null != loudongNameList) {
 			projectNamelist = new ArrayList<>(loudongNameList.size());
 			presalePremitList = new ArrayList<>(loudongNameList.size());
@@ -99,12 +99,12 @@ public class ShFangDiSaleInfoWorker extends AbstractCrawlWorker {
 				projectNamelist.add(projectName);
 				presalePremitList.add(presalePremit);
 			}
-			resultContext.addResult("projectName", projectNamelist);
-			resultContext.addResult("presalePermit", presalePremitList);
+			resultContext.addExtractResult("projectName", projectNamelist);
+			resultContext.addExtractResult("presalePermit", presalePremitList);
 		}
 
-		List<String> louDongNameList = resultContext.getResult("louDongName");
-		List<String> saleInfoUrlList = resultContext.getResult("楼栋信息url_4");
+		List<String> louDongNameList = resultContext.getExtractResult("louDongName");
+		List<String> saleInfoUrlList = resultContext.getExtractResult("楼栋信息url_4");
 		String saleInfoUrl = null;
 		String louDongName = null;
 		List<String> tempLouDongNameList = null;
@@ -124,7 +124,7 @@ public class ShFangDiSaleInfoWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	public void onComplete(Page p) {
+	public void onComplete(Page p,ResultContext resultContext) {
 	}
 
 	@Override

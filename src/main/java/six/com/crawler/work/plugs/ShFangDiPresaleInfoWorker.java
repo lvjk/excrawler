@@ -44,20 +44,20 @@ public class ShFangDiPresaleInfoWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void afterExtract(Page doingPage, ResultContext resultContext) {
-		List<String> projectNamelist = resultContext.getResult("projectName");
+		List<String> projectNamelist = resultContext.getExtractResult("projectName");
 		String projectName = null;
 		if (null != projectNamelist && !projectNamelist.isEmpty()) {
 			projectName = projectNamelist.get(0);
 		}
-		List<String> presalePremitList = resultContext.getResult("presalePermit");
+		List<String> presalePremitList = resultContext.getExtractResult("presalePermit");
 		if (null != presalePremitList) {
 			projectNamelist = new ArrayList<>(presalePremitList.size());
 			for (int i = 0; i < presalePremitList.size(); i++) {
 				projectNamelist.add(projectName);
 			}
-			resultContext.addResult("projectName", projectNamelist);
+			resultContext.addExtractResult("projectName", projectNamelist);
 		}
-		List<String> saleInfoUrlList = resultContext.getResult("销售信息url_3");
+		List<String> saleInfoUrlList = resultContext.getExtractResult("销售信息url_3");
 		if (null != saleInfoUrlList) {
 			String saleInfoUrl = null;
 			String presalePremit = null;
@@ -78,7 +78,7 @@ public class ShFangDiPresaleInfoWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	public void onComplete(Page p) {
+	public void onComplete(Page p,ResultContext resultContext) {
 	}
 
 	@Override

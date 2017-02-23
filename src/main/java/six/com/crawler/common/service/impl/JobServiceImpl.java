@@ -23,7 +23,7 @@ import six.com.crawler.common.ResponeMsgManager;
 import six.com.crawler.common.dao.JobSnapshotDao;
 import six.com.crawler.common.dao.JobDao;
 import six.com.crawler.common.dao.JobParameterDao;
-import six.com.crawler.common.dao.PaserItemDao;
+import six.com.crawler.common.dao.ExtractItemDao;
 import six.com.crawler.common.dao.WorkerErrMsgDao;
 import six.com.crawler.common.dao.WorkerSnapshotDao;
 import six.com.crawler.common.entity.DoneInfo;
@@ -78,7 +78,7 @@ public class JobServiceImpl implements JobService {
 	private RegisterCenter registerCenter;
 
 	@Autowired
-	private PaserItemDao paserItemDao;
+	private ExtractItemDao extractItemDao;
 
 	static final String JOB_SERVICE_OPERATION_PRE = "JobService.operation.";
 
@@ -106,7 +106,7 @@ public class JobServiceImpl implements JobService {
 		// 1查询任务
 		Job job = jobDao.query(jobName);
 		// 2查询任务解析组件
-		List<ExtractItem> paserItems = paserItemDao.query(jobName);
+		List<ExtractItem> paserItems = extractItemDao.query(jobName);
 		// 3查询任务参数
 		Map<String, Object> parameters = new HashMap<>();
 		parameters.put("jobName", jobName);
@@ -250,12 +250,12 @@ public class JobServiceImpl implements JobService {
 			}
 		}
 	}
-	
-	public JobSnapshot queryLastJobSnapshotFromHistory(String jobName){
-		JobSnapshot lastJobSnapshot=null;
-		List<JobSnapshot> result=queryJobSnapshotsFromHistory(jobName);
-		if(null!=result&&!result.isEmpty()){
-			lastJobSnapshot=result.get(0);
+
+	public JobSnapshot queryLastJobSnapshotFromHistory(String jobName) {
+		JobSnapshot lastJobSnapshot = null;
+		List<JobSnapshot> result = queryJobSnapshotsFromHistory(jobName);
+		if (null != result && !result.isEmpty()) {
+			lastJobSnapshot = result.get(0);
 		}
 		return lastJobSnapshot;
 	}
@@ -283,7 +283,7 @@ public class JobServiceImpl implements JobService {
 		JobSnapshot jobSnapshot = registerCenter.getJobSnapshot(hostNode, jobName);
 		if (null != jobSnapshot) {
 			// 判断任务是否运行过
-			if (jobSnapshot.getEnumState() == JobSnapshotState.EXECUTING 
+			if (jobSnapshot.getEnumState() == JobSnapshotState.EXECUTING
 					|| jobSnapshot.getEnumState() == JobSnapshotState.SUSPEND
 					|| jobSnapshot.getEnumState() == JobSnapshotState.STOP
 					|| jobSnapshot.getEnumState() == JobSnapshotState.FINISHED) {
@@ -326,7 +326,7 @@ public class JobServiceImpl implements JobService {
 				}
 				totalProcessCount += workerSnapshot.getTotalProcessCount();
 				totalResultCount += workerSnapshot.getTotalResultCount();
-				totalProcessTime+=workerSnapshot.getTotalProcessTime();
+				totalProcessTime += workerSnapshot.getTotalProcessTime();
 				if (workerSnapshot.getMaxProcessTime() > maxProcessTime) {
 					maxProcessTime = workerSnapshot.getMaxProcessTime();
 				}
@@ -344,7 +344,7 @@ public class JobServiceImpl implements JobService {
 			}
 			jobSnapshot.setTotalProcessCount(totalProcessCount);
 			jobSnapshot.setTotalResultCount(totalResultCount);
-			jobSnapshot.setTotalProcessTime(totalProcessTime/workerSnapshots.size());
+			jobSnapshot.setTotalProcessTime(totalProcessTime / workerSnapshots.size());
 			jobSnapshot.setMaxProcessTime(maxProcessTime);
 			jobSnapshot.setMinProcessTime(minProcessTime);
 			jobSnapshot.setAvgProcessTime(avgProcessTime / workerSnapshots.size());
@@ -384,7 +384,7 @@ public class JobServiceImpl implements JobService {
 
 	@Override
 	public List<ExtractItem> queryPaserItem(String jobName) {
-		List<ExtractItem> result = paserItemDao.query(jobName);
+		List<ExtractItem> result = extractItemDao.query(jobName);
 		return result;
 	}
 
@@ -466,12 +466,12 @@ public class JobServiceImpl implements JobService {
 		this.jobSnapshotDao = jobSnapshotDao;
 	}
 
-	public PaserItemDao getPaserItemDao() {
-		return paserItemDao;
+	public ExtractItemDao getExtractItemDao() {
+		return extractItemDao;
 	}
 
-	public void setPaserItemDao(PaserItemDao paserItemDao) {
-		this.paserItemDao = paserItemDao;
+	public void setExtractItemDao(ExtractItemDao extractItemDao) {
+		this.extractItemDao = extractItemDao;
 	}
 
 	private QueueInfo getJobQueueInfos(String queueName) {

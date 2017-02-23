@@ -130,7 +130,7 @@ public class Cq315housePresale1Worker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	public void onComplete(Page p) {
+	public void onComplete(Page p,ResultContext resultContext) {
 		pageIndex++;
 		Page newPage = buildPage(pageIndex, pageSize);
 		getWorkQueue().push(newPage);

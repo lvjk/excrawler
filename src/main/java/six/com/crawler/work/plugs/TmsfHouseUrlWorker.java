@@ -47,7 +47,7 @@ public class TmsfHouseUrlWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	protected void onComplete(Page doingPage) {
+	protected void onComplete(Page doingPage,ResultContext resultContext) {
 		
 	}
 
