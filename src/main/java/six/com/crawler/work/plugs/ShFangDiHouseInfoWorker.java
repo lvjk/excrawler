@@ -10,15 +10,11 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.ResultContext;
-import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.utils.JsoupUtils;
 import six.com.crawler.common.utils.JsoupUtils.TableResult;
-import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.WorkQueue;
 
 /**
  * @author 作者
@@ -29,10 +25,6 @@ public class ShFangDiHouseInfoWorker extends AbstractCrawlWorker {
 
 	Map<String, String> fieldMap = new HashMap<String, String>();
 
-	public ShFangDiHouseInfoWorker(String name, AbstractSchedulerManager manager, Job job, Site site,
-			WorkQueue stored) {
-		super(name, manager, job, site, stored);
-	}
 
 	@Override
 	protected void insideInit() {

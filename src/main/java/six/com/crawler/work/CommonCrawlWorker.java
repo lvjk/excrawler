@@ -1,10 +1,7 @@
 package six.com.crawler.work;
 
-import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.ResultContext;
-import six.com.crawler.common.entity.Site;
-import six.com.crawler.schedule.AbstractSchedulerManager;
 
 /**
  * @author 作者
@@ -13,9 +10,6 @@ import six.com.crawler.schedule.AbstractSchedulerManager;
  */
 public class CommonCrawlWorker extends AbstractCrawlWorker {
 
-	public CommonCrawlWorker(String name, AbstractSchedulerManager manager, Job job, Site site, WorkQueue workQueue) {
-		super(name, manager, job, site, workQueue);
-	}
 
 	@Override
 	protected void insideInit() {
@@ -38,7 +32,7 @@ public class CommonCrawlWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	protected void onComplete(Page doingPage,ResultContext resultContext) {
+	protected void onComplete(Page doingPage, ResultContext resultContext) {
 
 	}
 

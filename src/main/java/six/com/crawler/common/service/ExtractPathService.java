@@ -11,7 +11,7 @@ import six.com.crawler.work.extract.PathType;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年9月12日 上午10:24:19
  */
-public interface PaserPathService {
+public interface ExtractPathService {
 
 	public List<ExtractPath> getPaserPath(String siteCode, PathType pathType, Page page);
 
@@ -26,7 +26,7 @@ public interface PaserPathService {
 	 *            排名
 	 * @return
 	 */
-	public ExtractPath queryPath(String siteCode,String name, int ranking);
+	public List<ExtractPath> query(String pathName,String siteCode);
 
 	/**
 	 * 更新解析path

@@ -11,7 +11,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 
 import six.com.crawler.common.entity.DoneInfo;
 import six.com.crawler.common.entity.Job;
@@ -84,72 +86,24 @@ public class CrawlerJobApi extends BaseApi {
 		ResponseMsg<List<JobSnapshot>> msg = new ResponseMsg<>();
 		List<JobSnapshot> result = new ArrayList<>();
 		if (list != null) {
-			JobSnapshot jobSnapshot=null;
+			JobSnapshot jobSnapshot = null;
 			for (Object ob : list) {
 				if (ob instanceof Job) {
 					Job job = (Job) ob;
-					jobSnapshot = jobService.getJobSnapshotFromRegisterCenter(job.getHostNode(),
-							job.getName(),job.getQueueName());
+					jobSnapshot = jobService.getJobSnapshotFromRegisterCenter(job.getHostNode(), job.getName(),
+							job.getQueueName());
 				} else {
 					Map<String, String> map = (Map<String, String>) ob;
-					jobSnapshot = jobService.getJobSnapshotFromRegisterCenter(
-							map.get("hostNode"),
-							map.get("name"),
+					jobSnapshot = jobService.getJobSnapshotFromRegisterCenter(map.get("hostNode"), map.get("name"),
 							map.get("queueName"));
 				}
-				if(null!=jobSnapshot){
+				if (null != jobSnapshot) {
 					result.add(jobSnapshot);
 				}
 			}
 		}
 		msg.setData(result);
 		return msg;
-	}
-
-	@RequestMapping(value = "/crawler/job/execute/{jobHostNode}/{jobName}", method = RequestMethod.GET)
-	@ResponseBody
-	public ResponseMsg<String> execute(@PathVariable("jobHostNode")String jobHostNode,@PathVariable("jobName") String jobName) {
-		ResponseMsg<String> msg = new ResponseMsg<>();
-		String result = jobService.execute(jobHostNode,jobName);
-		msg.setData(result);
-		return msg;
-	}
-
-	@RequestMapping(value = "/crawler/job/suspend/{jobHostNode}/{jobName}", method = RequestMethod.GET)
-	@ResponseBody
-	public ResponseMsg<String> suspend(@PathVariable("jobHostNode")String jobHostNode,@PathVariable("jobName") String jobName) {
-		ResponseMsg<String> msg = new ResponseMsg<>();
-		String result = jobService.suspend(jobHostNode,jobName);
-		msg.setData(result);
-		return msg;
-	}
-
-	@RequestMapping(value = "/crawler/job/goon/{jobHostNode}/{jobName}", method = RequestMethod.GET)
-	@ResponseBody
-	public ResponseMsg<String> goon(@PathVariable("jobHostNode")String jobHostNode,@PathVariable("jobName") String jobName) {
-		ResponseMsg<String> msg = new ResponseMsg<>();
-		String result = jobService.goOn(jobHostNode,jobName);
-		msg.setData(result);
-		return msg;
-	}
-
-	@RequestMapping(value = "/crawler/job/stop/{jobHostNode}/{jobName}", method = RequestMethod.GET)
-	@ResponseBody
-	public ResponseMsg<String> stop(@PathVariable("jobHostNode")String jobHostNode,@PathVariable("jobName") String jobName) {
-		ResponseMsg<String> msg = new ResponseMsg<>();
-		String result = jobService.stop(jobHostNode,jobName);
-		msg.setData(result);
-		return msg;
-	}
-
-	@RequestMapping(value = "/crawler/job/scheduled/{jobName}/{isScheduled}", method = RequestMethod.GET)
-	@ResponseBody
-	public ResponseMsg<String> scheduled(@PathVariable("jobName") String jobName,
-			@PathVariable("isScheduled") int isScheduled) {
-		ResponseMsg<String> responseMsg = new ResponseMsg<>();
-		String msg = jobService.scheduled(jobName);
-		responseMsg.setMsg(msg);
-		return responseMsg;
 	}
 
 	@RequestMapping(value = "/crawler/job/getLoclaAll", method = RequestMethod.GET)
@@ -204,6 +158,15 @@ public class CrawlerJobApi extends BaseApi {
 		msg.setMsg(result);
 		msg.setData(result);
 		return msg;
+	}
+
+	@RequestMapping(value = "/crawler/job/upload/profile", method = RequestMethod.POST)
+	@ResponseBody
+	public ResponseMsg<String> uploadFile(@RequestParam("name") String name, @RequestParam("file") MultipartFile file) {
+		ResponseMsg<String> responseMsg = new ResponseMsg<>();
+		String msg=jobService.uploadJobProfile(file);
+		responseMsg.setMsg(msg);
+		return responseMsg;
 	}
 
 	public JobService getJobService() {

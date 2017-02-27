@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import six.com.crawler.common.RedisManager;
 import six.com.crawler.common.entity.JobSnapshot;
+import six.com.crawler.common.entity.Node;
 import six.com.crawler.common.entity.WorkerSnapshot;
 import six.com.crawler.work.Worker;
 import six.com.crawler.work.WorkerLifecycleState;

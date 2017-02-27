@@ -6,19 +6,16 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
+import six.com.crawler.common.entity.PageType;
 import six.com.crawler.common.entity.ResultContext;
-import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.utils.JsonUtils;
-import six.com.crawler.schedule.AbstractSchedulerManager;
+import six.com.crawler.common.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.WorkQueue;
+import six.com.crawler.work.RedisWorkQueue;
 
 /**
  * @author 作者
@@ -28,15 +25,33 @@ import six.com.crawler.work.WorkQueue;
 public class TmsfHouseInfoWorker extends AbstractCrawlWorker {
 
 	Map<String, String> jsonKeyMap;
-
-	public TmsfHouseInfoWorker(String name, AbstractSchedulerManager manager, Job job, Site site, WorkQueue stored) {
-		super(name, manager, job, site, stored);
-	}
+	RedisWorkQueue houseInfoQueue;
+	private String sidTemplate = "<<sid>>";
+	private String presellIdTemplate = "<<presellid>>";
+	private String buildingidTemplate = "<<buildingid>>";
+	private String areaTemplate = "<<area>>";
+	private String allpriceTemplate = "<<allprice>>";
+	private String housestateTemplate = "<<housestate>>";
+	private String housetypeTemplate = "<<housetype>>";
+	private String houseJsonUrlTemplate = "http://www.tmsf.com/newhouse/NewPropertyHz_showbox.jspx?" 
+			+ "buildingid="+ buildingidTemplate 
+			+ "&presellid=" + presellIdTemplate 
+			+ "&sid=" + sidTemplate 
+			+ "&area=" + areaTemplate
+			+ "&allprice=" + allpriceTemplate 
+			+ "&housestate=" + housestateTemplate 
+			+ "&housetype=" + housetypeTemplate;
+	private String sidCss = "input[id=sid]";
+	private String areaCss = "input[id=area]";
+	private String allpriceCss = "input[id=allprice]";
+	private String housestateCss = "input[id=housestate]";
+	private String housetypeCss = "input[id=housetype]";
 
 	@Override
 	protected void insideInit() {
 		jsonKeyMap = new HashMap<>();
 		jsonKeyMap.put("buildingName", "buildingname");
+		jsonKeyMap.put("unitName", "unitname");
 		jsonKeyMap.put("houseId", "houseno");
 		jsonKeyMap.put("status", "housestatename");
 		jsonKeyMap.put("houseUsage", "houseusage");
@@ -56,35 +71,84 @@ public class TmsfHouseInfoWorker extends AbstractCrawlWorker {
 	@SuppressWarnings("unchecked")
 	@Override
 	protected void beforeExtract(Page doingPage) {
-		String html = doingPage.getPageSrc();
-		Document doc = Jsoup.parse(html);
+		Element sidElement = doingPage.getDoc().select(sidCss).first();
+		String sid = "";
+		if (null != sidElement) {
+			sid = sidElement.attr("value");
+		}
+		Element areaElement = doingPage.getDoc().select(areaCss).first();
+		String area = "";
+		if (null != areaElement) {
+			area = areaElement.attr("value");
+		}
+		Element allpriceElement = doingPage.getDoc().select(allpriceCss).first();
+		String allprice = "";
+		if (null != allpriceElement) {
+			allprice = allpriceElement.attr("value");
+		}
+		Element housestateElement = doingPage.getDoc().select(housestateCss).first();
+		String housestate = "";
+		if (null != housestateElement) {
+			housestate = housestateElement.attr("value");
+		}
+
+		Element housetypeElement = doingPage.getDoc().select(housetypeCss).first();
+		String housetype = "";
+		if (null != housetypeElement) {
+			housetype = housetypeElement.attr("value");
+		}
+
 		String floorDivCss = "div[class=raphael_box][types=1]";
-		Elements floorDivs = doc.select(floorDivCss);
+		Elements floorDivs = doingPage.getDoc().select(floorDivCss);
 		Map<String, String> floorMap = new HashMap<>();
 		for (Element floorDiv : floorDivs) {
 			String floorKey = floorDiv.attr("floor");
 			String floor = floorDiv.attr("title");
 			floorMap.put(floorKey, floor);
 		}
+		String presellId_org = doingPage.getMetaMap().get("presellId_org").get(0);
+		String presellId = doingPage.getMetaMap().get("presellId").get(0);
+		String buildingId = doingPage.getMetaMap().get("buildingId").get(0);
+		String houseJsonUrl = StringUtils.replace(houseJsonUrlTemplate, buildingidTemplate, buildingId);
+		houseJsonUrl = StringUtils.replace(houseJsonUrl, presellIdTemplate, presellId_org);
+		houseJsonUrl = StringUtils.replace(houseJsonUrl, sidTemplate, sid);
+		houseJsonUrl = StringUtils.replace(houseJsonUrl, areaTemplate, area);
+		houseJsonUrl = StringUtils.replace(houseJsonUrl, allpriceTemplate, allprice);
+		houseJsonUrl = StringUtils.replace(houseJsonUrl, housestateTemplate, housestate);
+		houseJsonUrl = StringUtils.replace(houseJsonUrl, housetypeTemplate, housetype);
+		houseJsonUrl = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), houseJsonUrl);
+		Page housePage = new Page(doingPage.getSiteCode(), 1, houseJsonUrl, houseJsonUrl);
+		housePage.setReferer(doingPage.getFinalUrl());
+		housePage.setType(PageType.JSON.value());
+		getDowner().down(housePage);
 		String internalidTemplate = "<<internalid>>";
 		String houseDivCssTemplate = "div[id=lpb_" + internalidTemplate + "]";
-		String presaleJson = doingPage.getPageSrc();
-		Map<String, Object> map = JsonUtils.toObject(presaleJson, Map.class);
+		String houseInfoJson = housePage.getPageSrc();
+		Map<String, Object> map = JsonUtils.toObject(houseInfoJson, Map.class);
 		List<Map<String, Object>> houseList = (List<Map<String, Object>>) map.get("list");
+		List<String> presellIds=new ArrayList<>();
 		for (Map<String, Object> houseMap : houseList) {
-			String internalid = jsonKeyMap.get("internalid");
+			String internalidOb = houseMap.get("internalid").toString();
+			if (null == internalidOb || StringUtils.isBlank(internalidOb.toString())) {
+				throw new RuntimeException("don't find  house internalid ");
+			}
+			String internalid = internalidOb.toString();
 			String houseDivCss = StringUtils.replace(houseDivCssTemplate, internalidTemplate, internalid);
-			Element houseDiv = doc.select(houseDivCss).first();
-			String houseFloorKey = houseDiv.attr("floor");
-			String houseFloor = floorMap.get(houseFloorKey);
-			houseMap.put("floor", houseFloor);
+			Element houseDiv = doingPage.getDoc().select(houseDivCss).first();
+			if(null!=houseDiv){
+				String houseFloorKey = houseDiv.attr("floor");
+				String houseFloor = floorMap.get(houseFloorKey);
+				houseMap.put("floor", houseFloor);
+			}
 			for (String field : jsonKeyMap.keySet()) {
 				String jsonKey = jsonKeyMap.get(field);
-				Object value = (Map<String, Object>) houseMap.get(jsonKey);
+				Object valueOb = houseMap.get(jsonKey);
 				doingPage.getMetaMap().computeIfAbsent(field, mapKey -> new ArrayList<>())
-						.add(null != value ? value.toString() : "");
+				.add(null != valueOb ? valueOb.toString() : "");
 			}
-		}
+			presellIds.add(presellId);
+		}                           
+		doingPage.getMetaMap().put("presellId",presellIds);
 	}
 
 	@Override
@@ -93,7 +157,7 @@ public class TmsfHouseInfoWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	protected void onComplete(Page doingPage,ResultContext resultContext) {
+	protected void onComplete(Page doingPage, ResultContext resultContext) {
 
 	}
 

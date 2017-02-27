@@ -3,12 +3,15 @@ package six.com.crawler.common.service;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import six.com.crawler.common.entity.DoneInfo;
 import six.com.crawler.common.entity.Job;
+import six.com.crawler.common.entity.JobParam;
 import six.com.crawler.common.entity.WorkerSnapshot;
 import six.com.crawler.work.extract.ExtractItem;
-import six.com.crawler.common.entity.JobParameter;
 import six.com.crawler.common.entity.JobSnapshot;
+import six.com.crawler.common.entity.Node;
 import six.com.crawler.common.entity.QueueInfo;
 
 /**
@@ -18,6 +21,12 @@ import six.com.crawler.common.entity.QueueInfo;
  */
 public interface JobService {
 
+	
+	/**
+	 * 统计节点任务数据信息
+	 * @return
+	 */
+	public Node totalNodeJobInfo(String nodeName);
 	/**
 	 * 通过参数查询 job jobName String 任务名字 nodeName String 节点名字 isTrigger int 0 or 1
 	 * 是否开启调度
@@ -171,7 +180,7 @@ public interface JobService {
 	 * 
 	 * @return
 	 */
-	public List<JobParameter> queryJobParameter(String jobName);
+	public List<JobParam> queryJobParams(String jobName);
 
 	/**
 	 * 更新job 状态为 state
@@ -182,37 +191,6 @@ public interface JobService {
 	public void update(Job job);
 
 
-	/**
-	 * 执行job
-	 * 
-	 * @param jobName
-	 * @return
-	 */
-	public String execute(String jobHostNode,String jobName);
-
-	/**
-	 * 暂停执行job
-	 * 
-	 * @param jobName
-	 * @return
-	 */
-	public String suspend(String jobHostNode,String jobName);
-
-	/**
-	 * 继续执行job
-	 * 
-	 * @param jobName
-	 * @return
-	 */
-	public String goOn(String jobHostNode,String jobName);
-
-	/**
-	 * 终止执行job
-	 * 
-	 * @param jobName
-	 * @return
-	 */
-	public String stop(String jobHostNode,String jobName);
 
 	/**
 	 * 通过job name 查询 解析项
@@ -222,6 +200,10 @@ public interface JobService {
 	 */
 	public List<ExtractItem> queryPaserItem(String jobName);
 	
+	
+	
+	public String uploadJobProfile(MultipartFile jobProfile);
+	
 
-	public String scheduled(String jobName);
+	
 }

@@ -1,9 +1,7 @@
 package six.com.crawler.common.utils;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.DateFormatUtils;
 
-import six.com.crawler.common.DateFormats;
 
 /**
  * @author 作者
@@ -48,17 +46,7 @@ public class JobTableUtils {
 	 * @param fixedTableNamePre
 	 * @return
 	 */
-	public static String buildJobTableName(String fixedTableNamePre) {
-		return fixedTableNamePre + "_" + DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_2);
-	}
-
-	/**
-	 * job 数据表名生成=固定表名前缀+时间
-	 * 
-	 * @param fixedTableNamePre
-	 * @return
-	 */
-	public static String buildJobTableName(String fixedTableNamePre, long time) {
+	public static String buildJobTableName(String fixedTableNamePre, String time) {
 		return fixedTableNamePre + "_" + time;
 	}
 

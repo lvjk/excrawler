@@ -1,6 +1,7 @@
 package six.com.crawler.work.plugs;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
@@ -8,17 +9,13 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.PageType;
 import six.com.crawler.common.entity.ResultContext;
-import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.http.HttpMethod;
-import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.Constants;
 import six.com.crawler.work.RedisWorkQueue;
-import six.com.crawler.work.WorkQueue;
 
 /**
  * @author 作者
@@ -31,20 +28,13 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 	int longitudeMin = 73;
 	int latitudeMax = 53;
 	int latitudeMix = 4;
-	RedisWorkQueue projectHouseUrlQueue;
-	RedisWorkQueue projectPresaleUrlQueue;
-	String presaleUrlCss = "div[id=buildnavbar]>a:contains(一房一价)";
+	RedisWorkQueue presellUrlQueue;
 	String longitude_latitude_div_css = "div[id=boxid1]>div[class=border3 positionr]";
 	String mapDivCss = "div[id=boxid1]>div>div";
 
-	public TmsfProjectInfoWorker(String name, AbstractSchedulerManager manager, Job job, Site site, WorkQueue stored) {
-		super(name, manager, job, site, stored);
-	}
-
 	@Override
 	protected void insideInit() {
-		projectPresaleUrlQueue = new RedisWorkQueue(getManager().getRedisManager(), "tmsf_presale_url");
-		projectHouseUrlQueue = new RedisWorkQueue(getManager().getRedisManager(), "tmsf_house_url");
+		presellUrlQueue = new RedisWorkQueue(getManager().getRedisManager(), "tmsf_presell_url");
 	}
 
 	@Override
@@ -99,14 +89,19 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void onComplete(Page doingPage, ResultContext resultContext) {
-		String presaleUrl = resultContext.getExtractResult("presaleUrl").get(0);
-		String projectId = resultContext.getOutResults().get(0).get(Constants.DEFAULT_RESULT_ID);
-		Page presalePage = new Page(doingPage.getSiteCode(), 1, presaleUrl, presaleUrl);
-		presalePage.setReferer(doingPage.getFinalUrl());
-		presalePage.setMethod(HttpMethod.GET);
-		presalePage.setType(PageType.DATA.value());
-		presalePage.getMetaMap().put("projectid", Arrays.asList(projectId));
-		projectPresaleUrlQueue.push(presalePage);
+		List<String> presellUrls = resultContext.getExtractResult("presellUrl");
+		if (null != presellUrls && presellUrls.size() > 0) {
+			String presaleUrl = presellUrls.get(0);
+			String sid = resultContext.getExtractResult("sid").get(0);
+			String projectId = resultContext.getOutResults().get(0).get(Constants.DEFAULT_RESULT_ID);
+			Page presellPage = new Page(doingPage.getSiteCode(), 1, presaleUrl, presaleUrl);
+			presellPage.setReferer(doingPage.getFinalUrl());
+			presellPage.setMethod(HttpMethod.GET);
+			presellPage.setType(PageType.DATA.value());
+			presellPage.getMetaMap().put("sid", Arrays.asList(sid));
+			presellPage.getMetaMap().put("projectId", Arrays.asList(projectId));
+			presellUrlQueue.push(presellPage);
+		}
 	}
 
 }

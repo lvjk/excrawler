@@ -12,14 +12,10 @@ import org.jsoup.select.Elements;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
-import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.ResultContext;
-import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.utils.WebDriverUtils;
-import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.WorkQueue;
 
 /**
  * @author 作者
@@ -29,11 +25,6 @@ import six.com.crawler.work.WorkQueue;
 public class XiAnFang99HouseInfoWorker extends AbstractCrawlWorker {
 
 	Map<String, String> saleTypeMap;
-
-	public XiAnFang99HouseInfoWorker(String name, AbstractSchedulerManager manager, Job job, Site site,
-			WorkQueue stored) {
-		super(name, manager, job, site, stored);
-	}
 
 	@Override
 	protected void insideInit() {

@@ -1,4 +1,4 @@
-package six.com.crawler.schedule;
+package six.com.crawler.common.entity;
 /**
 * @author sixliu E-mail:359852326@qq.com
 * @version 创建时间：2016年1月17日 上午5:33:37

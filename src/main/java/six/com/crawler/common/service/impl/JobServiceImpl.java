@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.commons.lang3.time.DateUtils;
@@ -16,26 +19,27 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import six.com.crawler.common.DateFormats;
 import six.com.crawler.common.RedisManager;
-import six.com.crawler.common.ResponeMsgManager;
 import six.com.crawler.common.dao.JobSnapshotDao;
 import six.com.crawler.common.dao.JobDao;
-import six.com.crawler.common.dao.JobParameterDao;
+import six.com.crawler.common.dao.JobParamDao;
 import six.com.crawler.common.dao.ExtractItemDao;
 import six.com.crawler.common.dao.WorkerErrMsgDao;
 import six.com.crawler.common.dao.WorkerSnapshotDao;
 import six.com.crawler.common.entity.DoneInfo;
 import six.com.crawler.common.entity.Job;
+import six.com.crawler.common.entity.JobParam;
+import six.com.crawler.common.entity.JobProfile;
 import six.com.crawler.common.entity.WorkerSnapshot;
-import six.com.crawler.common.entity.JobParameter;
 import six.com.crawler.common.entity.JobSnapshot;
 import six.com.crawler.common.entity.JobSnapshotState;
+import six.com.crawler.common.entity.Node;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.QueueInfo;
 import six.com.crawler.common.entity.WorkerErrMsg;
-import six.com.crawler.common.exception.RedisException;
 import six.com.crawler.common.service.JobService;
 import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.schedule.RegisterCenter;
@@ -57,7 +61,7 @@ public class JobServiceImpl implements JobService {
 	private JobDao jobDao;
 
 	@Autowired
-	private JobParameterDao jobParameterDao;
+	private JobParamDao jobParamDao;
 
 	@Autowired
 	private JobSnapshotDao jobSnapshotDao;
@@ -81,6 +85,10 @@ public class JobServiceImpl implements JobService {
 	private ExtractItemDao extractItemDao;
 
 	static final String JOB_SERVICE_OPERATION_PRE = "JobService.operation.";
+
+	public Node totalNodeJobInfo(String nodeName) {
+		return jobDao.totalNodeJobInfo(nodeName);
+	}
 
 	@Override
 	public Job queryByName(String jobName) {
@@ -108,9 +116,7 @@ public class JobServiceImpl implements JobService {
 		// 2查询任务解析组件
 		List<ExtractItem> paserItems = extractItemDao.query(jobName);
 		// 3查询任务参数
-		Map<String, Object> parameters = new HashMap<>();
-		parameters.put("jobName", jobName);
-		List<JobParameter> jobParameters = jobParameterDao.query(parameters);
+		List<JobParam> jobParameters = jobParamDao.queryJobParams(jobName);
 		result.put("job", job);
 		result.put("paserItems", paserItems);
 		result.put("jobParameters", jobParameters);
@@ -125,114 +131,14 @@ public class JobServiceImpl implements JobService {
 	}
 
 	@Override
-	public List<JobParameter> queryJobParameter(String jobName) {
-		List<JobParameter> result = jobDao.queryJobParameter(jobName);
+	public List<JobParam> queryJobParams(String jobName) {
+		List<JobParam> result = jobParamDao.queryJobParams(jobName);
 		return result;
 	}
 
 	@Override
 	public void update(Job job) {
 		jobDao.update(job);
-	}
-
-	/**
-	 * 
-	 * 警告:所有对job的操作 需要执行分布式锁。保证所有此Job 的操作 顺序执行
-	 * 
-	 */
-
-	@Override
-	public String execute(String jobHostNode, String jobName) {
-		String msg = null;
-		try {
-			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
-			if (commonScheduleManager.isRunning(jobHostNode, jobName)) {
-				msg = "the job[" + jobName + "] is running";
-			} else {
-				Job job = jobDao.query(jobName);
-				commonScheduleManager.submitWaitQueue(job);
-				msg = "submit job[" + jobName + "] succeed and will wait to be executed";
-			}
-		} catch (RedisException e) {
-			LOG.error("JobService execute job[" + jobName + "] err", e);
-			msg = ResponeMsgManager.SYSTEM_ERR_0001;
-		} catch (Exception e) {
-			LOG.error("JobService execute job[" + jobName + "] err", e);
-			msg = ResponeMsgManager.SYSTEM_ERR_0001;
-		} finally {
-			redisManager.unlock(JOB_SERVICE_OPERATION_PRE + jobName);
-		}
-		return msg;
-	}
-
-	@Override
-	public String suspend(String jobHostNode, String jobName) {
-		String msg = null;
-		try {
-			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
-			if (!commonScheduleManager.isRunning(jobHostNode, jobName)) {
-				msg = "the job[" + jobName + "] is not running and don't suspend";
-			} else {
-				commonScheduleManager.suspendWorkerByJob(jobHostNode, jobName);
-				msg = "the job[" + jobName + "] have been requested to execute suspend";
-			}
-		} catch (RedisException e) {
-			LOG.error("JobService suspend job[" + jobName + "] err", e);
-			msg = ResponeMsgManager.SYSTEM_ERR_0001;
-		} catch (Exception e) {
-			LOG.error("JobService suspend job[" + jobName + "] err", e);
-			msg = ResponeMsgManager.SYSTEM_ERR_0001;
-		} finally {
-			redisManager.unlock(JOB_SERVICE_OPERATION_PRE + jobName);
-		}
-		return msg;
-	}
-
-	@Override
-	public String goOn(String jobHostNode, String jobName) {
-		String msg = null;
-		try {
-			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
-			if (!commonScheduleManager.isRunning(jobHostNode, jobName)) {
-				msg = "the job[" + jobName + "] is not running and don't goOn";
-			} else {
-				commonScheduleManager.goOnWorkerByJob(jobHostNode, jobName);
-				msg = "the job[" + jobName + "] have been requested to execute goOn";
-			}
-		} catch (RedisException e) {
-			LOG.error("JobService goOn job[" + jobName + "] err", e);
-			msg = ResponeMsgManager.SYSTEM_ERR_0001;
-		} catch (Exception e) {
-			LOG.error("JobService goOn job[" + jobName + "] err", e);
-			msg = ResponeMsgManager.SYSTEM_ERR_0001;
-		} finally {
-			redisManager.unlock(JOB_SERVICE_OPERATION_PRE + jobName);
-		}
-		return msg;
-
-	}
-
-	@Override
-	public String stop(String jobHostNode, String jobName) {
-		String msg = null;
-		try {
-			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
-			if (!commonScheduleManager.isRunning(jobHostNode, jobName)) {
-				msg = "the job[" + jobName + "] is not running and don't stop";
-			} else {
-				commonScheduleManager.stopWorkerByJob(jobHostNode, jobName);
-				msg = "the job[" + jobName + "] have been requested to execute stop";
-			}
-		} catch (RedisException e) {
-			LOG.error("JobService stop job[" + jobName + "] err", e);
-			msg = ResponeMsgManager.SYSTEM_ERR_0001;
-		} catch (Exception e) {
-			LOG.error("JobService stop job[" + jobName + "] err", e);
-			msg = ResponeMsgManager.SYSTEM_ERR_0001;
-		} finally {
-			redisManager.unlock(JOB_SERVICE_OPERATION_PRE + jobName);
-		}
-		return msg;
 	}
 
 	@Transactional
@@ -388,35 +294,7 @@ public class JobServiceImpl implements JobService {
 		return result;
 	}
 
-	@Override
-	public String scheduled(String jobName) {
-		String msg = null;
-		try {
-			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
-			Job job = jobDao.query(jobName);
-			// 如果等于1 那么已经开启调度
-			if (job.getIsScheduled() == 1) {
-				job.setIsScheduled(0);
-				commonScheduleManager.cancelScheduled(jobName);
-				update(job);
-				msg = "cancel schedule job[" + jobName + "] succeed";
-			} else {
-				job.setIsScheduled(1);
-				commonScheduleManager.scheduled(job);
-				msg = "schedule job[" + jobName + "] succeed";
-			}
-			jobDao.update(job);
-		} catch (RedisException e) {
-			LOG.error("JobService scheduled job[" + jobName + "] err", e);
-			msg = ResponeMsgManager.SYSTEM_ERR_0001;
-		} catch (Exception e) {
-			LOG.error("JobService scheduled job[" + jobName + "] err", e);
-			msg = ResponeMsgManager.SYSTEM_ERR_0001;
-		} finally {
-			redisManager.unlock(JOB_SERVICE_OPERATION_PRE + jobName);
-		}
-		return msg;
-	}
+
 
 	public JobDao getJobDao() {
 		return jobDao;
@@ -442,12 +320,12 @@ public class JobServiceImpl implements JobService {
 		this.redisManager = redisManager;
 	}
 
-	public JobParameterDao getJobParameterDao() {
-		return jobParameterDao;
+	public JobParamDao getJobParamDao() {
+		return jobParamDao;
 	}
 
-	public void setJobParameterDao(JobParameterDao jobParameterDao) {
-		this.jobParameterDao = jobParameterDao;
+	public void setJobParamDao(JobParamDao jobParamDao) {
+		this.jobParamDao = jobParamDao;
 	}
 
 	public RegisterCenter getRegisterCenter() {
@@ -551,6 +429,31 @@ public class JobServiceImpl implements JobService {
 			doneInfos.add(tempDoneInfo);
 		}
 		return doneInfos;
+	}
+
+	public String uploadJobProfile(MultipartFile jobProfile) {
+		String msg = null;
+		if (null != jobProfile && !jobProfile.isEmpty()) {
+			JAXBContext jaxbC;
+			try {
+				jaxbC = JAXBContext.newInstance(JobProfile.class);
+				Unmarshaller us = jaxbC.createUnmarshaller();
+				JobProfile profile = (JobProfile) us.unmarshal(jobProfile.getInputStream());
+				saveJobProfile(profile);
+				msg = "uploadJobProfile[" + jobProfile.getName() + "] succeed";
+			} catch (Exception e) {
+				msg = "uploadJobProfile[" + jobProfile.getName() + "] err";
+				LOG.error(msg, e);
+			}
+		} else {
+			msg = "uploadJobProfile is empty";
+		}
+		return msg;
+
+	}
+
+	private void saveJobProfile(JobProfile profile) {
+		profile.getSite();
 	}
 
 	@Override

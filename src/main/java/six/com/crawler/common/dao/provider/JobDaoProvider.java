@@ -2,6 +2,7 @@ package six.com.crawler.common.dao.provider;
 
 import java.util.Map;
 
+
 import org.apache.ibatis.jdbc.SQL;
 
 import six.com.crawler.common.dao.JobDao;
@@ -15,12 +16,40 @@ import six.com.crawler.common.entity.Job;
  */
 public class JobDaoProvider extends BaseProvider {
 
+	
+	public String totalNodeJobInfo(String nodeName){
+		StringBuilder sql = new StringBuilder();
+		sql.append("select  a.totalJobSize totalJobSize,"
+				        + " b.totalScheduleJobSize totalScheduleJobSize,"
+				        + " c.totalNoScheduleJobSize totalNoScheduleJobSize "
+				        + " from("
+				        + "				select count(1) totalJobSize,hostNode"
+				        + "             from "+JobDao.TABLE_NAME+" where hostNode=#{nodeName})a "
+				        + " left join ("
+				        + "				select count(1) totalScheduleJobSize,hostNode "
+				        + "				from "+JobDao.TABLE_NAME+" where  hostNode=#{nodeName} and isScheduled=1 )b "
+				        + " on a.hostNode=b.hostNode "
+				        + " left join("
+				        + "				select count(1) totalNoScheduleJobSize,hostNode "
+				        + "             from "+JobDao.TABLE_NAME+" where  hostNode=#{nodeName} and isScheduled=0)c  "
+				        + " on b.hostNode=c.hostNode");
+		return sql.toString();
+		
+	}
+	
 	public String query(Map<String, Object> parameters) {
 		StringBuilder sql = new StringBuilder();
-		sql.append("select `name`,cronTrigger,needNodes,level,httpProxyType,"
-				+ "loadImages,isSnapshotTable,fixedTableName,");
-		sql.append(" everyProcessDelayTime,hostNode,isScheduled,workerClass,"
-				+ "queueName,resultStoreClass,siteCode,`describe`");
+		sql.append("select `name`,"
+				+ " hostNode,"
+				+ "   level,"
+				+ "workFrequency,"
+				+ "isScheduled,"
+				+ "needNodes,"
+				+ "cronTrigger,"
+				+ "workerClass,"
+				+ "queueName,"
+				+ "`user`,"
+				+ "`describe`");
 		sql.append(" from "+JobDao.TABLE_NAME);
 		buildParameter(sql, parameters);
 		sql.append(" order by `level` asc,`name`");
@@ -28,39 +57,28 @@ public class JobDaoProvider extends BaseProvider {
 	}
 	
 	public String save(Job job) {
-		String columns = "`name`,"
-				+ "siteCode,"
-				+ "hostNode,"
-				+ "level,"
-				+ "workerClass,"
-				+ "httpProxyType,"
-				+ "loadImages,"
-				+ "needNodes,"				
-				+ "everyProcessDelayTime,"
-				+ "queueName,"
-				+ "user,"
-				+ "resultStoreClass,"
+		String columns = "select `name`,"
+				+ " hostNode,"
+				+ "   level,"
+				+ "workFrequency,"
 				+ "isScheduled,"
-				+ "isSnapshotTable,"
-				+ "fixedTableName,"
+				+ "needNodes,"
 				+ "cronTrigger,"
-				+ "describe";
+				+ "workerClass,"
+				+ "queueName,"
+				+ "`user`,"
+				+ "`describe`";
+		
 		String values = "#{name},"
-				+ "#{siteCode},"
 				+ "#{hostNode},"
 				+ "#{level},"
-				+ "#{workerClass},"
-				+ "#{httpProxyType},"
-				+ "#{loadImages},"
+				+ "#{workFrequency},"
+				+ "#{isScheduled},"
 				+ "#{needNodes},"
-				+ "#{everyProcessDelayTime},"
+				+ "#{cronTrigger},"
+				+ "#{workerClass},"
 				+ "#{queueName}"
 				+ "#{user},"
-				+ "#{resultStoreClass},"
-				+ "#{isScheduled},"
-				+ "#{isSnapshotTable},"
-				+ "#{fixedTableName},"
-				+ "#{cronTrigger},"
 				+ "#{describe}";
 		SQL sql = new SQL();
 		sql.INSERT_INTO(JobSnapshotDao.TABLE_NAME);
@@ -71,22 +89,16 @@ public class JobDaoProvider extends BaseProvider {
 	public String update(Job job) {
 		SQL sql=new SQL();
 		sql.UPDATE(JobDao.TABLE_NAME);
-		sql.SET("siteCode = #{siteCode}");
 		sql.SET("hostNode = #{hostNode}");
 		sql.SET("level = #{level}");
-		sql.SET("workerClass = #{workerClass}");
-		sql.SET("httpProxyType = #{httpProxyType}");
-		sql.SET("loadImages = #{loadImages}");
+		sql.SET("workFrequency = #{workFrequency}");
+		sql.SET("isScheduled = #{isScheduled}");
 		sql.SET("needNodes = #{needNodes}");
 		sql.SET("cronTrigger = #{cronTrigger}");
-		sql.SET("isSnapshotTable = #{isSnapshotTable}");
-		sql.SET("fixedTableName = #{fixedTableName}");
-		sql.SET("everyProcessDelayTime = #{everyProcessDelayTime}");
+		sql.SET("workerClass = #{workerClass}");
+		sql.SET("queueName = #{queueName}");
 		sql.SET("user = #{user}");
 		sql.SET("describe = #{describe}");
-		sql.SET("queueName = #{queueName}");
-		sql.SET("resultStoreClass = #{resultStoreClass}");
-		sql.SET("isScheduled = #{isScheduled}");
 		sql.WHERE("name = #{name}");
 		return sql.toString();
 	}

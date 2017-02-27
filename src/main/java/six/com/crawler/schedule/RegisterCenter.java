@@ -3,6 +3,7 @@ package six.com.crawler.schedule;
 import java.util.List;
 
 import six.com.crawler.common.entity.JobSnapshot;
+import six.com.crawler.common.entity.Node;
 import six.com.crawler.common.entity.WorkerSnapshot;
 import six.com.crawler.work.Worker;
 

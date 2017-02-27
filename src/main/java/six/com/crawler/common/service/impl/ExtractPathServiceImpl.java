@@ -1,5 +1,6 @@
 package six.com.crawler.common.service.impl;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,9 +10,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import six.com.crawler.common.dao.PathDao;
+import six.com.crawler.common.dao.ExtractPathDao;
 import six.com.crawler.common.entity.Page;
-import six.com.crawler.common.service.PaserPathService;
+import six.com.crawler.common.service.ExtractPathService;
 import six.com.crawler.work.extract.ExtractPath;
 import six.com.crawler.work.extract.PathType;
 
@@ -20,11 +21,11 @@ import six.com.crawler.work.extract.PathType;
  * @date 2016年8月18日 上午10:19:11 解析规则服务器
  */
 @Component
-public class PaserPathServiceImpl implements PaserPathService {
+public class ExtractPathServiceImpl implements ExtractPathService {
 
-	final static Logger LOG = LoggerFactory.getLogger(PaserPathServiceImpl.class);
+	final static Logger LOG = LoggerFactory.getLogger(ExtractPathServiceImpl.class);
 	@Autowired
-	private PathDao pathdao;
+	private ExtractPathDao pathdao;
 
 	Map<String, Map<String, List<ExtractPath>>> maps = new HashMap<String, Map<String, List<ExtractPath>>>();
 
@@ -49,22 +50,9 @@ public class PaserPathServiceImpl implements PaserPathService {
 	 *            排名
 	 * @return
 	 */
-	public ExtractPath queryPath(String siteCode, String name, int ranking) {
-		// long start=System.currentTimeMillis();
-		// System.out.println("queryPath start time:"+start);
-		Map<String, Object> parameters = new HashMap<>();
-		parameters.put("siteCode", siteCode);
-		parameters.put("name", name);
-		parameters.put("ranking", ranking);
-		List<ExtractPath> result = pathdao.query(parameters);
-		ExtractPath optimalPath = null;
-		if (null != result && result.size() > 0) {
-			optimalPath = result.get(0);
-		}
-		// long end=System.currentTimeMillis();
-		// System.out.println("queryPath end time:"+end);
-		// System.out.println("queryPath time:"+(end-start));
-		return optimalPath;
+	public List<ExtractPath> query(String pathName,String siteCode){
+		List<ExtractPath> result = pathdao.query(pathName,siteCode);
+		return result;
 	}
 
 	/**
@@ -83,7 +71,7 @@ public class PaserPathServiceImpl implements PaserPathService {
 	 * @param path
 	 */
 	public void addPaserPath(ExtractPath path) {
-		pathdao.save(path);
+		pathdao.batchSave(Arrays.asList(path));
 	}
 
 	/**
@@ -100,11 +88,11 @@ public class PaserPathServiceImpl implements PaserPathService {
 		}
 	}
 
-	public PathDao getPathdao() {
+	public ExtractPathDao getPathdao() {
 		return pathdao;
 	}
 
-	public void setPathdao(PathDao pathdao) {
+	public void setPathdao(ExtractPathDao pathdao) {
 		this.pathdao = pathdao;
 	}
 }

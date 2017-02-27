@@ -37,15 +37,16 @@ public class ChromeDowner extends AbstractDowner {
 	private String waitJsLoadElementXpath;
 
 	private static final long defaultWaitTimeOunt = 3000;
-	
+
 	private String lastRequestUrl;
 
 	public ChromeDowner(AbstractCrawlWorker worker) {
 		super(worker);
 		DesiredCapabilities cap = DesiredCapabilities.chrome();
 		HashMap<String, Object> settings = new HashMap<String, Object>();
-		if (worker.getJob().getLoadImages() == 2) {
-			settings.put("images", 2); //设置不加载图片
+		String loadImages = worker.getJob().getParam("loadImages");
+		if ("0".equals(loadImages)) {
+			settings.put("images", 2); // 设置不加载图片
 		}
 		Map<String, Object> prefs = new HashMap<String, Object>();
 		prefs.put("profile.managed_default_content_settings", settings);
@@ -73,7 +74,7 @@ public class ChromeDowner extends AbstractDowner {
 		// 页面加载 30秒抛异常
 		browser.manage().timeouts().pageLoadTimeout(60, TimeUnit.SECONDS);
 		browser.manage().timeouts().setScriptTimeout(1000, TimeUnit.MILLISECONDS);
-		waitJsLoadElementXpath = worker.getJob().getParameter("waitJsLoadElementXpath", String.class);
+		waitJsLoadElementXpath = worker.getJob().getParam("waitJsLoadElementXpath");
 		// WebDriverWait wait = new WebDriverWait(browser, 10);
 		// ExpectedCondition<Boolean> pageLoad = new
 		// ExpectedCondition<Boolean>() {
@@ -86,38 +87,41 @@ public class ChromeDowner extends AbstractDowner {
 	}
 
 	protected HttpResult insideDown(Page page) throws DownerException {
-		HttpResult result=new HttpResult();
-		if(!page.getOriginalUrl().equals(lastRequestUrl)){
+		HttpResult result = new HttpResult();
+		if (!page.getOriginalUrl().equals(lastRequestUrl)) {
 			browser.get(page.getOriginalUrl());
 			waitForload();
 			String html = browser.getPageSource();
 			String currentUrl = browser.getCurrentUrl();
 			page.setFinalUrl(currentUrl);
 			page.setPageSrc(html);
-			lastRequestUrl=page.getOriginalUrl();
+			lastRequestUrl = page.getOriginalUrl();
 		}
 		return result;
 	}
-	public WebDriver getWebDriver(){
+
+	public WebDriver getWebDriver() {
 		return browser;
 	}
-	public String getWindowHandle(){
+
+	public String getWindowHandle() {
 		return browser.getWindowHandle();
 	}
-	
+
 	public WebElement findWebElement(String xpath) {
-		WebElement findWebElement=WebDriverUtils.findElement(browser, xpath, defaultWaitTimeOunt);
+		WebElement findWebElement = WebDriverUtils.findElement(browser, xpath, defaultWaitTimeOunt);
 		return findWebElement;
 	}
 
 	public List<WebElement> findWebElements(String xpath) {
-		List<WebElement> findWebElements=WebDriverUtils.findElements(browser, xpath, defaultWaitTimeOunt);
+		List<WebElement> findWebElements = WebDriverUtils.findElements(browser, xpath, defaultWaitTimeOunt);
 		return findWebElements;
 	}
-	
-	public void click(WebElement webElement,String xpath){
+
+	public void click(WebElement webElement, String xpath) {
 		WebDriverUtils.click(browser, webElement, xpath, defaultWaitTimeOunt);
 	}
+
 	private void waitForload() {
 		if (null != waitJsLoadElementXpath && waitJsLoadElementXpath.length() > 0
 				&& !"null".equalsIgnoreCase(waitJsLoadElementXpath)) {
@@ -136,8 +140,8 @@ public class ChromeDowner extends AbstractDowner {
 			}
 		}
 	}
-	
-	public byte[] downBytes(Page page) throws DownerException{
+
+	public byte[] downBytes(Page page) throws DownerException {
 		return null;
 	}
 

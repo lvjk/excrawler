@@ -9,14 +9,14 @@ import org.jsoup.select.Elements;
  * @author six
  * @date 2016年8月23日 下午4:09:29
  */
-public class FilterPath {
+public class PathFilter {
 
 	protected String tagName;
 	protected String attName;
 	protected String attValue;
-	protected List<FilterPath> elements;
+	protected List<PathFilter> elements;
 
-	public static FilterPath EmptyFilterElement=new FilterPath(){
+	public static PathFilter EmptyFilterElement=new PathFilter(){
 		public Element filter(Element element) {
 			return element;
 		}
@@ -25,7 +25,7 @@ public class FilterPath {
 		}
 	};
 	public Element filter(Element element) {
-		for (FilterPath felement : elements) {
+		for (PathFilter felement : elements) {
 			if (null == felement.attName) {
 				if (element.tagName().equals(felement.tagName)) {
 					return null;
@@ -50,7 +50,7 @@ public class FilterPath {
 	}
 
 	public boolean isFilter(Element element) {
-		for (FilterPath felement : elements) {
+		for (PathFilter felement : elements) {
 			if (null == felement.attName) {
 				if (element.tagName().equals(felement.tagName)) {
 					return true;

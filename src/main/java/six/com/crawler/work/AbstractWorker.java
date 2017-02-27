@@ -3,6 +3,7 @@ package six.com.crawler.work;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.locks.StampedLock;
 
@@ -14,6 +15,7 @@ import org.slf4j.MDC;
 
 import six.com.crawler.common.DateFormats;
 import six.com.crawler.common.entity.Job;
+import six.com.crawler.common.entity.JobParam;
 import six.com.crawler.common.entity.JobSnapshot;
 import six.com.crawler.common.entity.WorkerErrMsg;
 import six.com.crawler.common.utils.ThreadUtils;
@@ -38,35 +40,24 @@ public abstract class AbstractWorker implements Worker {
 	// 工作状态 等待lock obejct
 	private Object waitLock = new Object();
 	// 最小延迟处理数据频率
-	protected long minDelayProcessTime;
+	protected long minWorkFrequency;
 	// 最大延迟处理数据频率
-	protected long maxDelayProcessTime;
-	
+	protected long maxWorkFrequency;
+
 	private long lastActivityTime;
 
 	private String jobSnapshotId;
-
-	private JobSnapshot jobSnapshot;
 
 	private String currentNodeName;
 	// 随机对象 产生随机控制时间
 	private static Random randomDownSleep = new Random();
 
-	public AbstractWorker(String name, AbstractSchedulerManager manager, Job job) {
-		super();
-		this.job = job;
-		this.currentNodeName = manager.getCurrentNode().getName();
-		workerSnapshot = new WorkerSnapshot();
-		jobSnapshot = manager.getJobService().getJobSnapshotFromRegisterCenter(job.getHostNode(), job.getName());
-		jobSnapshotId = jobSnapshot.getId();
-		workerSnapshot.setJobSnapshotId(jobSnapshotId);
-		workerSnapshot.setJobName(job.getName());
-		workerSnapshot.setJobHostNode(job.getHostNode());
-		workerSnapshot.setName(name);
-		workerSnapshot.setWorkerErrMsgs(new ArrayList<WorkerErrMsg>());
+	public void bindManager(AbstractSchedulerManager manager) {
 		this.manager = manager;
-		this.minDelayProcessTime = job.getEveryProcessDelayTime();
-		this.maxDelayProcessTime = 2 * minDelayProcessTime;
+	}
+
+	public void bindJob(Job job) {
+		this.job = job;
 	}
 
 	/**
@@ -157,16 +148,14 @@ public abstract class AbstractWorker implements Worker {
 		}
 	}
 
-
-
 	/**
 	 * 频率控制
 	 */
-	private void frequencyControl() {
+	protected void frequencyControl() {
 		long sleep = System.currentTimeMillis() - lastActivityTime;
-		if (sleep < minDelayProcessTime) {
+		if (sleep < minWorkFrequency) {
 			// 生成隨機 時間 避免服務器 識別出固定規律
-			long tempTime = (long) (randomDownSleep.nextDouble() * maxDelayProcessTime) + sleep;
+			long tempTime = (long) (randomDownSleep.nextDouble() * maxWorkFrequency) + sleep;
 			ThreadUtils.sleep(tempTime);
 		}
 		lastActivityTime = System.currentTimeMillis();
@@ -267,6 +256,32 @@ public abstract class AbstractWorker implements Worker {
 		return result;
 	}
 
+	@Override
+	public void init() {
+		String jobHostNode = getJob().getHostNode();
+		String jobName = getJob().getName();
+		MDC.put("jobName", jobName);
+		try {
+			JobSnapshot jobSnapshot = getManager().getJobService().getJobSnapshotFromRegisterCenter(jobHostNode,
+					jobName);
+			String workerName = getManager().getWorkerNameByJob(job);
+			this.currentNodeName = manager.getCurrentNode().getName();
+			workerSnapshot = new WorkerSnapshot();
+			jobSnapshotId = jobSnapshot.getId();
+			workerSnapshot.setJobSnapshotId(jobSnapshotId);
+			workerSnapshot.setJobName(job.getName());
+			workerSnapshot.setJobHostNode(job.getHostNode());
+			workerSnapshot.setName(workerName);
+			workerSnapshot.setWorkerErrMsgs(new ArrayList<WorkerErrMsg>());
+			this.minWorkFrequency = job.getWorkFrequency();
+			this.maxWorkFrequency = 2 * minWorkFrequency;
+			List<JobParam> jobParameters = manager.getJobService().queryJobParams(jobName);
+			job.setParamList(jobParameters);
+			initWorker(jobSnapshot);
+		} catch (Exception e) {
+			throw new RuntimeException("init crawlWorker err", e);
+		}
+	}
 
 	@Override
 	public final void destroy() {
@@ -275,15 +290,9 @@ public abstract class AbstractWorker implements Worker {
 		insideDestroy();
 	}
 
-	@Override
-	public void init() {
-		MDC.put("jobName", job.getName());
-		initWorker();
-	}
-
 	protected abstract void insideDestroy();
 
-	protected abstract void initWorker();
+	protected abstract void initWorker(JobSnapshot jobSnapshot);
 
 	/**
 	 * 获取 worker name
@@ -297,10 +306,6 @@ public abstract class AbstractWorker implements Worker {
 	@Override
 	public WorkerLifecycleState getState() {
 		return workerSnapshot.getState();
-	}
-
-	public JobSnapshot getJobSnapshot() {
-		return jobSnapshot;
 	}
 
 	@Override
@@ -322,13 +327,9 @@ public abstract class AbstractWorker implements Worker {
 		return job;
 	}
 
-
-	
-
 	public long getLastActivityTime() {
 		return lastActivityTime;
 	}
-
 
 	public boolean equals(Object anObject) {
 		if (null != anObject && anObject instanceof Worker) {
@@ -345,7 +346,6 @@ public abstract class AbstractWorker implements Worker {
 		int hash = name.hashCode();
 		return hash;
 	}
-
 
 	protected abstract void onError(Exception t);
 

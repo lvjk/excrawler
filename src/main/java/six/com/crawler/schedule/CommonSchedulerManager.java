@@ -35,20 +35,21 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
+import okhttp3.Request;
 import six.com.crawler.common.DateFormats;
 import six.com.crawler.common.email.QQEmailClient;
 import six.com.crawler.common.entity.HttpProxy;
 import six.com.crawler.common.entity.Job;
-import six.com.crawler.common.entity.JobParameter;
 import six.com.crawler.common.entity.JobSnapshot;
 import six.com.crawler.common.entity.JobSnapshotState;
-import six.com.crawler.common.entity.Site;
-import six.com.crawler.common.utils.JobTableUtils;
+import six.com.crawler.common.entity.Node;
+import six.com.crawler.common.http.HttpMethod;
+import six.com.crawler.common.http.HttpResult;
+import six.com.crawler.common.utils.AutoCharsetDetectorUtils.ContentType;
 import six.com.crawler.common.utils.MD5Utils;
 import six.com.crawler.common.utils.ObjectCheckUtils;
 import six.com.crawler.common.utils.ThreadUtils;
-import six.com.crawler.work.RedisWorkQueue;
-import six.com.crawler.work.WorkQueue;
+
 import six.com.crawler.work.Worker;
 
 /**
@@ -230,13 +231,10 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 			System.exit(1);
 		}
 		currentNode = new Node();
-		currentNode.setClusterName(getConfigure().getConfig("cluster.name", "default_spider_cluster"));
+		currentNode.setName(nodeName);
 		currentNode.setHost(host);
 		currentNode.setPort(port);
-		currentNode.setName(nodeName);
-		currentNode.setSshUser(getConfigure().getConfig("node.ssh.user", null));
-		currentNode.setShhPasswd(getConfigure().getConfig("node.ssh.passwd", null));
-		currentNode.setTrafficPort(getConfigure().getConfig("node.trafficPort.port", 9081));
+
 	}
 
 	/**
@@ -247,6 +245,14 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 	private void heartbeat() {
 		long sleepTime = Constants.REDIS_REGISTER_CENTER_HEARTBEAT * 1000 - 1000;
 		while (true) {
+			Node totalNode = getJobService().totalNodeJobInfo(currentNode.getName());
+			if (null != totalNode) {
+				currentNode.setRunningJobMaxSize(workerRunningMaxSize);
+				currentNode.setRunningJobSize(getRunningWorkerCount());
+				currentNode.setTotalJobSize(totalNode.getTotalJobSize());
+				currentNode.setTotalScheduleJobSize(totalNode.getTotalScheduleJobSize());
+				currentNode.setTotalNoScheduleJobSize(totalNode.getTotalNoScheduleJobSize());
+			}
 			// 节点注册
 			try {
 				getRegisterCenter().registerNode(currentNode, Constants.REDIS_REGISTER_CENTER_HEARTBEAT);
@@ -283,18 +289,16 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 	 * 
 	 * @param job
 	 */
-	private List<Node> getExecuteNodes(Job job) {
-		List<Node> executeJobNodes = new ArrayList<>();
-		Node currentNode = getCurrentNode();
-		executeJobNodes.add(currentNode);
+	private List<Node> getOtherFreeExecuteNodes(Job job) {
+		List<Node> otherFreeExecuteNodes = new ArrayList<>();
 		if (job.getNeedNodes() > 1) {
 			// 获取 空闲节点(已经根据节点资源进行排序过)
 			List<Node> freeNodes = getFreeNodes();
 			int count = 0;
 			// 从freeNodes里取job.getNeedNodes()-1 个节点 排除当前节点
 			for (Node freeNode : freeNodes) {
-				if (!freeNode.getName().equalsIgnoreCase(currentNode.getName())) {
-					executeJobNodes.add(freeNode);
+				if (!freeNode.getName().equalsIgnoreCase(getCurrentNode().getName())) {
+					otherFreeExecuteNodes.add(freeNode);
 					count++;
 				}
 				if (count >= job.getNeedNodes() - 1) {
@@ -302,7 +306,7 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 				}
 			}
 		}
-		return executeJobNodes;
+		return otherFreeExecuteNodes;
 	}
 
 	/**
@@ -311,13 +315,13 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 	 * @param crawlerWorker
 	 */
 	private void executeJobWorker(Worker jobWorker) {
+		getRegisterCenter().registerWorker(jobWorker);
 		Job job = jobWorker.getJob();
 		String nodeName = job.getHostNode();
 		String jobName = job.getName();
 		// 运行worker计数+1
 		runningWroker.incrementAndGet();
 		try {
-			jobWorker.init();
 			// 执行 job worker
 			jobWorker.start();
 		} catch (Exception e) {
@@ -473,10 +477,6 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 		if (null == job) {
 			throw new NullPointerException();
 		}
-		if (!job.getHostNode().equals(getCurrentNode().getName())) {
-			throw new RuntimeException("job.hostNode[" + job.getHostNode() + "] don't equals currentNode["
-					+ getCurrentNode().getName() + "],please submit job to waitQueue of currentNode]");
-		}
 		waitQueueLock.lock();
 		try {
 			JobSnapshot jobSnapshot = getJobService().getJobSnapshotFromRegisterCenter(job.getHostNode(),
@@ -512,36 +512,21 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 		String jobHostNode = job.getHostNode();
 		String jobName = job.getName();
 		if (!isRunning(jobHostNode, jobName)) {
-			List<Node> executeJobNodes = getExecuteNodes(job);
-			if (executeJobNodes.size() > 0) {
-				JobSnapshot jobSnapshot = getJobService().getJobSnapshotFromRegisterCenter(jobHostNode, jobName);
-				if (null == jobSnapshot) {
-					throw new RuntimeException("don't register jobSnapshot when submit job to waitQueue");
-				}
-				String tempTbaleName = null;
-				if (job.getIsSnapshotTable() == 1) {
-					JobSnapshot lastJobSnapshot = getJobService().queryLastJobSnapshotFromHistory(job.getName());
-					if (null != lastJobSnapshot && lastJobSnapshot.getEnumState() != JobSnapshotState.FINISHED) {
-						tempTbaleName = lastJobSnapshot.getTableName();
-					} else {
-						// 判断是否启用镜像表
-						tempTbaleName = JobTableUtils.buildJobTableName(job.getFixedTableName());
-					}
-				}else{
-					tempTbaleName=job.getFixedTableName();
-				}
-				jobSnapshot.setTableName(tempTbaleName);
-				jobSnapshot.setState(JobSnapshotState.EXECUTING.value());
-				getJobService().updateJobSnapshotToRegisterCenter(jobSnapshot);
-				WorkQueue stored = new RedisWorkQueue(getRedisManager(), job.getQueueName());
-				stored.repair();
-				executeJobNodes.forEach(node -> {
-					callNodeExecuteJob(stored, job);
-				});
-				return;
-			}
+			List<Node> otherFreeExecuteNodes = getOtherFreeExecuteNodes(job);
+			Worker worker = buildJobWorker(job);
+			worker.init();
+			JobSnapshot jobSnapshot = getJobService().getJobSnapshotFromRegisterCenter(jobHostNode, jobName);
+			jobSnapshot.setState(JobSnapshotState.EXECUTING.value());
+			getJobService().updateJobSnapshotToRegisterCenter(jobSnapshot);
+			executor.execute(() -> {
+				executeJobWorker(worker);
+			});
+			otherFreeExecuteNodes.forEach(node -> {
+				callNodeExecuteJob(node, jobName);
+			});
+		}else{
+			submitWaitQueue(job);
 		}
-		submitWaitQueue(job);
 	}
 
 	/**
@@ -573,18 +558,13 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 	}
 
 	@Override
-	public String callNodeExecuteJob(WorkQueue stored, Job job) {
-		// 1.执行job 时 查询出job的 JobConText
-		List<JobParameter> jobParameters = getJobService().queryJobParameter(job.getName());
-		job.init(jobParameters);
-		Site site = getSiteService().query(job.getSiteCode());
-		// 3.判断job是否需要多节点运行
-		Worker worker = buildJobWorker(job, stored, site);
-		getRegisterCenter().registerWorker(worker);
-		executor.execute(() -> {
-			executeJobWorker(worker);
-		});
-		return null;
+	public String callNodeExecuteJob(Node node, String jobName) {
+		String callUrl = "http://" + node.getHost() + ":" + node.getPort() + "/crawler/scheduled/assistExecute/"
+				+ jobName;
+		Request Request = getHttpClient().buildRequest(callUrl, null, HttpMethod.GET, null, null, null);
+		HttpResult result = getHttpClient().executeRequest(Request);
+		String responeMsg = getHttpClient().getHtml(result, ContentType.OTHER);
+		return responeMsg;
 	}
 
 	@Override

@@ -7,14 +7,13 @@ package six.com.crawler.common.constants;
  */
 public interface JobConTextConstants {
 
-	// 站点 key
-	String SITE = "site";
-
 	// 站点 code key
 	String SITE_CODE = "siteCode";
-
+	
 	// 下载器类型
 	String DOWNER_TYPE = "downerType";
+
+	String HTTP_PROXY_TYPE = "httpProxyType";
 
 	// 种子页面 md5
 	String SEED_PAGE = "seedPages";
@@ -23,11 +22,10 @@ public interface JobConTextConstants {
 
 	// 结果存储key
 	String RESULT_STORE_CLASS = "resultStoreClass";
-
-	String RESULT_CHECK_CLASS = "resultCheckClass";
-
-	// 结果是否是list
-	String RESULT_IS_LIST = "resultIsList";
+	
+	String IS_SNAPSHOT_TABLE="isSnapshotTable";
+	
+	String FIXED_TABLE_NAME="fixedTableName";
 
 	// 主要的结果key
 	String MAIN_RESULT_KEY = "mainResultKey";

@@ -2,7 +2,6 @@ package six.com.crawler.work;
 
 
 import six.com.crawler.common.entity.Job;
-import six.com.crawler.common.entity.JobSnapshot;
 import six.com.crawler.common.entity.WorkerSnapshot;
 import six.com.crawler.schedule.AbstractSchedulerManager;
 
@@ -11,7 +10,11 @@ import six.com.crawler.schedule.AbstractSchedulerManager;
  * @date 2016年1月15日 下午6:20:00
  */
 public interface Worker extends WorkerLifecycle {
-
+	
+	
+	void bindManager(AbstractSchedulerManager manager);
+	
+	void bindJob(Job job);
 	/**
 	 * 初始化
 	 */
@@ -31,8 +34,6 @@ public interface Worker extends WorkerLifecycle {
 	 */
 	String getName();
 	
-	
-	JobSnapshot getJobSnapshot();
 
 	/**
 	 * 获取worker 快照
@@ -131,9 +132,15 @@ public interface Worker extends WorkerLifecycle {
 		}
 
 		@Override
-		public JobSnapshot getJobSnapshot() {
-			return null;
+		public void bindManager(AbstractSchedulerManager manager) {
+			
 		}
+
+		@Override
+		public void bindJob(Job job) {
+			
+		}
+
 	};
 
 }

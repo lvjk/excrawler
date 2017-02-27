@@ -23,7 +23,7 @@ public enum HttpProxyType {
 		return value;
 	}
 
-	public static HttpProxyType getHttpProxyType(int type) {
+	public static HttpProxyType valueOf(int type) {
 		if (0 == type) {
 			return DISABLE;
 		} else if (1 == type) {

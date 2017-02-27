@@ -27,9 +27,8 @@ public abstract class AbstractExtracter implements Extracter {
 
 	private AbstractCrawlWorker worker;
 	private List<ExtractItem> extractItems;
-	private Map<String, ExtractPath> paserPathMap;
-	private int defaultEmptyExtractCountMax = 3;
 	private static final String EmptyResult = "";
+	Map<String, List<ExtractPath>> extractPathMap = new HashMap<>();
 	private static Set<Character> charSet = new HashSet<>();
 	static {
 		charSet.add(' ');
@@ -40,71 +39,46 @@ public abstract class AbstractExtracter implements Extracter {
 	public AbstractExtracter(AbstractCrawlWorker worker, List<ExtractItem> extractItems) {
 		this.worker = worker;
 		this.extractItems = extractItems;
-		paserPathMap = new HashMap<>();
 	}
 
-	protected List<String> extract(Page page, ExtractItem paserItem) {
+	protected List<String> extract(Page page, ExtractItem extractItem) {
 		List<String> preResult = null;
-		if (paserItem.getType() == ExtractItemType.META.value()) {
-			preResult = page.getMeta(paserItem.getResultKey());
+		if (extractItem.getType() == ExtractItemType.META.value()) {
+			preResult = page.getMeta(extractItem.getOutputKey());
 		} else {
-			ExtractPath optimalPath = paserPathMap.get(paserItem.getPathName());
-			// 排名 默认1是最优 >1> 2 ......
-			if (null == optimalPath) {
-				// 如果最优的path==null 那么获取评分最高的Path list>0 至少会获取一个 path
-				optimalPath = worker.getManager().getPaserPathService().queryPath(page.getSiteCode(),
-						paserItem.getPathName(), 1);
+			ExtractPath optimalPath = null;
+			int ranking = 0;
+			List<ExtractPath> pathList = extractPathMap.get(extractItem.getPathName());
+			if (null == pathList) {
+				pathList = worker.getManager().getPaserPathService().query(extractItem.getPathName(),
+						worker.getSite().getCode());
+				extractPathMap.put(extractItem.getPathName(), pathList);
 			}
+			if(ranking>=pathList.size()){
+				throw new RuntimeException("don't find path:"+extractItem.getPathName());
+			}
+			optimalPath = pathList.get(ranking);
 			// 如果 optimalPath 为null 那么库里根本不存在path 所以不需要继续往下处理
 			if (null != optimalPath) {
 				ExtractPath nowPath = optimalPath;
-				int ranking = 1;
-				int tempEmptyExtractCount = 0;
-				while (true) {
-					try {
-						// 抽取结果 result不可能为null 如果result没有结果 那么 result
-						// 会用Collections.emptyList();
-						preResult = extract(page, paserItem, nowPath);
-						if (!preResult.isEmpty()) {
-							// 如果抽取到结果那么 直接break;
-							break;
-						} else {
-							// 临时空抽取计数增量
-							tempEmptyExtractCount++;
-							// 设置 path 空抽取次数
-							nowPath.setEmptyExtractCount(nowPath.getEmptyExtractCount() + 1);
-							// 将path 更新至库里
-							worker.getManager().getPaserPathService().updatePaserPath(nowPath);
-							// 如果 path 临时空抽取达到默认次数那么将重新更新 optimalPath 的赋值
-							ranking++;// 排位增量
-							// 从库里按照path 排名迭代获取路径
-							nowPath = worker.getManager().getPaserPathService().queryPath(page.getSiteCode(),
-									paserItem.getPathName(), ranking);
-							if (tempEmptyExtractCount >= defaultEmptyExtractCountMax) {
-								// 如果最优的path==null 那么获取评分最高的Path list>0
-								// 至少会获取一个
-								// path
-								paserPathMap.put(paserItem.getPathName(), nowPath);
-								tempEmptyExtractCount = 0;
-							}
-							if (null == nowPath) {
-								break;
-							}
-						}
-					} catch (Exception t) {
-						throw new ExtractUnknownException(
-								"PaserProcessorExtractUnknownException:" + paserItem.getPathName(), t);
-					}
+				try {
+					// 抽取结果 result不可能为null 如果result没有结果 那么 result
+					// 会用Collections.emptyList();
+					preResult = extract(page, extractItem, nowPath);
+				} catch (Exception t) {
+					throw new ExtractUnknownException(
+							"PaserProcessorExtractUnknownException:" + extractItem.getPathName(), t);
 				}
+
 			} else {
-				throw new ExtractUnknownException("don't find paser path:" + paserItem.getPathName());
+				throw new ExtractUnknownException("don't find paser path:" + extractItem.getPathName());
 			}
 		}
 		// 查看这个path是否是一定要有结果
 		// 如果==must 没有结果的话 那么将会抛抽取 结果空 异常
-		if ((null == preResult || preResult.isEmpty()) && paserItem.getMustHaveResult() == MustHaveResult.MUST) {
+		if ((null == preResult || preResult.isEmpty()) && extractItem.getMustHaveResult() == MustHaveResult.MUST) {
 			throw new ExtractEmptyResultException(
-					"extract resultKey [" + paserItem.getResultKey() + "] value is empty");
+					"extract resultKey [" + extractItem.getOutputKey() + "] value is empty");
 		}
 		if (null == preResult) {
 			preResult = new ArrayList<>();
@@ -112,13 +86,14 @@ public abstract class AbstractExtracter implements Extracter {
 		return preResult;
 	}
 
-	protected String paserElement(FilterPath filterPath, String reslutAttName, Element element) {
+	protected String paserElement(String filterPath, String reslutAttName, Element element) {
+		PathFilter pathFilter = PathFilterBuilder.buildPathFilter(filterPath);
 		String result = "";
-		if (filterPath.isFilter(element)) {
+		if (pathFilter.isFilter(element)) {
 			result = EmptyResult;
 		} else if ("text".equalsIgnoreCase(reslutAttName)) {
 			StringBuilder text = new StringBuilder();
-			appendText(filterPath, element, text);
+			appendText(pathFilter, element, text);
 			result = text.toString();
 		} else {
 			result = element.attr(reslutAttName);
@@ -143,19 +118,19 @@ public abstract class AbstractExtracter implements Extracter {
 		boolean isAdd;
 		Document doc = page.getDoc();
 		Elements htmlElements = doc.getAllElements();
-		Elements findElements = htmlElements.select(path.getSelector());
+		Elements findElements = htmlElements.select(path.getPath());
 		String result = null;
 		for (Element element : findElements) {
 			isAdd = true;
-			result = paserElement(path.getFilterPath(), path.getReslutAttName(), element);
+			result = paserElement(path.getFilterPath(), path.getExtractAttName(), element);
 			// 如果null==pathResultType.getContainKeyWord() 或者 包含 指定的关键word
 			// 才add
 			if (null != path.getCompareAttName() && path.getCompareAttName().trim().length() > 0) {
 				String compareAttValue = null;
-				if (path.getReslutAttName().equalsIgnoreCase(path.getCompareAttName())) {
+				if (path.getExtractAttName().equalsIgnoreCase(path.getCompareAttName())) {
 					compareAttValue = result;
 				} else {
-					compareAttValue = paserElement(FilterPath.EmptyFilterElement, path.getCompareAttName(), element);
+					compareAttValue = paserElement(null, path.getCompareAttName(), element);
 				}
 				if (!compareAttValue.contains(path.getContainKeyWord())) {
 					isAdd = false;
@@ -233,7 +208,7 @@ public abstract class AbstractExtracter implements Extracter {
 	 * @param newBf
 	 * @param pathResultType
 	 */
-	protected void appendText(FilterPath filterPath, Node node, StringBuilder newBf) {
+	protected void appendText(PathFilter filterPath, Node node, StringBuilder newBf) {
 		if (node instanceof Element) {
 			if (filterPath.isFilter((Element) node)) {
 				newBf.append(EmptyResult);
