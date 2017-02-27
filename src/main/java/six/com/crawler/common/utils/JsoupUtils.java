@@ -121,8 +121,8 @@ public class JsoupUtils {
 							tdElement = tdElements.get(tempIndex);
 							value = paserElement(FilterPath.EmptyFilterElement, "text", tdElement);
 						}
-						tableResult.setKey(key);
-						tableResult.setValue(value);
+						tableResult.setKey(StringUtils.trim(key));
+						tableResult.setValue(StringUtils.trim(value));
 						result.add(tableResult);
 					}
 					j += 2;
