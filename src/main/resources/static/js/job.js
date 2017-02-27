@@ -413,7 +413,7 @@ function scheduled(jobName) {
 		msg = '你确定要开启任务[' + jobName + ']调度吗？';
 	}
 	if (window.confirm(msg)) {
-		var url = "/crawler/job/scheduled/" + jobName + "/" + isScheduled;
+		var url = "/crawler/scheduled/scheduled/" + jobName + "/" + isScheduled;
 		$.get(url, function(result) {
 			if (1 == isScheduled) {
 				// 隐藏取消任务调度按钮
@@ -440,7 +440,7 @@ function scheduled(jobName) {
  */
 function execute(jobHostNode,jobName) {
 	if (window.confirm('你确定要执行任务[' + jobName + ']吗？')) {
-		var url = "/crawler/job/execute/" +jobHostNode+"/"+ jobName;
+		var url = "/crawler/scheduled/execute/" +jobHostNode+"/"+ jobName;
 		$.get(url, function(result) {
 			alert(result.data);
 			$("#execute_job_bt_" + jobName).hide();
@@ -462,7 +462,7 @@ function execute(jobHostNode,jobName) {
  */
 function suspend(jobHostNode,jobName) {
 	if (window.confirm('你确定要暂停任务[' + jobName + ']吗？')) {
-		var url = "/crawler/job/suspend/" +jobHostNode+"/"+ jobName;
+		var url = "/crawler/scheduled/suspend/" +jobHostNode+"/"+ jobName;
 		$.get(url, function(result) {
 			alert(result.data);
 			$("#execute_job_bt_" + jobName).hide();
@@ -484,7 +484,7 @@ function suspend(jobHostNode,jobName) {
  */
 function goOn(jobHostNode,jobName) {
 	if (window.confirm('你确定要继续执行任务[' + jobName + ']吗？')) {
-		var url = "/crawler/job/goon/"+jobHostNode+"/"+ jobName;
+		var url = "/crawler/scheduled/goon/"+jobHostNode+"/"+ jobName;
 		$.get(url, function(result) {
 			alert(result.data);
 			$("#execute_job_bt_" + jobName).hide();
@@ -507,7 +507,7 @@ function goOn(jobHostNode,jobName) {
  */
 function stop(jobHostNode,jobName) {
 	if (window.confirm('你确定要终止任务[' + jobName + ']吗？')) {
-		var url = "/crawler/job/stop/" +jobHostNode+"/"+ jobName;
+		var url = "/crawler/scheduled/stop/" +jobHostNode+"/"+ jobName;
 		$.get(url, function(result) {
 			alert(result.data);
 			$("#execute_job_bt_" + jobName).show();
@@ -528,17 +528,15 @@ function repairQueue(queueName) {
 		var url = "/crawler/job/queue/repair/" + queueName;
 		$.get(url, function(result) {
 			alert(result.msg);
-			location.reload(true);   
 		});
 	}
 }
-
+//location.reload(true); 
 function cleanQueue(queueName) {
 	if (window.confirm("do you clean queue:"+queueName)) {
 		var url = "/crawler/job/queue/clean/" + queueName;
 		$.get(url, function(result) {
 			alert(result.msg);
-			location.reload(true); 
 		});
 	}
 }
