@@ -114,6 +114,7 @@ public class JsoupUtils {
 					tableResult = new TableResult();
 					tdElement = tdElements.get(j);
 					String key = paserElement(PathFilter.EmptyFilterElement, "text", tdElement);
+					key = StringUtils.trim(key);
 					if (StringUtils.isNotBlank(key)) {
 						String value = "";
 						int tempIndex = j + 1;
