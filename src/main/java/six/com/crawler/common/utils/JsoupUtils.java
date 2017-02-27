@@ -13,7 +13,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.select.Elements;
 
-import six.com.crawler.work.extract.FilterPath;
+import six.com.crawler.work.extract.PathFilter;
 
 /**
  * @author 作者
@@ -52,13 +52,13 @@ public class JsoupUtils {
 			for (int j = 0; j < tdElements.size();) {
 				tableResult = new TableResult();
 				tdElement = tdElements.get(j);
-				String key = paserElement(FilterPath.EmptyFilterElement, "text", tdElement);
+				String key = paserElement(PathFilter.EmptyFilterElement, "text", tdElement);
 				if (StringUtils.isNotBlank(key)) {
 					String value = "";
 					int tempIndex = j + 1;
 					if (tempIndex < tdElements.size()) {
 						tdElement = tdElements.get(tempIndex);
-						value = paserElement(FilterPath.EmptyFilterElement, "text", tdElement);
+						value = paserElement(PathFilter.EmptyFilterElement, "text", tdElement);
 					}
 					tableResult.setKey(key);
 					tableResult.setValue(value);
@@ -113,16 +113,16 @@ public class JsoupUtils {
 				for (int j = 0; j < tdElements.size();) {
 					tableResult = new TableResult();
 					tdElement = tdElements.get(j);
-					String key = paserElement(FilterPath.EmptyFilterElement, "text", tdElement);
+					String key = paserElement(PathFilter.EmptyFilterElement, "text", tdElement);
 					if (StringUtils.isNotBlank(key)) {
 						String value = "";
 						int tempIndex = j + 1;
 						if (tempIndex < tdElements.size()) {
 							tdElement = tdElements.get(tempIndex);
-							value = paserElement(FilterPath.EmptyFilterElement, "text", tdElement);
+							value = paserElement(PathFilter.EmptyFilterElement, "text", tdElement);
 						}
-						tableResult.setKey(StringUtils.trim(key));
-						tableResult.setValue(StringUtils.trim(value));
+						tableResult.setKey(key);
+						tableResult.setValue(value);
 						result.add(tableResult);
 					}
 					j += 2;
@@ -132,7 +132,7 @@ public class JsoupUtils {
 		return result;
 	}
 
-	public static String paserElement(FilterPath filterPath, String reslutAttName, Element element) {
+	public static String paserElement(PathFilter filterPath, String reslutAttName, Element element) {
 		String result = "";
 		if (filterPath.isFilter(element)) {
 			return result;
@@ -157,7 +157,7 @@ public class JsoupUtils {
 	 * @param newBf
 	 * @param pathResultType
 	 */
-	private static void appendText(FilterPath filterPath, Node node, StringBuilder newBf) {
+	private static void appendText(PathFilter filterPath, Node node, StringBuilder newBf) {
 		if (node instanceof Element) {
 			if (filterPath.isFilter((Element) node)) {
 				newBf.append("");

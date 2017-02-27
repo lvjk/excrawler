@@ -15,17 +15,13 @@ import org.slf4j.LoggerFactory;
 
 import okhttp3.Request;
 import six.com.crawler.common.constants.JobConTextConstants;
-import six.com.crawler.common.entity.Job;
-import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.exception.AbstractHttpException;
 import six.com.crawler.common.http.HttpConstant;
 import six.com.crawler.common.http.HttpMethod;
 import six.com.crawler.common.http.HttpResult;
 import six.com.crawler.common.utils.DbHelper;
 import six.com.crawler.common.utils.JobTableUtils;
-import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.work.DataBaseAbstractWorker;
-import six.com.crawler.work.WorkQueue;
 import six.com.crawler.work.WorkerLifecycleState;
 import six.com.crawler.work.downer.PostContentType;
 
@@ -47,19 +43,15 @@ public class QichachaSynchronousDataWorker extends DataBaseAbstractWorker{
 	int batchSize = 100;
 	int startIndex = 0;
 
-	public QichachaSynchronousDataWorker(String name, AbstractSchedulerManager manager, Job job, Site site,
-			WorkQueue stored) {
-		super(name, manager, job, site, stored);
-	}
 
 	public final void insideInit() {
-		fixedTableName = getJobSnapshot().getTableName();
-		selectSqlTemplate = getJob().getParameter(JobConTextConstants.SELECT_SQL_TEMPLATE, String.class);
-		updateSqlTemplate = getJob().getParameter(JobConTextConstants.UPDATE_SQL_TEMPLATE, String.class);
-		sendHttpUlr = getJob().getParameter(JobConTextConstants.SEND_HTTP_URL, String.class);
+		fixedTableName =getJob().getParam(JobConTextConstants.FIXED_TABLE_NAME);
+		selectSqlTemplate = getJob().getParam(JobConTextConstants.SELECT_SQL_TEMPLATE);
+		updateSqlTemplate = getJob().getParam(JobConTextConstants.UPDATE_SQL_TEMPLATE);
+		sendHttpUlr = getJob().getParam(JobConTextConstants.SEND_HTTP_URL);
 		selectSql=JobTableUtils.buildSelectSql(selectSqlTemplate, fixedTableName);
 		updateSql=JobTableUtils.buildUpdateSql(updateSqlTemplate, fixedTableName);
-		String httpMethod = getJob().getParameter(JobConTextConstants.SEND_HTTP_METHOD, String.class);
+		String httpMethod = getJob().getParam(JobConTextConstants.SEND_HTTP_METHOD);
 		method = "post".equalsIgnoreCase(httpMethod) ? HttpMethod.POST : HttpMethod.GET;
 	}
 	

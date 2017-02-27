@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import six.com.crawler.BaseTest;
 import six.com.crawler.common.DateFormats;
+import six.com.crawler.common.entity.JobParam;
 import six.com.crawler.common.entity.JobSnapshot;
 import six.com.crawler.common.entity.JobSnapshotState;
 import six.com.crawler.common.entity.WorkerErrMsg;
@@ -24,7 +25,7 @@ public class JobServiceTest extends BaseTest {
 
 	@Test
 	public void test() {
-		saveJobSnapshot();
+		queryJobParams();
 		// Node currentNode = jobWorkerManager.getCurrentNode();
 		// String nodeName = currentNode.getName();
 		// Map<String, Object> parameters = new HashMap<>();
@@ -34,16 +35,25 @@ public class JobServiceTest extends BaseTest {
 		// System.out.println(list);
 	}
 
+	public void queryJobParams() {
+		String jobName = "tmsf_project_list";
+		List<JobParam> list = jobService.queryJobParams(jobName);
+		if (null != list) {
+			for (JobParam jobParam : list) {
+				LOG.info("jobName:" + jobName + "[" + jobParam.getName() + ":" + jobParam.getValue() + "]");
+			}
+		}
+	}
+
 	public void saveJobSnapshot() {
 		String jobName = "test_name";
 		String jobSnapshotid = jobName + "_" + System.currentTimeMillis();
 		String hostNodeName = "test_hostNode";
 		JobSnapshot jobSnapshot = buildJobSnapshot(jobSnapshotid, jobName, hostNodeName);
 		jobService.registerJobSnapshotToRegisterCenter(jobSnapshot);
-		jobService.reportJobSnapshot(hostNodeName,jobName);
+		jobService.reportJobSnapshot(hostNodeName, jobName);
 		jobService.delJobSnapshotFromRegisterCenter(hostNodeName, jobName);
 	}
-
 
 	public void queryJobSnapshot() {
 		String jobName = "test_name";
@@ -71,7 +81,7 @@ public class JobServiceTest extends BaseTest {
 		workerSnapshot.setErrCount(5);
 		List<WorkerErrMsg> workerErrMsgs = new ArrayList<>();
 		for (int i = 0; i < count; i++) {
-			WorkerErrMsg workerErrMsg=new WorkerErrMsg();
+			WorkerErrMsg workerErrMsg = new WorkerErrMsg();
 			workerErrMsg.setJobSnapshotId(jobSnapshotid);
 			workerErrMsg.setJobName(jobName);
 			workerErrMsg.setWorkerName(workerName);
@@ -100,7 +110,7 @@ public class JobServiceTest extends BaseTest {
 		jobSnapshot.setErrCount(5);
 		List<WorkerSnapshot> WorkerSnapshots = new ArrayList<>();
 		for (int i = 0; i < count; i++) {
-			WorkerSnapshot workerSnapshot = buildWorkerSnapshot(jobSnapshotid, jobName, workerName + "_"+i,
+			WorkerSnapshot workerSnapshot = buildWorkerSnapshot(jobSnapshotid, jobName, workerName + "_" + i,
 					hostNodeName);
 			WorkerSnapshots.add(workerSnapshot);
 		}

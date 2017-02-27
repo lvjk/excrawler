@@ -12,18 +12,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import six.com.crawler.common.RedisManager;
-import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.PageType;
 import six.com.crawler.common.entity.ResultContext;
-import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.utils.ThreadUtils;
 import six.com.crawler.common.utils.UrlUtils;
-import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.work.Constants;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.RedisWorkQueue;
-import six.com.crawler.work.WorkQueue;
 
 /**
  * @author 作者
@@ -54,9 +50,10 @@ public class QichachaSearchWorker extends AbstractCrawlWorker {
 	private boolean hasNextPage;
 	private boolean selectPreItem = false;
 
-	public QichachaSearchWorker(String name, AbstractSchedulerManager manager, Job job, Site site, WorkQueue stored) {
-		super(name, manager, job, site, stored);
-		redisManager = manager.getRedisManager();
+
+	@Override
+	public void insideInit() {
+		redisManager =getManager().getRedisManager();
 		showProvinceBt = "//a[@id='show-province']";
 
 		clearProvinceBt = "//span[@class='m-l label btn-primary provinceChoosen appendSpan clearSpan']";
@@ -67,10 +64,6 @@ public class QichachaSearchWorker extends AbstractCrawlWorker {
 		clearCity = "//span[@class='m-l label btn-primary cityChoosen appendSpan clearSpan']";
 		cityList = "//div[@id='city_show']/dd/a";
 		nextPage = "//a[@id='ajaxpage' and text()='>']";
-	}
-
-	@Override
-	public void insideInit() {
 		qichachaQueue = new RedisWorkQueue(getManager().getRedisManager(), "qichacha");
 	}
 

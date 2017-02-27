@@ -6,17 +6,13 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.PageType;
 import six.com.crawler.common.entity.ResultContext;
-import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.http.HttpMethod;
 import six.com.crawler.common.utils.UrlUtils;
-import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.RedisWorkQueue;
-import six.com.crawler.work.WorkQueue;
 import six.com.crawler.work.WorkerLifecycleState;
 
 /**
@@ -41,9 +37,6 @@ public class TmsfProjectListWorker extends AbstractCrawlWorker {
 	int pageCount = -1;
 	String refererUrl;
 
-	public TmsfProjectListWorker(String name, AbstractSchedulerManager manager, Job job, Site site, WorkQueue stored) {
-		super(name, manager, job, site, stored);
-	}
 
 	private Page buildPage(int pageIndex, String refererUrl) {
 		String pageUrl = StringUtils.replace(urlTemplate, pageIndexTemplate, String.valueOf(pageIndex));

@@ -8,14 +8,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
-import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.ResultContext;
-import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.utils.WebDriverUtils;
-import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.WorkQueue;
 import six.com.crawler.work.WorkerLifecycleState;
 
 /**
@@ -31,10 +27,6 @@ public class CzfdcPresaleInfoWorker extends AbstractCrawlWorker {
 	String mainWindows;
 
 	Queue<String> queue;
-
-	public CzfdcPresaleInfoWorker(String name, AbstractSchedulerManager manager, Job job, Site site, WorkQueue stored) {
-		super(name, manager, job, site, stored);
-	}
 
 	@Override
 	protected void insideInit() {

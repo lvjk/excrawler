@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import six.com.crawler.common.entity.Job;
+import six.com.crawler.common.entity.Node;
 import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.http.HttpClient;
 import six.com.crawler.common.ocr.ImageDistinguish;
@@ -15,8 +16,7 @@ import six.com.crawler.common.service.HttpPorxyService;
 import six.com.crawler.common.service.JobService;
 import six.com.crawler.common.service.PageService;
 import six.com.crawler.common.service.SiteService;
-import six.com.crawler.common.service.impl.PaserPathServiceImpl;
-import six.com.crawler.work.WorkQueue;
+import six.com.crawler.common.service.impl.ExtractPathServiceImpl;
 import six.com.crawler.work.Worker;
 import six.com.crawler.common.RedisManager;
 import six.com.crawler.common.configure.SpiderConfigure;
@@ -37,7 +37,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager {
 	private SiteService siteService;
 
 	@Autowired
-	private PaserPathServiceImpl paserPathService;
+	private ExtractPathServiceImpl paserPathService;
 
 	@Autowired
 	private RegisterCenter registerCenter;
@@ -60,7 +60,6 @@ public abstract class AbstractSchedulerManager implements SchedulerManager {
 	@Autowired
 	private ImageDistinguish imageDistinguish;
 
-
 	private final static String WORKER_NAME_PREFIX = "job_worker";
 
 	/**
@@ -70,7 +69,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager {
 	 * @param job
 	 * @return
 	 */
-	protected String getWorkerNameByJob(Job job) {
+	public String getWorkerNameByJob(Job job) {
 		StringBuilder sbd = new StringBuilder();
 		sbd.append(WORKER_NAME_PREFIX).append("_");
 		sbd.append(job.getHostNode()).append("_");
@@ -81,14 +80,12 @@ public abstract class AbstractSchedulerManager implements SchedulerManager {
 	}
 
 	// 构建 job worker
-	protected Worker buildJobWorker(Job job, WorkQueue stored, Site site) {
+	protected Worker buildJobWorker(Job job) {
 		Worker newJobWorker = null;
 		String workerClass = job.getWorkerClass();
 		// 判断是否是htmljob 如果是那么调用 htmlJobWorkerBuilder 构建worker
 		Class<?> clz = null;
 		Constructor<?> constructor = null;
-		String workerName = null;
-
 		try {
 			clz = Class.forName(workerClass);
 		} catch (ClassNotFoundException e) {
@@ -96,8 +93,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager {
 		}
 		if (null != clz) {
 			try {
-				constructor = clz.getConstructor(String.class, AbstractSchedulerManager.class, Job.class, Site.class,
-						WorkQueue.class);
+				constructor = clz.getConstructor();
 			} catch (NoSuchMethodException e) {
 				LOG.error("NoSuchMethodException getConstructor err:" + clz, e);
 			} catch (SecurityException e) {
@@ -105,8 +101,9 @@ public abstract class AbstractSchedulerManager implements SchedulerManager {
 			}
 			if (null != constructor) {
 				try {
-					workerName = getWorkerNameByJob(job);
-					newJobWorker = (Worker) constructor.newInstance(workerName, this, job, site, stored);
+					newJobWorker = (Worker) constructor.newInstance();
+					newJobWorker.bindManager(this);
+					newJobWorker.bindJob(job);
 				} catch (InstantiationException e) {
 					LOG.error("InstantiationException  err:" + workerClass, e);
 				} catch (IllegalAccessException e) {
@@ -143,11 +140,11 @@ public abstract class AbstractSchedulerManager implements SchedulerManager {
 		this.registerCenter = registerCenter;
 	}
 
-	public PaserPathServiceImpl getPaserPathService() {
+	public ExtractPathServiceImpl getPaserPathService() {
 		return paserPathService;
 	}
 
-	public void setPaserPathService(PaserPathServiceImpl paserPathService) {
+	public void setPaserPathService(ExtractPathServiceImpl paserPathService) {
 		this.paserPathService = paserPathService;
 	}
 
@@ -206,7 +203,6 @@ public abstract class AbstractSchedulerManager implements SchedulerManager {
 	public void setImageDistinguish(ImageDistinguish imageDistinguish) {
 		this.imageDistinguish = imageDistinguish;
 	}
-
 
 	public abstract Node getCurrentNode();
 }

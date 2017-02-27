@@ -8,7 +8,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import six.com.crawler.BaseTest;
-import six.com.crawler.common.dao.PathDao;
+import six.com.crawler.common.dao.ExtractPathDao;
 import six.com.crawler.work.extract.ExtractPath;
 
 /**
@@ -19,7 +19,7 @@ import six.com.crawler.work.extract.ExtractPath;
 public class PathDaoTest extends BaseTest {
 
 	@Autowired
-	public PathDao pathdao;
+	public ExtractPathDao pathdao;
 
 	@Test
 	public void test() {

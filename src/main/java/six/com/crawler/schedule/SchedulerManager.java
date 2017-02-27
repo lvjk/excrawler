@@ -4,7 +4,8 @@ import java.util.List;
 import java.util.Observer;
 
 import six.com.crawler.common.entity.Job;
-import six.com.crawler.work.WorkQueue;
+import six.com.crawler.common.entity.Node;
+
 
 /**
  * @author 作者
@@ -92,7 +93,7 @@ public interface SchedulerManager extends Observer {
 	 * @param job
 	 * @return 各节点执行 job的相应
 	 */
-	public String callNodeExecuteJob(WorkQueue stored, Job job);
+	public String callNodeExecuteJob(Node node,String jobName);
 
 	/**
 	 * 通过email 给管理员发送信息

@@ -11,7 +11,9 @@ import six.com.crawler.common.entity.Site;
  */
 public interface SiteDao extends BaseDao{
 
-	@Select("select code,mainurl,downerType,proxy_enable,localAddress_enable,`describe` from ex_crawler_platform_site where code=#{sitecode}")
+	String TABLE_NAME="ex_crawler_platform_site";
+	
+	@Select("select code,mainurl,`describe` from "+TABLE_NAME+" where code=#{sitecode}")
 	public Site query(String sitecode);
 
 	public int save(Site site);

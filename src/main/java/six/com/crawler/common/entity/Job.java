@@ -2,11 +2,12 @@ package six.com.crawler.common.entity;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import six.com.crawler.common.constants.JobConTextConstants;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author sixliu E-mail:359852326@qq.com
@@ -14,53 +15,33 @@ import six.com.crawler.common.constants.JobConTextConstants;
  */
 public class Job implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 781122651512874550L;
+
 	private String name;// job 名字
-	private int level;// 任务级别
-	private String siteCode;// 站点code
-	private String queueName;// 队列 名字
-	private HttpProxyType httpProxyType;// http代理类型
-	private int loadImages;// 是否加载图片 2不加载
+
 	private String hostNode;// job所属哪个节点名字
-	private int needNodes;// 执行此任务需要的节点数
-	private String user = "admin";// 任务 所属用户
-	private long everyProcessDelayTime = 1000;// 每次处理时间的阈值 默认1000毫秒
-	private String describe;// 任务描述
+
+	private int level;// 任务级别
+
+	private long workFrequency = 1000;// 每次处理时间的阈值 默认1000毫秒
+
 	private int isScheduled;// 0不调度 1调度 是否开启调度
-	private String workerClass;// worker class
-	private String resultStoreClass;
+
+	private int needNodes;// 执行此任务需要的节点数
+
 	private String cronTrigger;// CronTrigger 时间
-	private String fixedTableName;//数据表名
-	private int isSnapshotTable;//是否启用镜像表
-	private Map<String, Object> map = new HashMap<>();
 
-	public String getCronTrigger() {
-		return cronTrigger;
-	}
+	private String workerClass;// worker class
+	
+	private String queueName;
 
-	public void setCronTrigger(String cronTrigger) {
-		this.cronTrigger = cronTrigger;
-	}
+	private String describe;// 任务描述
+	
+	private String user = "admin";// 任务 所属用户
 
-	public long getEveryProcessDelayTime() {
-		return everyProcessDelayTime;
-	}
+	private List<JobParam> paramList;
 
-	public void setEveryProcessDelayTime(long everyProcessDelayTime) {
-		this.everyProcessDelayTime = everyProcessDelayTime;
-	}
-
-	public String getUser() {
-		return user;
-	}
-
-	public void setUser(String user) {
-		this.user = user;
-	}
-
+	@XmlAttribute
 	public String getName() {
 		return name;
 	}
@@ -69,30 +50,7 @@ public class Job implements Serializable {
 		this.name = name;
 	}
 
-	public int getNeedNodes() {
-		return needNodes;
-	}
-
-	public void setNeedNodes(int needNodes) {
-		this.needNodes = needNodes;
-	}
-
-	public int getLevel() {
-		return level;
-	}
-
-	public void setLevel(int level) {
-		this.level = level;
-	}
-
-	public HttpProxyType getHttpProxyType() {
-		return httpProxyType;
-	}
-
-	public void setHttpProxyType(int httpProxyType) {
-		this.httpProxyType = HttpProxyType.getHttpProxyType(httpProxyType);
-	}
-
+	@XmlAttribute
 	public String getHostNode() {
 		return hostNode;
 	}
@@ -101,25 +59,25 @@ public class Job implements Serializable {
 		this.hostNode = hostNode;
 	}
 
-	public String getDescribe() {
-		return describe;
+	@XmlAttribute
+	public int getLevel() {
+		return level;
 	}
 
-	public void setDescribe(String describe) {
-		this.describe = describe;
+	public void setLevel(int level) {
+		this.level = level;
 	}
 
-	public String getQueueName() {
-		if (null == queueName) {
-			queueName = name;
-		}
-		return queueName;
+	@XmlAttribute
+	public long getWorkFrequency() {
+		return workFrequency;
 	}
 
-	public void setQueueName(String queueName) {
-		this.queueName = queueName;
+	public void setWorkFrequency(long workFrequency) {
+		this.workFrequency = workFrequency;
 	}
 
+	@XmlAttribute
 	public int getIsScheduled() {
 		return isScheduled;
 	}
@@ -128,6 +86,43 @@ public class Job implements Serializable {
 		this.isScheduled = isScheduled;
 	}
 
+	@XmlAttribute
+	public int getNeedNodes() {
+		return needNodes;
+	}
+
+	public void setNeedNodes(int needNodes) {
+		this.needNodes = needNodes;
+	}
+
+	@XmlAttribute
+	public String getUser() {
+		return user;
+	}
+
+	public void setUser(String user) {
+		this.user = user;
+	}
+	
+	@XmlElement(name = "queueName")
+	public String getQueueName() {
+		return queueName;
+	}
+
+	public void setQueueName(String queueName) {
+		this.queueName = queueName;
+	}
+	
+	@XmlElement(name = "cronTrigger")
+	public String getCronTrigger() {
+		return cronTrigger;
+	}
+
+	public void setCronTrigger(String cronTrigger) {
+		this.cronTrigger = cronTrigger;
+	}
+
+	@XmlElement(name = "workerClass")
 	public String getWorkerClass() {
 		return workerClass;
 	}
@@ -136,80 +131,55 @@ public class Job implements Serializable {
 		this.workerClass = workerClass;
 	}
 
-	public String getSiteCode() {
-		return siteCode;
+	@XmlElement(name = "describe")
+	public String getDescribe() {
+		return describe;
 	}
 
-	public void setSiteCode(String siteCode) {
-		this.siteCode = siteCode;
-	}
-	
-	public int getLoadImages() {
-		return loadImages;
+	public void setDescribe(String describe) {
+		this.describe = describe;
 	}
 
-	public void setLoadImages(int loadImages) {
-		this.loadImages = loadImages;
+	@XmlElement(name = "param")
+	public List<JobParam> getParamList() {
+		return paramList;
 	}
 
-	public String getResultStoreClass() {
-		return resultStoreClass;
+	public void setParamList(List<JobParam> paramList) {
+		this.paramList = paramList;
 	}
 
-	public void setResultStoreClass(String resultStoreClass) {
-		this.resultStoreClass = resultStoreClass;
-	}
-
-	@SuppressWarnings("unchecked")
-	public void init(List<JobParameter> list) {
-		for (JobParameter jobParameter : list) {
-			if (JobConTextConstants.SITE_CODE.equals(jobParameter.getAttName())) {
-				map.put(JobConTextConstants.SITE_CODE, jobParameter.getAttValue());
-			} else if (JobConTextConstants.SEED_PAGE.equals(jobParameter.getAttName())) {
-				Object ob = map.get(JobConTextConstants.SEED_PAGE);
-				List<String> seedPageMd5s = null;
-				if (null == ob) {
-					seedPageMd5s = new ArrayList<>();
-					map.put(JobConTextConstants.SEED_PAGE, seedPageMd5s);
-				} else {
-					seedPageMd5s = (List<String>) ob;
+	public String getParam(String paramKey) {
+		if (StringUtils.isBlank(paramKey)) {
+			throw new NullPointerException("paramKey mustn't be blank");
+		}
+		String param = null;
+		if (null != paramList) {
+			for (int i = 0; i < paramList.size(); i++) {
+				JobParam jobParam = paramList.get(i);
+				if (paramKey.equals(jobParam.getName())) {
+					param = jobParam.getValue();
+					break;
 				}
-				seedPageMd5s.add(jobParameter.getAttValue());
-			} else if (JobConTextConstants.RESULT_STORE_CLASS.equals(jobParameter.getAttName())) {
-				map.put(JobConTextConstants.RESULT_STORE_CLASS, jobParameter.getAttValue());
-			} else {
-				map.put(jobParameter.getAttName(), jobParameter.getAttValue());
 			}
-
 		}
+		return param;
 	}
 
-	public <T> T getParameter(String key, Class<T> claz) {
-		Object ob = map.get(key);
-		T result = null;
-		if (null != ob) {
-			result = claz.cast(ob);
+	public List<String> getParams(String paramKey) {
+		if (StringUtils.isBlank(paramKey)) {
+			throw new NullPointerException("paramKey mustn't be blank");
 		}
-		return result;
+		List<String> resultParams = new ArrayList<>();
+		if (null != paramList) {
+			for (int i = 0; i < paramList.size(); i++) {
+				JobParam jobParam = paramList.get(i);
+				if (paramKey.equals(jobParam.getName())) {
+					resultParams.add(jobParam.getValue());
+				}
+			}
+		}
+		return resultParams;
 	}
 
-	public void setParameter(String key, Object value) {
-		map.put(key, value);
-	}
-	
-	public String getFixedTableName() {
-		return fixedTableName;
-	}
-
-	public void setFixedTableName(String fixedTableName) {
-		this.fixedTableName = fixedTableName;
-	}
-
-	public int getIsSnapshotTable() {
-		return isSnapshotTable;
-	}
-
-	public void setIsSnapshotTable(int isSnapshotTable) {
-		this.isSnapshotTable = isSnapshotTable;
-	}
 }

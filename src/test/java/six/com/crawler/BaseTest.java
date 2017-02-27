@@ -18,15 +18,15 @@ import six.com.crawler.common.configure.SpiderConfigure;
 import six.com.crawler.common.dao.DataTableDao;
 import six.com.crawler.common.dao.JobSnapshotDao;
 import six.com.crawler.common.dao.JobDao;
-import six.com.crawler.common.dao.JobParameterDao;
+import six.com.crawler.common.dao.JobParamDao;
 import six.com.crawler.common.dao.PageDao;
-import six.com.crawler.common.dao.PathDao;
+import six.com.crawler.common.dao.ExtractPathDao;
 import six.com.crawler.common.dao.SiteDao;
 import six.com.crawler.common.http.HttpClient;
 import six.com.crawler.common.ocr.ImageDistinguish;
 import six.com.crawler.common.service.HttpPorxyService;
 import six.com.crawler.common.service.JobService;
-import six.com.crawler.common.service.PaserPathService;
+import six.com.crawler.common.service.ExtractPathService;
 import six.com.crawler.common.service.SiteService;
 
 /**
@@ -49,7 +49,7 @@ public  class BaseTest extends AbstractJUnit4SpringContextTests {
 	public SiteService siteService;
 
 	@Autowired
-	public PaserPathService paserPathService;
+	public ExtractPathService paserPathService;
 
 	@Autowired
 	public RegisterCenter registerCenter;
@@ -66,13 +66,13 @@ public  class BaseTest extends AbstractJUnit4SpringContextTests {
 	@Autowired
 	public SiteDao siteDao;
 	@Autowired
-	public PathDao pathdao;
+	public ExtractPathDao pathdao;
 	
 	@Autowired
 	public JobDao jobDao;
 
 	@Autowired
-	public JobParameterDao jobParameterDao;
+	public JobParamDao jobParameterDao;
 
 	@Autowired
 	public RedisManager redisManager;

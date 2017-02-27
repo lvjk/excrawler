@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import com.alibaba.druid.pool.DruidDataSource;
 
 import six.com.crawler.common.constants.JobConTextConstants;
+import six.com.crawler.common.entity.JobSnapshot;
 import six.com.crawler.common.utils.DbHelper;
 import six.com.crawler.common.utils.JobTableUtils;
 import six.com.crawler.work.AbstractWorker;
@@ -41,7 +42,7 @@ public class DataBaseStore extends StoreAbstarct implements AutoCloseable {
 
 	public DataBaseStore(AbstractWorker worker, List<String> resultKeys) {
 		super(worker, resultKeys);
-		String everySendSizeStr = worker.getJob().getParameter(JobConTextConstants.BATCH_SIZE, String.class);
+		String everySendSizeStr = worker.getJob().getParam(JobConTextConstants.BATCH_SIZE);
 		if (null != everySendSizeStr) {
 			try {
 				batchSize = Integer.valueOf(everySendSizeStr);
@@ -50,21 +51,24 @@ public class DataBaseStore extends StoreAbstarct implements AutoCloseable {
 			}
 
 		}
-		dbUrl = worker.getJob().getParameter(JobConTextConstants.DB_URL, String.class);
-		dbUser = worker.getJob().getParameter(JobConTextConstants.DB_USER, String.class);
-		dbPasswd = worker.getJob().getParameter(JobConTextConstants.DB_PASSWD, String.class);
-		dbDriverClassName = worker.getJob().getParameter(JobConTextConstants.DB_DRIVER_CLASS_NAME, String.class);
+		dbUrl = worker.getJob().getParam(JobConTextConstants.DB_URL);
+		dbUser = worker.getJob().getParam(JobConTextConstants.DB_USER);
+		dbPasswd = worker.getJob().getParam(JobConTextConstants.DB_PASSWD);
+		dbDriverClassName = worker.getJob().getParam(JobConTextConstants.DB_DRIVER_CLASS_NAME);
 		datasource = new DruidDataSource();
 		datasource.setUrl(dbUrl);
 		datasource.setDriverClassName(dbDriverClassName);
 		datasource.setUsername(dbUser);
 		datasource.setPassword(dbPasswd);
 		datasource.setMaxActive(1);
-		tableName = worker.getJobSnapshot().getTableName();
-		insertSqlTemplate = worker.getJob().getParameter(JobConTextConstants.INSERT_SQL_TEMPLATE, String.class);
+		String jobHostNode = getAbstractWorker().getJob().getHostNode();
+		String jobName = getAbstractWorker().getJob().getName();
+		JobSnapshot jobSnapshot = getAbstractWorker().getManager().getJobService()
+				.getJobSnapshotFromRegisterCenter(jobHostNode, jobName);
+		tableName = jobSnapshot.getTableName();
+		insertSqlTemplate = worker.getJob().getParam(JobConTextConstants.INSERT_SQL_TEMPLATE);
 		insertSql = JobTableUtils.buildInsertSql(insertSqlTemplate, tableName);
-		createTableSqlTemplate = worker.getJob().getParameter(JobConTextConstants.CREATE_TABLE_SQL_TEMPLATE,
-				String.class);
+		createTableSqlTemplate = worker.getJob().getParam(JobConTextConstants.CREATE_TABLE_SQL_TEMPLATE);
 		initTable();
 	}
 
@@ -102,28 +106,29 @@ public class DataBaseStore extends StoreAbstarct implements AutoCloseable {
 	@Override
 	protected int insideStore(List<Map<String, String>> results) throws StoreException {
 		int storeCount = 0;
-		if(null!=results){
-			List<Object> parameters=new ArrayList<>();
-			for(Map<String, String> dataMap:results){
+		if (null != results) {
+			List<Object> parameters = new ArrayList<>();
+			for (Map<String, String> dataMap : results) {
+				parameters.clear();
 				for (String resultKey : getResultList()) {
-					String param=dataMap.get(resultKey);
+					String param = dataMap.get(resultKey);
 					parameters.add(param);
 				}
-				storeCount+=doSql(insertSql, parameters);
+				storeCount += doSql(insertSql, parameters);
 			}
 		}
 		return storeCount;
 	}
 
 	private int doSql(String sql, List<Object> parameter) throws StoreException {
-		int storeCount=0;
+		int storeCount = 0;
 		Connection connection = null;
 		PreparedStatement ps = null;
 		try {
 			connection = datasource.getConnection();
 			ps = connection.prepareStatement(sql);
 			DbHelper.setPreparedStatement(ps, parameter);
-			storeCount=ps.executeUpdate();
+			storeCount = ps.executeUpdate();
 		} catch (SQLException e) {
 			if (!e.getMessage().contains("Duplicate entry")) {
 				throw new StoreException("execute sql err:" + sql, e);

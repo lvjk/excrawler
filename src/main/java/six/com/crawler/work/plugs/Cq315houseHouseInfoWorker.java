@@ -10,19 +10,16 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.ResultContext;
-import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.http.HttpMethod;
 import six.com.crawler.common.ocr.ImageDistinguish;
 import six.com.crawler.common.ocr.ImageUtils;
 import six.com.crawler.common.utils.JsUtils;
 import six.com.crawler.common.utils.JsonUtils;
 import six.com.crawler.common.utils.UrlUtils;
-import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.WorkQueue;
+
 import six.com.crawler.work.downer.PostContentType;
 
 /**
@@ -35,14 +32,9 @@ public class Cq315houseHouseInfoWorker extends AbstractCrawlWorker {
 	private ImageDistinguish imageDistinguish;
 	private Map<String, String> fieldMap;
 
-	public Cq315houseHouseInfoWorker(String name, AbstractSchedulerManager manager, Job job, Site site,
-			WorkQueue stored) {
-		super(name, manager, job, site, stored);
-		imageDistinguish = getManager().getImageDistinguish();
-	}
-
 	@Override
 	protected void insideInit() {
+		imageDistinguish = getManager().getImageDistinguish();
 		fieldMap = new HashMap<String, String>();
 		fieldMap.put("roomNum", "roomNum");// 房号
 		fieldMap.put("block", "buildingNum");// 楼号
@@ -59,7 +51,7 @@ public class Cq315houseHouseInfoWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	public void onComplete(Page p,ResultContext resultContext) {
+	public void onComplete(Page p, ResultContext resultContext) {
 
 	}
 

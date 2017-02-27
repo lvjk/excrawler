@@ -6,14 +6,10 @@ import java.util.List;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
-import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.ResultContext;
-import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.utils.WebDriverUtils;
-import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.WorkQueue;
 
 /**
  * @author 作者
@@ -40,9 +36,6 @@ public class SzplGovPreSaleWorker extends AbstractCrawlWorker {
 
 	int findElementTimeout = 1000;
 
-	public SzplGovPreSaleWorker(String name, AbstractSchedulerManager manager, Job job, Site site, WorkQueue stored) {
-		super(name, manager, job, site, stored);
-	}
 
 	@Override
 	protected void insideInit() {

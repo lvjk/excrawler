@@ -3,6 +3,7 @@ package six.com.crawler.common.dao.provider;
 import java.util.List;
 import java.util.Map;
 
+import six.com.crawler.common.dao.BaseDao;
 import six.com.crawler.common.dao.ExtractItemDao;
 import six.com.crawler.work.extract.ExtractItem;
 
@@ -11,28 +12,33 @@ import six.com.crawler.work.extract.ExtractItem;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年9月13日 下午12:05:10
  */
-public class ExtractItemDaoProvider {
+public class ExtractItemDaoProvider extends BaseProvider{
 
+	private String saveColumns="jobName,"
+			+ "serialNub,"
+			+ "pathName,"
+			+ "`primary`,"
+			+ "`type`,"
+			+ "outputType,"
+			+ "mustHaveResult,"
+			+ "`describe`";
+	
 	@SuppressWarnings("unchecked")
-	public String save(Map<String, Object> map) {
-		Object pm = map.get("list");
-		List<ExtractItem> paserResults = (List<ExtractItem>) pm;
-		StringBuilder sql = new StringBuilder("INSERT INTO "+ExtractItemDao.tableName+"("
-				+ "jobName,pathName,type,resultKey,mustHaveResult,pageType,`describe`) VALUES");
-		for (ExtractItem paserResult : paserResults) {
-			sql.append("(");
-			sql.append("'").append(paserResult.getJobName()).append("',");
-			sql.append("'").append(paserResult.getPathName()).append("',");
-			sql.append("").append(paserResult.getType()).append(",");
-			sql.append("'").append(paserResult.getResultKey()).append("',");
-			sql.append("").append(paserResult.getMustHaveResult().get()).append(",");
-			sql.append("").append(paserResult.getPageType().value()).append(",");
-			sql.append("'").append(paserResult.getDescribe()).append("'");
-			sql.append(")");
-			sql.append(",");
-		}
-		sql.deleteCharAt(sql.length() - 1);
-		sql.append(";");
-		return sql.toString();
+	public String batchSave(Map<String, Object> map) {
+		List<ExtractItem> extractItems = (List<ExtractItem>) map.get(BaseDao.BATCH_SAVE_PARAM);
+		String values="(#{list["+INDEX_FLAG+"].jobName},"
+				+ "#{list["+INDEX_FLAG+"].serialNub},"
+				+ "#{list["+INDEX_FLAG+"].pathName},"
+				+ "#{list["+INDEX_FLAG+"].primary},"
+				+ "#{list["+INDEX_FLAG+"].type},"
+				+ "#{list["+INDEX_FLAG+"].outputType},"
+				+ "#{list["+INDEX_FLAG+"].mustHaveResult},"
+				+ "#{list["+INDEX_FLAG+"].describe}";
+		StringBuilder sbd = new StringBuilder();  
+		sbd.append("insert into ").append(ExtractItemDao.TABLE_NAME);  
+		sbd.append("(").append(saveColumns).append(") ");  
+		sbd.append("values");  
+		sbd.append(setBatchSaveSql(values,extractItems));
+		return sbd.toString();
 	}
 }

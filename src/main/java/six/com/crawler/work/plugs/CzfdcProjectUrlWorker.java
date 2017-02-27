@@ -6,16 +6,12 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
-import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.PageType;
 import six.com.crawler.common.entity.ResultContext;
-import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.utils.UrlUtils;
 import six.com.crawler.common.utils.WebDriverUtils;
-import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.WorkQueue;
 import six.com.crawler.work.WorkerLifecycleState;
 
 /**
@@ -31,11 +27,7 @@ public class CzfdcProjectUrlWorker extends AbstractCrawlWorker {
 	String pageCountXpath = "//td[@id='getPage']/a/div";
 	String selectPageIndexXpath = "//td[@id='getPage']/a/div[@class='pageClass04']";
 	int maxPageNum;
-
-	public CzfdcProjectUrlWorker(String name, AbstractSchedulerManager manager, Job job, Site site, WorkQueue stored) {
-		super(name, manager, job, site, stored);
-	}
-
+	
 	@Override
 	protected void insideInit() {
 		WebDriver webDriver = getDowner().getWebDriver();

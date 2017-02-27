@@ -44,14 +44,14 @@ public class TaskMoveToProduct {
 		Connection srcConn = null;
 		Connection targetConn = null;
 		
-		List<MoveInfo> moveInfoList=buildMoveBaseInfo("tjfdc");
+		List<MoveInfo> moveInfoList=buildMoveBaseInfo("tmsf");
 		moveInfoList.addAll(
-				buildMoveJobInfo("tjfdc_project_url",
-						"tjfdc_project_info",
-						"tjfdc_presale_info",
-						"tjfdc_building_info",
-						"tjfdc_house_state",
-						"tjfdc_house_info"));
+				buildMoveJobInfo("tmsf_project_list",
+						"tmsf_project_info",
+						"tmsf_presell_url",
+						"tmsf_presell_info",
+						"tmsf_house_url",
+						"tmsf_house_info"));
 		try {
 			srcConn = testDatasource.getConnection();
 			targetConn = datasource.getConnection();
@@ -71,31 +71,32 @@ public class TaskMoveToProduct {
 		for(String jobName:jobNames){
 			// job移動信息
 			MoveInfo jobMoveInfo = new MoveInfo();
-			jobMoveInfo.selectSql = "select `name`,siteCode,hostNode,level,workerClass,"
-					+ "needNodes,everyProcessDelayTime,queueName,user,"
-					+ "resultStoreClass,`state`,isScheduled,cronTrigger,`describe`"
+			jobMoveInfo.selectSql = "select `name`,hostNode,level,workFrequency,"
+					+ "isScheduled,needNodes,cronTrigger,workerClass,"
+					+ "queueName,user,`describe`"
 					+ "  from ex_crawler_platform_job where name=?";
-			jobMoveInfo.insertSql = "insert into ex_crawler_platform_job" + "(`name`,siteCode,hostNode,level,workerClass,"
-					+ "needNodes,everyProcessDelayTime,queueName,user,"
-					+ "resultStoreClass,`state`,isScheduled,cronTrigger,`describe`) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+			jobMoveInfo.insertSql = "insert into ex_crawler_platform_job" 
+					+ "(`name`,hostNode,level,workFrequency,"
+					+ "isScheduled,needNodes,cronTrigger,workerClass,"
+					+ "queueName,user,`describe`) VALUES(?,?,?,?,?,?,?,?,?,?,?)";
 			jobMoveInfo.selectParameters = Arrays.asList(jobName);
 			moveInfoList.add(jobMoveInfo);
 			// job參數移動信息
 			MoveInfo jobParameterMoveInfo = new MoveInfo();
-			jobParameterMoveInfo.selectSql = "select jobName,attName,attValue"
-					+ "  from ex_crawler_platform_job_parameter where jobName=?";
-			jobParameterMoveInfo.insertSql = "insert into ex_crawler_platform_job_parameter"
-					+ "(jobName,attName,attValue) VALUES(?,?,?)";
+			jobParameterMoveInfo.selectSql = "select jobName,name,value"
+					+ "  from ex_crawler_platform_job_param where jobName=?";
+			jobParameterMoveInfo.insertSql = "insert into ex_crawler_platform_job_param"
+					+ "(jobName,name,value) VALUES(?,?,?)";
 			jobParameterMoveInfo.selectParameters = Arrays.asList(jobName);
 			moveInfoList.add(jobParameterMoveInfo);
 			// job解析組件移動信息
 			MoveInfo jobPaserComponentMoveInfo = new MoveInfo();
-			jobPaserComponentMoveInfo.selectSql = "select `name`,jobName,serialNub,output,`type`,"
-					+ "paserClassName,resultKey,mustHaveResult,depth,`describe`,pageType "
-					+ "  from ex_crawler_platform_paser_component where jobName=?";
-			jobPaserComponentMoveInfo.insertSql = "insert into ex_crawler_platform_paser_component"
-					+ "(`name`,jobName,serialNub,output,`type`,paserClassName,"
-					+ "resultKey,mustHaveResult,depth,`describe`,pageType) VALUES(?,?,?,?,?,?,?,?,?,?,?)";
+			jobPaserComponentMoveInfo.selectSql = "select jobName,serialNub,pathName,`primary`,`type`,"
+					+ "outputType,outputKey,mustHaveResult,`describe` "
+					+ "  from ex_crawler_platform_extract_item where jobName=?";
+			jobPaserComponentMoveInfo.insertSql = "insert into ex_crawler_platform_extract_item"
+					+ "(jobName,serialNub,`pathName`,`primary`,`type`,outputType,"
+					+ "outputKey,mustHaveResult,`describe`) VALUES(?,?,?,?,?,?,?,?,?)";
 			jobPaserComponentMoveInfo.selectParameters = Arrays.asList(jobName);
 			moveInfoList.add(jobPaserComponentMoveInfo);
 		}
@@ -107,10 +108,10 @@ public class TaskMoveToProduct {
 		List<MoveInfo> moveInfoList = new ArrayList<TaskMoveToProduct.MoveInfo>();
 		// 站點移動信息
 		MoveInfo siteMoveInfo = new MoveInfo();
-		siteMoveInfo.selectSql = "select `code`,mainurl,proxy_enable,localAddress_enable,downerType,`describe`"
+		siteMoveInfo.selectSql = "select `code`,mainurl,`describe`"
 				+ "  from ex_crawler_platform_site where `code`=?";
 		siteMoveInfo.insertSql = "insert into ex_crawler_platform_site"
-				+ "(`code`,mainurl,proxy_enable,localAddress_enable,downerType,`describe`) VALUES(?,?,?,?,?,?)";
+				+ "(`code`,mainurl,`describe`) VALUES(?,?,?)";
 		siteMoveInfo.selectParameters = Arrays.asList(site);
 		moveInfoList.add(siteMoveInfo);
 
@@ -127,13 +128,13 @@ public class TaskMoveToProduct {
 
 		// 解析path移動信息
 		MoveInfo pathMoveInfo = new MoveInfo();
-		pathMoveInfo.selectSql = "select `name`,siteCode,ranking,`type`,path,filterPath,reslutAttName,appendHead,"
-				+ "appendEnd,containKeyWord,replaceWord,replaceValue,depth,emptyExtractCount,`describe`,compareAttName"
-				+ "  from ex_crawler_platform_paser_path where siteCode=?";
-		pathMoveInfo.insertSql = "insert into ex_crawler_platform_paser_path"
-				+ "(`name`,siteCode,ranking,`type`,path,filterPath,reslutAttName,appendHead,appendEnd,"
-				+ "containKeyWord,replaceWord,replaceValue,depth,emptyExtractCount,"
-				+ "`describe`,compareAttName) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		pathMoveInfo.selectSql = "select `name`,siteCode,ranking,path,filterPath,extractAttName,appendHead,"
+				+ "appendEnd,compareAttName,containKeyWord,replaceWord,replaceValue,extractEmptyCount,`describe`"
+				+ "  from ex_crawler_platform_extract_path where siteCode=?";
+		pathMoveInfo.insertSql = "insert into ex_crawler_platform_extract_path"
+				+ "(`name`,siteCode,ranking,path,filterPath,extractAttName,appendHead,appendEnd,"
+				+ "compareAttName,containKeyWord,replaceWord,replaceValue,extractEmptyCount,"
+				+ "`describe`) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 		pathMoveInfo.selectParameters = Arrays.asList(site);
 		moveInfoList.add(pathMoveInfo);
 		return moveInfoList;

@@ -10,11 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 import six.com.crawler.common.constants.JobConTextConstants;
-import six.com.crawler.common.entity.Job;
-import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.utils.DbHelper;
 import six.com.crawler.common.utils.JobTableUtils;
-import six.com.crawler.schedule.AbstractSchedulerManager;
 
 /**
  * @author 作者
@@ -33,10 +30,6 @@ public class DataBaseMergeTableWorker extends DataBaseAbstractWorker {
 	private String delSqlTemplate;
 	private List<String> insertFields;
 
-	public DataBaseMergeTableWorker(String name, AbstractSchedulerManager manager, Job job, Site site,
-			WorkQueue stored) {
-		super(name, manager, job, site, stored);
-	}
 
 	@Override
 	protected void insideWork() throws Exception {
@@ -44,7 +37,8 @@ public class DataBaseMergeTableWorker extends DataBaseAbstractWorker {
 			Connection connection = null;
 			try {
 				Long tableNameSuffix = tableNameSuffixs.get(0);
-				String SnapshotTableName = JobTableUtils.buildJobTableName(fixedTableName, tableNameSuffix);
+				String SnapshotTableName = JobTableUtils.buildJobTableName(fixedTableName,
+						String.valueOf(tableNameSuffix));
 				connection = getConnection();
 				// 1 固定表中的数据对比镜像表是否存在如果不存在那么设置islive=0
 				doFixedTable(connection, SnapshotTableName);
@@ -202,14 +196,14 @@ public class DataBaseMergeTableWorker extends DataBaseAbstractWorker {
 	protected void handle(Connection connection, List<Map<String, Object>> datas) throws Exception {
 
 	}
-	
+
 	@Override
 	protected void insideInit() {
-		fixedTableName = getJobSnapshot().getTableName();
-		selectSqlTemplate = getJob().getParameter(JobConTextConstants.SELECT_SQL_TEMPLATE, String.class);
-		inserSqlTemplate = getJob().getParameter(JobConTextConstants.INSERT_SQL_TEMPLATE, String.class);
-		updateSqlTemplate = getJob().getParameter(JobConTextConstants.UPDATE_SQL_TEMPLATE, String.class);
-		delSqlTemplate = getJob().getParameter(JobConTextConstants.DEL_SQL_TEMPLATE, String.class);
+		fixedTableName = getJob().getParam(JobConTextConstants.FIXED_TABLE_NAME);
+		selectSqlTemplate = getJob().getParam(JobConTextConstants.SELECT_SQL_TEMPLATE);
+		inserSqlTemplate = getJob().getParam(JobConTextConstants.INSERT_SQL_TEMPLATE);
+		updateSqlTemplate = getJob().getParam(JobConTextConstants.UPDATE_SQL_TEMPLATE);
+		delSqlTemplate = getJob().getParam(JobConTextConstants.DEL_SQL_TEMPLATE);
 		selectSqlTemplate = "";
 		Connection connection = null;
 		List<String> queryTables = null;
@@ -235,5 +229,4 @@ public class DataBaseMergeTableWorker extends DataBaseAbstractWorker {
 			}
 		}
 	}
-
 }

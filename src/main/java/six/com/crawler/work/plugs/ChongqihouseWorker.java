@@ -2,14 +2,10 @@ package six.com.crawler.work.plugs;
 
 import java.util.List;
 
-import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.PageType;
 import six.com.crawler.common.entity.ResultContext;
-import six.com.crawler.common.entity.Site;
-import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.WorkQueue;
 
 /**
  * @author 作者
@@ -18,17 +14,13 @@ import six.com.crawler.work.WorkQueue;
  */
 public class ChongqihouseWorker extends AbstractCrawlWorker {
 
-	public ChongqihouseWorker(String name, AbstractSchedulerManager manager, Job job, Site site, WorkQueue stored) {
-		super(name, manager, job, site, stored);
-	}
-
 	@Override
 	protected void insideInit() {
 
 	}
 
 	@Override
-	public void onComplete(Page p,ResultContext resultContext) {
+	public void onComplete(Page p, ResultContext resultContext) {
 
 	}
 
