@@ -68,7 +68,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		if (StringUtils.isBlank(queueName)) {
 			throw new NullPointerException("please set queue's name");
 		}
-		workQueue= new RedisWorkQueue(getManager().getRedisManager(), queueName);
+		workQueue = new RedisWorkQueue(getManager().getRedisManager(), queueName);
 		// 3.只有是当前节点 才会修复队列
 		if (getManager().getCurrentNode().getName().equals(getJob().getHostNode())) {
 			workQueue.repair();
@@ -76,7 +76,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		// 4.初始化下载器
 		String downerType = getJob().getParam(JobConTextConstants.DOWNER_TYPE);
 		downer = DownerManager.getInstance().buildDowner(DownerType.valueOf(Integer.valueOf(downerType)), this);
-		String httpProxyTypeStr=getJob().getParam(JobConTextConstants.HTTP_PROXY_TYPE);
+		String httpProxyTypeStr = getJob().getParam(JobConTextConstants.HTTP_PROXY_TYPE);
 		httpProxyType = HttpProxyType.valueOf(Integer.valueOf(httpProxyTypeStr));
 
 		// 5.初始化内容抽取
@@ -84,7 +84,6 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		if (null != extractItems && !extractItems.isEmpty()) {
 			primaryKeys = new ArrayList<>();
 			outResultKey = new ArrayList<>();
-			outResultKey.add(Constants.DEFAULT_RESULT_ID);
 			for (ExtractItem extractItem : extractItems) {
 				if (extractItem.getOutputType() == 1) {
 					outResultKey.add(extractItem.getOutputKey());
@@ -93,9 +92,10 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 					primaryKeys.add(extractItem.getOutputKey());
 				}
 			}
-			if (primaryKeys.isEmpty()) {
+			if (!outResultKey.isEmpty() && primaryKeys.isEmpty()) {
 				throw new RuntimeException("there is a primary's key at least");
 			}
+			outResultKey.add(0, Constants.DEFAULT_RESULT_ID);
 			outResultKey.add(Constants.DEFAULT_RESULT_COLLECTION_DATE);
 			outResultKey.add(Constants.DEFAULT_RESULT_ORIGIN_URL);
 			extracter = new CssSelectExtracter(this, extractItems);
@@ -204,7 +204,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 	 * @return
 	 */
 	private void assembleExtractResult(ResultContext resultContext) {
-		if(null!=primaryKeys&&!primaryKeys.isEmpty()){
+		if (null != primaryKeys && !primaryKeys.isEmpty()) {
 			String primaryKey = primaryKeys.get(0);
 			List<String> mainResultList = resultContext.getExtractResult(primaryKey);
 			if (null != mainResultList) {
