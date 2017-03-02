@@ -24,9 +24,36 @@ $(function() {
 	$("#create_job_bt").click(function(){
 		searchJob();
 	});
+	$("#upload_jobProfile").click(function() {
+		uploadJobProfile();
+	});
 	// 加载数据
-	loadTable("/crawler/job/getDefault", "get", "");
+	loadTable("/crawler/job/query/1/0", "get", "");
 });
+
+function uploadJobProfile() {
+var url="/crawler/job/upload/profile";
+var formData = new FormData();
+formData.append("file", $("#jobProfile")[0].files[0]);
+$.ajax({
+	url : url,
+	type : 'POST',
+	data : formData,
+	// 告诉jQuery不要去处理发送的数据
+	processData : false,
+	// 告诉jQuery不要去设置Content-Type请求头
+	contentType : false,
+	beforeSend : function() {
+		console.log("正在进行，请稍候");
+	},
+	success : function(responseStr) {
+		alert(responseStr.msg);
+	},
+	error : function(responseStr) {
+		console.log("error");
+	}
+});
+}
 
 function loadTable(url, method, params) {
 	if ("get" == method) {
@@ -109,7 +136,8 @@ function showJobTable(data) {
 		var otherOperation = "<a  href=\"javascript:showJobRunningRecord('" + job.name
 		+ "')\">记录</a>&nbsp;";
 		otherOperation += "<a href=\"javascript:showJobInfo('" + job.name
-				+ "')\">详细</a>";
+				+ "')\">详细</a>&nbsp;";
+		otherOperation += "<a href=\"/crawler/job/download/profile/"+ job.name+"\"  >下载</a>";
 		$(otherOperation).appendTo(otherTd);
 		otherTd.appendTo(tr);
 		
