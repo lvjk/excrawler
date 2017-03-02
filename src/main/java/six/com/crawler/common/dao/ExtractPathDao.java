@@ -2,6 +2,7 @@ package six.com.crawler.common.dao;
 
 import java.util.List;
 
+import org.apache.ibatis.annotations.DeleteProvider;
 import org.apache.ibatis.annotations.InsertProvider;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.SelectProvider;
@@ -23,13 +24,20 @@ public interface ExtractPathDao extends BaseDao{
 	String PARAM_SITE_CODE="siteCode";
 	
 	
+	@SelectProvider(type = ExtractPathDaoProvider.class, method = "queryBySite")
+	public List<ExtractPath> queryBySite(@Param("siteCode")String siteCode);
+	
 	@SelectProvider(type = ExtractPathDaoProvider.class, method = "query")
 	public List<ExtractPath> query(@Param("pathName")String pathName,@Param("siteCode")String siteCode);
 
 	@InsertProvider(type = ExtractPathDaoProvider.class, method = "batchSave")
 	public int batchSave(@Param(BATCH_SAVE_PARAM)List<ExtractPath> paserResults);
-
-	public int delete(String id);
+	
+	@DeleteProvider(type = ExtractPathDaoProvider.class, method = "delByName")
+	public int delByName(String name);
+	
+	@DeleteProvider(type = ExtractPathDaoProvider.class, method = "delBySiteCode")
+	public int delBySiteCode(String siteCode);
 
 	public int update(ExtractPath t);
 

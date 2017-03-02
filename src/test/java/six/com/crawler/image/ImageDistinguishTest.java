@@ -23,8 +23,8 @@ public class ImageDistinguishTest extends BaseTest {
 	public void test() {
 		// String dirPath = "F:/six/ocr/image/err/";
 		// String dirPath = "F:/six/ocr/image/test/";
-		imageDistinguish.loadToRedis("F:/six/ocr/image/char");
-		// doErrImage(dirPath);
+		//imageDistinguish.loadToRedis("F:/six/ocr/image/char");
+		//doErrImage("F:/test/cq315image");
 	}
 
 	String charPath = "F:/six/ocr/image/test/char";

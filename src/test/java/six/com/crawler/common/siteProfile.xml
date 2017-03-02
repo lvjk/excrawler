@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?><siteProfile>
+<site code="chongqi_cqgtfw_gov">
+<mainUrl>http://www.cqgtfw.gov.cn/</mainUrl>
+<describe>重启房产管理局</describe>
+</site>
+<extractPath appendEnd="" appendHead="" compareAttName="text" containKeyWord="发证日期" extractAttName="text" name="issueDate" ranking="1" siteCode="chongqi_cqgtfw_gov">
+<path>div[class=wrap-c-m]&gt;table&gt;tbody&gt;tr&gt;td&gt;table&gt;tbody&gt;tr</path>
+<filterPath>empty</filterPath>
+<replaceWord>发证日期</replaceWord>
+<describe>发证日期</describe>
+</extractPath>
+<extractPath appendEnd="" appendHead="" compareAttName="text" containKeyWord="售房单位名称" extractAttName="text" name="companyName" ranking="1" siteCode="chongqi_cqgtfw_gov">
+<path>div[class=wrap-c-m]&gt;table&gt;tbody&gt;tr&gt;td&gt;table&gt;tbody&gt;tr</path>
+<filterPath>empty</filterPath>
+<replaceWord>售房单位名称</replaceWord>
+<describe>售房单位名称</describe>
+</extractPath>
+<extractPath appendEnd="" appendHead="" compareAttName="text" containKeyWord="预售证号" extractAttName="text" name="presellCode" ranking="1" siteCode="chongqi_cqgtfw_gov">
+<path>div[class=wrap-c-m]&gt;table&gt;tbody&gt;tr&gt;td&gt;table&gt;tbody&gt;tr</path>
+<filterPath>empty</filterPath>
+<replaceWord>预售证号</replaceWord>
+<describe>预售证号</describe>
+</extractPath>
+<extractPath appendEnd="" appendHead="" compareAttName="text" containKeyWord="项目名称" extractAttName="text" name="projectName" ranking="1" siteCode="chongqi_cqgtfw_gov">
+<path>div[class=wrap-c-m]&gt;table&gt;tbody&gt;tr&gt;td&gt;table&gt;tbody&gt;tr</path>
+<filterPath>empty</filterPath>
+<replaceWord>项目名称</replaceWord>
+<describe>项目名称</describe>
+</extractPath>
+<extractPath appendEnd="" appendHead="" compareAttName="text" containKeyWord="业务类型" extractAttName="text" name="businessType" ranking="1" siteCode="chongqi_cqgtfw_gov">
+<path>div[class=wrap-c-m]&gt;table&gt;tbody&gt;tr&gt;td&gt;table&gt;tbody&gt;tr</path>
+<filterPath>empty</filterPath>
+<replaceWord>业务类型</replaceWord>
+<describe>业务类型</describe>
+</extractPath>
+<extractPath appendEnd="" appendHead="" compareAttName="text" containKeyWord="房屋坐落" extractAttName="text" name="houseAddress" ranking="1" siteCode="chongqi_cqgtfw_gov">
+<path>div[class=wrap-c-m]&gt;table&gt;tbody&gt;tr&gt;td&gt;table&gt;tbody&gt;tr</path>
+<filterPath>empty</filterPath>
+<replaceWord>房屋坐落</replaceWord>
+<describe>房屋坐落</describe>
+</extractPath>
+<extractPath appendEnd="" appendHead="" compareAttName="text" containKeyWord="预售期限" extractAttName="text" name="presellPeriod" ranking="1" siteCode="chongqi_cqgtfw_gov">
+<path>div[class=wrap-c-m]&gt;table&gt;tbody&gt;tr&gt;td&gt;table&gt;tbody&gt;tr</path>
+<filterPath>empty</filterPath>
+<replaceWord>预售期限</replaceWord>
+<describe>预售期限</describe>
+</extractPath>
+<extractPath appendEnd="" appendHead="" compareAttName="" containKeyWord="" extractAttName="href" name="presellInfoUrl" ranking="1" siteCode="chongqi_cqgtfw_gov">
+<path>table[class=table1 table2]&gt;tbody&gt;tr&gt;td&gt;a</path>
+<filterPath>empty</filterPath>
+<describe>抽取重庆房产管理局商品房预售许可 内容页</describe>
+</extractPath>
+</siteProfile>

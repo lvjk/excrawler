@@ -28,7 +28,7 @@ public class ExtractItem implements Serializable {
 	
 	private String outputKey;// 结果 key
 	
-	private MustHaveResult mustHaveResult;// 是否必须有值
+	private int mustHaveResult;// 是否必须有值 1 ：必须有值   
 	
 	private String describe;// 描述
 	
@@ -96,13 +96,13 @@ public class ExtractItem implements Serializable {
 		this.outputKey = outputKey;
 	}
 
-	public MustHaveResult getMustHaveResult() {
+	public int getMustHaveResult() {
 		return mustHaveResult;
 	}
 
 	@XmlAttribute
 	public void setMustHaveResult(int mustHaveResult) {
-		this.mustHaveResult = MustHaveResult.getMustHaveResult(mustHaveResult);
+		this.mustHaveResult =mustHaveResult;
 	}
 
 	@XmlElement(name = "describe")

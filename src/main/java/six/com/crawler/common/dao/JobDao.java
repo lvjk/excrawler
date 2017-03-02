@@ -3,6 +3,7 @@ package six.com.crawler.common.dao;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.SelectProvider;
 import org.apache.ibatis.annotations.UpdateProvider;
@@ -80,7 +81,8 @@ public interface JobDao extends BaseDao{
 	 * @param id
 	 * @return
 	 */
-	public int delete(String id);
+	@Delete("delete from "+TABLE_NAME+" where name = #{jobName}")
+	public int del(String jobName);
 
 	/**
 	 * 更新数据

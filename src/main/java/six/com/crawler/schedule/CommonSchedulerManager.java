@@ -315,13 +315,14 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 	 * @param crawlerWorker
 	 */
 	private void executeJobWorker(Worker jobWorker) {
-		getRegisterCenter().registerWorker(jobWorker);
 		Job job = jobWorker.getJob();
 		String nodeName = job.getHostNode();
 		String jobName = job.getName();
 		// 运行worker计数+1
 		runningWroker.incrementAndGet();
 		try {
+			jobWorker.init();
+			getRegisterCenter().registerWorker(jobWorker);
 			// 执行 job worker
 			jobWorker.start();
 		} catch (Exception e) {
@@ -514,7 +515,6 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 		if (!isRunning(jobHostNode, jobName)) {
 			List<Node> otherFreeExecuteNodes = getOtherFreeExecuteNodes(job);
 			Worker worker = buildJobWorker(job);
-			worker.init();
 			JobSnapshot jobSnapshot = getJobService().getJobSnapshotFromRegisterCenter(jobHostNode, jobName);
 			jobSnapshot.setState(JobSnapshotState.EXECUTING.value());
 			getJobService().updateJobSnapshotToRegisterCenter(jobSnapshot);

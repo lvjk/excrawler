@@ -6,7 +6,6 @@ import java.util.Map;
 import org.apache.ibatis.jdbc.SQL;
 
 import six.com.crawler.common.dao.JobDao;
-import six.com.crawler.common.dao.JobSnapshotDao;
 import six.com.crawler.common.entity.Job;
 
 /**
@@ -57,9 +56,9 @@ public class JobDaoProvider extends BaseProvider {
 	}
 	
 	public String save(Job job) {
-		String columns = "select `name`,"
-				+ " hostNode,"
-				+ "   level,"
+		String columns = "`name`,"
+				+ "hostNode,"
+				+ "level,"
 				+ "workFrequency,"
 				+ "isScheduled,"
 				+ "needNodes,"
@@ -77,11 +76,11 @@ public class JobDaoProvider extends BaseProvider {
 				+ "#{needNodes},"
 				+ "#{cronTrigger},"
 				+ "#{workerClass},"
-				+ "#{queueName}"
+				+ "#{queueName},"
 				+ "#{user},"
 				+ "#{describe}";
 		SQL sql = new SQL();
-		sql.INSERT_INTO(JobSnapshotDao.TABLE_NAME);
+		sql.INSERT_INTO(JobDao.TABLE_NAME);
 		sql.VALUES(columns, values);
 		return sql.toString();
 	}

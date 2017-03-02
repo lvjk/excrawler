@@ -20,6 +20,7 @@ public class ExtractItemDaoProvider extends BaseProvider{
 			+ "`primary`,"
 			+ "`type`,"
 			+ "outputType,"
+			+ "outputKey,"
 			+ "mustHaveResult,"
 			+ "`describe`";
 	
@@ -32,8 +33,9 @@ public class ExtractItemDaoProvider extends BaseProvider{
 				+ "#{list["+INDEX_FLAG+"].primary},"
 				+ "#{list["+INDEX_FLAG+"].type},"
 				+ "#{list["+INDEX_FLAG+"].outputType},"
+				+ "#{list["+INDEX_FLAG+"].outputKey},"
 				+ "#{list["+INDEX_FLAG+"].mustHaveResult},"
-				+ "#{list["+INDEX_FLAG+"].describe}";
+				+ "#{list["+INDEX_FLAG+"].describe})";
 		StringBuilder sbd = new StringBuilder();  
 		sbd.append("insert into ").append(ExtractItemDao.TABLE_NAME);  
 		sbd.append("(").append(saveColumns).append(") ");  

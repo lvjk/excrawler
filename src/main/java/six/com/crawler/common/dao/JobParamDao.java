@@ -2,8 +2,12 @@ package six.com.crawler.common.dao;
 
 import java.util.List;
 
+import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.InsertProvider;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import six.com.crawler.common.dao.provider.JobParamDaoProvider;
 import six.com.crawler.common.entity.JobParam;
 
 /** 
@@ -17,6 +21,12 @@ public interface JobParamDao extends BaseDao{
 
 	@Select("select jobName,name,value from "+TABLE_NAME+" where jobName = #{jobName}")
 	public List<JobParam> queryJobParams(String jobName);
+	
+	@InsertProvider(type = JobParamDaoProvider.class, method = "batchSave")
+	public int batchSave(@Param(BATCH_SAVE_PARAM)List<JobParam> jobParams);
+	
+	@Delete("delete from "+TABLE_NAME+" where jobName = #{jobName}")
+	public int delJobParams(String jobName);
 	
 
 }

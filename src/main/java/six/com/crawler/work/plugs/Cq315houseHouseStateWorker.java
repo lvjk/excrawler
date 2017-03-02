@@ -2,7 +2,6 @@ package six.com.crawler.work.plugs;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +16,7 @@ import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.utils.JsonUtils;
 import six.com.crawler.common.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
+import six.com.crawler.work.Constants;
 import six.com.crawler.work.RedisWorkQueue;
 
 /**
@@ -26,38 +26,14 @@ import six.com.crawler.work.RedisWorkQueue;
  */
 public class Cq315houseHouseStateWorker extends AbstractCrawlWorker {
 
-	RedisWorkQueue suiteInfoQueue;
-	Map<String, String> stateMap;
-	Map<String, String> fieldMap;
-
+	RedisWorkQueue houseInfoQueue;
 
 	@Override
 	protected void insideInit() {
-		suiteInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "cq315house_house_info");
-		stateMap = new HashMap<>();
-		stateMap.put("655360", "限制销售");
-		stateMap.put("524292", "可售");
-		stateMap.put("525316", "预定");
-		stateMap.put("2621444", "已售");
-		stateMap.put("2398237", "已登记");
-		stateMap.put("2398229", "已登记");
-		stateMap.put("2361349", "已登记");
-		stateMap.put("2394117", "已登记");//
-		stateMap.put("2365461", "已登记");
-		stateMap.put("524288", "524288");
+		houseInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "cq315house_house_info");
 	}
 
 	protected void beforeDown(Page page) {
-
-	}
-
-	@Override
-	public void onComplete(Page p,ResultContext resultContext) {
-
-	}
-
-	@Override
-	public void insideOnError(Exception t, Page p) {
 
 	}
 
@@ -100,27 +76,18 @@ public class Cq315houseHouseStateWorker extends AbstractCrawlWorker {
 	protected void beforeExtract(Page doingPage) {
 		String html = doingPage.getPageSrc();
 		Document doc = Jsoup.parse(html);
-		List<String> tempProjectName = doingPage.getMetaMap().get("projectName");
-		List<String> tempSaleUnitName = doingPage.getMetaMap().get("company");
-		List<String> tempAddress = doingPage.getMetaMap().get("address");
-		List<String> tempPresalePermit = doingPage.getMetaMap().get("presalePermit");
+		List<String> tempPresellId = doingPage.getMetaMap().get("presellId");
 		List<String> tempBuildingUnit = doingPage.getMetaMap().get("buildingUnit");
-		String projectName = tempProjectName.get(0);
-		String saleUnitName = tempSaleUnitName.get(0);
-		String address = tempAddress.get(0);
-		String presalePermit = tempPresalePermit.get(0);
+		String presellId = tempPresellId.get(0);
 		String buildingUnit = tempBuildingUnit.get(0);
-		List<String> projectNames = new ArrayList<>();
-		List<String> saleUnitNames = new ArrayList<>();
-		List<String> addresses = new ArrayList<>();
-		List<String> presalePermits = new ArrayList<>();
+		List<String> houseIds = new ArrayList<>();
+		List<String> presellIds = new ArrayList<>();
 		List<String> buildingUnits = new ArrayList<>();
 		List<String> unitNums = new ArrayList<>();
 		List<String> houseNums = new ArrayList<>();
 		List<String> states = new ArrayList<>();
 		List<String> physicalLayers = new ArrayList<>();
 		List<String> logicLayers = new ArrayList<>();
-
 		String stateUrl = "http://www.cq315house.com/315web/webservice/jsonstatus.ashx";
 		Page statePage = new Page(doingPage.getSiteCode(), 1, stateUrl, stateUrl);
 		statePage.setReferer(doingPage.getFinalUrl());
@@ -154,9 +121,7 @@ public class Cq315houseHouseStateWorker extends AbstractCrawlWorker {
 				if (stateOb instanceof Double) {
 					String stateStr = stateOb.toString();
 					Double d = Double.valueOf(stateStr);
-					tempState = d.longValue();
-					;// 状态
-
+					tempState = d.longValue();// 状态
 				} else {
 					String stateStr = stateOb.toString();
 					tempState = Long.valueOf(stateStr);
@@ -165,43 +130,51 @@ public class Cq315houseHouseStateWorker extends AbstractCrawlWorker {
 				if (null == state) {
 					continue;
 				}
-				projectNames.add(projectName);
-				saleUnitNames.add(saleUnitName);
-				presalePermits.add(presalePermit);
-				addresses.add(address);
+				houseIds.add(houseId);
+				presellIds.add(presellId);
 				buildingUnits.add(buildingUnit);
 				unitNums.add(unitNum);
 				houseNums.add(houseNum);
 				states.add(state);
 				physicalLayers.add(physicalLayer);
 				logicLayers.add(logicLayer);
-				String houseInfoUrl = "../YanZhengCode/YanZhengPage.aspx?fid=" + houseId;
-				houseInfoUrl = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), houseInfoUrl);
-				Page houseInfoPage = new Page(doingPage.getSiteCode(), 1, houseInfoUrl, houseInfoUrl);
-				houseInfoPage.setReferer(doingPage.getFinalUrl());
-				houseInfoPage.setType(PageType.DATA.value());
-				houseInfoPage.getMetaMap().put("projectName", Arrays.asList(projectName));
-				houseInfoPage.getMetaMap().put("buildingUnit", Arrays.asList(buildingUnit));
-				if (!suiteInfoQueue.duplicateKey(houseInfoPage.getPageKey())) {
-					suiteInfoQueue.push(houseInfoPage);
-				}
 			}
 		}
-		doingPage.getMetaMap().put("projectName", projectNames);
-		doingPage.getMetaMap().put("saleUnitName", saleUnitNames);
-		doingPage.getMetaMap().put("address", addresses);
-		doingPage.getMetaMap().put("presalePermit", presalePermits);
+		doingPage.getMetaMap().put("houseId", houseIds);
+		doingPage.getMetaMap().put("presellId_2", presellIds);
 		doingPage.getMetaMap().put("buildingUnit", buildingUnits);
 		doingPage.getMetaMap().put("unitNum", unitNums);
 		doingPage.getMetaMap().put("houseNum", houseNums);
-		doingPage.getMetaMap().put("state", states);
+		doingPage.getMetaMap().put("status", states);
 		doingPage.getMetaMap().put("physicalLayer", physicalLayers);
 		doingPage.getMetaMap().put("logicLayer", logicLayers);
-
 	}
 
 	@Override
 	protected void afterExtract(Page doingPage, ResultContext result) {
+
+	}
+
+	@Override
+	public void onComplete(Page doingPage, ResultContext resultContext) {
+		List<String> houseIds = resultContext.getExtractResult("houseId");
+		for (int i = 0; i < houseIds.size(); i++) {
+			String systemHouseId = resultContext.getOutResults().get(i).get(Constants.DEFAULT_RESULT_ID);
+			String houseId = houseIds.get(i);
+			String houseInfoUrl = "../YanZhengCode/YanZhengPage.aspx?fid=" + houseId;
+			houseInfoUrl = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), houseInfoUrl);
+			Page houseInfoPage = new Page(doingPage.getSiteCode(), 1, houseInfoUrl, houseInfoUrl);
+			houseInfoPage.setReferer(doingPage.getFinalUrl());
+			houseInfoPage.setType(PageType.DATA.value());
+			houseInfoPage.getMetaMap().put("houseId", Arrays.asList(systemHouseId));
+			if (!houseInfoQueue.duplicateKey(houseInfoPage.getPageKey())) {
+				houseInfoQueue.push(houseInfoPage);
+			}
+		}
+	}
+
+	@Override
+	public void insideOnError(Exception t, Page p) {
 
 	}
 

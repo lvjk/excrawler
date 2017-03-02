@@ -26,7 +26,7 @@ import six.com.crawler.common.http.HttpClient;
 import six.com.crawler.common.ocr.ImageDistinguish;
 import six.com.crawler.common.service.HttpPorxyService;
 import six.com.crawler.common.service.JobService;
-import six.com.crawler.common.service.ExtractPathService;
+import six.com.crawler.common.service.ExtracterService;
 import six.com.crawler.common.service.SiteService;
 
 /**
@@ -49,7 +49,7 @@ public  class BaseTest extends AbstractJUnit4SpringContextTests {
 	public SiteService siteService;
 
 	@Autowired
-	public ExtractPathService paserPathService;
+	public ExtracterService paserPathService;
 
 	@Autowired
 	public RegisterCenter registerCenter;

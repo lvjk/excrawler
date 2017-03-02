@@ -62,7 +62,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		if (StringUtils.isBlank(siteCode)) {
 			throw new NullPointerException("please set siteCode");
 		}
-		site = getManager().getSiteService().query(siteCode);
+		site = getManager().getSiteService().querySite(siteCode);
 		// 2.初始化工作对了
 		String queueName = getJob().getQueueName();
 		if (StringUtils.isBlank(queueName)) {
@@ -80,7 +80,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		httpProxyType = HttpProxyType.valueOf(Integer.valueOf(httpProxyTypeStr));
 
 		// 5.初始化内容抽取
-		List<ExtractItem> extractItems = getManager().getJobService().queryPaserItem(getJob().getName());
+		List<ExtractItem> extractItems = getManager().getJobService().queryExtractItems(getJob().getName());
 		if (null != extractItems && !extractItems.isEmpty()) {
 			primaryKeys = new ArrayList<>();
 			outResultKey = new ArrayList<>();
@@ -106,7 +106,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		if ("1".equals(isSnapshotTable)) {
 			JobSnapshot lastJobSnapshot = getManager().getJobService()
 					.queryLastJobSnapshotFromHistory(getJob().getName());
-			if (null != lastJobSnapshot && lastJobSnapshot.getEnumState() != JobSnapshotState.FINISHED) {
+			if (null != lastJobSnapshot&&StringUtils.isNotBlank(lastJobSnapshot.getTableName()) && lastJobSnapshot.getEnumState() != JobSnapshotState.FINISHED) {
 				tempTbaleName = lastJobSnapshot.getTableName();
 			} else {
 				String jobStart = StringUtils.remove(jobSnapshot.getId(), getJob().getName() + "_");

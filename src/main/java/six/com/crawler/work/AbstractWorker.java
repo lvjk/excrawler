@@ -261,7 +261,9 @@ public abstract class AbstractWorker implements Worker {
 		String jobHostNode = getJob().getHostNode();
 		String jobName = getJob().getName();
 		MDC.put("jobName", jobName);
+		String lockKey=jobName+"_worker_init";
 		try {
+			getManager().getRedisManager().lock(lockKey);
 			JobSnapshot jobSnapshot = getManager().getJobService().getJobSnapshotFromRegisterCenter(jobHostNode,
 					jobName);
 			String workerName = getManager().getWorkerNameByJob(job);
@@ -280,6 +282,8 @@ public abstract class AbstractWorker implements Worker {
 			initWorker(jobSnapshot);
 		} catch (Exception e) {
 			throw new RuntimeException("init crawlWorker err", e);
+		}finally {
+			getManager().getRedisManager().unlock(lockKey);
 		}
 	}
 

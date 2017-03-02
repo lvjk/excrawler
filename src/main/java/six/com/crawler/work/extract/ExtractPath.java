@@ -1,5 +1,7 @@
 package six.com.crawler.work.extract;
 
+import java.io.Serializable;
+
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 
@@ -7,11 +9,16 @@ import javax.xml.bind.annotation.XmlElement;
  * @author sixliu E-mail:359852326@qq.com
  * @version 创建时间：2016年5月17日 下午7:48:04 类说明
  */ 
-public class ExtractPath {
+public class ExtractPath implements Serializable{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3396441928276937779L;
 
 	private String name;
 
-	private String sitecode;// 站点id
+	private String siteCode;// 站点id
 
 	private int ranking;
 
@@ -21,9 +28,9 @@ public class ExtractPath {
 
 	private String extractAttName;// 要获取的值的属性名字
 
-	private String appendHead; // 在头部追加字符
+	private String substringStart; //截止字符开始字符，不设值 默认从头开始
 
-	private String appendEnd;// 在尾部追加字符
+	private String substringEnd;// 截取字符结尾字符,不设值 默认截取到尾部
 
 	private String compareAttName;// 用来比较 的att name
 
@@ -32,6 +39,10 @@ public class ExtractPath {
 	private String replaceWord;// 要替换的词
 
 	private String replaceValue;// 替换的值
+	
+	private String appendHead; // 在头部追加字符
+
+	private String appendEnd;// 在尾部追加字符
 	
 	private int extractEmptyCount;// 抽取结果为空的计数
 
@@ -48,12 +59,12 @@ public class ExtractPath {
 	}
 
 	@XmlAttribute
-	public String getSitecode() {
-		return sitecode;
+	public String getSiteCode() {
+		return siteCode;
 	}
 
-	public void setSitecode(String sitecode) {
-		this.sitecode = sitecode;
+	public void setSiteCode(String siteCode) {
+		this.siteCode = siteCode;
 	}
 
 	@XmlAttribute
@@ -110,6 +121,23 @@ public class ExtractPath {
 		this.appendEnd = appendEnd;
 	}
 
+	@XmlElement(name = "substringStart")
+	public String getSubstringStart() {
+		return substringStart;
+	}
+
+	public void setSubstringStart(String substringStart) {
+		this.substringStart = substringStart;
+	}
+
+	@XmlElement(name = "substringEnd")
+	public String getSubstringEnd() {
+		return substringEnd;
+	}
+
+	public void setSubstringEnd(String substringEnd) {
+		this.substringEnd = substringEnd;
+	}
 	
 	@XmlAttribute
 	public String getCompareAttName() {

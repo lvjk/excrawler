@@ -21,9 +21,9 @@ import org.springframework.core.io.Resource;
  * @date 2016年7月15日 上午9:34:58 编码识别工具
  */
 public class AutoCharsetDetectorUtils {
-	
+
 	final static Logger LOG = LoggerFactory.getLogger(AutoCharsetDetectorUtils.class);
-	
+
 	public enum ContentType {
 		HTML, XML, OTHER
 	}
@@ -36,12 +36,12 @@ public class AutoCharsetDetectorUtils {
 
 	private static Map<String, String> encodingReplacementMap = new HashMap<String, String>();
 
-	private static String  DEFAULT_CHARSET="UTF-8";
+	private static String DEFAULT_CHARSET = "UTF-8";
 	private static Map<String, String> peculiarCharacterMap = new HashMap<String, String>();
 	static {
 		encodingReplacementMap.put("gb2312", "GBK");
 		encodingReplacementMap.put("utf_8", "UTF-8");
-		
+
 		Resource resource = new ClassPathResource("/peculiarCharacter");
 		try {
 			String path = resource.getURI().getPath();
@@ -68,18 +68,11 @@ public class AutoCharsetDetectorUtils {
 	 * @return
 	 */
 	public static String replacePeculiarCharacter(String str) {
-		if (null != str) {
-			char c = 0;
-			StringBuilder newString = new StringBuilder();
-			for (int i = 0; i < str.length(); i++) {
-				c = str.charAt(i);
-				if (peculiarCharacterMap.containsKey(String.valueOf(c))) {
-					newString.append(peculiarCharacterMap.get(c));
-				} else {
-					newString.append(c);
-				}
+		if (StringUtils.isNoneBlank(str)) {
+			for (String key : peculiarCharacterMap.keySet()) {
+				String value = peculiarCharacterMap.get(key);
+				str = StringUtils.replace(str, key, value);
 			}
-			return newString.toString();
 		}
 		return str;
 	}
@@ -105,7 +98,7 @@ public class AutoCharsetDetectorUtils {
 						charsetResult = replacement(charset);
 					}
 				}
-			}else{
+			} else {
 				m = charsetPattern.matcher(content);
 				if (m.find()) {
 					String charset = StringUtils.remove(m.group(1), ';');
@@ -130,8 +123,8 @@ public class AutoCharsetDetectorUtils {
 			charsetResult = autoDetector.getDetectedCharset();
 			autoDetector.reset();
 		}
-		if(null==charsetResult){
-			charsetResult=DEFAULT_CHARSET;
+		if (null == charsetResult) {
+			charsetResult = DEFAULT_CHARSET;
 		}
 		return charsetResult;
 	}

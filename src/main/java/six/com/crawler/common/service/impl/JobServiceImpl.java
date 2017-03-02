@@ -1,5 +1,7 @@
 package six.com.crawler.common.service.impl;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -8,15 +10,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Unmarshaller;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -124,7 +127,7 @@ public class JobServiceImpl implements JobService {
 	}
 
 	@Override
-	public List<Job> defaultQuery() {
+	public List<Job> queryJobs(int pageIndex,int pageSize){
 		Map<String, Object> parameters = new HashMap<>();
 		List<Job> jobs = jobDao.queryByParam(parameters);
 		return jobs;
@@ -289,7 +292,7 @@ public class JobServiceImpl implements JobService {
 	}
 
 	@Override
-	public List<ExtractItem> queryPaserItem(String jobName) {
+	public List<ExtractItem> queryExtractItems(String jobName) {
 		List<ExtractItem> result = extractItemDao.query(jobName);
 		return result;
 	}
@@ -431,30 +434,63 @@ public class JobServiceImpl implements JobService {
 		return doneInfos;
 	}
 
-	public String uploadJobProfile(MultipartFile jobProfile) {
+	
+	@Override
+	public ResponseEntity<InputStreamResource> download(String param) {
+		JobProfile profile = new JobProfile();
+		Job job = queryByName(param);
+		if (null != job) {
+			List<JobParam> jobParams = queryJobParams(job.getName());
+			job.setParamList(jobParams);
+			List<ExtractItem> extractItems=queryExtractItems(job.getName());
+			profile.setJob(job);
+			profile.setExtractItems(extractItems);
+		}
+		String xml = "";
+		try {
+			xml=JobProfile.buildXml(profile);
+		} catch (Exception e) {
+			LOG.error("downloadProfile err:" + param, e);
+		}
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+		headers.setContentDispositionFormData("attachment",param + "_job.xml");
+		byte[] bytes=xml.getBytes();
+		InputStream inputStream = new ByteArrayInputStream(bytes);
+		return ResponseEntity.ok().headers(headers).contentLength(bytes.length)
+				.contentType(MediaType.parseMediaType("application/octet-stream"))
+				.body(new InputStreamResource(inputStream));
+	}
+
+	@Override
+	public String upload(MultipartFile multipartFile) {
 		String msg = null;
-		if (null != jobProfile && !jobProfile.isEmpty()) {
-			JAXBContext jaxbC;
+		if (null != multipartFile && !multipartFile.isEmpty()) {
 			try {
-				jaxbC = JAXBContext.newInstance(JobProfile.class);
-				Unmarshaller us = jaxbC.createUnmarshaller();
-				JobProfile profile = (JobProfile) us.unmarshal(jobProfile.getInputStream());
-				saveJobProfile(profile);
-				msg = "uploadJobProfile[" + jobProfile.getName() + "] succeed";
+				byte[] buffer = multipartFile.getBytes();
+				String jobProfileXml = new String(buffer);
+				JobProfile profile =JobProfile.buildJobProfile(jobProfileXml);
+				Job job=profile.getJob();
+				//删除job参数数据
+				jobParamDao.delJobParams(job.getName());
+				//删除job抽取项
+				extractItemDao.del(job.getName());
+				//删除job
+				jobDao.del(job.getName());
+				jobDao.save(job);
+				jobParamDao.batchSave(job.getParamList());
+				extractItemDao.batchSave(profile.getExtractItems());
+				msg = "uploadJobProfile[" + multipartFile.getName() + "] succeed";
 			} catch (Exception e) {
-				msg = "uploadJobProfile[" + jobProfile.getName() + "] err";
+				msg = "uploadJobProfile[" + multipartFile.getName() + "] err";
 				LOG.error(msg, e);
 			}
 		} else {
 			msg = "uploadJobProfile is empty";
 		}
 		return msg;
-
 	}
 
-	private void saveJobProfile(JobProfile profile) {
-		profile.getSite();
-	}
 
 	@Override
 	public String cleanQueueDones(String queueName) {
@@ -478,4 +514,5 @@ public class JobServiceImpl implements JobService {
 	public void setWorkerErrMsgDao(WorkerErrMsgDao workerErrMsgDao) {
 		this.workerErrMsgDao = workerErrMsgDao;
 	}
+
 }

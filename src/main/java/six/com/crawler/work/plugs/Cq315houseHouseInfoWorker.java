@@ -36,7 +36,8 @@ public class Cq315houseHouseInfoWorker extends AbstractCrawlWorker {
 	protected void insideInit() {
 		imageDistinguish = getManager().getImageDistinguish();
 		fieldMap = new HashMap<String, String>();
-		fieldMap.put("roomNum", "roomNum");// 房号
+		fieldMap.put("houseId", "houseId");// 
+		fieldMap.put("houseNum", "houseNum");// 房号
 		fieldMap.put("block", "buildingNum");// 楼号
 		fieldMap.put("iArea", "innerArea");// 套内面积
 		fieldMap.put("bArea", "buildingArea");// 建筑面积
@@ -44,7 +45,7 @@ public class Cq315houseHouseInfoWorker extends AbstractCrawlWorker {
 		fieldMap.put("rType", "houseType");// 户型
 		fieldMap.put("nsjg", "priceOfInner"); // 拟售单价（套内）
 		fieldMap.put("nsjmjg", "priceOfBuilding");// 拟售单价（建面）
-		fieldMap.put("F_PRESALE_CERT", "presalePermit");// 预售许可证
+		fieldMap.put("F_PRESALE_CERT", "presellPermit");// 预售许可证
 		fieldMap.put("stru", "buildingStructure");// 建筑结构
 		fieldMap.put("S_ISONLINESIGN", "signedStatus");// 签约情况
 		fieldMap.put("S_ISOWNERSHIP", "houseStatus");// 房屋状态
@@ -87,8 +88,8 @@ public class Cq315houseHouseInfoWorker extends AbstractCrawlWorker {
 		validCodePage.setReferer(doingPage.getFinalUrl());
 		byte[] imageBytes = getDowner().downBytes(validCodePage);
 		BufferedImage croppedImage = ImageUtils.loadImage(imageBytes);
-		// ImageUtils.writeImage(new File("F:/test/cq315image",
-		// System.currentTimeMillis() + ".gif"), croppedImage);
+//		ImageUtils.writeImage(new File("F:/test/cq315image",
+//		System.currentTimeMillis() + ".gif"), croppedImage);
 		try {
 			String result = imageDistinguish.distinguish(croppedImage);
 			txtCode = JsUtils.eval(result, result);
@@ -150,8 +151,10 @@ public class Cq315houseHouseInfoWorker extends AbstractCrawlWorker {
 		Map<String, Object> resultMap = JsonUtils.toObject(json, Map.class);
 		String flr = getJsonValue("flr", resultMap);// 楼层
 		String x = getJsonValue("x", resultMap);// 编号
-		String roomNum = flr + "-" + x;
-		resultMap.put("roomNum", roomNum);
+		String houseNum = flr + "-" + x;
+		String houseId = doingPage.getMetaMap().get("houseId").get(0);
+		resultMap.put("houseId", houseId);
+		resultMap.put("houseNum", houseNum);
 		for (String key : fieldMap.keySet()) {
 			String field = fieldMap.get(key);
 			String value = getJsonValue(key, resultMap);

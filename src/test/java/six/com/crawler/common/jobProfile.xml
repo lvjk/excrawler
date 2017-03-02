@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?><jobProfile>
+<job hostNode="test" isScheduled="0" level="1" name="chongqi_cqgtfw_gov_presell_info" needNodes="2" user="admin" workFrequency="2000">
+<queueName>chongqi_cqgtfw_gov_presell_info</queueName>
+<workerClass>six.com.crawler.work.plugs.ChongqiCqgtfwGovPresellInfoWorker</workerClass>
+<describe>重庆房产管理局预售信息采集</describe>
+<param name="siteCode">chongqi_cqgtfw_gov</param>
+<param name="resultStoreClass">six.com.crawler.work.store.DataBaseStore</param>
+<param name="dbDriverClassName">com.mysql.jdbc.Driver</param>
+<param name="dbUser">root</param>
+<param name="dbPasswd">123456</param>
+<param name="dbUrl">jdbc:mysql://172.18.84.44:3306/test?user=root&amp;password=123456&amp;useUnicode=true&amp;characterEncoding=UTF8</param>
+<param name="batchStoreSize">1</param>
+<param name="downerType">1</param>
+<param name="httpProxyType">2</param>
+<param name="fixedTableName">ex_crawler_dc_chongqi_cqgtfw_gov_presell_info</param>
+<param name="isSnapshotTable">1</param>
+<param name="createTableSqlTemplate">CREATE TABLE `&lt;&lt;tableName&gt;&gt;` (`id` varchar(32) NOT NULL,`projectName` varchar(100) NOT NULL COMMENT '项目名称',`companyName` varchar(100) NOT NULL COMMENT '售房单位名称',`address` varchar(100) DEFAULT NULL COMMENT '房屋坐落',`presellCode` varchar(100) NOT NULL COMMENT '预售证号',`businessType` varchar(100) DEFAULT NULL COMMENT '业务类型',`issueDate` varchar(100) DEFAULT NULL COMMENT '业务类型发证日期',`presellPeriod` varchar(100) DEFAULT NULL COMMENT '预售期限',`isLive` int(1) DEFAULT '1' COMMENT '标示信息是否仍在页面上存在',`collectionDate` varchar(45) DEFAULT NULL,`originUrl` varchar(500) DEFAULT NULL,PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8;</param>
+<param name="insertSqlTemplate">insert into &lt;&lt;tableName&gt;&gt;(id,projectName,companyName,address,presellCode,businessType,issueDate,presellPeriod,collectionDate,originUrl) value(?,?,?,?,?,?,?,?,?,?)</param>
+</job>
+<extractItem jobName="chongqi_cqgtfw_gov_presell_info" mustHaveResult="1" outputKey="projectName" outputType="1" pathName="projectName" primary="1" serialNub="2" type="1">
+<describe>项目名称</describe>
+</extractItem>
+<extractItem jobName="chongqi_cqgtfw_gov_presell_info" mustHaveResult="0" outputKey="companyName" outputType="1" pathName="companyName" primary="0" serialNub="3" type="1">
+<describe>单位名称</describe>
+</extractItem>
+<extractItem jobName="chongqi_cqgtfw_gov_presell_info" mustHaveResult="0" outputKey="houseAddress" outputType="1" pathName="houseAddress" primary="0" serialNub="4" type="1">
+<describe>房屋地址</describe>
+</extractItem>
+<extractItem jobName="chongqi_cqgtfw_gov_presell_info" mustHaveResult="1" outputKey="presellCode" outputType="1" pathName="presellCode" primary="1" serialNub="5" type="1">
+<describe>预售证号</describe>
+</extractItem>
+<extractItem jobName="chongqi_cqgtfw_gov_presell_info" mustHaveResult="0" outputKey="businessType" outputType="1" pathName="businessType" primary="0" serialNub="6" type="1">
+<describe>业务类型</describe>
+</extractItem>
+<extractItem jobName="chongqi_cqgtfw_gov_presell_info" mustHaveResult="0" outputKey="issueDate" outputType="1" pathName="issueDate" primary="0" serialNub="7" type="7">
+<describe>发证日期</describe>
+</extractItem>
+<extractItem jobName="chongqi_cqgtfw_gov_presell_info" mustHaveResult="0" outputKey="presellPeriod" outputType="1" pathName="presellPeriod" primary="0" serialNub="8" type="1">
+<describe>预售期限</describe>
+</extractItem>
+</jobProfile>

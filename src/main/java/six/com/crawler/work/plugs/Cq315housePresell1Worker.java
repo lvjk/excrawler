@@ -1,6 +1,7 @@
 package six.com.crawler.work.plugs;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ import six.com.crawler.common.http.HttpMethod;
 import six.com.crawler.common.utils.JsonUtils;
 import six.com.crawler.common.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
+import six.com.crawler.work.Constants;
 import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.WorkerLifecycleState;
 
@@ -24,17 +26,17 @@ import six.com.crawler.work.WorkerLifecycleState;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年11月4日 下午5:18:21
  */
-public class Cq315housePresale1Worker extends AbstractCrawlWorker {
+public class Cq315housePresell1Worker extends AbstractCrawlWorker {
 
-	final static Logger LOG = LoggerFactory.getLogger(Cq315housePresale1Worker.class);
+	final static Logger LOG = LoggerFactory.getLogger(Cq315housePresell1Worker.class);
 	private String referer = "http://www.cq315house.com/315web/HtmlPage/PresaleCertDetail.htm#";
 	private String pageSizeTemplate = "<<pageSize>>";
 	private String pageIndexTemplate = "<<pageIndex>>";
 	String jsonTemplateUrl = "http://www.cq315house.com/315web/webservice/GetMyData913.ashx"
 			+ "?projectname=&kfs=&projectaddr=&pagesize=" + pageSizeTemplate + "&pageindex=" + pageIndexTemplate
 			+ "&presalecert=";
-	RedisWorkQueue presale2Queue;
-	private int pageIndex = 83;// 83没有数据
+	RedisWorkQueue presell2Queue;
+	private int pageIndex = 1;// 83没有数据
 	private int pageSize = 100;
 	Map<String, String> fieldMap;
 
@@ -49,14 +51,15 @@ public class Cq315housePresale1Worker extends AbstractCrawlWorker {
 	}
 
 	protected void insideInit() {
-		presale2Queue = new RedisWorkQueue(getManager().getRedisManager(), "cq315house_presale_2");
+		presell2Queue = new RedisWorkQueue(getManager().getRedisManager(), "cq315house_presell_2");
 		fieldMap = new HashMap<>();
+		fieldMap.put("PARENTPROJID", "projectId");
 		fieldMap.put("F_PROJECT_NAME", "projectName");
-		fieldMap.put("F_SITE", "area");
+		fieldMap.put("F_SITE", "district");
 		fieldMap.put("F_ADDR", "address");
-		fieldMap.put("F_ENTERPRISE_NAME", "company");
-		fieldMap.put("F_PRESALE_CERT", "presalePermit");
-		fieldMap.put("F_BLOCK", "forSaleUnit");
+		fieldMap.put("F_ENTERPRISE_NAME", "companyName");
+		fieldMap.put("F_PRESALE_CERT", "presellPermit");
+		fieldMap.put("F_BLOCK", "forSellBuilding");
 		Page firstPage = buildPage(pageIndex, pageSize);// 初始化第一页
 		getWorkQueue().clear();
 		getWorkQueue().push(firstPage);
@@ -82,21 +85,7 @@ public class Cq315housePresale1Worker extends AbstractCrawlWorker {
 			Map<String, Object> jsonMap = JsonUtils.toObject(jsonData, Map.class);
 			List<Map<String, Object>> projectList = (List<Map<String, Object>>) jsonMap.get(proxyJsonKey);
 			Map<String, List<String>> result = new HashMap<>();
-			String projectIdKey = "PARENTPROJID";
 			for (Map<String, Object> projectMap : projectList) {
-				Object projectId = projectMap.get(projectIdKey);
-				if (null == projectId) {
-					throw new RuntimeException("jsonMap don't contain this key[" + projectIdKey + "] ");
-				}
-				String preReferer = "ProjectDetailPre.htm?projectId=" + projectId;
-				preReferer = UrlUtils.paserUrl(doingPage.getBaseUrl(), referer, preReferer);
-
-				String preSale2Url = "../webservice/GetMyData112.ashx?type=1&projectId=" + projectId;
-				preSale2Url = UrlUtils.paserUrl(doingPage.getBaseUrl(), preReferer, preSale2Url);
-				Page preSale2Page = new Page(doingPage.getSiteCode(), 1, preSale2Url, preSale2Url);
-				preSale2Page.setReferer(preReferer);
-				preSale2Page.setType(PageType.DATA.value());
-				presale2Queue.push(preSale2Page);
 				for (String jsonKey : fieldMap.keySet()) {
 					Object value = projectMap.get(jsonKey);
 					if (null == value) {
@@ -121,7 +110,20 @@ public class Cq315housePresale1Worker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	public void onComplete(Page p,ResultContext resultContext) {
+	public void onComplete(Page doingPage, ResultContext resultContext) {
+		List<String> projectIds = doingPage.getMetaMap().get("projectId");
+		for (int i = 0; i < projectIds.size(); i++) {
+			String projectId = projectIds.get(i);
+			String pre1Id = resultContext.getOutResults().get(i).get(Constants.DEFAULT_RESULT_ID);
+			String preReferer = "ProjectDetailPre.htm?projectId=" + projectId;
+			preReferer = UrlUtils.paserUrl(doingPage.getBaseUrl(), referer, preReferer);
+			String presell2Url = "../webservice/GetMyData112.ashx?type=1&projectId=" + projectId;
+			presell2Url = UrlUtils.paserUrl(doingPage.getBaseUrl(), preReferer, presell2Url);
+			Page presell2Page = new Page(doingPage.getSiteCode(), 1, presell2Url, presell2Url);
+			presell2Page.setReferer(preReferer);
+			presell2Page.getMetaMap().put("presellId_1", Arrays.asList(pre1Id));
+			presell2Queue.push(presell2Page);
+		}
 		pageIndex++;
 		Page newPage = buildPage(pageIndex, pageSize);
 		getWorkQueue().push(newPage);

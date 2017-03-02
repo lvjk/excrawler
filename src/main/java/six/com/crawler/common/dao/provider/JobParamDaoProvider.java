@@ -1,5 +1,11 @@
 package six.com.crawler.common.dao.provider;
 
+import java.util.List;
+import java.util.Map;
+
+import six.com.crawler.common.dao.BaseDao;
+import six.com.crawler.common.dao.JobParamDao;
+import six.com.crawler.common.entity.JobParam;
 
 /**
  * @author 作者
@@ -8,5 +14,19 @@ package six.com.crawler.common.dao.provider;
  */
 public class JobParamDaoProvider extends BaseProvider{
 	
+	@SuppressWarnings("unchecked")
+	public String batchSave(Map<String, Object> map) {
+		String columns="jobName,name,value";
+		List<JobParam> extractPaths = (List<JobParam>) map.get(BaseDao.BATCH_SAVE_PARAM);
+		String values="(#{list["+INDEX_FLAG+"].jobName},"
+				+ "#{list["+INDEX_FLAG+"].name},"
+				+ "#{list["+INDEX_FLAG+"].value})";
+		StringBuilder sbd = new StringBuilder();  
+		sbd.append("insert into ").append(JobParamDao.TABLE_NAME);  
+		sbd.append("(").append(columns).append(") ");  
+		sbd.append("values");  
+		sbd.append(setBatchSaveSql(values,extractPaths));
+		return sbd.toString();
+	}
 
 }

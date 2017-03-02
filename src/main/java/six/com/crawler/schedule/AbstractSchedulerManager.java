@@ -16,7 +16,7 @@ import six.com.crawler.common.service.HttpPorxyService;
 import six.com.crawler.common.service.JobService;
 import six.com.crawler.common.service.PageService;
 import six.com.crawler.common.service.SiteService;
-import six.com.crawler.common.service.impl.ExtractPathServiceImpl;
+import six.com.crawler.common.service.impl.ExtracterServiceImpl;
 import six.com.crawler.work.Worker;
 import six.com.crawler.common.RedisManager;
 import six.com.crawler.common.configure.SpiderConfigure;
@@ -37,7 +37,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager {
 	private SiteService siteService;
 
 	@Autowired
-	private ExtractPathServiceImpl paserPathService;
+	private ExtracterServiceImpl paserPathService;
 
 	@Autowired
 	private RegisterCenter registerCenter;
@@ -140,11 +140,11 @@ public abstract class AbstractSchedulerManager implements SchedulerManager {
 		this.registerCenter = registerCenter;
 	}
 
-	public ExtractPathServiceImpl getPaserPathService() {
+	public ExtracterServiceImpl getPaserPathService() {
 		return paserPathService;
 	}
 
-	public void setPaserPathService(ExtractPathServiceImpl paserPathService) {
+	public void setPaserPathService(ExtracterServiceImpl paserPathService) {
 		this.paserPathService = paserPathService;
 	}
 

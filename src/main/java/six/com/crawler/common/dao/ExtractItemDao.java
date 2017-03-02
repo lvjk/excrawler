@@ -2,6 +2,7 @@ package six.com.crawler.common.dao;
 
 import java.util.List;
 
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.InsertProvider;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -24,4 +25,7 @@ public interface ExtractItemDao extends BaseDao {
 
 	@InsertProvider(type = ExtractItemDaoProvider.class, method = "batchSave")
 	public int batchSave(@Param(BATCH_SAVE_PARAM) List<ExtractItem> paserResults);
+	
+	@Delete("delete from "+TABLE_NAME+" where jobName = #{jobName}")
+	public int del(String jobName);
 }

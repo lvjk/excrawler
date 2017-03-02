@@ -13,7 +13,9 @@ import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.select.Elements;
 
+import six.com.crawler.work.extract.ExtractPath;
 import six.com.crawler.work.extract.PathFilter;
+import six.com.crawler.work.extract.PathFilterBuilder;
 
 /**
  * @author 作者
@@ -29,14 +31,102 @@ public class JsoupUtils {
 		charSet.add('\n');
 		charSet.add('\t');
 	}
-	
+
+	/**
+	 * 抽取
+	 * 
+	 * @param page
+	 *            当前处理的页面对象
+	 * @param path
+	 *            抽取结果path
+	 * @return
+	 */
+	public static List<String> extract(Document doc,ExtractPath path) {
+		List<String> resultList = new ArrayList<String>();
+		boolean isAdd;
+		Elements htmlElements = doc.getAllElements();
+		Elements findElements = htmlElements.select(path.getPath());
+		String result = null;
+		for (Element element : findElements) {
+			isAdd = true;
+			result = paserElement(path.getFilterPath(), path.getExtractAttName(), element);
+			// 如果null==pathResultType.getContainKeyWord() 或者 包含 指定的关键word
+			// 才add
+			// 判断是否有比较 的attName
+			if (StringUtils.isNotBlank(path.getCompareAttName())) {
+				String compareAttValue = null;
+				// 判断比较的attName是否跟抽取路径attName相等
+				if (path.getExtractAttName().equalsIgnoreCase(path.getCompareAttName())) {
+					compareAttValue = result;
+				} else {
+					compareAttValue = paserElement(StringUtils.EMPTY, path.getCompareAttName(), element);
+				}
+				// 如果 比较的值没有包含指定key的话那么不add
+				if (!StringUtils.contains(compareAttValue, path.getContainKeyWord())) {
+					isAdd = false;
+				}
+			}
+			if (isAdd) {
+				// 判断 是否有需要替换的字符
+				if (StringUtils.isNotBlank(path.getReplaceWord())) {
+					result = StringUtils.replace(result, path.getReplaceWord(),
+							path.getReplaceValue() == null ? "" : path.getReplaceValue());
+				}
+				// 判断是否需要截取
+				if (StringUtils.isNotBlank(path.getSubstringStart())
+						|| StringUtils.isNotBlank(path.getSubstringEnd())) {
+					// 如果getSubstringStart==blank,那么默认从头截取到 getSubstringEnd
+					if (StringUtils.isBlank(path.getSubstringStart())) {
+						result = StringUtils.substringBeforeLast(result, path.getSubstringEnd());
+
+					} // 如果getSubstringEnd==blank,那么默认从getSubstringStart截取到尾
+					else if (StringUtils.isBlank(path.getSubstringEnd())) {
+						result = StringUtils.substringAfterLast(result, path.getSubstringStart());
+					} else {
+						result = StringUtils.substringBetween(result, path.getSubstringStart(), path.getSubstringEnd());
+					}
+				}
+				resultList.add(result);
+			}
+
+		}
+		return resultList;
+	}
+
+	private static String paserElement(String filterPath, String reslutAttName, Element element) {
+		PathFilter pathFilter = PathFilterBuilder.buildPathFilter(filterPath);
+		String result = null;
+		if (pathFilter.isFilter(element)) {
+			result = "";
+		} else if ("text".equalsIgnoreCase(reslutAttName)) {
+			StringBuilder text = new StringBuilder();
+			appendText(pathFilter, element, text);
+			result = text.toString();
+		} else {
+			result = element.attr(reslutAttName);
+			result = StringUtils.trim(result);
+		}
+		// 替换空格 &nbsp;
+		result = StringUtils.replace(result, "&nbsp;", " ");
+		return result;
+	}
+
 	/**
 	 * <table>
-	 * 	<tr><td>key</td><td>value</td><td>key</td><td>value</td>
-	 * 	</tr>
-	 * 	<tr><td>key</td><td>value</td><td>key</td><td>value</td>
-	 * 	</tr>
+	 * <tr>
+	 * <td>key</td>
+	 * <td>value</td>
+	 * <td>key</td>
+	 * <td>value</td>
+	 * </tr>
+	 * <tr>
+	 * <td>key</td>
+	 * <td>value</td>
+	 * <td>key</td>
+	 * <td>value</td>
+	 * </tr>
 	 * </table>
+	 * 
 	 * @param table
 	 * @return
 	 */
@@ -69,35 +159,37 @@ public class JsoupUtils {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * 
 	 * @param table
-	 * @param headCssSelect    table>tbody>tr>td 
-	 * @param dataCssSelect    table>tbody>tr
+	 * @param headCssSelect
+	 *            table>tbody>tr>td
+	 * @param dataCssSelect
+	 *            table>tbody>tr
 	 * @return
 	 */
-	public static Map<String,List<String>> paserTable(Element table,String headCssSelect,String dataCssSelect) {
-		Elements headElements=table.select(headCssSelect);
-		Elements dataElements=table.select(dataCssSelect);
-		String[] fields=new String[headElements.size()];
+	public static Map<String, List<String>> paserTable(Element table, String headCssSelect, String dataCssSelect) {
+		Elements headElements = table.select(headCssSelect);
+		Elements dataElements = table.select(dataCssSelect);
+		String[] fields = new String[headElements.size()];
 		for (int i = 0; i < headElements.size(); i++) {
-			Element fieldElement=headElements.get(i);
-			fields[i]=fieldElement.text();
+			Element fieldElement = headElements.get(i);
+			fields[i] = fieldElement.text();
 		}
-		Map<String,List<String>> resultMap=new HashMap<>();
+		Map<String, List<String>> resultMap = new HashMap<>();
 		for (int i = 0; i < dataElements.size(); i++) {
-			Element dataTrElement=dataElements.get(i);
+			Element dataTrElement = dataElements.get(i);
 			Elements tdElements = dataTrElement.getElementsByTag("td");
-			for (int j = 0; j < tdElements.size();j++) {
+			for (int j = 0; j < tdElements.size(); j++) {
 				Element tdElement = tdElements.get(j);
-				String result=tdElement.text();
-				resultMap.computeIfAbsent(fields[j],mapKey -> new ArrayList<>()).add(result);
+				String result = tdElement.text();
+				resultMap.computeIfAbsent(fields[j], mapKey -> new ArrayList<>()).add(result);
 			}
 		}
 		return resultMap;
 	}
-	
+
 	public static List<TableResult> paserTable(Element table) {
 		Elements trElements = table.getElementsByTag("tr");
 		Element trElement = null;
@@ -107,9 +199,9 @@ public class JsoupUtils {
 			trElement = trElements.get(i);
 			Elements tdElements = trElement.getElementsByTag("td");
 			Element tdElement = null;
-			if(1==tdElements.size()){
+			if (1 == tdElements.size()) {
 				continue;
-			}else{
+			} else {
 				for (int j = 0; j < tdElements.size();) {
 					tableResult = new TableResult();
 					tdElement = tdElements.get(j);

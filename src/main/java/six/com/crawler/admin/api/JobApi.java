@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
@@ -26,16 +28,17 @@ import six.com.crawler.common.service.JobService;
  * @date 2016年5月31日 下午2:56:54 爬虫 Job 任务 api
  */
 @Controller
-public class CrawlerJobApi extends BaseApi {
+public class JobApi extends BaseApi {
 
 	@Autowired
 	private JobService jobService;
 
-	@RequestMapping(value = "/crawler/job/getDefault", method = RequestMethod.GET)
+	@RequestMapping(value = "/crawler/job/query/{pageIndex}/{pageSize}", method = RequestMethod.GET)
 	@ResponseBody
-	public ResponseMsg<List<Job>> getDefaultJobs() {
+	public ResponseMsg<List<Job>> queryJobs(@PathVariable("pageIndex") int pageIndex,
+			@PathVariable("pageSize") int pageSize) {
 		ResponseMsg<List<Job>> msg = new ResponseMsg<>();
-		List<Job> result = jobService.defaultQuery();
+		List<Job> result = jobService.queryJobs(pageIndex, pageSize);
 		msg.setData(result);
 		return msg;
 	}
@@ -127,7 +130,6 @@ public class CrawlerJobApi extends BaseApi {
 		ResponseMsg<String> msg = new ResponseMsg<>();
 		String result = jobService.repairQueue(queueName);
 		msg.setMsg(result);
-		msg.setData(result);
 		return msg;
 	}
 
@@ -137,7 +139,6 @@ public class CrawlerJobApi extends BaseApi {
 		ResponseMsg<String> msg = new ResponseMsg<>();
 		String result = jobService.cleanQueue(queueName);
 		msg.setMsg(result);
-		msg.setData(result);
 		return msg;
 	}
 
@@ -156,17 +157,22 @@ public class CrawlerJobApi extends BaseApi {
 		ResponseMsg<String> msg = new ResponseMsg<>();
 		String result = jobService.cleanQueueDones(queueName);
 		msg.setMsg(result);
-		msg.setData(result);
 		return msg;
 	}
 
 	@RequestMapping(value = "/crawler/job/upload/profile", method = RequestMethod.POST)
 	@ResponseBody
-	public ResponseMsg<String> uploadFile(@RequestParam("name") String name, @RequestParam("file") MultipartFile file) {
-		ResponseMsg<String> responseMsg = new ResponseMsg<>();
-		String msg=jobService.uploadJobProfile(file);
+	public ResponseMsg<String> uploadFile(@RequestParam("file") MultipartFile multipartFile) {
+		ResponseMsg<String> responseMsg = createResponseMsg();
+		String msg = uploadFile(jobService, multipartFile);
 		responseMsg.setMsg(msg);
 		return responseMsg;
+	}
+
+	@RequestMapping(value = "/crawler/job/download/profile/{jobName}", method = RequestMethod.GET)
+	@ResponseBody
+	public ResponseEntity<InputStreamResource> downloadFile(@PathVariable("jobName") String jobName) {
+		return downloadFile(jobService, jobName);
 	}
 
 	public JobService getJobService() {
