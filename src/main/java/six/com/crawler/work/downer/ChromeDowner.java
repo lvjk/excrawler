@@ -38,7 +38,6 @@ public class ChromeDowner extends AbstractDowner {
 
 	private static final long defaultWaitTimeOunt = 3000;
 
-	private String lastRequestUrl;
 
 	public ChromeDowner(AbstractCrawlWorker worker) {
 		super(worker);
@@ -88,15 +87,12 @@ public class ChromeDowner extends AbstractDowner {
 
 	protected HttpResult insideDown(Page page) throws DownerException {
 		HttpResult result = new HttpResult();
-		if (!page.getOriginalUrl().equals(lastRequestUrl)) {
-			browser.get(page.getOriginalUrl());
-			waitForload();
-			String html = browser.getPageSource();
-			String currentUrl = browser.getCurrentUrl();
-			page.setFinalUrl(currentUrl);
-			page.setPageSrc(html);
-			lastRequestUrl = page.getOriginalUrl();
-		}
+		browser.get(page.getOriginalUrl());
+		waitForload();
+		String html = browser.getPageSource();
+		String currentUrl = browser.getCurrentUrl();
+		page.setFinalUrl(currentUrl);
+		page.setPageSrc(html);
 		return result;
 	}
 

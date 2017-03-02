@@ -51,7 +51,6 @@ public class OkHttpDowner extends AbstractDowner {
 		HttpMethod httpMethod = page.getMethod();
 		PostContentType postContentType = page.getPostContentType();
 		Map<String, Object> parameters = page.getParameters();
-
 		HttpResult result = null;
 		int redirectTime = 0;
 		HttpProxy httpProxy = null;

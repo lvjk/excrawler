@@ -2,6 +2,7 @@ package six.com.crawler.work.downer;
 
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.slf4j.Logger;
@@ -23,6 +24,8 @@ public abstract class AbstractDowner implements Downer, AutoCloseable {
 
 	protected AbstractCrawlWorker worker;
 	private HttpProxy httpProxy;
+	private String lastRequestUrl;
+	private HttpResult lastHttpResult;
 
 	public AbstractDowner(AbstractCrawlWorker worker) {
 		this.worker = worker;
@@ -30,18 +33,28 @@ public abstract class AbstractDowner implements Downer, AutoCloseable {
 
 	protected abstract HttpResult insideDown(Page page) throws DownerException;
 
+	/**
+	 * 记录上一次请求的url ，如果跟上一次请求url一样的话那么不下载
+	 */
 	public HttpResult down(Page page) throws DownerException {
-		return insideDown(page);
+		if (null != page 
+				&& StringUtils.isNotBlank(page.getOriginalUrl())
+				&& StringUtils.equals(page.getOriginalUrl(), lastRequestUrl)) {
+			lastHttpResult = insideDown(page);
+			lastRequestUrl = page.getOriginalUrl();
+		}
+		return lastHttpResult;
 	}
-	
-	public AbstractCrawlWorker getHtmlCommonWorker(){
+
+	public AbstractCrawlWorker getHtmlCommonWorker() {
 		return worker;
 	}
-	
-	public WebDriver getWebDriver(){
+
+	public WebDriver getWebDriver() {
 		return null;
 	}
-	public String getWindowHandle(){
+
+	public String getWindowHandle() {
 		return null;
 	}
 
@@ -52,9 +65,9 @@ public abstract class AbstractDowner implements Downer, AutoCloseable {
 	public List<WebElement> findWebElements(String xpath) {
 		return null;
 	}
-	
-	public void click(WebElement webElement,String xpath){
-		
+
+	public void click(WebElement webElement, String xpath) {
+
 	}
 
 	public void setHttpProxy(HttpProxy httpProxy) {
@@ -71,7 +84,7 @@ public abstract class AbstractDowner implements Downer, AutoCloseable {
 	protected abstract void insideColose();
 
 	@Override
-	public final void close(){
+	public final void close() {
 		insideColose();
 	}
 }
