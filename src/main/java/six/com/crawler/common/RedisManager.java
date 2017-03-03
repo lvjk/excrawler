@@ -43,7 +43,7 @@ public class RedisManager implements InitializingBean {
 	// redis lock time out 3分钟
 	private int lockTimeout;
 	// redis 锁 前缀
-	private final static String PRE_LOCK = "spider_redis_lock_";
+	private final static String PRE_LOCK = "lock";
 
 	private final static String HOST_PID;
 
