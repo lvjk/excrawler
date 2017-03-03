@@ -163,7 +163,7 @@ public class Job implements Serializable {
 				}
 			}
 		}
-		return param;
+		return StringUtils.trim(param);
 	}
 
 	public List<String> getParams(String paramKey) {
@@ -175,7 +175,7 @@ public class Job implements Serializable {
 			for (int i = 0; i < paramList.size(); i++) {
 				JobParam jobParam = paramList.get(i);
 				if (paramKey.equals(jobParam.getName())) {
-					resultParams.add(jobParam.getValue());
+					resultParams.add(StringUtils.trim(jobParam.getValue()));
 				}
 			}
 		}

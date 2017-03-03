@@ -11,7 +11,9 @@ public enum HttpProxyType {
 	// 启用一个
 	ENABLE_ONE(1),
 	// 启用多个
-	ENABLE_MANY(2);
+	ENABLE_MANY(2),
+	// 启用阿布
+	ENABLE_ABU(3);
 
 	private final int value;
 
@@ -30,6 +32,8 @@ public enum HttpProxyType {
 			return ENABLE_ONE;
 		} else if (2 == type) {
 			return ENABLE_MANY;
+		} else if (3 == type) {
+			return ENABLE_ABU;
 		} else {
 			return DISABLE;
 		}
