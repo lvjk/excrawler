@@ -10,6 +10,7 @@ import java.net.URLEncoder;
 import java.net.Proxy.Type;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -167,6 +168,17 @@ public class HttpClient implements InitializingBean {
 			SocketAddress sa = new InetSocketAddress(httpProxy.getHost(), httpProxy.getPort());
 			Proxy proxy = new Proxy(Type.HTTP, sa);
 			build.proxy(proxy);
+			if (StringUtils.isNotBlank(httpProxy.getUserName())) {
+				String nameAndPass = httpProxy.getUserName() + ":" + httpProxy.getPassword();
+				String encoding = new String(Base64.getEncoder().encode(nameAndPass.getBytes()));
+				build.addHeader("Proxy-Authorization", "Basic " + encoding);
+				if (2 == httpProxy.getType()) {
+					// 设置IP切换头
+					final String ProxyHeadKey = "Proxy-Switch-Ip";
+					final String ProxyHeadVal = "yes";
+					build.addHeader(ProxyHeadKey, ProxyHeadVal);
+				}
+			}
 			headName = HttpConstant.PROXY_CONNECTION;
 			headValue = HttpConstant.KEEP_ALIVE;
 		}
@@ -418,10 +430,8 @@ public class HttpClient implements InitializingBean {
 		cookiesStore = new CookiesStore(cookirDir);
 		okHttpClientBuilder.cookieJar(cookiesStore);
 		okClient = okHttpClientBuilder.build();
-
 		// HttpClientBuilder httpClientBuilder=HttpClients.custom();
 		// httpClientBuilder.setDefaultCookieStore(cookieStore);
-
 		httpClient = HttpClients.createDefault();
 	}
 }

@@ -177,7 +177,7 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 	protected void checkedHttpProxyValid() {
 		LOG.info("start Thread{check-httpProxy-valid-thread}");
 		while (true) {
-			HttpProxy httpProxy = getHttpPorxyService().getHttpProxy("check-httpProxy-valid");
+			HttpProxy httpProxy = getHttpPorxyService().getHttpProxy("check-httpProxy-valid", 1, 1000);
 			if (null != httpProxy) {
 				int checkInvalidCount = 0;
 				while (checkInvalidCount < CheckInvalidCountMax) {
@@ -524,7 +524,7 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 			otherFreeExecuteNodes.forEach(node -> {
 				callNodeExecuteJob(node, jobName);
 			});
-		}else{
+		} else {
 			submitWaitQueue(job);
 		}
 	}

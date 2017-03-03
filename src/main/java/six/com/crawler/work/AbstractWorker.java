@@ -331,6 +331,10 @@ public abstract class AbstractWorker implements Worker {
 		return job;
 	}
 
+	public long getWorkFrequency(){
+		return minWorkFrequency;
+	}
+	
 	public long getLastActivityTime() {
 		return lastActivityTime;
 	}

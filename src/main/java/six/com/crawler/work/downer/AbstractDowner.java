@@ -37,11 +37,16 @@ public abstract class AbstractDowner implements Downer, AutoCloseable {
 	 * 记录上一次请求的url ，如果跟上一次请求url一样的话那么不下载
 	 */
 	public HttpResult down(Page page) throws DownerException {
-		if (null != page 
-				&& StringUtils.isNotBlank(page.getOriginalUrl())
-				&& StringUtils.equals(page.getOriginalUrl(), lastRequestUrl)) {
+		if (null == page 
+				|| StringUtils.isBlank(page.getOriginalUrl())){
+			throw new DownerException("page is null or page's url is blank");
+		}		
+		if ( !StringUtils.equals(page.getOriginalUrl(), lastRequestUrl)) {
 			lastHttpResult = insideDown(page);
 			lastRequestUrl = page.getOriginalUrl();
+			lastHttpResult.setHtml(page.getPageSrc());
+		}else{
+			page.setPageSrc(lastHttpResult.getHtml());
 		}
 		return lastHttpResult;
 	}

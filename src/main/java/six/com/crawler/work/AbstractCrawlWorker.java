@@ -106,7 +106,8 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		if ("1".equals(isSnapshotTable)) {
 			JobSnapshot lastJobSnapshot = getManager().getJobService()
 					.queryLastJobSnapshotFromHistory(getJob().getName());
-			if (null != lastJobSnapshot&&StringUtils.isNotBlank(lastJobSnapshot.getTableName()) && lastJobSnapshot.getEnumState() != JobSnapshotState.FINISHED) {
+			if (null != lastJobSnapshot && StringUtils.isNotBlank(lastJobSnapshot.getTableName())
+					&& lastJobSnapshot.getEnumState() != JobSnapshotState.FINISHED) {
 				tempTbaleName = lastJobSnapshot.getTableName();
 			} else {
 				String jobStart = StringUtils.remove(jobSnapshot.getId(), getJob().getName() + "_");
@@ -286,14 +287,13 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		HttpProxy httpProxy = null;
 		if (null != downer) {
 			if (httpProxyType == HttpProxyType.ENABLE_ONE && null == downer.getHttpProxy()) {
-				httpProxy = getManager().getHttpPorxyService().getHttpProxy(site.getCode());
-				downer.setHttpProxy(httpProxy);
+				httpProxy = getManager().getHttpPorxyService().getHttpProxy(site.getCode(),1, getWorkFrequency());
 			} else if (httpProxyType == HttpProxyType.ENABLE_MANY) {
-				httpProxy = getManager().getHttpPorxyService().getHttpProxy(site.getCode());
-				downer.setHttpProxy(httpProxy);
-			} else {
-				downer.setHttpProxy(httpProxy);
+				httpProxy = getManager().getHttpPorxyService().getHttpProxy(site.getCode(),1, getWorkFrequency());
+			} else if (httpProxyType == HttpProxyType.ENABLE_ABU) {
+				httpProxy = getManager().getHttpPorxyService().getHttpProxy(site.getCode(),2, getWorkFrequency());
 			}
+			downer.setHttpProxy(httpProxy);
 		}
 	}
 

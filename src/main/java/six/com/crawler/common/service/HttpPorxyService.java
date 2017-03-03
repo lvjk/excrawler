@@ -16,12 +16,16 @@ public interface HttpPorxyService {
 
 	/**
 	 * 通过 siteCode 获取一个可用的http代理
-	 * 
+	 * 判断获取到的 代理上一次试用时间是否大于等于restTime 
+	 * 如果是那么直接返回此代理
+	 * 否则循环下一个代理
+	 * 直到获取到有冷却代理
 	 * @param siteCode
 	 * @return
 	 */
-	public HttpProxy getHttpProxy(String siteCode);
-
+	public HttpProxy getHttpProxy(String siteCode,int type,long restTime);
+	
+	
 	/**
 	 * 添加一个 http代理
 	 * @param host

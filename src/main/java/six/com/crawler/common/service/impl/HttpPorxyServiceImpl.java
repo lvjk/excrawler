@@ -26,8 +26,7 @@ public class HttpPorxyServiceImpl implements HttpPorxyService {
 
 	final static Logger LOG = LoggerFactory.getLogger(HttpPorxyServiceImpl.class);
 
-	private static final String REDIS_LOACK_PRE = "http_proxy_index";
-
+	private static final String REDIS_HTTP_PROXY_INDEX = "http_proxy_index";
 	private static final String REDIS_HTTP_PROXY_POOL = "http_proxy_pool";
 
 	@Autowired
@@ -61,38 +60,70 @@ public class HttpPorxyServiceImpl implements HttpPorxyService {
 		}
 	}
 
-	public HttpProxy getHttpProxy(String siteCode) {
-		int index = getProxyIndex(siteCode);
+	public HttpProxy getHttpProxy(String siteCode, int type, long restTime) {
 		HttpProxy httpProxy = null;
-		if (index != -1) {
-			httpProxy = schedulerManager.getRedisManager().lindex(REDIS_HTTP_PROXY_POOL, index, HttpProxy.class);
+		if (2 == type) {
+			httpProxy = schedulerManager.getRedisManager().get(REDIS_HTTP_PROXY_POOL + "_2", HttpProxy.class);
+		} else {
+			// 站点http代理池 key
+			String siteHttpProxyPoolKey = REDIS_HTTP_PROXY_POOL + "_" + siteCode;
+			// 站点http代理获取索引 key
+			String siteHttpProxyIndexKey = REDIS_HTTP_PROXY_INDEX + "_" + siteCode;
+			while (true) {
+				int index = getProxyIndex(siteHttpProxyPoolKey, siteHttpProxyIndexKey);
+				if (index != -1) {
+					httpProxy = schedulerManager.getRedisManager().lindex(REDIS_HTTP_PROXY_POOL, index,
+							HttpProxy.class);
+					long nowTime = System.currentTimeMillis();
+					long alreadyRestTime = nowTime - httpProxy.getLastUseTime();
+					LOG.info(
+							siteHttpProxyPoolKey + "[" + httpProxy.toString() + "] alreadyRestTime:" + alreadyRestTime);
+					if (alreadyRestTime >= restTime) {
+						httpProxy.setLastUseTime(nowTime);
+						schedulerManager.getRedisManager().lset(REDIS_HTTP_PROXY_POOL, index, httpProxy);
+						break;
+					}
+				} else {
+					throw new RuntimeException("get getProxyIndex:-1");
+				}
+			}
 		}
 		return httpProxy;
 	}
 
-	private int getProxyIndex(String siteCode) {
+	private int getProxyIndex(String siteHttpProxyPoolKey, String siteHttpProxyIndexKey) {
 		int index = -1;
 		boolean flag = false;
-		String redisKey = REDIS_LOACK_PRE + siteCode;
-		schedulerManager.getRedisManager().lock(redisKey);
-		int size = schedulerManager.getRedisManager().llen(REDIS_HTTP_PROXY_POOL);
+		schedulerManager.getRedisManager().lock(siteHttpProxyPoolKey);
+		int size = schedulerManager.getRedisManager().llen(siteHttpProxyPoolKey);
+		if (0 == size) {
+			List<HttpProxy> list = schedulerManager.getRedisManager().lrange(REDIS_HTTP_PROXY_POOL, 0, -1,
+					HttpProxy.class);
+			for (HttpProxy httpProxy : list) {
+				schedulerManager.getRedisManager().lpush(siteHttpProxyPoolKey, httpProxy);
+			}
+			int expire=1 * 60 * 60;
+			schedulerManager.getRedisManager().expire(siteHttpProxyIndexKey, expire);
+			size = list.size();
+		}
 		if (size > 0) {
 			try {
 				do {
 					// 因为 incr 当key不存在时 先设置值=0，然后再自增，所以都是从1开始
-					Long tempIndex = schedulerManager.getRedisManager().incr(redisKey);
+					Long tempIndex = schedulerManager.getRedisManager().incr(siteHttpProxyIndexKey);
 					// 设置10分钟过期时间
-					schedulerManager.getRedisManager().expire(redisKey, 1 * 60 * 10);
+					int expire=1 * 60 * 10;
+					schedulerManager.getRedisManager().expire(siteHttpProxyIndexKey, expire);
 					index = tempIndex.intValue() - 1;
 					if (index >= size) {
-						schedulerManager.getRedisManager().del(redisKey);
+						schedulerManager.getRedisManager().del(siteHttpProxyIndexKey);
 						flag = true;
 					} else {
 						break;
 					}
 				} while (flag);
 			} finally {
-				schedulerManager.getRedisManager().unlock(redisKey);
+				schedulerManager.getRedisManager().unlock(siteHttpProxyPoolKey);
 			}
 		}
 		return index;
@@ -114,8 +145,13 @@ public class HttpPorxyServiceImpl implements HttpPorxyService {
 		if (schedulerManager.getHttpClient().isValidHttpProxy(httpProxy)) {
 			schedulerManager.getRedisManager().lock(REDIS_HTTP_PROXY_POOL);
 			try {
-				delHttpProxy(httpProxy);
-				schedulerManager.getRedisManager().lpush(REDIS_HTTP_PROXY_POOL, httpProxy);
+				if (httpProxy.getType() == 2) {
+					schedulerManager.getRedisManager().del(REDIS_HTTP_PROXY_POOL + "_2");
+					schedulerManager.getRedisManager().set(REDIS_HTTP_PROXY_POOL + "_2", httpProxy);
+				} else {
+					schedulerManager.getRedisManager().lrem(REDIS_HTTP_PROXY_POOL, 0, httpProxy);
+					schedulerManager.getRedisManager().lpush(REDIS_HTTP_PROXY_POOL, httpProxy);
+				}
 				return "this httpProxy[" + httpProxy.getHost() + ":" + httpProxy.getPort() + "] add succeed";
 			} finally {
 				schedulerManager.getRedisManager().unlock(REDIS_HTTP_PROXY_POOL);
