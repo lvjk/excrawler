@@ -100,7 +100,7 @@ function showJobTable(data) {
 		$("<td name='jobState' id='"+job_state+ job.name + "' style='font-weight:bold;color:"+color+"'>"
 						+ state + "</td>").appendTo(tr);
 		$("<td id='" + job_start_time + job.name + "'></td>").appendTo(tr);
-		$("<td id='" + job_queue_count + job.name + "'>0/0/0</td>").appendTo(tr);
+		$("<td id='" + job_queue_count + job.name + "'>0/(0/0/0)</td>").appendTo(tr);
 		$("<td id='" + job_exception_count + job.name + "'>0</td>").appendTo(tr);
 		
 		
@@ -323,7 +323,9 @@ function showJobActivitiesInfo(infos) {
 		var totalProcessCountHtml="<span style='color:#FF0000;font-size: 14px; font-weight: bold;'>"+info.totalProcessCount+"</span>";
 		var proxyQueueCountHtml="<span style='color:#227700;font-size: 14px; font-weight: bold;'>"+info.proxyQueueCount+"</span>";
 		var realQueueCountCountHtml="<span style='color:#227700;font-size: 14px; font-weight: bold;'>"+info.realQueueCount+"</span>";
-		$("#" + job_queue_count + jobName).html(totalProcessCountHtml+"/&nbsp;("+proxyQueueCountHtml+"&nbsp;|&nbsp;"+realQueueCountCountHtml+")");
+		var errQueueCountHtml="<span style='color:#FF0000;font-size: 14px; font-weight: bold;'>"+info.errQueueCount+"</span>";
+		var queueShowStr=totalProcessCountHtml+"/&nbsp;("+proxyQueueCountHtml+"&nbsp;|&nbsp;"+realQueueCountCountHtml+"&nbsp;|&nbsp;"+errQueueCountHtml+")";
+		$("#" + job_queue_count + jobName).html(queueShowStr);
 		$("#" + job_exception_count + jobName).html(info.errCount);
 		var opetationHtml=getOperation(info.state,info.hostNode,info.name);
 		$("#" + job_operation + jobName).html(opetationHtml);
