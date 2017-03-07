@@ -79,6 +79,8 @@ public class Page implements Serializable {
 
 	private Map<String, List<String>> metaMap;
 
+	private int noNeedDown;// 不需要下载:1  需要下载默认:0
+
 	public PostContentType getPostContentType() {
 		return postContentType;
 	}
@@ -161,6 +163,7 @@ public class Page implements Serializable {
 
 	public void setPageSrc(String pageSrc) {
 		this.pageSrc = pageSrc;
+		doc = Jsoup.parse(pageSrc);
 	}
 
 	public Document getDoc() {
@@ -240,7 +243,11 @@ public class Page implements Serializable {
 	 * @return finalUrl
 	 */
 	public String getFinalUrl() {
-		return finalUrl;
+		if (null == finalUrl) {
+			return originalUrl;
+		} else {
+			return finalUrl;
+		}
 	}
 
 	public void setPageNum(int pageNum) {
@@ -286,6 +293,14 @@ public class Page implements Serializable {
 
 	public void setNextUrl(String nextUrl) {
 		this.nextUrl = nextUrl;
+	}
+
+	public int getNoNeedDown() {
+		return noNeedDown;
+	}
+
+	public void setNoNeedDown(int noNeedDown) {
+		this.noNeedDown = noNeedDown;
 	}
 
 	public List<String> getNewListingUrl() {

@@ -20,30 +20,32 @@ public class RedisWorkQueue implements WorkQueue {
 
 	final static Logger LOG = LoggerFactory.getLogger(RedisWorkQueue.class);
 
-	//redis page 代理队列 key 前缀
+	// redis page 代理队列 key 前缀
 	public final static String PRE_PROXY_QUEUE_KEY = "spider_redis_store_page_proxy_queue_";
-	//redis page 队列 key 前缀
+	// redis page 队列 key 前缀
 	public final static String PRE_QUEUE_KEY = "spider_redis_store_page_queue_";
-	
+
 	public final static String PRE_ERR_QUEUE_KEY = "spider_redis_store_page_err_queue_";
-	//redis 处理过数据 key 去重前缀
+	// redis 处理过数据 key 去重前缀
 	public final static String PRE_DONE_DUPLICATE_KEY = "spider_redis_store_page_done_duplicate_";
-	
+
+	int batch = 10000;
+
 	private RedisManager redisManager;
 
 	private String proxyQueueKey;
 
 	private String queueKey;
-	
+
 	protected String errQueueKey;
 
 	private String doneDuplicateKey;
 
-	public RedisWorkQueue(RedisManager redisManager,String queueName) {
+	public RedisWorkQueue(RedisManager redisManager, String queueName) {
 		this.redisManager = redisManager;
 		proxyQueueKey = PRE_PROXY_QUEUE_KEY.concat(queueName);
 		queueKey = PRE_QUEUE_KEY.concat(queueName);
-		errQueueKey=PRE_ERR_QUEUE_KEY.concat(queueName);
+		errQueueKey = PRE_ERR_QUEUE_KEY.concat(queueName);
 		doneDuplicateKey = PRE_DONE_DUPLICATE_KEY.concat(queueName);
 	}
 
@@ -52,14 +54,27 @@ public class RedisWorkQueue implements WorkQueue {
 		Page page = null;
 		// 加锁
 		redisManager.lock(queueKey);
+		boolean isRepair = false;
+		boolean againGet = false;
 		try {
-			// 先从代理队列里获取头元素数据key 并移除
-			String dataKey = redisManager.lpop(proxyQueueKey, String.class);
-			if (null != dataKey) {
-				// 通过数据key 再获取数据
-				page = redisManager.hget(queueKey, dataKey, Page.class);
-				if (null == page) {
-					throw new RuntimeException("don't find value by data's key[" + dataKey + "] from queue");
+			while (!isRepair || againGet) {
+				// 先从代理队列里获取头元素数据key 并移除
+				String dataKey = redisManager.lpop(proxyQueueKey, String.class);
+				if (isRepair&&null==dataKey) {
+					break;
+				}else{
+					if (null != dataKey) {
+						// 通过数据key 再获取数据
+						page = redisManager.hget(queueKey, dataKey, Page.class);
+						if (null == page) {
+							throw new RuntimeException("don't find value by data's key[" + dataKey + "] from queue");
+						}
+						break;
+					} else {
+						repair();
+						isRepair = true;
+						againGet = true;
+					}
 				}
 			}
 		} finally {
@@ -98,7 +113,7 @@ public class RedisWorkQueue implements WorkQueue {
 		redisManager.lock(doneDuplicateKey);
 		try {
 			redisManager.hdel(queueKey, key);
-			redisManager.hset(doneDuplicateKey, key,page.getFinalUrl());
+			redisManager.hset(doneDuplicateKey, key, page.getFinalUrl());
 		} finally {
 			// 解锁
 			redisManager.unlock(doneDuplicateKey);
@@ -160,11 +175,11 @@ public class RedisWorkQueue implements WorkQueue {
 	}
 
 	@Override
-	public void addDuplicateKey(String pageKey,String url) {
+	public void addDuplicateKey(String pageKey, String url) {
 		// 加锁判断 队列里是否有重复的数据
 		redisManager.lock(doneDuplicateKey);
 		try {
-			redisManager.hset(doneDuplicateKey, pageKey,url);
+			redisManager.hset(doneDuplicateKey, pageKey, url);
 		} finally {
 			// 解锁
 			redisManager.unlock(doneDuplicateKey);
@@ -184,18 +199,12 @@ public class RedisWorkQueue implements WorkQueue {
 	public void retryPush(Page page) {
 		if (null != page) {
 			String dataKey = page.getPageKey();
-			Page data = null;
 			// 加锁
 			redisManager.lock(queueKey);
 			try {
 				// 先将数据key放入代理队列
 				redisManager.rpush(proxyQueueKey, dataKey);
-				// 判断 队列里是否有重复的数据
-				data = redisManager.hget(queueKey, dataKey, Page.class);
-				if (null == data) {
-					// 再存入实际数据
-					redisManager.hset(queueKey, dataKey, page);
-				}
+				redisManager.hset(queueKey, dataKey, page);
 			} finally {
 				// 解锁
 				redisManager.unlock(queueKey);
@@ -205,6 +214,6 @@ public class RedisWorkQueue implements WorkQueue {
 
 	@Override
 	public void pushErr(Page page) {
-		//redisManager.hset(errQueueKey, page.getPageKey(),page);
+		redisManager.hset(errQueueKey, page.getPageKey(), page);
 	}
 }

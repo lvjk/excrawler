@@ -67,6 +67,38 @@ public abstract class AbstractWorker implements Worker {
 	 */
 	protected abstract void insideWork() throws Exception;
 
+	private String catchException(Exception exception) {
+		String msg=null;
+		if(null!=exception){
+			StringBuilder msgSb=new StringBuilder();
+			Throwable throwable=exception;
+			while(null!=throwable){
+				msgSb.append(throwable.getClass());
+				msgSb.append(":");
+				msgSb.append(throwable.getMessage());
+				msgSb.append("\n");
+				StackTraceElement[] stackTraceElements=throwable.getStackTrace();
+				if(null!=stackTraceElements){
+					for(StackTraceElement stackTraceElement:stackTraceElements){
+						msgSb.append("\t\t\t");
+						msgSb.append(stackTraceElement.getClassName());
+						msgSb.append(".");
+						msgSb.append(stackTraceElement.getMethodName());
+						msgSb.append("(");
+						msgSb.append(stackTraceElement.getFileName());
+						msgSb.append(":");
+						msgSb.append(stackTraceElement.getLineNumber());
+						msgSb.append(")");
+						msgSb.append("\n");
+					}
+				}
+				throwable=throwable.getCause();
+			}
+			msg=msgSb.toString();
+		}
+		return msg;
+	}
+
 	private final void work() {
 		LOG.info("start worker:" + getName());
 		// 记录job 开始时间
@@ -83,7 +115,8 @@ public abstract class AbstractWorker implements Worker {
 					try {
 						insideWork();
 					} catch (Exception e) {
-						LOG.error("insideWork err", e);
+						LOG.error("worker process err", e);
+						String msg = catchException(e);
 						workerSnapshot.setErrCount(workerSnapshot.getErrCount() + 1);
 						WorkerErrMsg errMsg = new WorkerErrMsg();
 						errMsg.setJobSnapshotId(jobSnapshotId);
@@ -91,11 +124,10 @@ public abstract class AbstractWorker implements Worker {
 						errMsg.setWorkerName(getName());
 						errMsg.setStartTime(
 								DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
-						errMsg.setMsg(e.getMessage());
+						errMsg.setMsg(msg);
 						workerSnapshot.getWorkerErrMsgs().add(errMsg);
 						// 通知管理员异常
 						getManager().noticeAdminByEmail("worker process err", e.getMessage());
-						LOG.error("worker process err", e);
 						onError(e);
 					}
 					// 频率控制
@@ -261,7 +293,7 @@ public abstract class AbstractWorker implements Worker {
 		String jobHostNode = getJob().getHostNode();
 		String jobName = getJob().getName();
 		MDC.put("jobName", jobName);
-		String lockKey=jobName+"_worker_init";
+		String lockKey = jobName + "_worker_init";
 		try {
 			getManager().getRedisManager().lock(lockKey);
 			JobSnapshot jobSnapshot = getManager().getJobService().getJobSnapshotFromRegisterCenter(jobHostNode,
@@ -282,7 +314,7 @@ public abstract class AbstractWorker implements Worker {
 			initWorker(jobSnapshot);
 		} catch (Exception e) {
 			throw new RuntimeException("init crawlWorker err", e);
-		}finally {
+		} finally {
 			getManager().getRedisManager().unlock(lockKey);
 		}
 	}
@@ -331,10 +363,10 @@ public abstract class AbstractWorker implements Worker {
 		return job;
 	}
 
-	public long getWorkFrequency(){
+	public long getWorkFrequency() {
 		return minWorkFrequency;
 	}
-	
+
 	public long getLastActivityTime() {
 		return lastActivityTime;
 	}

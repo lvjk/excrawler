@@ -19,6 +19,8 @@ public class QueueInfo {
 	 */
 	private int realQueueSize;
 	
+	private int errQueueCount;// 错误任务队列数量
+	
 	public String getQueueName() {
 		return queueName;
 	}
@@ -36,5 +38,13 @@ public class QueueInfo {
 	}
 	public void setRealQueueSize(int realQueueSize) {
 		this.realQueueSize = realQueueSize;
+	}
+	
+	public int getErrQueueCount() {
+		return errQueueCount;
+	}
+
+	public void setErrQueueCount(int errQueueCount) {
+		this.errQueueCount = errQueueCount;
 	}
 }

@@ -28,6 +28,7 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 	int longitudeMin = 73;
 	int latitudeMax = 53;
 	int latitudeMix = 4;
+	RedisWorkQueue projectInfo1Queue;
 	RedisWorkQueue presellUrlQueue;
 	String longitude_latitude_div_css = "div[id=boxid1]>div[class=border3 positionr]";
 	String mapDivCss = "div[id=boxid1]>div>div";
@@ -35,6 +36,7 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 	@Override
 	protected void insideInit() {
 		presellUrlQueue = new RedisWorkQueue(getManager().getRedisManager(), "tmsf_presell_url");
+		projectInfo1Queue = new RedisWorkQueue(getManager().getRedisManager(), "tmsf_project_info_1");
 	}
 
 	@Override
@@ -83,8 +85,15 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	protected void insideOnError(Exception t, Page doingPage) {
-
+	protected boolean insideOnError(Exception t, Page doingPage) {
+		String projectNameCss = "div[id=head]>ul>li";
+		Elements projectNameElements = doingPage.getDoc().select(projectNameCss);
+		if (null != projectNameElements && !projectNameElements.isEmpty()) {
+			projectInfo1Queue.push(doingPage);
+			getWorkQueue().finish(doingPage);
+			return true;
+		}
+		return false;
 	}
 
 	@Override

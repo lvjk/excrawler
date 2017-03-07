@@ -33,6 +33,7 @@ public class HeatQQWorker extends AbstractCrawlWorker {
 	String referer = "https://heat.qq.com/qianxi/index.html";
 	String cityDateUrl = "https://heat.qq.com/qianxi/js/data/city.js";
 	String dateFormat = "yyyyMMdd";
+	//20150201 20170302
 	String startDateStr;
 	String endDateStr;
 	NumberFormat ptNf = NumberFormat.getPercentInstance();
@@ -230,8 +231,8 @@ public class HeatQQWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	protected void insideOnError(Exception e, Page doingPage) {
-
+	public boolean insideOnError(Exception t, Page doingPage) {
+		return false;
 	}
 
 }

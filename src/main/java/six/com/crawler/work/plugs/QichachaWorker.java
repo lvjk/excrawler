@@ -50,8 +50,8 @@ public class QichachaWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	public void insideOnError(Exception t, Page p) {
-
+	public boolean insideOnError(Exception t, Page doingPage) {
+		return false;
 	}
 
 	protected void beforeDown(Page doingPage) {

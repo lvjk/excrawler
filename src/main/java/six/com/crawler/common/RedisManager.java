@@ -77,7 +77,7 @@ public class RedisManager implements InitializingBean {
 			return result;
 		});
 	}
-	
+
 	/**
 	 * 
 	 * @param key
@@ -112,6 +112,16 @@ public class RedisManager implements InitializingBean {
 		});
 	}
 
+	public <T>void lpushAll(String key, List<T> values) {
+		byte[] keyBytes = JavaSerializeUtils.serializeString(key);
+		for (T value : values) {
+			byte[] valueBytes = JavaSerializeUtils.serialize(value);
+			RedisRetryHelper.execute(() -> {
+				return jedisCluster.lpush(keyBytes, valueBytes);
+			});
+		}
+	}
+
 	public <T> T lindex(String key, int index, Class<T> clz) {
 		byte[] keyBytes = JavaSerializeUtils.serializeString(key);
 		return RedisRetryHelper.execute(() -> {
@@ -123,16 +133,16 @@ public class RedisManager implements InitializingBean {
 			return result;
 		});
 	}
-	
-	public String lset(String key, int index,Object value) {
+
+	public String lset(String key, int index, Object value) {
 		byte[] keyBytes = JavaSerializeUtils.serializeString(key);
 		byte[] valueBytes = JavaSerializeUtils.serialize(value);
 		return RedisRetryHelper.execute(() -> {
 			return jedisCluster.lset(keyBytes, index, valueBytes);
 		});
 	}
-	
-	public int lrem(String key, int count,Object value) {
+
+	public int lrem(String key, int count, Object value) {
 		byte[] keyBytes = JavaSerializeUtils.serializeString(key);
 		byte[] valueBytes = JavaSerializeUtils.serialize(value);
 		return RedisRetryHelper.execute(() -> {

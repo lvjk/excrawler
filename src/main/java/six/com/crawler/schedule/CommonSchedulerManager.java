@@ -38,7 +38,6 @@ import org.springframework.stereotype.Component;
 import okhttp3.Request;
 import six.com.crawler.common.DateFormats;
 import six.com.crawler.common.email.QQEmailClient;
-import six.com.crawler.common.entity.HttpProxy;
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.JobSnapshot;
 import six.com.crawler.common.entity.JobSnapshotState;
@@ -91,10 +90,6 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 	// 节点心跳线程
 	private Thread heartbeatThread;
 
-	Thread checkValidHttpProxyThread;
-
-	private static final int CheckInvalidCountMax = 3;// 检查无效性最大次数
-
 	private Scheduler scheduler;
 
 	private final static String schedulerGroup = "spider";
@@ -140,12 +135,6 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 		// 启动读取等待执行任务线程 线程
 		executeWaitQueueThread.start();
 
-		// checkValidHttpProxyThread = new Thread(() -> {
-		// checkedHttpProxyValid();
-		// }, "check-httpProxy-valid-thread");
-		// checkValidHttpProxyThread.setDaemon(true);
-		// checkValidHttpProxyThread.start();
-
 		// 加载 当前节点 需要调度的任务
 		loadScheduledJob();
 	}
@@ -172,31 +161,6 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 			}
 		}
 
-	}
-
-	protected void checkedHttpProxyValid() {
-		LOG.info("start Thread{check-httpProxy-valid-thread}");
-		while (true) {
-			HttpProxy httpProxy = getHttpPorxyService().getHttpProxy("check-httpProxy-valid", 1, 1000);
-			if (null != httpProxy) {
-				int checkInvalidCount = 0;
-				while (checkInvalidCount < CheckInvalidCountMax) {
-					if (!getHttpClient().isValidHttpProxy(httpProxy)) {
-						checkInvalidCount++;
-						ThreadUtils.sleep(1000 * 60);// 休息1分钟
-					} else {
-						break;
-					}
-				}
-				if (checkInvalidCount >= CheckInvalidCountMax) {
-					String msg = "this node[" + getCurrentNode().getName() + "] check httpProxy[" + httpProxy.toString()
-							+ "] is invalid";
-					LOG.error(msg);
-					noticeAdminByEmail(msg, msg);
-				}
-			}
-			ThreadUtils.sleep(1000 * 60 * 30);// 休息30分钟
-		}
 	}
 
 	private void initScheduler() {

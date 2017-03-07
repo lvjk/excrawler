@@ -93,8 +93,8 @@ public class ChongqiCqgtfwGovPresellUrlWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	protected void insideOnError(Exception e, Page doingPage) {
-
+	public boolean insideOnError(Exception t, Page p) {
+		return false;
 	}
 
 }

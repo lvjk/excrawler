@@ -50,12 +50,10 @@ public class QichachaSearchWorker extends AbstractCrawlWorker {
 	private boolean hasNextPage;
 	private boolean selectPreItem = false;
 
-
 	@Override
 	public void insideInit() {
-		redisManager =getManager().getRedisManager();
+		redisManager = getManager().getRedisManager();
 		showProvinceBt = "//a[@id='show-province']";
-
 		clearProvinceBt = "//span[@class='m-l label btn-primary provinceChoosen appendSpan clearSpan']";
 		provinceList = "//dl[@id='provinceOld']/div[2]/dd";
 		clearCreateDate = "//span[@class='m-l label btn-primary startDateChoosen appendSpan clearSpan']";
@@ -64,11 +62,14 @@ public class QichachaSearchWorker extends AbstractCrawlWorker {
 		clearCity = "//span[@class='m-l label btn-primary cityChoosen appendSpan clearSpan']";
 		cityList = "//div[@id='city_show']/dd/a";
 		nextPage = "//a[@id='ajaxpage' and text()='>']";
+		String searchPageUrl = "http://www.qichacha.com/search?key=%E5%9C%B0%E4%BA%A7&index=0";
+		Page searchPage = new Page(getSite().getCode(), 1,searchPageUrl, searchPageUrl);
+		getWorkQueue().push(searchPage);
 		qichachaQueue = new RedisWorkQueue(getManager().getRedisManager(), "qichacha");
 	}
 
 	@Override
-	public void onComplete(Page doingPage,ResultContext resultContext) {
+	public void onComplete(Page doingPage, ResultContext resultContext) {
 		getWorkQueue().push(doingPage);
 	}
 
@@ -200,10 +201,9 @@ public class QichachaSearchWorker extends AbstractCrawlWorker {
 			}
 		}
 	}
-
 	@Override
-	protected void insideOnError(Exception t, Page doingPage) {
-
+	public boolean insideOnError(Exception t, Page doingPage) {
+		return false;
 	}
 
 	private String selectProvince() {

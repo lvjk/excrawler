@@ -184,6 +184,7 @@ public class JobServiceImpl implements JobService {
 		jobSnapshot.setQueueName(queueName);
 		jobSnapshot.setRealQueueCount(tempQueueInfo.getRealQueueSize());
 		jobSnapshot.setProxyQueueCount(tempQueueInfo.getProxyQueueSize());
+		jobSnapshot.setErrQueueCount(tempQueueInfo.getErrQueueCount());
 		return jobSnapshot;
 	}
 
@@ -361,9 +362,15 @@ public class JobServiceImpl implements JobService {
 		String tempProxyKey = RedisWorkQueue.PRE_PROXY_QUEUE_KEY + queueName;
 		int proxySize = redisManager.llen(tempProxyKey);
 		tempQueueInfo.setProxyQueueSize(proxySize);
+		
 		String tempRealKey = RedisWorkQueue.PRE_QUEUE_KEY + queueName;
 		int realSize = redisManager.hllen(tempRealKey);
 		tempQueueInfo.setRealQueueSize(realSize);
+		
+		String tempErrKey = RedisWorkQueue.PRE_ERR_QUEUE_KEY + queueName;
+		int errSize = redisManager.hllen(tempErrKey);
+		tempQueueInfo.setErrQueueCount(errSize);
+		
 		return tempQueueInfo;
 	}
 

@@ -1,6 +1,7 @@
 package six.com.crawler.work.plugs;
 
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -57,8 +58,8 @@ public class Cq315houseHouseInfoWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	public void insideOnError(Exception t, Page p) {
-
+	public boolean insideOnError(Exception t, Page doingPage) {
+		return false;
 	}
 
 	protected void beforeDown(Page page) {
@@ -88,8 +89,8 @@ public class Cq315houseHouseInfoWorker extends AbstractCrawlWorker {
 		validCodePage.setReferer(doingPage.getFinalUrl());
 		byte[] imageBytes = getDowner().downBytes(validCodePage);
 		BufferedImage croppedImage = ImageUtils.loadImage(imageBytes);
-//		ImageUtils.writeImage(new File("F:/test/cq315image",
-//		System.currentTimeMillis() + ".gif"), croppedImage);
+		ImageUtils.writeImage(new File("F:/test/cq315image",
+		System.currentTimeMillis() + ".gif"), croppedImage);
 		try {
 			String result = imageDistinguish.distinguish(croppedImage);
 			txtCode = JsUtils.eval(result, result);
@@ -112,6 +113,7 @@ public class Cq315houseHouseInfoWorker extends AbstractCrawlWorker {
 		getDowner().down(formPage);
 
 		String formHtml = formPage.getPageSrc();
+		writeString(formHtml);
 		Document formDoc = Jsoup.parse(formHtml);
 		Element scriptElement = formDoc.select("form>script").first();
 		String houseInfoUrl = null;

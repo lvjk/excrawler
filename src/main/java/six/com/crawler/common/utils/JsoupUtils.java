@@ -41,7 +41,7 @@ public class JsoupUtils {
 	 *            抽取结果path
 	 * @return
 	 */
-	public static List<String> extract(Document doc,ExtractPath path) {
+	public static List<String> extract(Document doc, ExtractPath path) {
 		List<String> resultList = new ArrayList<String>();
 		boolean isAdd;
 		Elements htmlElements = doc.getAllElements();
@@ -143,6 +143,7 @@ public class JsoupUtils {
 				tableResult = new TableResult();
 				tdElement = tdElements.get(j);
 				String key = paserElement(PathFilter.EmptyFilterElement, "text", tdElement);
+				key=StringUtils.remove(key," ");
 				if (StringUtils.isNotBlank(key)) {
 					String value = "";
 					int tempIndex = j + 1;
@@ -175,7 +176,7 @@ public class JsoupUtils {
 		String[] fields = new String[headElements.size()];
 		for (int i = 0; i < headElements.size(); i++) {
 			Element fieldElement = headElements.get(i);
-			fields[i] = fieldElement.text();
+			fields[i]=StringUtils.remove(fieldElement.text()," ");
 		}
 		Map<String, List<String>> resultMap = new HashMap<>();
 		for (int i = 0; i < dataElements.size(); i++) {
@@ -189,6 +190,8 @@ public class JsoupUtils {
 		}
 		return resultMap;
 	}
+	
+
 
 	public static List<TableResult> paserTable(Element table) {
 		Elements trElements = table.getElementsByTag("tr");

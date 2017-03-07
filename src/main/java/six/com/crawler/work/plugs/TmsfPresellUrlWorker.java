@@ -85,8 +85,8 @@ public class TmsfPresellUrlWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	protected void insideOnError(Exception t, Page doingPage) {
-
+	public boolean insideOnError(Exception t, Page doingPage) {
+		return false;
 	}
 
 }

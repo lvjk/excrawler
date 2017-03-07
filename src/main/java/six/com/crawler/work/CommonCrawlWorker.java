@@ -10,7 +10,6 @@ import six.com.crawler.common.entity.ResultContext;
  */
 public class CommonCrawlWorker extends AbstractCrawlWorker {
 
-
 	@Override
 	protected void insideInit() {
 
@@ -37,8 +36,8 @@ public class CommonCrawlWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	protected void insideOnError(Exception e, Page doingPage) {
-
+	protected boolean insideOnError(Exception e, Page doingPage) {
+		return false;
 	}
 
 }

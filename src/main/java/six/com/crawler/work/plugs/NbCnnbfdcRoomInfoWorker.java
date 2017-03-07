@@ -50,7 +50,7 @@ public class NbCnnbfdcRoomInfoWorker extends AbstractCrawlWorker{
 		for (TableResult result : results) {
 			String key=fieldMap.get(result.getKey());
 			if(null!=key){
-				doingPage.getMetaMap().put("roomStateId", doingPage.getMeta("roomStateId"));
+				//doingPage.getMetaMap().put("roomStateId", doingPage.getMeta("roomStateId"));
 				doingPage.getMetaMap().computeIfAbsent(key,mapKey->new ArrayList<>()).add(StringUtils.trim(result.getValue()));
 			}
 		}
@@ -65,7 +65,8 @@ public class NbCnnbfdcRoomInfoWorker extends AbstractCrawlWorker{
 	}
 
 	@Override
-	protected void insideOnError(Exception e, Page doingPage) {
+	public boolean insideOnError(Exception t, Page doingPage) {
+		return false;
 	}
 
 }

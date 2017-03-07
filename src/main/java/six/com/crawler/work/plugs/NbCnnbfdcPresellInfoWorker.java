@@ -79,7 +79,6 @@ public class NbCnnbfdcPresellInfoWorker extends AbstractCrawlWorker {
 		String ctCss = "table[width='100%']>tbody>tr:eq(0)>td[align='left']:eq(0)";
 		Element ele = doingPage.getDoc().select(ctCss).get(1);
 		String str = ele.html();
-		System.out.println(str);
 		if(str!=null && str.contains("<br>")){
 			String[] sts = str.split("<br>");
 			if(sts!=null && sts.length>0){
@@ -111,11 +110,9 @@ public class NbCnnbfdcPresellInfoWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	protected void insideOnError(Exception e, Page doingPage) {
+	public boolean insideOnError(Exception t, Page doingPage) {
+		return false;
 	}
 	
-	public static void main(String[] args) {
-		String s = "           0011 0012 0001         ".replace(" ", "");
-		System.out.println(s);
-	}
+	
 }

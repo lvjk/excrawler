@@ -37,8 +37,8 @@ public class CzfdcNewhouseInfoWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	protected void insideOnError(Exception e, Page doingPage) {
-
+	public boolean insideOnError(Exception t, Page doingPage) {
+		return false;
 	}
 
 }

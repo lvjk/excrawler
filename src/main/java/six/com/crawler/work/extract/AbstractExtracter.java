@@ -41,6 +41,9 @@ public abstract class AbstractExtracter implements Extracter {
 		List<String> extractResult = null;
 		if (extractItem.getType() == ExtractItemType.META.value()) {
 			extractResult = page.getMeta(extractItem.getOutputKey());
+			if(null==extractResult){
+				extractResult = new ArrayList<>();
+			}
 		} else {
 			extractResult = new ArrayList<>();
 			ExtractPath optimalPath = null;
@@ -77,7 +80,7 @@ public abstract class AbstractExtracter implements Extracter {
 		}
 		// 查看这个path是否是一定要有结果
 		// 如果==must 没有结果的话 那么将会抛抽取 结果空 异常
-		if ((null == extractResult || extractResult.isEmpty())
+		if (extractResult.isEmpty()
 				&& extractItem.getMustHaveResult() ==1) {
 			throw new ExtractEmptyResultException(
 					"extract resultKey [" + extractItem.getOutputKey() + "] value is empty");

@@ -14,13 +14,13 @@ import org.slf4j.LoggerFactory;
 
 import six.com.crawler.common.DateFormats;
 import six.com.crawler.common.constants.JobConTextConstants;
-import six.com.crawler.common.entity.HttpProxy;
 import six.com.crawler.common.entity.HttpProxyType;
 import six.com.crawler.common.entity.JobSnapshot;
 import six.com.crawler.common.entity.JobSnapshotState;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.entity.Site;
+import six.com.crawler.common.http.HttpProxyPool;
 import six.com.crawler.common.utils.JobTableUtils;
 import six.com.crawler.common.utils.MD5Utils;
 import six.com.crawler.work.downer.Downer;
@@ -55,6 +55,8 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 
 	private HttpProxyType httpProxyType;
 
+	private HttpProxyPool httpProxyPool;
+
 	@Override
 	protected final void initWorker(JobSnapshot jobSnapshot) {
 		// 1.初始化 站点code
@@ -69,16 +71,16 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 			throw new NullPointerException("please set queue's name");
 		}
 		workQueue = new RedisWorkQueue(getManager().getRedisManager(), queueName);
-		// 3.只有是当前节点 才会修复队列
-		if (getManager().getCurrentNode().getName().equals(getJob().getHostNode())) {
-			workQueue.repair();
-		}
 		// 4.初始化下载器
 		String downerType = getJob().getParam(JobConTextConstants.DOWNER_TYPE);
 		downer = DownerManager.getInstance().buildDowner(DownerType.valueOf(Integer.valueOf(downerType)), this);
 		String httpProxyTypeStr = getJob().getParam(JobConTextConstants.HTTP_PROXY_TYPE);
+		if (StringUtils.isBlank(httpProxyTypeStr)) {
+			httpProxyTypeStr = "0";
+		}
 		httpProxyType = HttpProxyType.valueOf(Integer.valueOf(httpProxyTypeStr));
-
+		httpProxyPool = getManager().getHttpPorxyService().buildHttpProxyPool(siteCode, httpProxyType,
+				getWorkFrequency());
 		// 5.初始化内容抽取
 		List<ExtractItem> extractItems = getManager().getJobService().queryExtractItems(getJob().getName());
 		if (null != extractItems && !extractItems.isEmpty()) {
@@ -163,7 +165,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 			try {
 				LOG.info("processor page:" + doingPage.getOriginalUrl());
 				// 1.设置下载器代理
-				setHttpProxyForDowner();
+				downer.setHttpProxy(httpProxyPool.getHttpProxy());
 				// 2. 下载数据
 				downer.down(doingPage);
 				// 3. 抽取前操作
@@ -276,38 +278,42 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 	protected abstract void onComplete(Page doingPage, ResultContext resultContext);
 
 	/**
-	 * 异常处理
+	 * 内部异常处理，如果成功处理返回true 否则返回false;
 	 * 
 	 * @param e
 	 * @param doingPage
+	 * @return
 	 */
-	protected abstract void insideOnError(Exception e, Page doingPage);
-
-	public void setHttpProxyForDowner() {
-		HttpProxy httpProxy = null;
-		if (null != downer) {
-			if (httpProxyType == HttpProxyType.ENABLE_ONE && null == downer.getHttpProxy()) {
-				httpProxy = getManager().getHttpPorxyService().getHttpProxy(site.getCode(),1, getWorkFrequency());
-			} else if (httpProxyType == HttpProxyType.ENABLE_MANY) {
-				httpProxy = getManager().getHttpPorxyService().getHttpProxy(site.getCode(),1, getWorkFrequency());
-			} else if (httpProxyType == HttpProxyType.ENABLE_ABU) {
-				httpProxy = getManager().getHttpPorxyService().getHttpProxy(site.getCode(),2, getWorkFrequency());
-			}
-			downer.setHttpProxy(httpProxy);
-		}
-	}
+	protected abstract boolean insideOnError(Exception e, Page doingPage);
 
 	protected void onError(Exception e) {
 		if (null != doingPage) {
-			if (doingPage.getRetryProcess() < Constants.WOKER_PROCESS_PAGE_MAX_RETRY_COUNT) {
-				doingPage.setRetryProcess(doingPage.getRetryProcess() + 1);
-				workQueue.retryPush(doingPage);
-			} else {
-				workQueue.pushErr(doingPage);
+			Exception insideException = null;
+			boolean insideExceptionResult = false;
+			try {
+				insideExceptionResult = insideOnError(e, doingPage);
+			} catch (Exception e1) {
+				insideException = e1;
+				LOG.error("insideOnError err page:" + doingPage.getFinalUrl(), e1);
 			}
-			LOG.error("processor err page[" + doingPage.getRetryProcess() + "] :" + doingPage.getFinalUrl(), e);
+			// 判断内部处理是否可处理,如果不可处理那么这里默认处理
+			if (!insideExceptionResult) {
+				String msg = null;
+				if (null != insideException
+						&& doingPage.getRetryProcess() < Constants.WOKER_PROCESS_PAGE_MAX_RETRY_COUNT) {
+					doingPage.setRetryProcess(doingPage.getRetryProcess() + 1);
+					workQueue.retryPush(doingPage);
+					msg = "retry processor[" + doingPage.getRetryProcess() + "] page:" + doingPage.getFinalUrl();
+				} else {
+					workQueue.pushErr(doingPage);
+					workQueue.finish(doingPage);
+					msg = "retry process count[" + doingPage.getRetryProcess() + "]>="
+							+ Constants.WOKER_PROCESS_PAGE_MAX_RETRY_COUNT + " and push to err queue:"
+							+ doingPage.getFinalUrl();
+				}
+				LOG.error(msg, e);
+			}
 		}
-		insideOnError(e, doingPage);
 	}
 
 	private String getResultID(List<String> keyValues) {

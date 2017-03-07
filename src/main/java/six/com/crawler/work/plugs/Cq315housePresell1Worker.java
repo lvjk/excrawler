@@ -105,8 +105,8 @@ public class Cq315housePresell1Worker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	protected void insideOnError(Exception t, Page doingPage) {
-
+	public boolean insideOnError(Exception t, Page doingPage) {
+		return false;
 	}
 
 	@Override

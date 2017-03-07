@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.nodes.Element;
 
 import six.com.crawler.common.entity.Page;
@@ -50,7 +51,12 @@ public class NbCnnbfdcProjectInfoWorker extends AbstractCrawlWorker {
 		for (TableResult result : results) {
 			String key=fieldMap.get(result.getKey());
 			if(null!=key){
-				doingPage.getMetaMap().computeIfAbsent(key,mapKey->new ArrayList<>()).add(result.getValue());
+				String value=result.getValue();
+				if("projectName".equals(key)){
+					value=StringUtils.replace(value,"地图定位", "");
+					value=StringUtils.trim(value);
+				}
+				doingPage.getMetaMap().computeIfAbsent(key,mapKey->new ArrayList<>()).add(value);
 			}
 		}
 	}
@@ -68,7 +74,6 @@ public class NbCnnbfdcProjectInfoWorker extends AbstractCrawlWorker {
 		fieldMap.put("楼栋名称", "unitName");
 		fieldMap.put("纳入网上可售住宅套数", "forSellHouseCount");
 		fieldMap.put("纳入网上可售非住宅套数", "forSellNoHouseCount");
-		
 		Element table = doingPage.getDoc().select(tabaleCss).first();
 		if (null == table) {
 			throw new RuntimeException("don't find table:" + tabaleCss);
@@ -78,12 +83,9 @@ public class NbCnnbfdcProjectInfoWorker extends AbstractCrawlWorker {
 		Map<String,List<String>> mp = new HashMap<String,List<String>>();
 		Map<String,List<String>> map = JsoupUtils.paserTable(table, headCssSelect, dataCssSelect);
 		for (String field : map.keySet()) {
-			for (String key : fieldMap.keySet()) {
-				String fd = field.replace(" ", "");
-				if(fd.contains(key)) {
-					String resultKey = fieldMap.get(key);
-					mp.put(resultKey, map.get(field));
-				}
+			String resultKey=fieldMap.get(field);
+			if(null!=resultKey) {
+				mp.put(resultKey, map.get(field));
 			}
 		}
 		List<String> unitNames = mp.get("unitName");
@@ -92,33 +94,22 @@ public class NbCnnbfdcProjectInfoWorker extends AbstractCrawlWorker {
 			for (int i = 0; i < unitNames.size(); i++) {
 				projectIds.add(projectId);
 			}
+			List<String> unitUrls = resultContext.getExtractResult("unitUrl");
 			Page unitInfoPage = new Page(doingPage.getSiteCode(), 1, doingPage.getFirstUrl(), doingPage.getFinalUrl());
+			unitInfoPage.setNoNeedDown(1);
 			unitInfoPage.setReferer(doingPage.getFinalUrl());
-			unitInfoPage.getMetaMap().put("unitName", unitNames);
 			unitInfoPage.getMetaMap().put("projectId", projectIds);
+			unitInfoPage.getMetaMap().put("unitName", unitNames);
+			unitInfoPage.getMetaMap().put("unitUrl", unitUrls);
 			unitInfoPage.getMetaMap().put("forSellHouseCount", mp.get("forSellHouseCount"));
-			unitInfoPage.getMetaMap().put("forSellNoHouseCount", mp.get("forSellHouseCount"));
+			unitInfoPage.getMetaMap().put("forSellNoHouseCount", mp.get("forSellNoHouseCount"));
 			unitInfoQueue.push(unitInfoPage);
 		}
 	}
 
 	@Override
-	protected void insideOnError(Exception e, Page doingPage) {
-
+	public boolean insideOnError(Exception t, Page doingPage) {
+		return false;
 	}
 	
-	public static void main(String[] args) {
-		String s = "border-collapse: collapse; background-color:#99FF00; width=92%;height=100%";
-		String[] ss = s.split(";");
-		String color = "";
-		for (String string : ss) {
-			if(string.contains("background-color")){
-				color = string.split(":")[1];
-				break;
-			}
-		}
-		System.out.println(color);
-//		System.out.println(s.substring(s.indexOf("'")+1, s.indexOf(",")-1));
-	}
-
 }

@@ -1,9 +1,10 @@
 package six.com.crawler.common.service;
 
-
 import java.util.List;
 
 import six.com.crawler.common.entity.HttpProxy;
+import six.com.crawler.common.entity.HttpProxyType;
+import six.com.crawler.common.http.HttpProxyPool;
 
 /**
  * @author 作者
@@ -12,22 +13,18 @@ import six.com.crawler.common.entity.HttpProxy;
  */
 public interface HttpPorxyService {
 
+	/**
+	 * 根据siteCode 初始化一个 http代理池
+	 * @param siteCode
+	 */
+	public HttpProxyPool buildHttpProxyPool(String siteCode,HttpProxyType httpProxyType,long restTime);
+	
+
 	public List<HttpProxy> getHttpProxys();
 
 	/**
-	 * 通过 siteCode 获取一个可用的http代理
-	 * 判断获取到的 代理上一次试用时间是否大于等于restTime 
-	 * 如果是那么直接返回此代理
-	 * 否则循环下一个代理
-	 * 直到获取到有冷却代理
-	 * @param siteCode
-	 * @return
-	 */
-	public HttpProxy getHttpProxy(String siteCode,int type,long restTime);
-	
-	
-	/**
 	 * 添加一个 http代理
+	 * 
 	 * @param host
 	 * @param port
 	 * @return
@@ -36,6 +33,7 @@ public interface HttpPorxyService {
 
 	/**
 	 * 更新指定http代理
+	 * 
 	 * @param host
 	 * @param port
 	 * @return
@@ -44,6 +42,7 @@ public interface HttpPorxyService {
 
 	/**
 	 * 删除指定http代理
+	 * 
 	 * @param host
 	 * @return
 	 */

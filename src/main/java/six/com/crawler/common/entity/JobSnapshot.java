@@ -26,6 +26,7 @@ public class JobSnapshot implements Serializable {
 	private int isScheduled;//
 	private int proxyQueueCount;// 代理任务队列数量
 	private int realQueueCount;// 真实任务队列数量
+	private int errQueueCount;// 错误任务队列数量
 	private int totalProcessCount;// 统计处理多少个数据
 	private int totalResultCount;// 统计获取多少个数据
 	private int totalProcessTime;// 统计获取处理时间
@@ -136,6 +137,14 @@ public class JobSnapshot implements Serializable {
 		this.realQueueCount = realQueueCount;
 	}
 
+	public int getErrQueueCount() {
+		return errQueueCount;
+	}
+
+	public void setErrQueueCount(int errQueueCount) {
+		this.errQueueCount = errQueueCount;
+	}
+	
 	public int getTotalProcessCount() {
 		return totalProcessCount;
 	}

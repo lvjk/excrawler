@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
@@ -23,6 +24,7 @@ import six.com.crawler.work.RedisWorkQueue;
 public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker{
 	
 	RedisWorkQueue roomInfoQueue;
+	String iframeCss = "td>iframe[id=mapbarframe]";
 	
 	private Map<String,String> roomStates = new HashMap<String,String>();
 
@@ -37,6 +39,15 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker{
 
 	@Override
 	protected void beforeExtract(Page doingPage) {
+		Element iframe = doingPage.getDoc().select(iframeCss).first();
+		if (null == iframe) {
+			throw new RuntimeException("don't find iframe:" + iframeCss);
+		}
+		String src = iframe.attr("src");
+		Page iframePage = new Page(doingPage.getSiteCode(), 1, src, src);
+		iframePage.setReferer(doingPage.getFinalUrl());
+		getDowner().down(iframePage);
+		doingPage.setPageSrc(iframePage.getPageSrc());
 		//获取所有状态信息
 		if(roomStates.isEmpty()){
 			String allCssQuery = "table[width='600']>tbody>tr>td>font";
@@ -47,6 +58,8 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker{
 			for(Element ets : elements2){
 				String key = ets.attr("color");
 				String value = ets.ownText();
+				value=StringUtils.remove(value,":");
+				value=StringUtils.remove(value," ");
 				roomStates.put(key, value);
 			}
 		}
@@ -109,7 +122,7 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker{
 	}
 
 	@Override
-	protected void insideOnError(Exception e, Page doingPage) {
+	public boolean insideOnError(Exception t, Page doingPage) {
+		return false;
 	}
-
 }
