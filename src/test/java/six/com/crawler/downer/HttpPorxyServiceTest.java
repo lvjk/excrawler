@@ -9,8 +9,10 @@ import org.slf4j.LoggerFactory;
 import okhttp3.Request;
 import six.com.crawler.BaseTest;
 import six.com.crawler.common.entity.HttpProxy;
+import six.com.crawler.common.entity.HttpProxyType;
 import six.com.crawler.common.http.HttpConstant;
 import six.com.crawler.common.http.HttpMethod;
+import six.com.crawler.common.http.HttpProxyPool;
 import six.com.crawler.common.http.HttpResult;
 
 /**
@@ -28,11 +30,12 @@ public class HttpPorxyServiceTest extends BaseTest {
 
 	@Test
 	public void capacityTest() {
+		HttpProxyPool httpProxyPool=httpPorxyService.buildHttpProxyPool("HttpPorxyServiceTest", HttpProxyType.ENABLE_MANY, 0);
 		final CountDownLatch countDownLatch = new CountDownLatch(2);
 		new Thread(() -> {
 			long start = System.currentTimeMillis();
 			for (int i = 0; i < loopCount; i++) {
-				HttpProxy httpProxy = httpPorxyService.getHttpProxy("HttpPorxyServiceTest");
+				HttpProxy httpProxy = httpProxyPool.getHttpProxy();
 				Request request = httpClient.buildRequest(url, null, HttpMethod.GET, HttpConstant.headMap, null, null,
 						httpProxy);
 				try {
@@ -74,8 +77,9 @@ public class HttpPorxyServiceTest extends BaseTest {
 
 	@Test
 	public void useTest() {
+		HttpProxyPool httpProxyPool=httpPorxyService.buildHttpProxyPool("HttpPorxyServiceTest", HttpProxyType.ENABLE_MANY, 0);
 		for (int i = 0; i < loopCount; i++) {
-			HttpProxy httpProxy = httpPorxyService.getHttpProxy("HttpPorxyServiceTest");
+			HttpProxy httpProxy = httpProxyPool.getHttpProxy();
 			LOG.info("useTest use httpProxy:" + httpProxy.toString());
 			Request request = httpClient.buildRequest(url, null, HttpMethod.GET, HttpConstant.headMap, null, null,
 					httpProxy);
