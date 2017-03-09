@@ -50,9 +50,8 @@ public class JobServiceTest extends BaseTest {
 		String jobSnapshotid = jobName + "_" + System.currentTimeMillis();
 		String hostNodeName = "test_hostNode";
 		JobSnapshot jobSnapshot = buildJobSnapshot(jobSnapshotid, jobName, hostNodeName);
-		jobService.registerJobSnapshotToRegisterCenter(jobSnapshot);
+		jobService.registerJobSnapshot(jobSnapshot);
 		jobService.reportJobSnapshot(hostNodeName, jobName);
-		jobService.delJobSnapshotFromRegisterCenter(hostNodeName, jobName);
 	}
 
 	public void queryJobSnapshot() {
@@ -70,7 +69,8 @@ public class JobServiceTest extends BaseTest {
 		workerSnapshot.setJobSnapshotId(jobSnapshotid);
 		workerSnapshot.setJobName(jobName);
 		workerSnapshot.setName(workerName);
-		workerSnapshot.setJobHostNode(hostNodeName);
+		workerSnapshot.setLocalNode(hostNodeName);
+		workerSnapshot.setJobLocalNode(hostNodeName);
 		workerSnapshot.setStartTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
 		workerSnapshot.setEndTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
 		workerSnapshot.setTotalProcessCount(50);
@@ -98,7 +98,7 @@ public class JobServiceTest extends BaseTest {
 		JobSnapshot jobSnapshot = new JobSnapshot();
 		jobSnapshot.setId(jobName + "_" + System.currentTimeMillis());
 		jobSnapshot.setName(jobName);
-		jobSnapshot.setHostNode(hostNodeName);
+		jobSnapshot.setLocalNode(hostNodeName);
 		jobSnapshot.setState(JobSnapshotState.READY.value());
 		jobSnapshot.setStartTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
 		jobSnapshot.setEndTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
