@@ -255,9 +255,9 @@ public class HttpClient implements InitializingBean {
 	public String getHtml(HttpResult result, ContentType type) {
 		String charset = result.getCharset();
 		if (null == result.getCharset()) {
-			charset = AutoCharsetDetectorUtils.getCharset(result.getData(), type);
+			charset = AutoCharsetDetectorUtils.instance().getCharset(result.getData(), type);
 		} else {
-			charset = AutoCharsetDetectorUtils.replacement(charset);
+			charset = AutoCharsetDetectorUtils.instance().replacement(charset);
 		}
 		result.setCharset(charset);
 		return getDataAsString(charset, result.getData());

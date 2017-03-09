@@ -84,7 +84,7 @@ public class RedisRegisterCenter implements RegisterCenter {
 	}
 
 	public void registerJobSnapshot(JobSnapshot jobSnapshot) {
-		String nodeName = jobSnapshot.getHostNode();
+		String nodeName = jobSnapshot.getLocalNode();
 		String jobName = jobSnapshot.getName();
 		String jobSnapshotskey = RedisRegisterKeyUtils.getJobSnapshotsKey(nodeName);
 		String workerkey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(nodeName, jobName);
@@ -107,7 +107,7 @@ public class RedisRegisterCenter implements RegisterCenter {
 	}
 
 	public void updateJobSnapshot(JobSnapshot jobSnapshot) {
-		String jobSnapshotskey = RedisRegisterKeyUtils.getJobSnapshotsKey(jobSnapshot.getHostNode());
+		String jobSnapshotskey = RedisRegisterKeyUtils.getJobSnapshotsKey(jobSnapshot.getLocalNode());
 		redisManager.lock(jobSnapshotskey);
 		try {
 			redisManager.hset(jobSnapshotskey, jobSnapshot.getName(), jobSnapshot);
@@ -154,7 +154,7 @@ public class RedisRegisterCenter implements RegisterCenter {
 	@Override
 	public void registerWorker(Worker worker) {
 		WorkerSnapshot workerSnapshot = worker.getWorkerSnapshot();
-		String workerSnapshotsKey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(workerSnapshot.getJobHostNode(),
+		String workerSnapshotsKey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(workerSnapshot.getJobLocalNode(),
 				workerSnapshot.getJobName());
 		redisManager.lock(workerSnapshotsKey);
 		try {
@@ -166,7 +166,7 @@ public class RedisRegisterCenter implements RegisterCenter {
 	}
 
 	public void updateWorkerSnapshot(WorkerSnapshot workerSnapshot) {
-		String workerSnapshotKey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(workerSnapshot.getJobHostNode(),
+		String workerSnapshotKey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(workerSnapshot.getJobLocalNode(),
 				workerSnapshot.getJobName());
 		redisManager.hset(workerSnapshotKey, workerSnapshot.getName(), workerSnapshot);
 	}

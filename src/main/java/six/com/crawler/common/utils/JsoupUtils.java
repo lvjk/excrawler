@@ -43,7 +43,7 @@ public class JsoupUtils {
 	 */
 	public static List<String> extract(Document doc, ExtractPath path) {
 		List<String> resultList = new ArrayList<String>();
-		boolean isAdd;
+		boolean isAdd=false;
 		Elements htmlElements = doc.getAllElements();
 		Elements findElements = htmlElements.select(path.getPath());
 		String result = null;
@@ -106,8 +106,8 @@ public class JsoupUtils {
 			result = element.attr(reslutAttName);
 			result = StringUtils.trim(result);
 		}
-		// 替换空格 &nbsp;
-		result = StringUtils.replace(result, "&nbsp;", " ");
+		// 替换特殊字符
+		result = AutoCharsetDetectorUtils.instance().replacePeculiarCharacter(result);
 		return result;
 	}
 
@@ -143,7 +143,7 @@ public class JsoupUtils {
 				tableResult = new TableResult();
 				tdElement = tdElements.get(j);
 				String key = paserElement(PathFilter.EmptyFilterElement, "text", tdElement);
-				key=StringUtils.remove(key," ");
+				key = StringUtils.remove(key, " ");
 				if (StringUtils.isNotBlank(key)) {
 					String value = "";
 					int tempIndex = j + 1;
@@ -176,7 +176,7 @@ public class JsoupUtils {
 		String[] fields = new String[headElements.size()];
 		for (int i = 0; i < headElements.size(); i++) {
 			Element fieldElement = headElements.get(i);
-			fields[i]=StringUtils.remove(fieldElement.text()," ");
+			fields[i] = StringUtils.remove(fieldElement.text(), " ");
 		}
 		Map<String, List<String>> resultMap = new HashMap<>();
 		for (int i = 0; i < dataElements.size(); i++) {
@@ -190,8 +190,6 @@ public class JsoupUtils {
 		}
 		return resultMap;
 	}
-	
-
 
 	public static List<TableResult> paserTable(Element table) {
 		Elements trElements = table.getElementsByTag("tr");

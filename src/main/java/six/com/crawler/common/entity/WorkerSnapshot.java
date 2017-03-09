@@ -15,11 +15,12 @@ public class WorkerSnapshot implements Serializable {
 	private static final long serialVersionUID = 8013640891595004526L;
 	private String jobSnapshotId;//jobSnapshotId id
 	private String name;// worker 名
+	private String localNode;//本地节点
 	private String jobName;// 任务名
-	private String jobHostNode;//任务host
+	private String jobLocalNode;//任务本地节点
 	private volatile WorkerLifecycleState state = WorkerLifecycleState.READY;// 状态
-	private String startTime;// 开始时间
-	private String endTime;//结束时间
+	private String startTime="";// 开始时间
+	private String endTime="";//结束时间
 	private int totalProcessCount;// 统计处理多少个数据
 	private int totalResultCount;// 统计获取多少个数据
 	private int totalProcessTime;// 统计处理时间
@@ -37,11 +38,11 @@ public class WorkerSnapshot implements Serializable {
 		this.jobSnapshotId = jobSnapshotId;
 	}
 	
-	public WorkerLifecycleState getState() {
+	public synchronized WorkerLifecycleState getState() {
 		return state;
 	}
 
-	public void setState(WorkerLifecycleState state) {
+	public synchronized void setState(WorkerLifecycleState state) {
 		this.state = state;
 	}
 	
@@ -144,12 +145,20 @@ public class WorkerSnapshot implements Serializable {
 	public void setName(String name) {
 		this.name = name;
 	}
-	public String getJobHostNode() {
-		return jobHostNode;
+	public String getLocalNode() {
+		return localNode;
 	}
 
-	public void setJobHostNode(String jobHostNode) {
-		this.jobHostNode = jobHostNode;
+	public void setLocalNode(String localNode) {
+		this.localNode = localNode;
+	}
+
+	public String getJobLocalNode() {
+		return jobLocalNode;
+	}
+
+	public void setJobLocalNode(String jobLocalNode) {
+		this.jobLocalNode = jobLocalNode;
 	}
 
 }

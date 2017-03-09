@@ -4,9 +4,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -19,7 +16,7 @@ public class Job implements Serializable {
 
 	private String name;// job 名字
 
-	private String hostNode;// job所属哪个节点名字
+	private String localNode;// job所属哪个节点名字
 
 	private int level;// 任务级别
 
@@ -32,16 +29,15 @@ public class Job implements Serializable {
 	private String cronTrigger;// CronTrigger 时间
 
 	private String workerClass;// worker class
-	
+
 	private String queueName;
 
 	private String describe;// 任务描述
-	
+
 	private String user = "admin";// 任务 所属用户
 
 	private List<JobParam> paramList;
 
-	@XmlAttribute
 	public String getName() {
 		return name;
 	}
@@ -50,16 +46,14 @@ public class Job implements Serializable {
 		this.name = name;
 	}
 
-	@XmlAttribute
-	public String getHostNode() {
-		return hostNode;
+	public String getLocalNode() {
+		return localNode;
 	}
 
-	public void setHostNode(String hostNode) {
-		this.hostNode = hostNode;
+	public void setLocalNode(String localNode) {
+		this.localNode = localNode;
 	}
 
-	@XmlAttribute
 	public int getLevel() {
 		return level;
 	}
@@ -68,7 +62,6 @@ public class Job implements Serializable {
 		this.level = level;
 	}
 
-	@XmlAttribute
 	public long getWorkFrequency() {
 		return workFrequency;
 	}
@@ -77,7 +70,6 @@ public class Job implements Serializable {
 		this.workFrequency = workFrequency;
 	}
 
-	@XmlAttribute
 	public int getIsScheduled() {
 		return isScheduled;
 	}
@@ -86,7 +78,6 @@ public class Job implements Serializable {
 		this.isScheduled = isScheduled;
 	}
 
-	@XmlAttribute
 	public int getNeedNodes() {
 		return needNodes;
 	}
@@ -95,7 +86,6 @@ public class Job implements Serializable {
 		this.needNodes = needNodes;
 	}
 
-	@XmlAttribute
 	public String getUser() {
 		return user;
 	}
@@ -103,8 +93,7 @@ public class Job implements Serializable {
 	public void setUser(String user) {
 		this.user = user;
 	}
-	
-	@XmlElement(name = "queueName")
+
 	public String getQueueName() {
 		return queueName;
 	}
@@ -112,8 +101,7 @@ public class Job implements Serializable {
 	public void setQueueName(String queueName) {
 		this.queueName = queueName;
 	}
-	
-	@XmlElement(name = "cronTrigger")
+
 	public String getCronTrigger() {
 		return cronTrigger;
 	}
@@ -122,7 +110,6 @@ public class Job implements Serializable {
 		this.cronTrigger = cronTrigger;
 	}
 
-	@XmlElement(name = "workerClass")
 	public String getWorkerClass() {
 		return workerClass;
 	}
@@ -131,7 +118,6 @@ public class Job implements Serializable {
 		this.workerClass = workerClass;
 	}
 
-	@XmlElement(name = "describe")
 	public String getDescribe() {
 		return describe;
 	}
@@ -140,7 +126,6 @@ public class Job implements Serializable {
 		this.describe = describe;
 	}
 
-	@XmlElement(name = "param")
 	public List<JobParam> getParamList() {
 		return paramList;
 	}
@@ -180,6 +165,25 @@ public class Job implements Serializable {
 			}
 		}
 		return resultParams;
+	}
+
+	public int hashCode() {
+		if (null != getName()) {
+			return name.hashCode();
+		}
+		return 0;
+	}
+
+	public boolean equals(Object o) {
+		if (null != o) {
+			if (o instanceof Job) {
+				Job targetJob = (Job) o;
+				if (null != getName() && getName().equals(targetJob.getName())) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 }

@@ -21,7 +21,7 @@ public class ScheduledJob implements org.quartz.Job {
 		AbstractSchedulerManager scheduleManager = (AbstractSchedulerManager) context.getJobDetail().getJobDataMap()
 				.get(SCHEDULER_MANAGER_KEY);
 		Job job = (Job) context.getJobDetail().getJobDataMap().get(JOB_KEY);
-		scheduleManager.submitWaitQueue(job);
+		scheduleManager.localExecute(job);
 	}
 
 }

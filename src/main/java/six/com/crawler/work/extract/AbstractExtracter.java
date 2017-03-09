@@ -41,7 +41,7 @@ public abstract class AbstractExtracter implements Extracter {
 		List<String> extractResult = null;
 		if (extractItem.getType() == ExtractItemType.META.value()) {
 			extractResult = page.getMeta(extractItem.getOutputKey());
-			if(null==extractResult){
+			if (null == extractResult) {
 				extractResult = new ArrayList<>();
 			}
 		} else {
@@ -80,15 +80,13 @@ public abstract class AbstractExtracter implements Extracter {
 		}
 		// 查看这个path是否是一定要有结果
 		// 如果==must 没有结果的话 那么将会抛抽取 结果空 异常
-		if (extractResult.isEmpty()
-				&& extractItem.getMustHaveResult() ==1) {
+		if (extractResult.isEmpty() && extractItem.getMustHaveResult() == 1) {
 			throw new ExtractEmptyResultException(
 					"extract resultKey [" + extractItem.getOutputKey() + "] value is empty");
 		}
 		return extractResult;
 	}
 
-	
 	/**
 	 * 对抽取出来的结果进行加工解析
 	 * 
@@ -98,26 +96,29 @@ public abstract class AbstractExtracter implements Extracter {
 	 *            抽取出来的结果
 	 */
 	protected String paserString(ExtractItem paserResult, Page page, String preText) {
-		if (ExtractItemType.STRING.value() == paserResult.getType()) {
-			return StringUtils.trim(preText);
-		} else if (ExtractItemType.URL.value() == paserResult.getType()) {
-			String newUrl = null;
-			if (!"#no".equals(preText)) {
-				newUrl = UrlUtils.paserUrl(page.getBaseUrl(), page.getFinalUrl(), StringUtils.trim(preText));
-			}
-			return newUrl;
-		} else if (ExtractItemType.PHONE.value() == paserResult.getType()) {
-			String[] temp = preText.split(" ");
-			String telPhone = "";
-			for (String word : temp) {
-				if (TelPhoneUtils.isTelPhone(word)) {
-					telPhone = word.trim();
+		if (StringUtils.isNoneBlank(preText)) {
+			if (ExtractItemType.STRING.value() == paserResult.getType()) {
+				return StringUtils.trim(preText);
+			} else if (ExtractItemType.URL.value() == paserResult.getType()) {
+				String newUrl = null;
+				if (!"#no".equals(preText)) {
+					newUrl = UrlUtils.paserUrl(page.getBaseUrl(), page.getFinalUrl(), StringUtils.trim(preText));
 				}
+				return newUrl;
+			} else if (ExtractItemType.PHONE.value() == paserResult.getType()) {
+				String[] temp = preText.split(" ");
+				String telPhone = "";
+				for (String word : temp) {
+					if (TelPhoneUtils.isTelPhone(word)) {
+						telPhone = word.trim();
+					}
+				}
+				return telPhone;
+			} else {
+				return StringUtils.trim(preText);
 			}
-			return telPhone;
-		} else {
-			return StringUtils.trim(preText);
 		}
+		return preText;
 	}
 
 	public AbstractCrawlWorker getAbstractWorker() {

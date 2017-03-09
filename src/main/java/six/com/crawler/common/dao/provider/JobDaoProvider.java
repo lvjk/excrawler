@@ -16,22 +16,22 @@ import six.com.crawler.common.entity.Job;
 public class JobDaoProvider extends BaseProvider {
 
 	
-	public String totalNodeJobInfo(String nodeName){
+	public String totalNodeJobInfo(String localNode){
 		StringBuilder sql = new StringBuilder();
 		sql.append("select  a.totalJobSize totalJobSize,"
 				        + " b.totalScheduleJobSize totalScheduleJobSize,"
 				        + " c.totalNoScheduleJobSize totalNoScheduleJobSize "
 				        + " from("
-				        + "				select count(1) totalJobSize,hostNode"
-				        + "             from "+JobDao.TABLE_NAME+" where hostNode=#{nodeName})a "
+				        + "				select count(1) totalJobSize,localNode"
+				        + "             from "+JobDao.TABLE_NAME+" where localNode=#{localNode})a "
 				        + " left join ("
-				        + "				select count(1) totalScheduleJobSize,hostNode "
-				        + "				from "+JobDao.TABLE_NAME+" where  hostNode=#{nodeName} and isScheduled=1 )b "
-				        + " on a.hostNode=b.hostNode "
+				        + "				select count(1) totalScheduleJobSize,localNode "
+				        + "				from "+JobDao.TABLE_NAME+" where  localNode=#{localNode} and isScheduled=1 )b "
+				        + " on a.localNode=b.localNode "
 				        + " left join("
-				        + "				select count(1) totalNoScheduleJobSize,hostNode "
-				        + "             from "+JobDao.TABLE_NAME+" where  hostNode=#{nodeName} and isScheduled=0)c  "
-				        + " on b.hostNode=c.hostNode");
+				        + "				select count(1) totalNoScheduleJobSize,localNode "
+				        + "             from "+JobDao.TABLE_NAME+" where  localNode=#{localNode} and isScheduled=0)c  "
+				        + " on b.localNode=c.localNode");
 		return sql.toString();
 		
 	}
@@ -39,7 +39,7 @@ public class JobDaoProvider extends BaseProvider {
 	public String query(Map<String, Object> parameters) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("select `name`,"
-				+ " hostNode,"
+				+ " localNode,"
 				+ "   level,"
 				+ "workFrequency,"
 				+ "isScheduled,"
@@ -57,7 +57,7 @@ public class JobDaoProvider extends BaseProvider {
 	
 	public String save(Job job) {
 		String columns = "`name`,"
-				+ "hostNode,"
+				+ "localNode,"
 				+ "level,"
 				+ "workFrequency,"
 				+ "isScheduled,"
@@ -69,7 +69,7 @@ public class JobDaoProvider extends BaseProvider {
 				+ "`describe`";
 		
 		String values = "#{name},"
-				+ "#{hostNode},"
+				+ "#{localNode},"
 				+ "#{level},"
 				+ "#{workFrequency},"
 				+ "#{isScheduled},"
@@ -88,16 +88,16 @@ public class JobDaoProvider extends BaseProvider {
 	public String update(Job job) {
 		SQL sql=new SQL();
 		sql.UPDATE(JobDao.TABLE_NAME);
-		sql.SET("hostNode = #{hostNode}");
-		sql.SET("level = #{level}");
+		sql.SET("`localNode` = #{localNode}");
+		sql.SET("`level` = #{level}");
 		sql.SET("workFrequency = #{workFrequency}");
 		sql.SET("isScheduled = #{isScheduled}");
 		sql.SET("needNodes = #{needNodes}");
 		sql.SET("cronTrigger = #{cronTrigger}");
 		sql.SET("workerClass = #{workerClass}");
 		sql.SET("queueName = #{queueName}");
-		sql.SET("user = #{user}");
-		sql.SET("describe = #{describe}");
+		sql.SET("`user` = #{user}");
+		sql.SET("`describe` = #{describe}");
 		sql.WHERE("name = #{name}");
 		return sql.toString();
 	}

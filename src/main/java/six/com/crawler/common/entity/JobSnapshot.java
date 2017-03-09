@@ -20,7 +20,7 @@ public class JobSnapshot implements Serializable {
 	private JobSnapshotState state=JobSnapshotState.READY;// 任务状态
 	private String tableName;//数据表名
 	private String queueName;// 任务队列名
-	private String hostNode;// 宿主节点
+	private String localNode;// 宿主节点
 	private String startTime;// 开始时间
 	private String endTime;
 	private int isScheduled;//
@@ -39,8 +39,8 @@ public class JobSnapshot implements Serializable {
 	public JobSnapshot() {
 	}
 
-	public JobSnapshot(String hostNode, String name) {
-		this.hostNode = hostNode;
+	public JobSnapshot(String localNode, String name) {
+		this.localNode = localNode;
 		this.name = name;
 		this.id = name + "_" + DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_2);
 	}
@@ -89,12 +89,12 @@ public class JobSnapshot implements Serializable {
 		this.queueName = queueName;
 	}
 
-	public String getHostNode() {
-		return hostNode;
+	public String getLocalNode() {
+		return localNode;
 	}
 
-	public void setHostNode(String hostNode) {
-		this.hostNode = hostNode;
+	public void setLocalNode(String localNode) {
+		this.localNode = localNode;
 	}
 
 	public String getStartTime() {
@@ -224,12 +224,5 @@ public class JobSnapshot implements Serializable {
 		return sbd.toString();
 	}
 
-	public static JobSnapshot buildJobSnapshot(Job job) {
-		JobSnapshot jobSnapshot = new JobSnapshot();
-		jobSnapshot.setName(job.getName());
-		jobSnapshot.setHostNode(job.getHostNode());
-		jobSnapshot.setQueueName(job.getQueueName());
-		return jobSnapshot;
-	}
 
 }

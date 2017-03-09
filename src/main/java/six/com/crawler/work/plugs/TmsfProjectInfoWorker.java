@@ -8,6 +8,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.PageType;
@@ -24,6 +26,7 @@ import six.com.crawler.work.RedisWorkQueue;
  */
 public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 
+	final static Logger LOG = LoggerFactory.getLogger(TmsfProjectInfoWorker.class);
 	int longitudeMax = 135;
 	int longitudeMin = 73;
 	int latitudeMax = 53;
@@ -32,6 +35,8 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 	RedisWorkQueue presellUrlQueue;
 	String longitude_latitude_div_css = "div[id=boxid1]>div[class=border3 positionr]";
 	String mapDivCss = "div[id=boxid1]>div>div";
+	String projectNameCss = "div[class=lpxqtop]>div>div>span[class=buidname colordg]";
+	String brandNameCss = "div[class=lpxqtop]>div>div>span[class=extension famwei ft14 mgr10]>ul>li:eq(1)";
 
 	@Override
 	protected void insideInit() {

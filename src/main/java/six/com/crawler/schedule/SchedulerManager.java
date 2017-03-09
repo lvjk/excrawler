@@ -6,7 +6,6 @@ import java.util.Observer;
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.Node;
 
-
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
@@ -15,33 +14,65 @@ import six.com.crawler.common.entity.Node;
 public interface SchedulerManager extends Observer {
 
 	/**
+	 * 本地执行job
+	 * 
+	 * @param job
+	 */
+	public void localExecute(Job job);
+	
+	
+	/**
+	 * 
+	 * call 协助执行
+	 * @param nodes
+	 * @param job
+	 * @return 各节点执行 job的相应
+	 */
+	public boolean callLocalExecute(Job job);
+
+	/**
+	 * 协助执行
+	 * 
+	 * @param jobName
+	 */
+	public void assistExecute(Job job);
+
+	/**
+	 * 
+	 * call 协助执行
+	 * @param nodes
+	 * @param job
+	 * @return 各节点执行 job的相应
+	 */
+	public String callAssistExecute(Node node, String jobName);
+
+	/**
 	 * 暂停运行的job
 	 * 
 	 * @param jobName
 	 */
-	public void suspendWorkerByJob(String jobHostNode,String jobName);
+	public void suspendWorkerByJob(String jobHostNode, String jobName);
 
 	/**
 	 * 恢复暂停的 job
 	 * 
 	 * @param jobName
 	 */
-	public void goOnWorkerByJob(String jobHostNode,String jobName);
+	public void goOnWorkerByJob(String jobHostNode, String jobName);
 
 	/**
 	 * 停止运行的job
 	 * 
 	 * @param jobName
 	 */
-	public void stopWorkerByJob(String jobHostNode,String jobName);
-	
-	
+	public void stopWorkerByJob(String jobHostNode, String jobName);
+
 	/**
 	 * 完成运行的job
 	 * 
 	 * @param jobName
 	 */
-	public void finishWorkerByJob(String jobHostNode,String jobName);
+	public void finishWorkerByJob(String jobHostNode, String jobName);
 
 	/**
 	 * 判断注册中心是否有此job的worker
@@ -49,7 +80,7 @@ public interface SchedulerManager extends Observer {
 	 * @param job
 	 * @return
 	 */
-	public boolean isRunning(String jobHostNode,String jobName);
+	public boolean isRunning(Job job);
 
 	/**
 	 * 获取运行的job数
@@ -85,15 +116,6 @@ public interface SchedulerManager extends Observer {
 	 * @return
 	 */
 	public List<Node> getFreeNodes();
-
-	/**
-	 * 通知 nodes 节点执行job
-	 * 
-	 * @param nodes
-	 * @param job
-	 * @return 各节点执行 job的相应
-	 */
-	public String callNodeExecuteJob(Node node,String jobName);
 
 	/**
 	 * 通过email 给管理员发送信息

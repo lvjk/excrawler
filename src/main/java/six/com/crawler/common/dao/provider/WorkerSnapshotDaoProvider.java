@@ -18,6 +18,7 @@ public class WorkerSnapshotDaoProvider extends BaseProvider{
 	
 	private String saveColumns="jobSnapshotId,"
 			+ "`name`,"
+			+ "localNode,"
 			+ "jobName,"
 			+ "startTime,"
 			+ "endTime,"
@@ -32,6 +33,7 @@ public class WorkerSnapshotDaoProvider extends BaseProvider{
 		SQL sql=new SQL();
 		String columns="jobSnapshotId,"
 				+ "`name`,"
+				+ "localNode,"
 				+ "jobName,"
 				+ "UNIX_TIMESTAMP(startTime)*1000 startTime,"
 				+ "UNIX_TIMESTAMP(endTime)*1000 endTime,"
@@ -50,6 +52,7 @@ public class WorkerSnapshotDaoProvider extends BaseProvider{
 	public String save(WorkerSnapshot workerSnapshot) {
 		String values="#{jobSnapshotId},"
 				+ "#{name},"
+				+ "#{localNode},"
 				+ "#{jobName},"
 				+ "#{startTime},"
 				+ "#{endTime},"
@@ -71,6 +74,7 @@ public class WorkerSnapshotDaoProvider extends BaseProvider{
 		List<WorkerSnapshot> workerSnapshots = (List<WorkerSnapshot>) map.get(BaseDao.BATCH_SAVE_PARAM);
 		String values="(#{list["+INDEX_FLAG+"].jobSnapshotId},"
 				+ "#{list["+INDEX_FLAG+"].name},"
+				+ "#{list["+INDEX_FLAG+"].localNode},"
 				+ "#{list["+INDEX_FLAG+"].jobName},"
 				+ "#{list["+INDEX_FLAG+"].startTime},"
 				+ "#{list["+INDEX_FLAG+"].endTime},"

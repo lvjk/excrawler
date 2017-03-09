@@ -22,5 +22,9 @@ public interface JobSnapshotDao extends BaseDao{
 	
 	@InsertProvider(type = JobSnapshotDaoProvider.class, method = "save")
 	public int save(JobSnapshot jobSnapshot);
+	
+	
+	@InsertProvider(type = JobSnapshotDaoProvider.class, method = "update")
+	public int update(JobSnapshot jobSnapshot);
 		
 }

@@ -38,18 +38,19 @@ public class AutoCharsetDetectorUtils {
 
 	private static String DEFAULT_CHARSET = "UTF-8";
 	private static Map<String, String> peculiarCharacterMap = new HashMap<String, String>();
-	static {
+
+	private AutoCharsetDetectorUtils() {
 		encodingReplacementMap.put("gb2312", "GBK");
 		encodingReplacementMap.put("utf_8", "UTF-8");
-
 		Resource resource = new ClassPathResource("/peculiarCharacter");
 		try {
 			String path = resource.getURI().getPath();
 			List<String> list = FileUtils.readLines(new File(path));
 			String[] temp = null;
 			for (String str : list) {
-				temp = str.split("=<>=");
-				if (temp.length > 2) {
+				str=str.replace("=<>=","!=!");
+				temp = StringUtils.split(str, "!=!");
+				if (temp.length >=2) {
 					peculiarCharacterMap.put(temp[0], temp[1]);
 				} else {
 					peculiarCharacterMap.put(temp[0], "");
@@ -61,13 +62,21 @@ public class AutoCharsetDetectorUtils {
 		}
 	}
 
+	static class InsideAutoCharsetDetectorUtils {
+		static AutoCharsetDetectorUtils autoCharsetDetectorUtils = new AutoCharsetDetectorUtils();
+	}
+
+	public static AutoCharsetDetectorUtils instance() {
+		return InsideAutoCharsetDetectorUtils.autoCharsetDetectorUtils;
+	}
+
 	/**
 	 * 替换特殊字符
 	 * 
 	 * @param str
 	 * @return
 	 */
-	public static String replacePeculiarCharacter(String str) {
+	public  String replacePeculiarCharacter(String str) {
 		if (StringUtils.isNoneBlank(str)) {
 			for (String key : peculiarCharacterMap.keySet()) {
 				String value = peculiarCharacterMap.get(key);
@@ -84,7 +93,7 @@ public class AutoCharsetDetectorUtils {
 	 * @param type
 	 * @return
 	 */
-	public static String getCharset(byte[] bytes, ContentType type) {
+	public  String getCharset(byte[] bytes, ContentType type) {
 		String charsetResult = null;
 		if (type == ContentType.HTML) {
 			String content = new String(bytes);
@@ -129,7 +138,7 @@ public class AutoCharsetDetectorUtils {
 		return charsetResult;
 	}
 
-	public static String replacement(String charset) {
+	public  String replacement(String charset) {
 		String replacement = encodingReplacementMap.get(StringUtils.lowerCase(charset));
 		return replacement != null ? replacement : charset;
 	}

@@ -61,7 +61,7 @@ public class DataBaseStore extends StoreAbstarct implements AutoCloseable {
 		datasource.setUsername(dbUser);
 		datasource.setPassword(dbPasswd);
 		datasource.setMaxActive(1);
-		String jobHostNode = getAbstractWorker().getJob().getHostNode();
+		String jobHostNode = getAbstractWorker().getJob().getLocalNode();
 		String jobName = getAbstractWorker().getJob().getName();
 		JobSnapshot jobSnapshot = getAbstractWorker().getManager().getJobService()
 				.getJobSnapshotFromRegisterCenter(jobHostNode, jobName);

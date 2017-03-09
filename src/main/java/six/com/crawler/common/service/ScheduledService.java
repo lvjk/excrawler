@@ -1,4 +1,9 @@
 package six.com.crawler.common.service;
+
+import java.util.List;
+
+import six.com.crawler.common.entity.WorkerSnapshot;
+
 /** 
 * @author  作者 
 * @E-mail: 359852326@qq.com 
@@ -12,7 +17,7 @@ public interface ScheduledService {
 	 * @param jobName
 	 * @return
 	 */
-	public String execute(String jobHostNode,String jobName);
+	public String execute(String jobName);
 	
 	/**
 	 * 协助执行任务
@@ -27,7 +32,7 @@ public interface ScheduledService {
 	 * @param jobName
 	 * @return
 	 */
-	public String suspend(String jobHostNode,String jobName);
+	public String suspend(String jobName);
 
 	/**
 	 * 继续执行job
@@ -35,7 +40,7 @@ public interface ScheduledService {
 	 * @param jobName
 	 * @return
 	 */
-	public String goOn(String jobHostNode,String jobName);
+	public String goOn(String jobName);
 
 	/**
 	 * 终止执行job
@@ -43,7 +48,11 @@ public interface ScheduledService {
 	 * @param jobName
 	 * @return
 	 */
-	public String stop(String jobHostNode,String jobName);
+	public String stop(String jobName);
+	
 	
 	public String scheduled(String jobName);
+	
+	
+	public List<WorkerSnapshot> getWorkerInfo(String jobName);
 }

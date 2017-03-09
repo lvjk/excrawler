@@ -55,7 +55,7 @@ public class JobProfile extends Profile {
 				Element jobElement = doc.createElement("job");
 				Job job = jobProfile.getJob();
 				jobElement.setAttribute("name", getValue(job.getName()));
-				jobElement.setAttribute("hostNode", getValue(job.getHostNode()));
+				jobElement.setAttribute("localNode", getValue(job.getLocalNode()));
 				jobElement.setAttribute("level", getValue(String.valueOf(job.getLevel())));
 				jobElement.setAttribute("workFrequency", getValue(String.valueOf(job.getWorkFrequency())));
 				jobElement.setAttribute("isScheduled", getValue(String.valueOf(job.getIsScheduled())));
@@ -145,7 +145,7 @@ public class JobProfile extends Profile {
 				for (int i = 0; i < jobNodeList.getLength(); i++) {
 					Node jobNode = jobNodeList.item(i);
 					job.setName(getValueStr(jobNode.getAttributes().getNamedItem("name")));
-					job.setHostNode(getValueStr(jobNode.getAttributes().getNamedItem("hostNode")));
+					job.setLocalNode(getValueStr(jobNode.getAttributes().getNamedItem("localNode")));
 					job.setLevel(getValueInt(jobNode.getAttributes().getNamedItem("level")));
 					job.setWorkFrequency(getValueInt(jobNode.getAttributes().getNamedItem("workFrequency")));
 					job.setIsScheduled(getValueInt(jobNode.getAttributes().getNamedItem("isScheduled")));

@@ -1,10 +1,17 @@
 package six.com.crawler.work.plugs;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.PageType;
@@ -22,6 +29,8 @@ import six.com.crawler.work.WorkerLifecycleState;
  */
 public class TmsfProjectListWorker extends AbstractCrawlWorker {
 
+	final static Logger LOG = LoggerFactory.getLogger(TmsfProjectListWorker.class);
+
 	String siteidFlag = "<<siteid>>";
 	String propertyidFlag = "<<propertyid>>";
 	String projectUrilTemplate = "/newhouse/property_" + siteidFlag + "_" + propertyidFlag + "_info.htm";
@@ -33,10 +42,10 @@ public class TmsfProjectListWorker extends AbstractCrawlWorker {
 			+ "sid=&" + "districtid=&" + "areaid=&" + "dealprice=&" + "propertystate=&" + "propertytype=&"
 			+ "ordertype=&" + "priceorder=&" + "openorder=&" + "view720data=&" + "page=" + pageIndexTemplate + "&"
 			+ "bbs=&" + "avanumorder=&" + "comnumorder=";
+	// 第一页从1开始
 	int pageIndex = 1;
 	int pageCount = -1;
 	String refererUrl;
-
 
 	private Page buildPage(int pageIndex, String refererUrl) {
 		String pageUrl = StringUtils.replace(urlTemplate, pageIndexTemplate, String.valueOf(pageIndex));
@@ -72,7 +81,45 @@ public class TmsfProjectListWorker extends AbstractCrawlWorker {
 			pageCount = Integer.valueOf(pageCountStr);
 		}
 		Elements projectDivElements = doc.select(projectDivCss);
+		String projectNameCss = "div[class='build_word01']>a";
+		String brandNameCss = "div[class='build_word01']>div:contains(推广名)";
+		String districtAndAddressCss = "div:contains(项目位置)>p";
 		for (Element projecrDivElement : projectDivElements) {
+			Element projectNameElement = projecrDivElement.select(projectNameCss).first();
+			Map<String, List<String>> metaMap = new HashMap<>();
+			String projectName = null;
+			if (null != projectNameElement) {
+				projectName = projectNameElement.text();
+				if (StringUtils.isNotBlank(projectName)) {
+					metaMap.put("projectName", Arrays.asList(projectName));
+				}
+			}
+			Element brandNameElement = projecrDivElement.select(brandNameCss).first();
+			String brandName = null;
+			if (null != brandNameElement) {
+				brandName = brandNameElement.text();
+				if (StringUtils.isNotBlank(brandName)) {
+					brandName = StringUtils.remove(brandName, "推广名");
+					brandName = StringUtils.remove(brandName, ":");
+					brandName = StringUtils.remove(brandName, "：");
+					metaMap.put("brandName", Arrays.asList(brandName));
+				}
+			}
+			Element districtAndAddressElement = projecrDivElement.select(districtAndAddressCss).first();
+			String district = null;
+			String address = null;
+			if (null != districtAndAddressElement) {
+				String districtAndAddress = districtAndAddressElement.text();
+				district = StringUtils.substringBetween(districtAndAddress, "[", "]");
+				address = StringUtils.substringAfter(districtAndAddress, "]");
+				if (StringUtils.isNotBlank(district)) {
+					metaMap.put("district", Arrays.asList(district));
+				}
+				if (StringUtils.isNotBlank(address)) {
+					metaMap.put("address", Arrays.asList(address));
+				}
+			}
+
 			String onclick = projecrDivElement.attr("onclick");
 			onclick = StringUtils.substringBetween(onclick, "toPropertyInfo(", ")");
 			String[] params = StringUtils.split(onclick, ",");
@@ -82,6 +129,7 @@ public class TmsfProjectListWorker extends AbstractCrawlWorker {
 			Page projectPage = new Page(doingPage.getSiteCode(), 1, projectUrl, projectUrl);
 			projectPage.setReferer(doingPage.getFinalUrl());
 			projectPage.setType(PageType.DATA.value());
+			projectPage.getMetaMap().putAll(metaMap);
 			projectInfoQueue.push(projectPage);
 		}
 		pageIndex++;
@@ -105,7 +153,7 @@ public class TmsfProjectListWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	protected void onComplete(Page doingPage,ResultContext resultContext) {
+	protected void onComplete(Page doingPage, ResultContext resultContext) {
 
 	}
 

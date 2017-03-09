@@ -72,9 +72,9 @@ public abstract class AbstractSchedulerManager implements SchedulerManager {
 	public String getWorkerNameByJob(Job job) {
 		StringBuilder sbd = new StringBuilder();
 		sbd.append(WORKER_NAME_PREFIX).append("_");
-		sbd.append(job.getHostNode()).append("_");
+		sbd.append(job.getLocalNode()).append("_");
 		sbd.append(job.getName()).append("_");
-		int serialNumber = getRegisterCenter().getSerNumOfWorkerByJob(job.getHostNode(), job.getName());
+		int serialNumber = getRegisterCenter().getSerNumOfWorkerByJob(job.getLocalNode(), job.getName());
 		sbd.append(serialNumber);
 		return sbd.toString();
 	}

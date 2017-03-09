@@ -17,10 +17,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
-import six.com.crawler.common.entity.DoneInfo;
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.JobSnapshot;
-import six.com.crawler.common.entity.QueueInfo;
 import six.com.crawler.common.service.JobService;
 
 /**
@@ -67,9 +65,9 @@ public class JobApi extends BaseApi {
 		return msg;
 	}
 
-	@RequestMapping(value = "/crawler/job/jobSnapshot/history/{jobName}", method = RequestMethod.GET)
+	@RequestMapping(value = "/crawler/job/getHistoryJobSnapshot/{jobName}", method = RequestMethod.GET)
 	@ResponseBody
-	public ResponseMsg<List<JobSnapshot>> queryHistoryJobActivityInfo(@PathVariable("jobName") String jobName) {
+	public ResponseMsg<List<JobSnapshot>> getHistoryJobSnapshot(@PathVariable("jobName") String jobName) {
 		ResponseMsg<List<JobSnapshot>> msg = new ResponseMsg<>();
 		List<JobSnapshot> result = jobService.queryJobSnapshotsFromHistory(jobName);
 		msg.setData(result);
@@ -93,7 +91,7 @@ public class JobApi extends BaseApi {
 			for (Object ob : list) {
 				if (ob instanceof Job) {
 					Job job = (Job) ob;
-					jobSnapshot = jobService.getJobSnapshotFromRegisterCenter(job.getHostNode(), job.getName(),
+					jobSnapshot = jobService.getJobSnapshotFromRegisterCenter(job.getLocalNode(), job.getName(),
 							job.getQueueName());
 				} else {
 					Map<String, String> map = (Map<String, String>) ob;
@@ -113,51 +111,6 @@ public class JobApi extends BaseApi {
 	@ResponseBody
 	public ResponseMsg<List<Job>> getLoclaAllJobs() {
 		return null;
-	}
-
-	@RequestMapping(value = "/crawler/job/queues", method = RequestMethod.GET)
-	@ResponseBody
-	public ResponseMsg<List<QueueInfo>> getJobQueues() {
-		ResponseMsg<List<QueueInfo>> msg = new ResponseMsg<>();
-		List<QueueInfo> result = jobService.getJobQueueInfos();
-		msg.setData(result);
-		return msg;
-	}
-
-	@RequestMapping(value = "/crawler/job/queue/repair/{queueName}", method = RequestMethod.GET)
-	@ResponseBody
-	public ResponseMsg<String> repairQueue(@PathVariable("queueName") String queueName) {
-		ResponseMsg<String> msg = new ResponseMsg<>();
-		String result = jobService.repairQueue(queueName);
-		msg.setMsg(result);
-		return msg;
-	}
-
-	@RequestMapping(value = "/crawler/job/queue/clean/{queueName}", method = RequestMethod.GET)
-	@ResponseBody
-	public ResponseMsg<String> cleanQueue(@PathVariable("queueName") String queueName) {
-		ResponseMsg<String> msg = new ResponseMsg<>();
-		String result = jobService.cleanQueue(queueName);
-		msg.setMsg(result);
-		return msg;
-	}
-
-	@RequestMapping(value = "/crawler/job/queue/done", method = RequestMethod.GET)
-	@ResponseBody
-	public ResponseMsg<List<DoneInfo>> getQueueDones() {
-		ResponseMsg<List<DoneInfo>> msg = new ResponseMsg<>();
-		List<DoneInfo> result = jobService.getQueueDones();
-		msg.setData(result);
-		return msg;
-	}
-
-	@RequestMapping(value = "/crawler/job/queue/done/clean/{queueName}", method = RequestMethod.GET)
-	@ResponseBody
-	public ResponseMsg<String> cleanQueueDone(@PathVariable("queueName") String queueName) {
-		ResponseMsg<String> msg = new ResponseMsg<>();
-		String result = jobService.cleanQueueDones(queueName);
-		msg.setMsg(result);
-		return msg;
 	}
 
 	@RequestMapping(value = "/crawler/job/upload/profile", method = RequestMethod.POST)

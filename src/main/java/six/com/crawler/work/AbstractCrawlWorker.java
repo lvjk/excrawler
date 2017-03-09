@@ -23,9 +23,11 @@ import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.http.HttpProxyPool;
 import six.com.crawler.common.utils.JobTableUtils;
 import six.com.crawler.common.utils.MD5Utils;
+import six.com.crawler.common.utils.ThreadUtils;
 import six.com.crawler.work.downer.Downer;
 import six.com.crawler.work.downer.DownerManager;
 import six.com.crawler.work.downer.DownerType;
+import six.com.crawler.work.downer.exception.DownerException;
 import six.com.crawler.work.extract.ExtractItem;
 import six.com.crawler.work.extract.Extracter;
 import six.com.crawler.work.extract.CssSelectExtracter;
@@ -120,7 +122,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 			tempTbaleName = fixedTableName;
 		}
 		jobSnapshot.setTableName(tempTbaleName);
-		getManager().getJobService().updateJobSnapshotToRegisterCenter(jobSnapshot);
+		getManager().getJobService().updateJobSnapshot(jobSnapshot);
 
 		String resultStoreClass = getJob().getParam(JobConTextConstants.RESULT_STORE_CLASS);
 		if (StringUtils.isNotBlank(resultStoreClass) && !"null".equalsIgnoreCase(resultStoreClass)) {
@@ -288,6 +290,11 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 
 	protected void onError(Exception e) {
 		if (null != doingPage) {
+			if (e instanceof DownerException) {
+				long restTime = 1000 * 10;
+				LOG.info("perhaps server is too busy,it's time for having a rest(" + restTime + ")");
+				ThreadUtils.sleep(restTime);
+			}
 			Exception insideException = null;
 			boolean insideExceptionResult = false;
 			try {

@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.locks.StampedLock;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
@@ -30,15 +32,19 @@ public abstract class AbstractWorker implements Worker {
 
 	private final static Logger LOG = LoggerFactory.getLogger(AbstractWorker.class);
 
+	// 用来lock 读写 状态
+	private final StampedLock setStateLock = new StampedLock();
+	// 用来lock Condition.await() 和condition.signalAll();
+	private final ReentrantLock reentrantLock = new ReentrantLock();
+	// 用来Condition.await() 和condition.signalAll();
+	private final Condition condition = reentrantLock.newCondition();
+
 	private AbstractSchedulerManager manager;
 
-	private StampedLock setStateLock = new StampedLock();
-
-	private WorkerSnapshot workerSnapshot;
-
 	private Job job;
-	// 工作状态 等待lock obejct
-	private Object waitLock = new Object();
+
+	private volatile WorkerSnapshot workerSnapshot;
+
 	// 最小延迟处理数据频率
 	protected long minWorkFrequency;
 	// 最大延迟处理数据频率
@@ -68,18 +74,18 @@ public abstract class AbstractWorker implements Worker {
 	protected abstract void insideWork() throws Exception;
 
 	private String catchException(Exception exception) {
-		String msg=null;
-		if(null!=exception){
-			StringBuilder msgSb=new StringBuilder();
-			Throwable throwable=exception;
-			while(null!=throwable){
+		String msg = null;
+		if (null != exception) {
+			StringBuilder msgSb = new StringBuilder();
+			Throwable throwable = exception;
+			while (null != throwable) {
 				msgSb.append(throwable.getClass());
 				msgSb.append(":");
 				msgSb.append(throwable.getMessage());
 				msgSb.append("\n");
-				StackTraceElement[] stackTraceElements=throwable.getStackTrace();
-				if(null!=stackTraceElements){
-					for(StackTraceElement stackTraceElement:stackTraceElements){
+				StackTraceElement[] stackTraceElements = throwable.getStackTrace();
+				if (null != stackTraceElements) {
+					for (StackTraceElement stackTraceElement : stackTraceElements) {
 						msgSb.append("\t\t\t");
 						msgSb.append(stackTraceElement.getClassName());
 						msgSb.append(".");
@@ -92,9 +98,9 @@ public abstract class AbstractWorker implements Worker {
 						msgSb.append("\n");
 					}
 				}
-				throwable=throwable.getCause();
+				throwable = throwable.getCause();
 			}
-			msg=msgSb.toString();
+			msg = msgSb.toString();
 		}
 		return msg;
 	}
@@ -145,24 +151,24 @@ public abstract class AbstractWorker implements Worker {
 					// 当state == WorkerLifecycleState.WAITED 时
 				} else if (getState() == WorkerLifecycleState.WAITED) {
 					// 通过job向注册中心检查 运行该job的所以worker是否已经全部等待
-					if (currentNodeName.equals(job.getHostNode())) {
-						boolean isAllWait = getManager().getRegisterCenter().workerIsAllWaited(job.getHostNode(),
+					if (currentNodeName.equals(job.getLocalNode())) {
+						boolean isAllWait = getManager().getRegisterCenter().workerIsAllWaited(job.getLocalNode(),
 								job.getName());
 						if (isAllWait) {
 							compareAndSetState(WorkerLifecycleState.WAITED, WorkerLifecycleState.FINISHED);
 							continue;
 						}
 					}
-					insideWait();
+					signalWait();
 				} else if (getState() == WorkerLifecycleState.SUSPEND) {
 					// 否处于等待中
-					insideWait();
+					signalWait();
 					// getState() == WorkerLifecycleState.STOPED 时 直接跳出循环
 				} else if (getState() == WorkerLifecycleState.STOPED) {
 					break;
 				} else if (getState() == WorkerLifecycleState.FINISHED) {
 					// 通知job worker 管理工作完成
-					getManager().finishWorkerByJob(job.getHostNode(), job.getName());
+					getManager().finishWorkerByJob(job.getLocalNode(), job.getName());
 					break;
 				}
 
@@ -211,6 +217,7 @@ public abstract class AbstractWorker implements Worker {
 	public final void suspend() {
 		// 只有设置状态前 state=WorkerLifecycleState.STARTED
 		if (compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.SUSPEND)) {
+			LOG.info("suspend worker:" + getName());
 		}
 	}
 
@@ -218,38 +225,47 @@ public abstract class AbstractWorker implements Worker {
 	public final void goOn() {
 		// 只有设置状态前 state=WorkerLifecycleState.SUSPEND 才会调用 waitLock.notify() 方法
 		if (compareAndSetState(WorkerLifecycleState.SUSPEND, WorkerLifecycleState.STARTED)) {
-			insideNotify();
+			signalRun();
+			LOG.info("goOn worker:" + getName());
 		}
 	}
 
 	@Override
 	public final void stop() {
 		// 一切状态都能设置 stoped只有设置状态前 state=WorkerLifecycleState.SUSPEND 才会调用
-		// waitLock.notify() 方法
 		WorkerLifecycleState snapshot = getAndSetState(WorkerLifecycleState.STOPED);
 		if (snapshot == WorkerLifecycleState.SUSPEND || snapshot == WorkerLifecycleState.WAITED) {
-			insideNotify();
+			signalRun();
 		}
+		LOG.info("stop worker:" + getName());
 	}
 
-	private void insideWait() {
+	private void signalWait() {
 		if ((getState() == WorkerLifecycleState.SUSPEND || getState() == WorkerLifecycleState.WAITED)) {
-			synchronized (waitLock) {
-				while ((getState() == WorkerLifecycleState.SUSPEND || getState() == WorkerLifecycleState.WAITED)) {
-					try {
-						waitLock.wait();
-					} catch (InterruptedException e) {
-						LOG.error("worker wait err", e);
-					}
+			reentrantLock.lock();
+			try {
+				if ((getState() == WorkerLifecycleState.SUSPEND || getState() == WorkerLifecycleState.WAITED)) {
+					condition.await();
 				}
+			} catch (InterruptedException e) {
+				LOG.error("worker wait err", e);
+			} finally {
+				reentrantLock.unlock();
 			}
 		}
 	}
 
-	private void insideNotify() {
-		if (getState() == WorkerLifecycleState.STOPED || getState() == WorkerLifecycleState.STARTED) {
-			synchronized (waitLock) {
-				waitLock.notify();
+	private void signalRun() {
+		if (getState() == WorkerLifecycleState.STARTED || getState() == WorkerLifecycleState.STOPED
+				|| getState() == WorkerLifecycleState.FINISHED) {
+			reentrantLock.lock();
+			try {
+				if (getState() == WorkerLifecycleState.STARTED || getState() == WorkerLifecycleState.STOPED
+						|| getState() == WorkerLifecycleState.FINISHED) {
+					condition.signalAll();
+				}
+			} finally {
+				reentrantLock.unlock();
 			}
 		}
 	}
@@ -290,7 +306,7 @@ public abstract class AbstractWorker implements Worker {
 
 	@Override
 	public void init() {
-		String jobHostNode = getJob().getHostNode();
+		String jobHostNode = getJob().getLocalNode();
 		String jobName = getJob().getName();
 		MDC.put("jobName", jobName);
 		String lockKey = jobName + "_worker_init";
@@ -304,7 +320,8 @@ public abstract class AbstractWorker implements Worker {
 			jobSnapshotId = jobSnapshot.getId();
 			workerSnapshot.setJobSnapshotId(jobSnapshotId);
 			workerSnapshot.setJobName(job.getName());
-			workerSnapshot.setJobHostNode(job.getHostNode());
+			workerSnapshot.setLocalNode(currentNodeName);
+			workerSnapshot.setJobLocalNode(job.getLocalNode());
 			workerSnapshot.setName(workerName);
 			workerSnapshot.setWorkerErrMsgs(new ArrayList<WorkerErrMsg>());
 			this.minWorkFrequency = job.getWorkFrequency();

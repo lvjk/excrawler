@@ -3,21 +3,19 @@ package six.com.crawler.common.service;
 import java.util.List;
 import java.util.Map;
 
-import six.com.crawler.common.entity.DoneInfo;
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.JobParam;
 import six.com.crawler.common.entity.WorkerSnapshot;
 import six.com.crawler.work.extract.ExtractItem;
 import six.com.crawler.common.entity.JobSnapshot;
 import six.com.crawler.common.entity.Node;
-import six.com.crawler.common.entity.QueueInfo;
 
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年9月8日 下午3:25:23
  */
-public interface JobService extends DownloadAndUploadService{
+public interface JobService extends DownloadAndUploadService {
 
 	/**
 	 * 统计节点任务数据信息
@@ -33,7 +31,7 @@ public interface JobService extends DownloadAndUploadService{
 	 * @param parameterMap
 	 * @return
 	 */
-	public Job queryByName(String jobName);
+	public Job queryJob(String jobName);
 
 	/**
 	 * 查询job相关的所有信息
@@ -96,27 +94,20 @@ public interface JobService extends DownloadAndUploadService{
 	public JobSnapshot getJobSnapshotFromRegisterCenter(String nodeName, String jobName);
 
 	/**
-	 * 注册 JobSnapshot 快照至注册中心
+	 * 保存job's JobSnapshot并缓存 此方法只能在job被手动和定时触发执行时调用一次
 	 * 
 	 * @param jobActivityInfo
 	 */
-	public void registerJobSnapshotToRegisterCenter(JobSnapshot jobSnapshot);
+	public void registerJobSnapshot(JobSnapshot jobSnapshot);
 
 	/**
-	 * 更新 JobSnapshot 快照至注册中心
+	 * 更新 保存的JobSnapshot
 	 * 
 	 * @param jobActivityInfo
 	 */
-	public void updateJobSnapshotToRegisterCenter(JobSnapshot jobSnapshot);
+	public void updateJobSnapshot(JobSnapshot jobSnapshot);
 
-	/**
-	 * 删除注册中心的 JobSnapshot
-	 * 
-	 * @param nodeName
-	 * @param jobName
-	 */
-	public void delJobSnapshotFromRegisterCenter(String nodeName, String jobName);
-
+	
 	/**
 	 * 通过任务名字查询任务正在运行活动信息
 	 * 
@@ -138,44 +129,7 @@ public interface JobService extends DownloadAndUploadService{
 	 * 
 	 * @return
 	 */
-	public List<Job>  queryJobs(int pageIndex,int pageSize);
-
-	/**
-	 * 获取所有任务队列信息
-	 * 
-	 * @return
-	 */
-	public List<QueueInfo> getJobQueueInfos();
-
-	/**
-	 * 获取所有任务处理过信息
-	 * 
-	 * @return
-	 */
-	public List<DoneInfo> getQueueDones();
-
-	/**
-	 * 移除指定任务处理过信息
-	 * 
-	 * @return
-	 */
-	public String cleanQueueDones(String queueName);
-
-	/**
-	 * 通过 queueName 清除指定任务队列
-	 * 
-	 * @param queueName
-	 * @return
-	 */
-	public String cleanQueue(String queueName);
-
-	/**
-	 * 通过 queueName 修復指定任务队列
-	 * 
-	 * @param queueName
-	 * @return
-	 */
-	public String repairQueue(String queueName);
+	public List<Job> queryJobs(int pageIndex, int pageSize);
 
 	/**
 	 * 查询job参数
@@ -199,6 +153,5 @@ public interface JobService extends DownloadAndUploadService{
 	 * @return
 	 */
 	public List<ExtractItem> queryExtractItems(String jobName);
-
 
 }

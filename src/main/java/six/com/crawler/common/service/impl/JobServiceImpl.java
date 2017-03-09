@@ -3,12 +3,10 @@ package six.com.crawler.common.service.impl;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
@@ -32,7 +30,6 @@ import six.com.crawler.common.dao.JobParamDao;
 import six.com.crawler.common.dao.ExtractItemDao;
 import six.com.crawler.common.dao.WorkerErrMsgDao;
 import six.com.crawler.common.dao.WorkerSnapshotDao;
-import six.com.crawler.common.entity.DoneInfo;
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.JobParam;
 import six.com.crawler.common.entity.JobProfile;
@@ -40,7 +37,6 @@ import six.com.crawler.common.entity.WorkerSnapshot;
 import six.com.crawler.common.entity.JobSnapshot;
 import six.com.crawler.common.entity.JobSnapshotState;
 import six.com.crawler.common.entity.Node;
-import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.QueueInfo;
 import six.com.crawler.common.entity.WorkerErrMsg;
 import six.com.crawler.common.service.JobService;
@@ -94,7 +90,7 @@ public class JobServiceImpl implements JobService {
 	}
 
 	@Override
-	public Job queryByName(String jobName) {
+	public Job queryJob(String jobName) {
 		Job job = jobDao.query(jobName);
 		return job;
 	}
@@ -127,7 +123,7 @@ public class JobServiceImpl implements JobService {
 	}
 
 	@Override
-	public List<Job> queryJobs(int pageIndex,int pageSize){
+	public List<Job> queryJobs(int pageIndex, int pageSize) {
 		Map<String, Object> parameters = new HashMap<>();
 		List<Job> jobs = jobDao.queryByParam(parameters);
 		return jobs;
@@ -147,7 +143,7 @@ public class JobServiceImpl implements JobService {
 	@Transactional
 	public void reportJobSnapshot(String nodeName, String jobName) {
 		JobSnapshot jobSnapshot = getJobSnapshotFromRegisterCenter(nodeName, jobName);
-		jobSnapshotDao.save(jobSnapshot);
+		jobSnapshotDao.update(jobSnapshot);
 		List<WorkerSnapshot> workerSnapshots = jobSnapshot.getWorkerSnapshots();
 		if (null != workerSnapshots) {
 			workerSnapshotDao.batchSave(workerSnapshots);
@@ -158,6 +154,7 @@ public class JobServiceImpl implements JobService {
 
 			}
 		}
+		registerCenter.delJobSnapshot(nodeName,jobName);
 	}
 
 	public JobSnapshot queryLastJobSnapshotFromHistory(String jobName) {
@@ -262,19 +259,17 @@ public class JobServiceImpl implements JobService {
 		}
 	}
 
-	public void registerJobSnapshotToRegisterCenter(JobSnapshot jobSnapshot) {
+	public void registerJobSnapshot(JobSnapshot jobSnapshot) {
+		jobSnapshotDao.save(jobSnapshot);
 		registerCenter.registerJobSnapshot(jobSnapshot);
 	}
 
 	@Override
-	public void updateJobSnapshotToRegisterCenter(JobSnapshot jobSnapshot) {
+	public void updateJobSnapshot(JobSnapshot jobSnapshot) {
+		jobSnapshotDao.update(jobSnapshot);
 		registerCenter.updateJobSnapshot(jobSnapshot);
 	}
 
-	@Override
-	public void delJobSnapshotFromRegisterCenter(String nodeName, String jobName) {
-		registerCenter.delJobSnapshot(nodeName, jobName);
-	}
 
 	@Override
 	public void updateWorkSnapshotToRegisterCenter(WorkerSnapshot workerSnapshot, boolean isSaveErrMsg) {
@@ -284,6 +279,80 @@ public class JobServiceImpl implements JobService {
 			errMsgs.clear();
 		}
 		registerCenter.updateWorkerSnapshot(workerSnapshot);
+	}
+
+	private QueueInfo getJobQueueInfos(String queueName) {
+		QueueInfo tempQueueInfo = new QueueInfo();
+		tempQueueInfo.setQueueName(queueName);
+		String tempProxyKey = RedisWorkQueue.PRE_PROXY_QUEUE_KEY + queueName;
+		int proxySize = redisManager.llen(tempProxyKey);
+		tempQueueInfo.setProxyQueueSize(proxySize);
+
+		String tempRealKey = RedisWorkQueue.PRE_QUEUE_KEY + queueName;
+		int realSize = redisManager.hllen(tempRealKey);
+		tempQueueInfo.setRealQueueSize(realSize);
+
+		String tempErrKey = RedisWorkQueue.PRE_ERR_QUEUE_KEY + queueName;
+		int errSize = redisManager.hllen(tempErrKey);
+		tempQueueInfo.setErrQueueCount(errSize);
+
+		return tempQueueInfo;
+	}
+
+	@Override
+	public ResponseEntity<InputStreamResource> download(String param) {
+		JobProfile profile = new JobProfile();
+		Job job = queryJob(param);
+		if (null != job) {
+			List<JobParam> jobParams = queryJobParams(job.getName());
+			job.setParamList(jobParams);
+			List<ExtractItem> extractItems = queryExtractItems(job.getName());
+			profile.setJob(job);
+			profile.setExtractItems(extractItems);
+		}
+		String xml = "";
+		try {
+			xml = JobProfile.buildXml(profile);
+		} catch (Exception e) {
+			LOG.error("downloadProfile err:" + param, e);
+		}
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+		headers.setContentDispositionFormData("attachment", param + "_job.xml");
+		byte[] bytes = xml.getBytes();
+		InputStream inputStream = new ByteArrayInputStream(bytes);
+		return ResponseEntity.ok().headers(headers).contentLength(bytes.length)
+				.contentType(MediaType.parseMediaType("application/octet-stream"))
+				.body(new InputStreamResource(inputStream));
+	}
+
+	@Override
+	public String upload(MultipartFile multipartFile) {
+		String msg = null;
+		if (null != multipartFile && !multipartFile.isEmpty()) {
+			try {
+				byte[] buffer = multipartFile.getBytes();
+				String jobProfileXml = new String(buffer);
+				JobProfile profile = JobProfile.buildJobProfile(jobProfileXml);
+				Job job = profile.getJob();
+				// 删除job参数数据
+				jobParamDao.delJobParams(job.getName());
+				// 删除job抽取项
+				extractItemDao.del(job.getName());
+				// 删除job
+				jobDao.del(job.getName());
+				jobDao.save(job);
+				jobParamDao.batchSave(job.getParamList());
+				extractItemDao.batchSave(profile.getExtractItems());
+				msg = "uploadJobProfile[" + multipartFile.getName() + "] succeed";
+			} catch (Exception e) {
+				msg = "uploadJobProfile[" + multipartFile.getName() + "] err";
+				LOG.error(msg, e);
+			}
+		} else {
+			msg = "uploadJobProfile is empty";
+		}
+		return msg;
 	}
 
 	@Override
@@ -297,8 +366,6 @@ public class JobServiceImpl implements JobService {
 		List<ExtractItem> result = extractItemDao.query(jobName);
 		return result;
 	}
-
-
 
 	public JobDao getJobDao() {
 		return jobDao;
@@ -354,156 +421,6 @@ public class JobServiceImpl implements JobService {
 
 	public void setExtractItemDao(ExtractItemDao extractItemDao) {
 		this.extractItemDao = extractItemDao;
-	}
-
-	private QueueInfo getJobQueueInfos(String queueName) {
-		QueueInfo tempQueueInfo = new QueueInfo();
-		tempQueueInfo.setQueueName(queueName);
-		String tempProxyKey = RedisWorkQueue.PRE_PROXY_QUEUE_KEY + queueName;
-		int proxySize = redisManager.llen(tempProxyKey);
-		tempQueueInfo.setProxyQueueSize(proxySize);
-		
-		String tempRealKey = RedisWorkQueue.PRE_QUEUE_KEY + queueName;
-		int realSize = redisManager.hllen(tempRealKey);
-		tempQueueInfo.setRealQueueSize(realSize);
-		
-		String tempErrKey = RedisWorkQueue.PRE_ERR_QUEUE_KEY + queueName;
-		int errSize = redisManager.hllen(tempErrKey);
-		tempQueueInfo.setErrQueueCount(errSize);
-		
-		return tempQueueInfo;
-	}
-
-	@Override
-	public List<QueueInfo> getJobQueueInfos() {
-		Set<String> realQueuekeys = redisManager.keys(RedisWorkQueue.PRE_QUEUE_KEY + "*");
-		QueueInfo tempQueueInfo = null;
-		String queueName = null;
-		List<QueueInfo> result = new ArrayList<>();
-		for (String tempKey : realQueuekeys) {
-			queueName = StringUtils.remove(tempKey, RedisWorkQueue.PRE_QUEUE_KEY);
-			tempQueueInfo = getJobQueueInfos(queueName);
-			result.add(tempQueueInfo);
-		}
-		return result;
-	}
-
-	@Override
-	public String cleanQueue(String queueName) {
-		String proxyQueuekey = RedisWorkQueue.PRE_PROXY_QUEUE_KEY + queueName;
-		String realQueuekey = RedisWorkQueue.PRE_QUEUE_KEY + queueName;
-		redisManager.lock(realQueuekey);
-		try {
-			redisManager.del(proxyQueuekey);
-			redisManager.del(realQueuekey);
-		} finally {
-			redisManager.unlock(realQueuekey);
-		}
-		return "clean queue[" + queueName + "] succeed";
-	}
-
-	@Override
-	public String repairQueue(String queueName) {
-		String proxyQueuekey = RedisWorkQueue.PRE_PROXY_QUEUE_KEY + queueName;
-		String realQueuekey = RedisWorkQueue.PRE_QUEUE_KEY + queueName;
-		redisManager.lock(realQueuekey);
-		try {
-			int proxyQueueLlen = redisManager.llen(proxyQueuekey);
-			int queueKeyLlen = redisManager.hllen(realQueuekey);
-			if (queueKeyLlen != proxyQueueLlen) {
-				redisManager.del(proxyQueuekey);
-				Map<String, Page> findMap = redisManager.hgetAll(realQueuekey, Page.class);
-				if (null != findMap) {
-					for (String key : findMap.keySet()) {
-						redisManager.rpush(proxyQueuekey, key);
-					}
-				}
-			}
-		} finally {
-			redisManager.unlock(realQueuekey);
-		}
-		return "repair queue[" + queueName + "] succeed";
-	}
-
-	@Override
-	public List<DoneInfo> getQueueDones() {
-		Set<String> proxyQueuekeys = redisManager.keys(RedisWorkQueue.PRE_DONE_DUPLICATE_KEY + "*");
-		List<DoneInfo> doneInfos = new ArrayList<>();
-		DoneInfo tempDoneInfo = null;
-		for (String tempKey : proxyQueuekeys) {
-			int size = redisManager.hllen(tempKey);
-			String queueName = StringUtils.remove(tempKey, RedisWorkQueue.PRE_DONE_DUPLICATE_KEY);
-			tempDoneInfo = new DoneInfo();
-			tempDoneInfo.setQueueName(queueName);
-			tempDoneInfo.setSize(size);
-			doneInfos.add(tempDoneInfo);
-		}
-		return doneInfos;
-	}
-
-	
-	@Override
-	public ResponseEntity<InputStreamResource> download(String param) {
-		JobProfile profile = new JobProfile();
-		Job job = queryByName(param);
-		if (null != job) {
-			List<JobParam> jobParams = queryJobParams(job.getName());
-			job.setParamList(jobParams);
-			List<ExtractItem> extractItems=queryExtractItems(job.getName());
-			profile.setJob(job);
-			profile.setExtractItems(extractItems);
-		}
-		String xml = "";
-		try {
-			xml=JobProfile.buildXml(profile);
-		} catch (Exception e) {
-			LOG.error("downloadProfile err:" + param, e);
-		}
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-		headers.setContentDispositionFormData("attachment",param + "_job.xml");
-		byte[] bytes=xml.getBytes();
-		InputStream inputStream = new ByteArrayInputStream(bytes);
-		return ResponseEntity.ok().headers(headers).contentLength(bytes.length)
-				.contentType(MediaType.parseMediaType("application/octet-stream"))
-				.body(new InputStreamResource(inputStream));
-	}
-
-	@Override
-	public String upload(MultipartFile multipartFile) {
-		String msg = null;
-		if (null != multipartFile && !multipartFile.isEmpty()) {
-			try {
-				byte[] buffer = multipartFile.getBytes();
-				String jobProfileXml = new String(buffer);
-				JobProfile profile =JobProfile.buildJobProfile(jobProfileXml);
-				Job job=profile.getJob();
-				//删除job参数数据
-				jobParamDao.delJobParams(job.getName());
-				//删除job抽取项
-				extractItemDao.del(job.getName());
-				//删除job
-				jobDao.del(job.getName());
-				jobDao.save(job);
-				jobParamDao.batchSave(job.getParamList());
-				extractItemDao.batchSave(profile.getExtractItems());
-				msg = "uploadJobProfile[" + multipartFile.getName() + "] succeed";
-			} catch (Exception e) {
-				msg = "uploadJobProfile[" + multipartFile.getName() + "] err";
-				LOG.error(msg, e);
-			}
-		} else {
-			msg = "uploadJobProfile is empty";
-		}
-		return msg;
-	}
-
-
-	@Override
-	public String cleanQueueDones(String queueName) {
-		String doneKey = RedisWorkQueue.PRE_DONE_DUPLICATE_KEY + queueName;
-		redisManager.del(doneKey);
-		return "clean doneQueue[" + queueName + "] succeed";
 	}
 
 	public WorkerSnapshotDao getWorkerSnapshotDao() {

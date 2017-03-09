@@ -32,7 +32,7 @@ public interface JobDao extends BaseDao{
 	 * @return
 	 */
 	@Select("select `name`,"
-			+ " hostNode,"
+			+ " localNode,"
 			+ "   level,"
 			+ "workFrequency,"
 			+ "isScheduled,"
@@ -45,7 +45,7 @@ public interface JobDao extends BaseDao{
 	public Job query(String name);
 
 	@Select("select `name`,"
-			+ " hostNode,"
+			+ " localNode,"
 			+ "   level,"
 			+ "workFrequency,"
 			+ "isScheduled,"
