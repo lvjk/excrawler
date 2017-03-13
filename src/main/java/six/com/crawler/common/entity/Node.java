@@ -14,6 +14,7 @@ public class Node  implements Serializable{
 	 */
 	private static final long serialVersionUID = 5609665168838994265L;
 	private String name;//节点名字
+	private NodeType type;//节点类型
 	private String host;//节点host
 	private int port;//节点服务端口
 	private int cpu;//cpu使用情况
@@ -31,6 +32,14 @@ public class Node  implements Serializable{
 	public void setName(String name) {
 		this.name = name;
 	}
+	
+	public NodeType getType() {
+		return type;
+	}
+	public void setType(NodeType type) {
+		this.type = type;
+	}
+	
 	public String getHost() {
 		return host;
 	}

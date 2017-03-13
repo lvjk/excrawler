@@ -149,7 +149,7 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 			job = waitingRunQueue.poll();
 			// 如果获取到Job的那么 那么execute
 			if (null != job) {
-				LOG.info("从待执行队列里获取到job["+job.getName()+"],准备执行");
+				LOG.info("从待执行队列里获取到job[" + job.getName() + "],准备执行");
 				doExecute(job);
 			} else {// 如果队列里没有Job的话那么 wait 1000 毫秒
 				waitQueueLock.lock();
@@ -238,7 +238,7 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 	 * 加载需要调度的job
 	 */
 	private void loadScheduledJob() {
-		if(NodeType.MASTER==getConfigure().getNodeType()){
+		if (NodeType.MASTER == getConfigure().getNodeType()) {
 			LOG.info("start load scheduled job");
 			Map<String, Object> parameters = new HashMap<>();
 			parameters.put("isScheduled", 1);
@@ -267,10 +267,11 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 			// 获取 空闲节点(已经根据节点资源进行排序过)
 			List<Node> freeNodes = getFreeNodes();
 			if (null != freeNodes) {
-				for(Node freeNode:freeNodes){
-					if(!StringUtils.equals(freeNode.getName(), jobLocalNode)){
+				for (Node freeNode : freeNodes) {
+					if (freeNode.getType() != NodeType.MASTER && freeNode.getType() != NodeType.MASTER_STANDBY
+							&& !StringUtils.equals(freeNode.getName(), jobLocalNode)) {
 						otherFreeNodes.add(freeNode);
-						if(otherFreeNodes.size()==needFreeNodeSize){
+						if (otherFreeNodes.size() == needFreeNodeSize) {
 							break;
 						}
 					}
@@ -479,11 +480,12 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 			List<JobParam> jobParameters = getJobService().queryJobParams(job.getName());
 			job.setParamList(jobParameters);
 			// 新建一个 JobSnapshot 并生成一个id
-			if (getCurrentNode().getName().equals(job.getLocalNode())) {
-				LOG.info("本地节点执行job["+job.getName()+"]");
-				JobSnapshot jobSnapshot = getJobService().getJobSnapshotFromRegisterCenter(job.getLocalNode(), job.getName());
-				if(null==jobSnapshot){
-					throw new RuntimeException("执行前必须在缓存中注册jobSnapshot:"+job.getName());
+			if (getCurrentNode().getType() == NodeType.MASTER) {
+				LOG.info("MASTER节点调度执行job[" + job.getName() + "]");
+				JobSnapshot jobSnapshot = getJobService().getJobSnapshotFromRegisterCenter(job.getLocalNode(),
+						job.getName());
+				if (null == jobSnapshot) {
+					throw new RuntimeException("执行前必须在缓存中注册jobSnapshot:" + job.getName());
 				}
 				Date nowDate = new Date();
 				jobSnapshot.setStartTime(DateFormatUtils.format(nowDate, DateFormats.DATE_FORMAT_1));
@@ -507,26 +509,23 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 				}
 				jobSnapshot.setTableName(tempTbaleName);
 				jobSnapshot.setState(JobSnapshotState.EXECUTING.value());
-				//将jobSnapshot更新缓存 这里一定要 saveJobSnapshot 
+				// 将jobSnapshot更新缓存 这里一定要 saveJobSnapshot
 				getJobService().updateJobSnapshotToRegisterCenter(jobSnapshot);
 				getJobService().saveJobSnapshot(jobSnapshot);
-				boolean executeResult = callLocalExecute(job);
-				if (executeResult) {
-					// 需要运行节点数量减去本地运行节点1
-					int needFreeNodeSize = job.getNeedNodes() - 1;
-					//设置0 不启用集群
-					needFreeNodeSize =0;
-					List<Node> otherFreeExecuteNodes = getOtherFreeNodes(needFreeNodeSize, job.getLocalNode());
-					otherFreeExecuteNodes.forEach(node -> {
-						callAssistExecute(node, job.getName());
-					});
-				}
+				// 需要运行节点数量减去本地运行节点1
+				int needFreeNodeSize = job.getNeedNodes() - 1;
+				// 设置0 不启用集群
+				needFreeNodeSize = 1;
+				List<Node> otherFreeExecuteNodes = getOtherFreeNodes(needFreeNodeSize, job.getLocalNode());
+				otherFreeExecuteNodes.forEach(node -> {
+					callAssistExecute(node, job.getName());
+				});
 			} else {
-				LOG.info("空闲节点协助执行job["+job.getName()+"]");
+				LOG.info("工作节点执行job[" + job.getName() + "]");
 				callLocalExecute(job);
 			}
 		} else {
-			LOG.info("任务job["+job.getName()+"]正在执行，将任务返回到待执行队列");
+			LOG.info("任务job[" + job.getName() + "]正在执行，将任务返回到待执行队列");
 			submitWaitQueue(job);
 		}
 	}
@@ -537,8 +536,7 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 	 * @param job
 	 */
 	public void localExecute(Job job) {
-		String id = job.getName() + "_"
-				+ DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_2);
+		String id = job.getName() + "_" + DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_2);
 		JobSnapshot jobSnapshot = new JobSnapshot();
 		jobSnapshot.setId(id);
 		jobSnapshot.setName(job.getName());
@@ -549,17 +547,17 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 	}
 
 	public boolean callLocalExecute(Job job) {
-		LOG.info("构建任务job["+job.getName()+"] worker");
+		LOG.info("构建任务job[" + job.getName() + "] worker");
 		Worker worker = buildJobWorker(job);
 		executor.execute(() -> {
-			LOG.info("开始执行任务job["+job.getName()+"]'s worker");
+			LOG.info("开始执行任务job[" + job.getName() + "]'s worker");
 			executeWorker(worker);
 		});
 		// 等待worker.getState() == WorkerLifecycleState.STARTED 时返回true
-		LOG.info("等待任务job["+job.getName()+"]'s worker开始执行");
+		LOG.info("等待任务job[" + job.getName() + "]'s worker开始执行");
 		while (worker.getState() == WorkerLifecycleState.READY) {
 		}
-		LOG.info("任务job["+job.getName()+"]'s worker开始执行");
+		LOG.info("任务job[" + job.getName() + "]'s worker开始执行");
 		return true;
 	}
 
@@ -602,7 +600,7 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 
 	@Override
 	public List<Node> getFreeNodes() {
-		List<Node> result=getClusterService().getClusterInfo();
+		List<Node> result = getClusterService().getClusterInfo();
 		return result;
 	}
 
