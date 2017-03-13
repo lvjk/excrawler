@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.JobSnapshot;
+import six.com.crawler.common.entity.PageQuery;
 import six.com.crawler.common.service.JobService;
 
 /**
@@ -31,24 +32,16 @@ public class JobApi extends BaseApi {
 	@Autowired
 	private JobService jobService;
 
-	@RequestMapping(value = "/crawler/job/query/{pageIndex}/{pageSize}", method = RequestMethod.GET)
+	@RequestMapping(value = "/crawler/job/query/{pageIndex}/{pageSize}/{jobName}", method = RequestMethod.GET)
 	@ResponseBody
-	public ResponseMsg<List<Job>> queryJobs(@PathVariable("pageIndex") int pageIndex,
-			@PathVariable("pageSize") int pageSize) {
-		ResponseMsg<List<Job>> msg = new ResponseMsg<>();
-		List<Job> result = jobService.queryJobs(pageIndex, pageSize);
-		msg.setData(result);
-		return msg;
+	public ResponseMsg<PageQuery<Job>> queryJobs(@PathVariable("pageIndex") int pageIndex,
+			@PathVariable("pageSize") int pageSize,
+			@PathVariable("jobName") String jobName) {
+		ResponseMsg<PageQuery<Job>> responseMsg = createResponseMsg();
+		jobService.queryJobs(responseMsg, jobName, pageIndex, pageSize);
+		return responseMsg;
 	}
 
-	@RequestMapping(value = "/crawler/job/query/{jobName}", method = RequestMethod.GET)
-	@ResponseBody
-	public ResponseMsg<List<Job>> query(@PathVariable("jobName") String jobName) {
-		ResponseMsg<List<Job>> msg = new ResponseMsg<>();
-		List<Job> result = jobService.fuzzyQuery(jobName);
-		msg.setData(result);
-		return msg;
-	}
 
 	@RequestMapping(value = "/crawler/job/save", method = RequestMethod.POST)
 	@ResponseBody

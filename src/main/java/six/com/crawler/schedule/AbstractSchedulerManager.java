@@ -12,6 +12,7 @@ import six.com.crawler.common.entity.Node;
 import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.http.HttpClient;
 import six.com.crawler.common.ocr.ImageDistinguish;
+import six.com.crawler.common.service.ClusterService;
 import six.com.crawler.common.service.HttpPorxyService;
 import six.com.crawler.common.service.JobService;
 import six.com.crawler.common.service.PageService;
@@ -59,6 +60,10 @@ public abstract class AbstractSchedulerManager implements SchedulerManager {
 
 	@Autowired
 	private ImageDistinguish imageDistinguish;
+	
+	@Autowired
+	private ClusterService clusterService;
+
 
 	private final static String WORKER_NAME_PREFIX = "job_worker";
 
@@ -202,6 +207,14 @@ public abstract class AbstractSchedulerManager implements SchedulerManager {
 
 	public void setImageDistinguish(ImageDistinguish imageDistinguish) {
 		this.imageDistinguish = imageDistinguish;
+	}
+	
+	public ClusterService getClusterService() {
+		return clusterService;
+	}
+
+	public void setClusterService(ClusterService clusterService) {
+		this.clusterService = clusterService;
 	}
 
 	public abstract Node getCurrentNode();

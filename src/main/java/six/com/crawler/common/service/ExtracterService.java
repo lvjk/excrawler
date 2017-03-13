@@ -3,6 +3,7 @@ package six.com.crawler.common.service;
 import java.util.List;
 
 import six.com.crawler.work.extract.ExtractPath;
+import six.com.crawler.work.extract.TestExtractPath;
 
 /**
  * @author 作者
@@ -41,7 +42,7 @@ public interface ExtracterService {
 	 * @param html
 	 * @return
 	 */
-	public List<String> testExtract(ExtractPath extractPath, String testHtml,String testUrl);
+	public List<String> testExtract(TestExtractPath extractPath);
 
 
 	/**

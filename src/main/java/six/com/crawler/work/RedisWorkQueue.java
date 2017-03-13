@@ -1,5 +1,6 @@
 package six.com.crawler.work;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -93,12 +94,15 @@ public class RedisWorkQueue implements WorkQueue {
 			int queueKeyLlen = redisManager.hllen(queueKey);
 			if (queueKeyLlen != proxyQueueLlen) {
 				redisManager.del(proxyQueueKey);
-				Map<String, Page> findMap = redisManager.hgetAll(queueKey, Page.class);
-				if (null != findMap) {
-					for (String key : findMap.keySet()) {
-						redisManager.rpush(proxyQueueKey, key);
-					}
-				}
+				String cursorStr = "0";
+				Map<String,Page> map = new HashMap<>();
+				do {
+					cursorStr = redisManager.hscan(queueKey,cursorStr, map, Page.class);
+					map.keySet().stream().forEach(mapKey->{
+						redisManager.rpush(proxyQueueKey,mapKey);
+					});
+					map.clear();
+				} while (!"0".equals(cursorStr));
 			}
 		} finally {
 			redisManager.unlock(queueKey);
@@ -214,6 +218,6 @@ public class RedisWorkQueue implements WorkQueue {
 
 	@Override
 	public void pushErr(Page page) {
-		redisManager.hset(errQueueKey, page.getPageKey(), page);
+		redisManager.lpush(errQueueKey, page);
 	}
 }

@@ -16,12 +16,10 @@ import six.com.crawler.common.DateFormats;
 import six.com.crawler.common.constants.JobConTextConstants;
 import six.com.crawler.common.entity.HttpProxyType;
 import six.com.crawler.common.entity.JobSnapshot;
-import six.com.crawler.common.entity.JobSnapshotState;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.entity.ResultContext;
 import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.http.HttpProxyPool;
-import six.com.crawler.common.utils.JobTableUtils;
 import six.com.crawler.common.utils.MD5Utils;
 import six.com.crawler.common.utils.ThreadUtils;
 import six.com.crawler.work.downer.Downer;
@@ -83,6 +81,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		httpProxyType = HttpProxyType.valueOf(Integer.valueOf(httpProxyTypeStr));
 		httpProxyPool = getManager().getHttpPorxyService().buildHttpProxyPool(siteCode, httpProxyType,
 				getWorkFrequency());
+		downer.setHttpProxy(httpProxyPool.getHttpProxy());
 		// 5.初始化内容抽取
 		List<ExtractItem> extractItems = getManager().getJobService().queryExtractItems(getJob().getName());
 		if (null != extractItems && !extractItems.isEmpty()) {
@@ -104,26 +103,6 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 			outResultKey.add(Constants.DEFAULT_RESULT_ORIGIN_URL);
 			extracter = new CssSelectExtracter(this, extractItems);
 		}
-		String fixedTableName = getJob().getParam(JobConTextConstants.FIXED_TABLE_NAME);
-		String isSnapshotTable = getJob().getParam(JobConTextConstants.IS_SNAPSHOT_TABLE);
-		String tempTbaleName = null;
-		if ("1".equals(isSnapshotTable)) {
-			JobSnapshot lastJobSnapshot = getManager().getJobService()
-					.queryLastJobSnapshotFromHistory(getJob().getName());
-			if (null != lastJobSnapshot && StringUtils.isNotBlank(lastJobSnapshot.getTableName())
-					&& lastJobSnapshot.getEnumState() != JobSnapshotState.FINISHED) {
-				tempTbaleName = lastJobSnapshot.getTableName();
-			} else {
-				String jobStart = StringUtils.remove(jobSnapshot.getId(), getJob().getName() + "_");
-				// 判断是否启用镜像表
-				tempTbaleName = JobTableUtils.buildJobTableName(fixedTableName, jobStart);
-			}
-		} else {
-			tempTbaleName = fixedTableName;
-		}
-		jobSnapshot.setTableName(tempTbaleName);
-		getManager().getJobService().updateJobSnapshot(jobSnapshot);
-
 		String resultStoreClass = getJob().getParam(JobConTextConstants.RESULT_STORE_CLASS);
 		if (StringUtils.isNotBlank(resultStoreClass) && !"null".equalsIgnoreCase(resultStoreClass)) {
 
@@ -306,7 +285,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 			// 判断内部处理是否可处理,如果不可处理那么这里默认处理
 			if (!insideExceptionResult) {
 				String msg = null;
-				if (null != insideException
+				if (null== insideException
 						&& doingPage.getRetryProcess() < Constants.WOKER_PROCESS_PAGE_MAX_RETRY_COUNT) {
 					doingPage.setRetryProcess(doingPage.getRetryProcess() + 1);
 					workQueue.retryPush(doingPage);
@@ -359,6 +338,9 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 	protected void insideDestroy() {
 		if (null != downer) {
 			downer.close();
+		}
+		if(null!=httpProxyPool){
+			httpProxyPool.destroy();
 		}
 	}
 }

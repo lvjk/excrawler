@@ -3,6 +3,7 @@ package six.com.crawler.common.dao;
 import java.util.List;
 
 import org.apache.ibatis.annotations.InsertProvider;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.SelectProvider;
 
 import six.com.crawler.common.dao.provider.JobSnapshotDaoProvider;
@@ -19,6 +20,10 @@ public interface JobSnapshotDao extends BaseDao{
 	
 	@SelectProvider(type = JobSnapshotDaoProvider.class, method = "query")
 	public List<JobSnapshot> query(String jobName);
+	
+	@SelectProvider(type = JobSnapshotDaoProvider.class, method = "queryLast")
+	public List<JobSnapshot> queryLast(@Param("excludeJobSnapshotId")String excludeJobSnapshotId
+			,@Param("jobName")String jobName);
 	
 	@InsertProvider(type = JobSnapshotDaoProvider.class, method = "save")
 	public int save(JobSnapshot jobSnapshot);

@@ -47,4 +47,12 @@ public interface HttpPorxyService {
 	 * @return
 	 */
 	public String delHttpProxy(HttpProxy httpProxy);
+	
+	/**
+	 * 删除指定http代理
+	 * 
+	 * @param host
+	 * @return
+	 */
+	public void delAllHttpProxy();
 }

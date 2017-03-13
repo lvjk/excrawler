@@ -24,6 +24,7 @@ public abstract class AbstractDowner implements Downer, AutoCloseable {
 
 	protected AbstractCrawlWorker worker;
 	private HttpProxy httpProxy;
+	private String pageKey;
 	private String lastRequestUrl;
 	private HttpResult lastHttpResult;
 
@@ -41,8 +42,10 @@ public abstract class AbstractDowner implements Downer, AutoCloseable {
 			throw new DownerException("page is null or page's url is blank");
 		}
 		if (1 != page.getNoNeedDown()) {
-			if (!StringUtils.equals(page.getOriginalUrl(), lastRequestUrl)) {
+			if (!(StringUtils.equals(page.getPageKey(), pageKey)
+					&& StringUtils.equals(page.getOriginalUrl(), lastRequestUrl))) {
 				lastHttpResult = insideDown(page);
+				pageKey = page.getPageKey();
 				lastRequestUrl = page.getOriginalUrl();
 				lastHttpResult.setHtml(page.getPageSrc());
 			} else {

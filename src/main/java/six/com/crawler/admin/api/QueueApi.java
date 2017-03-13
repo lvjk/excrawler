@@ -1,6 +1,7 @@
 package six.com.crawler.admin.api;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -25,20 +26,22 @@ public class QueueApi {
 	@Autowired
 	private WorkQueueService workQueueService;
 
-	@RequestMapping(value = "/crawler/queue/getQueueInfo/{queueName}", method = RequestMethod.GET)
+	@RequestMapping(value = "/crawler/queue/getQueueInfo/{queueName}/{queueCursor}", method = RequestMethod.GET)
 	@ResponseBody
-	public ResponseMsg<List<Page>> getQueueInfo(@PathVariable("queueName") String queueName) {
-		ResponseMsg<List<Page>> msg = new ResponseMsg<>();
-		List<Page> result = workQueueService.getQueueInfo(queueName);
+	public ResponseMsg<Map<String,Object>> getQueueInfo(@PathVariable("queueName") String queueName,
+			@PathVariable("queueCursor") String queueCursor) {
+		ResponseMsg<Map<String,Object>> msg = new ResponseMsg<>();
+		Map<String,Object> result = workQueueService.getQueueInfo(queueName,queueCursor);
 		msg.setData(result);
 		return msg;
 	}
 
-	@RequestMapping(value = "/crawler/queue/getErrQueueInfo/{queueName}", method = RequestMethod.GET)
+	@RequestMapping(value = "/crawler/queue/getErrQueueInfo/{queueName}/{errQueueIndex}", method = RequestMethod.GET)
 	@ResponseBody
-	public ResponseMsg<List<Page>> getErrQueueInfo(@PathVariable("queueName") String queueName) {
+	public ResponseMsg<List<Page>> getErrQueueInfo(@PathVariable("queueName") String queueName
+			,@PathVariable("errQueueIndex")int errQueueIndex) {
 		ResponseMsg<List<Page>> msg = new ResponseMsg<>();
-		List<Page> result = workQueueService.getErrQueueInfo(queueName);
+		List<Page> result = workQueueService.getErrQueueInfo(queueName,errQueueIndex);
 		msg.setData(result);
 		return msg;
 	}

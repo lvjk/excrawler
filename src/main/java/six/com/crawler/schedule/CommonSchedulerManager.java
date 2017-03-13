@@ -2,6 +2,7 @@ package six.com.crawler.schedule;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,14 +39,18 @@ import org.springframework.stereotype.Component;
 
 import okhttp3.Request;
 import six.com.crawler.common.DateFormats;
+import six.com.crawler.common.constants.JobConTextConstants;
 import six.com.crawler.common.email.QQEmailClient;
 import six.com.crawler.common.entity.Job;
+import six.com.crawler.common.entity.JobParam;
 import six.com.crawler.common.entity.JobSnapshot;
 import six.com.crawler.common.entity.JobSnapshotState;
 import six.com.crawler.common.entity.Node;
+import six.com.crawler.common.entity.NodeType;
 import six.com.crawler.common.http.HttpMethod;
 import six.com.crawler.common.http.HttpResult;
 import six.com.crawler.common.utils.AutoCharsetDetectorUtils.ContentType;
+import six.com.crawler.common.utils.JobTableUtils;
 import six.com.crawler.common.utils.MD5Utils;
 import six.com.crawler.common.utils.ObjectCheckUtils;
 import six.com.crawler.common.utils.ThreadUtils;
@@ -144,7 +149,8 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 			job = waitingRunQueue.poll();
 			// 如果获取到Job的那么 那么execute
 			if (null != job) {
-				insideExecute(job);
+				LOG.info("从待执行队列里获取到job["+job.getName()+"],准备执行");
+				doExecute(job);
 			} else {// 如果队列里没有Job的话那么 wait 1000 毫秒
 				waitQueueLock.lock();
 				try {
@@ -232,17 +238,16 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 	 * 加载需要调度的job
 	 */
 	private void loadScheduledJob() {
-		LOG.info("start load scheduled job");
-		Node currentNode = getCurrentNode();
-		String nodeName = currentNode.getName();
-		Map<String, Object> parameters = new HashMap<>();
-		parameters.put("localNode", nodeName);
-		parameters.put("isScheduled", 1);
-		List<Job> jobList = getJobService().query(parameters);
-		int size = null != jobList ? jobList.size() : 0;
-		LOG.info("load Scheduled Job size:" + size);
-		for (Job job : jobList) {
-			scheduled(job);
+		if(NodeType.MASTER==getConfigure().getNodeType()){
+			LOG.info("start load scheduled job");
+			Map<String, Object> parameters = new HashMap<>();
+			parameters.put("isScheduled", 1);
+			List<Job> jobList = getJobService().query(parameters);
+			int size = null != jobList ? jobList.size() : 0;
+			LOG.info("load Scheduled Job size:" + size);
+			for (Job job : jobList) {
+				scheduled(job);
+			}
 		}
 	}
 
@@ -262,10 +267,13 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 			// 获取 空闲节点(已经根据节点资源进行排序过)
 			List<Node> freeNodes = getFreeNodes();
 			if (null != freeNodes) {
-				if (freeNodes.size() > needFreeNodeSize) {
-					otherFreeNodes.addAll(freeNodes.subList(0, needFreeNodeSize - 1));
-				} else {
-					otherFreeNodes.addAll(freeNodes);
+				for(Node freeNode:freeNodes){
+					if(!StringUtils.equals(freeNode.getName(), jobLocalNode)){
+						otherFreeNodes.add(freeNode);
+						if(otherFreeNodes.size()==needFreeNodeSize){
+							break;
+						}
+					}
 				}
 			}
 		} else {
@@ -279,19 +287,19 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 	 * 
 	 * @param crawlerWorker
 	 */
-	private void executeJobWorker(Worker jobWorker) {
+	private void executeWorker(Worker worker) {
 		String currentNodeName = getCurrentNode().getName();
-		Job job = jobWorker.getJob();
+		Job job = worker.getJob();
 		String jobLocalNodeName = job.getLocalNode();
 		String jobName = job.getName();
 		// 运行worker计数+1
 		runningWroker.incrementAndGet();
 		try {
-			jobWorker.init();
+			worker.init();
 			// 执行 job worker
-			jobWorker.start();
+			worker.start();
 		} catch (Exception e) {
-			LOG.error("execute jobWorker {" + jobWorker.getName() + "} err", e);
+			LOG.error("execute jobWorker {" + worker.getName() + "} err", e);
 		} finally {
 			// 运行worker计数-1
 			runningWroker.decrementAndGet();
@@ -300,9 +308,9 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 				getJobService().reportJobSnapshot(jobLocalNodeName, jobName);
 			}
 			// 移除注册中心数据
-			getRegisterCenter().delWorker(jobLocalNodeName, jobName, jobWorker.getName());
+			getRegisterCenter().delWorker(jobLocalNodeName, jobName, worker.getName());
 			// wokrer 销毁
-			jobWorker.destroy();
+			worker.destroy();
 		}
 
 	}
@@ -310,7 +318,7 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 	public synchronized void suspendWorkerByJob(String jobHostNode, String jobName) {
 		JobSnapshot jobSnapshot = getJobService().getJobSnapshotFromRegisterCenter(jobHostNode, jobName);
 		jobSnapshot.setState(JobSnapshotState.SUSPEND.value());
-		getJobService().updateJobSnapshot(jobSnapshot);
+		getJobService().updateJobSnapshotToRegisterCenter(jobSnapshot);
 		List<Worker> list = getRegisterCenter().getWorkers(jobName);
 		for (Worker worker : list) {
 			worker.suspend();
@@ -320,7 +328,7 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 	public synchronized void goOnWorkerByJob(String jobHostNode, String jobName) {
 		JobSnapshot jobSnapshot = getJobService().getJobSnapshotFromRegisterCenter(jobHostNode, jobName);
 		jobSnapshot.setState(JobSnapshotState.EXECUTING.value());
-		getJobService().updateJobSnapshot(jobSnapshot);
+		getJobService().updateJobSnapshotToRegisterCenter(jobSnapshot);
 		List<Worker> list = getRegisterCenter().getWorkers(jobName);
 		for (Worker worker : list) {
 			worker.goOn();
@@ -330,7 +338,7 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 	public synchronized void stopWorkerByJob(String jobHostNode, String jobName) {
 		JobSnapshot jobSnapshot = getJobService().getJobSnapshotFromRegisterCenter(jobHostNode, jobName);
 		jobSnapshot.setState(JobSnapshotState.STOP.value());
-		getJobService().updateJobSnapshot(jobSnapshot);
+		getJobService().updateJobSnapshotToRegisterCenter(jobSnapshot);
 		List<Worker> list = getRegisterCenter().getWorkers(jobName);
 		for (Worker worker : list) {
 			worker.stop();
@@ -340,7 +348,7 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 	public void finishWorkerByJob(String jobHostNode, String jobName) {
 		JobSnapshot jobSnapshot = getJobService().getJobSnapshotFromRegisterCenter(jobHostNode, jobName);
 		jobSnapshot.setState(JobSnapshotState.FINISHED.value());
-		getJobService().updateJobSnapshot(jobSnapshot);
+		getJobService().updateJobSnapshotToRegisterCenter(jobSnapshot);
 		List<Worker> list = getRegisterCenter().getWorkers(jobName);
 		for (Worker worker : list) {
 			worker.stop();
@@ -442,7 +450,7 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 	 * 
 	 * @param job
 	 */
-	public void submitWaitQueue(Job job) {
+	private void submitWaitQueue(Job job) {
 		if (null == job) {
 			throw new NullPointerException();
 		}
@@ -450,16 +458,8 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 		try {
 			// 如果队里里面没有这个job 才会继续下一步操作
 			if (!waitingRunQueue.contains(job)) {
-				JobSnapshot jobSnapshot = getJobService().getJobSnapshotFromRegisterCenter(job.getLocalNode(),
-						job.getName());
-				// 如果job状态不是 处于执行 暂停 状态则会继续操作
-				if (jobSnapshot.getEnumState() != JobSnapshotState.EXECUTING
-						&& jobSnapshot.getEnumState() != JobSnapshotState.SUSPEND) {
-					jobSnapshot.setState(JobSnapshotState.WAITING_EXECUTED.value());
-					getJobService().updateJobSnapshot(jobSnapshot);
-				}
 				waitingRunQueue.add(job);
-				waitQueueCondition.signal();
+				waitQueueCondition.signalAll();
 			}
 		} finally {
 			waitQueueLock.unlock();
@@ -472,29 +472,61 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 	 * 
 	 * @param job
 	 */
-	private void insideExecute(Job job) {
+	private void doExecute(Job job) {
 		// 判断任务是否在运行
 		if (!isRunning(job)) {
 			// 判断任务节点是否是本地节点
+			List<JobParam> jobParameters = getJobService().queryJobParams(job.getName());
+			job.setParamList(jobParameters);
+			// 新建一个 JobSnapshot 并生成一个id
 			if (getCurrentNode().getName().equals(job.getLocalNode())) {
-				// 呼叫本地执行任务
-				JobSnapshot jobSnapshot = getJobService().getJobSnapshotFromRegisterCenter(job.getLocalNode(),
-						job.getName());
+				LOG.info("本地节点执行job["+job.getName()+"]");
+				JobSnapshot jobSnapshot = getJobService().getJobSnapshotFromRegisterCenter(job.getLocalNode(), job.getName());
+				if(null==jobSnapshot){
+					throw new RuntimeException("执行前必须在缓存中注册jobSnapshot:"+job.getName());
+				}
+				Date nowDate = new Date();
+				jobSnapshot.setStartTime(DateFormatUtils.format(nowDate, DateFormats.DATE_FORMAT_1));
+				jobSnapshot.setEndTime(DateFormatUtils.format(nowDate, DateFormats.DATE_FORMAT_1));
+				String fixedTableName = job.getParam(JobConTextConstants.FIXED_TABLE_NAME);
+				String isSnapshotTable = job.getParam(JobConTextConstants.IS_SNAPSHOT_TABLE);
+				String tempTbaleName = null;
+				if ("1".equals(isSnapshotTable)) {
+					JobSnapshot lastJobSnapshot = getJobService().queryLastJobSnapshotFromHistory(jobSnapshot.getId(),
+							job.getName());
+					if (null != lastJobSnapshot && StringUtils.isNotBlank(lastJobSnapshot.getTableName())
+							&& lastJobSnapshot.getEnumState() != JobSnapshotState.FINISHED) {
+						tempTbaleName = lastJobSnapshot.getTableName();
+					} else {
+						String jobStart = StringUtils.remove(jobSnapshot.getId(), job.getName() + "_");
+						// 判断是否启用镜像表
+						tempTbaleName = JobTableUtils.buildJobTableName(fixedTableName, jobStart);
+					}
+				} else {
+					tempTbaleName = fixedTableName;
+				}
+				jobSnapshot.setTableName(tempTbaleName);
 				jobSnapshot.setState(JobSnapshotState.EXECUTING.value());
-				getJobService().updateJobSnapshot(jobSnapshot);
+				//将jobSnapshot更新缓存 这里一定要 saveJobSnapshot 
+				getJobService().updateJobSnapshotToRegisterCenter(jobSnapshot);
+				getJobService().saveJobSnapshot(jobSnapshot);
 				boolean executeResult = callLocalExecute(job);
 				if (executeResult) {
 					// 需要运行节点数量减去本地运行节点1
 					int needFreeNodeSize = job.getNeedNodes() - 1;
+					//设置0 不启用集群
+					needFreeNodeSize =0;
 					List<Node> otherFreeExecuteNodes = getOtherFreeNodes(needFreeNodeSize, job.getLocalNode());
 					otherFreeExecuteNodes.forEach(node -> {
 						callAssistExecute(node, job.getName());
 					});
 				}
 			} else {
+				LOG.info("空闲节点协助执行job["+job.getName()+"]");
 				callLocalExecute(job);
 			}
 		} else {
+			LOG.info("任务job["+job.getName()+"]正在执行，将任务返回到待执行队列");
 			submitWaitQueue(job);
 		}
 	}
@@ -505,29 +537,30 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 	 * @param job
 	 */
 	public void localExecute(Job job) {
-		// 新建一个 JobSnapshot 并生成一个id
-		String id = job.getName() + "_" + DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_2);
+		String id = job.getName() + "_"
+				+ DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_2);
 		JobSnapshot jobSnapshot = new JobSnapshot();
 		jobSnapshot.setId(id);
 		jobSnapshot.setName(job.getName());
 		jobSnapshot.setLocalNode(job.getLocalNode());
-		getJobService().registerJobSnapshot(jobSnapshot);
+		jobSnapshot.setState(JobSnapshotState.WAITING_EXECUTED.value());
+		getJobService().registerJobSnapshotToRegisterCenter(jobSnapshot);
 		submitWaitQueue(job);
 	}
 
 	public boolean callLocalExecute(Job job) {
+		LOG.info("构建任务job["+job.getName()+"] worker");
 		Worker worker = buildJobWorker(job);
-		getRegisterCenter().registerWorker(worker);
 		executor.execute(() -> {
-			executeJobWorker(worker);
+			LOG.info("开始执行任务job["+job.getName()+"]'s worker");
+			executeWorker(worker);
 		});
 		// 等待worker.getState() == WorkerLifecycleState.STARTED 时返回true
+		LOG.info("等待任务job["+job.getName()+"]'s worker开始执行");
 		while (worker.getState() == WorkerLifecycleState.READY) {
-			if (worker.getState() == WorkerLifecycleState.STARTED) {
-				return true;
-			}
 		}
-		return false;
+		LOG.info("任务job["+job.getName()+"]'s worker开始执行");
+		return true;
 	}
 
 	public void assistExecute(Job job) {
@@ -569,7 +602,8 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 
 	@Override
 	public List<Node> getFreeNodes() {
-		return new ArrayList<Node>();
+		List<Node> result=getClusterService().getClusterInfo();
+		return result;
 	}
 
 	@Override

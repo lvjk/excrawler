@@ -1,6 +1,8 @@
 package six.com.crawler.common.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,22 +25,24 @@ public class HttpPorxyServiceImpl implements HttpPorxyService {
 
 	final static Logger LOG = LoggerFactory.getLogger(HttpPorxyServiceImpl.class);
 
-
 	@Autowired
 	private AbstractSchedulerManager schedulerManager;
 
 	@Autowired
 	private RedisManager redisManager;
 
-	public HttpProxyPool buildHttpProxyPool(String siteCode,HttpProxyType httpProxyType,long restTime) {
-		HttpProxyPool httpProxyPool = new HttpProxyPool(redisManager,siteCode,httpProxyType,restTime);
+	public HttpProxyPool buildHttpProxyPool(String siteCode, HttpProxyType httpProxyType, long restTime) {
+		HttpProxyPool httpProxyPool = new HttpProxyPool(redisManager, siteCode, httpProxyType, restTime);
 		return httpProxyPool;
 	}
 
-
 	@Override
 	public List<HttpProxy> getHttpProxys() {
-		List<HttpProxy> result = redisManager.lrange(HttpProxyPool.REDIS_HTTP_PROXY_POOL, 0, -1, HttpProxy.class);
+		List<HttpProxy> result = new ArrayList<HttpProxy>();
+		Map<String, HttpProxy> map = redisManager.hgetAll(HttpProxyPool.REDIS_HTTP_PROXY_POOL, HttpProxy.class);
+		if (null != map) {
+			result.addAll(map.values());
+		}
 		return result;
 	}
 
@@ -47,28 +51,23 @@ public class HttpPorxyServiceImpl implements HttpPorxyService {
 		if (schedulerManager.getHttpClient().isValidHttpProxy(httpProxy)) {
 			redisManager.lock(HttpProxyPool.REDIS_HTTP_PROXY_POOL);
 			try {
-				if (httpProxy.getType() == 2) {
-					redisManager.del(HttpProxyPool.REDIS_HTTP_PROXY_POOL + "_2");
-					redisManager.set(HttpProxyPool.REDIS_HTTP_PROXY_POOL + "_2", httpProxy);
-				} else {
-					redisManager.lrem(HttpProxyPool.REDIS_HTTP_PROXY_POOL, 0, httpProxy);
-					redisManager.lpush(HttpProxyPool.REDIS_HTTP_PROXY_POOL, httpProxy);
-				}
-				return "this httpProxy[" + httpProxy.getHost() + ":" + httpProxy.getPort() + "] add succeed";
+				redisManager.hset(HttpProxyPool.REDIS_HTTP_PROXY_POOL, httpProxy.toString(), httpProxy);
+				return "this httpProxy[" + httpProxy.toString() + "] add succeed";
 			} finally {
 				redisManager.unlock(HttpProxyPool.REDIS_HTTP_PROXY_POOL);
 			}
 		} else {
-			return "this httpProxy[" + httpProxy.getHost() + ":" + httpProxy.getPort() + "] is invalid";
+			return "this httpProxy[" + httpProxy.toString() + "] is invalid";
 		}
 	}
 
 	@Override
 	public String testHttpProxy(HttpProxy httpProxy) {
-		if (schedulerManager.getHttpClient().isValidHttpProxy(httpProxy)) {
-			return "this httpProxy[" + httpProxy.getHost() + ":" + httpProxy.getPort() + "] is valid";
+		HttpProxy getHttpProxy=redisManager.hget(HttpProxyPool.REDIS_HTTP_PROXY_POOL, httpProxy.toString(), HttpProxy.class);
+		if (schedulerManager.getHttpClient().isValidHttpProxy(getHttpProxy)) {
+			return "this httpProxy[" + getHttpProxy.toString() + "] is valid";
 		} else {
-			return "this httpProxy[" + httpProxy.getHost() + ":" + httpProxy.getPort() + "] is invalid";
+			return "this httpProxy[" + getHttpProxy.toString() + "] is invalid";
 		}
 	}
 
@@ -76,11 +75,21 @@ public class HttpPorxyServiceImpl implements HttpPorxyService {
 	public String delHttpProxy(HttpProxy httpProxy) {
 		redisManager.lock(HttpProxyPool.REDIS_HTTP_PROXY_POOL);
 		try {
-			redisManager.lrem(HttpProxyPool.REDIS_HTTP_PROXY_POOL, 0, httpProxy);
+			redisManager.hdel(HttpProxyPool.REDIS_HTTP_PROXY_POOL, httpProxy.toString());
 			return "this httpProxy[" + httpProxy.getHost() + ":" + httpProxy.getPort() + "] del succeed";
 		} finally {
 			redisManager.unlock(HttpProxyPool.REDIS_HTTP_PROXY_POOL);
 		}
+	}
+
+	public void delAllHttpProxy() {
+//		redisManager.lock(HttpProxyPool.REDIS_HTTP_PROXY_POOL);
+//		try {
+//			redisManager.del(HttpProxyPool.REDIS_HTTP_PROXY_POOL + "_2");
+//			redisManager.del(HttpProxyPool.REDIS_HTTP_PROXY_POOL);
+//		} finally {
+//			redisManager.unlock(HttpProxyPool.REDIS_HTTP_PROXY_POOL);
+//		}
 	}
 
 	public AbstractSchedulerManager getSchedulerManager() {

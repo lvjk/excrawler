@@ -2,6 +2,8 @@ package six.com.crawler.schedule;
 
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import six.com.crawler.common.entity.Job;
 
@@ -12,6 +14,8 @@ import six.com.crawler.common.entity.Job;
  */
 public class ScheduledJob implements org.quartz.Job {
 
+	final static Logger LOG = LoggerFactory.getLogger(ScheduledJob.class);
+			
 	public static final String JOB_KEY = "job";
 
 	public static final String SCHEDULER_MANAGER_KEY = "scheduleManager";
@@ -21,6 +25,7 @@ public class ScheduledJob implements org.quartz.Job {
 		AbstractSchedulerManager scheduleManager = (AbstractSchedulerManager) context.getJobDetail().getJobDataMap()
 				.get(SCHEDULER_MANAGER_KEY);
 		Job job = (Job) context.getJobDetail().getJobDataMap().get(JOB_KEY);
+		LOG.info("定时触发job["+job.getName()+"],提交到待执行队列里");
 		scheduleManager.localExecute(job);
 	}
 

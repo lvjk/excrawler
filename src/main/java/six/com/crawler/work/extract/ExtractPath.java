@@ -2,9 +2,6 @@ package six.com.crawler.work.extract;
 
 import java.io.Serializable;
 
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-
 /**
  * @author sixliu E-mail:359852326@qq.com
  * @version 创建时间：2016年5月17日 下午7:48:04 类说明
@@ -49,7 +46,6 @@ public class ExtractPath implements Serializable{
 	private String describe;// 描述
 
 
-	@XmlAttribute
 	public String getName() {
 		return name;
 	}
@@ -58,7 +54,6 @@ public class ExtractPath implements Serializable{
 		this.name = name;
 	}
 
-	@XmlAttribute
 	public String getSiteCode() {
 		return siteCode;
 	}
@@ -67,7 +62,6 @@ public class ExtractPath implements Serializable{
 		this.siteCode = siteCode;
 	}
 
-	@XmlAttribute
 	public int getRanking() {
 		return ranking;
 	}
@@ -76,7 +70,6 @@ public class ExtractPath implements Serializable{
 		this.ranking = ranking;
 	}
 
-	@XmlElement(name = "path")
 	public String getPath() {
 		return path;
 	}
@@ -85,7 +78,6 @@ public class ExtractPath implements Serializable{
 		this.path = path;
 	}
 
-	@XmlElement(name = "filterPath")
 	public String getFilterPath() {
 		return filterPath;
 	}
@@ -94,7 +86,6 @@ public class ExtractPath implements Serializable{
 		this.filterPath = filterPath;
 	}
 
-	@XmlAttribute
 	public String getExtractAttName() {
 		return extractAttName;
 	}
@@ -103,7 +94,6 @@ public class ExtractPath implements Serializable{
 		this.extractAttName = extractAttName;
 	}
 
-	@XmlAttribute
 	public String getAppendHead() {
 		return appendHead;
 	}
@@ -112,7 +102,6 @@ public class ExtractPath implements Serializable{
 		this.appendHead = appendHead;
 	}
 
-	@XmlAttribute
 	public String getAppendEnd() {
 		return appendEnd;
 	}
@@ -121,7 +110,6 @@ public class ExtractPath implements Serializable{
 		this.appendEnd = appendEnd;
 	}
 
-	@XmlElement(name = "substringStart")
 	public String getSubstringStart() {
 		return substringStart;
 	}
@@ -130,7 +118,6 @@ public class ExtractPath implements Serializable{
 		this.substringStart = substringStart;
 	}
 
-	@XmlElement(name = "substringEnd")
 	public String getSubstringEnd() {
 		return substringEnd;
 	}
@@ -139,7 +126,6 @@ public class ExtractPath implements Serializable{
 		this.substringEnd = substringEnd;
 	}
 	
-	@XmlAttribute
 	public String getCompareAttName() {
 		return compareAttName;
 	}
@@ -148,7 +134,6 @@ public class ExtractPath implements Serializable{
 		this.compareAttName = compareAttName;
 	}
 
-	@XmlAttribute
 	public String getContainKeyWord() {
 		return containKeyWord;
 	}
@@ -157,7 +142,6 @@ public class ExtractPath implements Serializable{
 		this.containKeyWord = containKeyWord;
 	}
 
-	@XmlElement(name = "replaceWord")
 	public String getReplaceWord() {
 		return replaceWord;
 	}
@@ -166,7 +150,6 @@ public class ExtractPath implements Serializable{
 		this.replaceWord = replaceWord;
 	}
 
-	@XmlElement(name = "replaceValue")
 	public String getReplaceValue() {
 		return replaceValue;
 	}
@@ -175,7 +158,6 @@ public class ExtractPath implements Serializable{
 		this.replaceValue = replaceValue;
 	}
 
-	@XmlElement(name = "describe")
 	public String getDescribe() {
 		return describe;
 	}

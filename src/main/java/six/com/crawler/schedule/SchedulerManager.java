@@ -15,7 +15,7 @@ public interface SchedulerManager extends Observer {
 
 	/**
 	 * 本地执行job
-	 * 
+	 * 此方法会在缓存注册此job的运行镜像
 	 * @param job
 	 */
 	public void localExecute(Job job);
@@ -74,6 +74,7 @@ public interface SchedulerManager extends Observer {
 	 */
 	public void finishWorkerByJob(String jobHostNode, String jobName);
 
+	
 	/**
 	 * 判断注册中心是否有此job的worker
 	 * 
@@ -102,13 +103,6 @@ public interface SchedulerManager extends Observer {
 	 * @param job
 	 */
 	public void cancelScheduled(String jobName);
-
-	/**
-	 * 提交job至等待队列
-	 * 
-	 * @param job
-	 */
-	public void submitWaitQueue(Job job);
 
 	/**
 	 * 获取空闲节点

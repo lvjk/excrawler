@@ -26,15 +26,41 @@ public class ChongqiCqgtfwGovPresellUrlWorker extends AbstractCrawlWorker {
 	String pageIndexTemplate = "<<pageIndex>>";
 	String firstUrl = "http://www.cqgtfw.gov.cn/spjggs/fw/spfysxk/index.htm";
 	String urlTemplate = "http://www.cqgtfw.gov.cn/spjggs/fw/spfysxk/index_" + pageIndexTemplate + ".htm";
-	int pageCount = -1;
-	int pageIndex = 0;
+	String pageInfoCss = "div[class=page]>script";
 
 	@Override
 	protected void insideInit() {
 		presellInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "chongqi_cqgtfw_gov_presell_info");
 		Page firstPage = new Page(getSite().getCode(), 1, firstUrl, firstUrl);
+		getDowner().down(firstPage);
+		Element pageInfoElement = firstPage.getDoc().select(pageInfoCss).first();
+		String html = pageInfoElement.html();
+		String pageCountStr = StringUtils.substringBetween(html, "var countPage =", ";//共多少页");
+		pageCountStr = StringUtils.trim(pageCountStr);
+		int pageCount = -1;
+		if (!NumberUtils.isNumber(pageCountStr)) {
+			throw new RuntimeException("don't find pageCount");
+		}
+		try {
+			pageCount = Integer.valueOf(pageCountStr);
+		} catch (Exception e) {
+			LOG.error("pageCount Integer.valueOf(" + pageCountStr + ") err", e);
+		}
+		if (-1 == pageCount) {
+			getAndSetState(WorkerLifecycleState.WAITED);
+			throw new RuntimeException("don't find pageCount");
+		}
 		getWorkQueue().clear();
 		getWorkQueue().push(firstPage);
+		String referer=firstPage.getFinalUrl();
+		for(int pageIndex=1;pageIndex<pageCount;pageIndex++){
+			String nextPageUrl = StringUtils.replace(urlTemplate, pageIndexTemplate, String.valueOf(pageIndex));
+			Page nextPage = new Page(getSite().getCode(), 1, nextPageUrl, nextPageUrl);
+			nextPage.setSiteCode(getSite().getCode());
+			nextPage.setReferer(referer);
+			getWorkQueue().push(nextPage);
+			referer=nextPage.getOriginalUrl();
+		}
 	}
 
 	@Override
@@ -44,26 +70,7 @@ public class ChongqiCqgtfwGovPresellUrlWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void beforeExtract(Page doingPage) {
-		//获取 分页总数
-		if (-1 == pageCount) {
-			String pageInfoCss = "div[class=page]>script";
-			Element pageInfoElement = doingPage.getDoc().select(pageInfoCss).first();
-			String html = pageInfoElement.html();
-			String pageCountStr = StringUtils.substringBetween(html, "var countPage =", ";//共多少页");
-			pageCountStr = StringUtils.trim(pageCountStr);
-			if (!NumberUtils.isNumber(pageCountStr)) {
-				throw new RuntimeException("don't find pageCount");
-			}
-			try {
-				pageCount = Integer.valueOf(pageCountStr);
-			} catch (Exception e) {
-				LOG.error("pageCount Integer.valueOf(" + pageCountStr + ") err", e);
-			}
-			if (-1 == pageCount) {
-				getAndSetState(WorkerLifecycleState.WAITED);
-				throw new RuntimeException("don't find pageCount");
-			}
-		}
+		
 	}
 
 	@Override
@@ -80,14 +87,6 @@ public class ChongqiCqgtfwGovPresellUrlWorker extends AbstractCrawlWorker {
 				presellPage.setSiteCode(doingPage.getSiteCode());
 				presellPage.setReferer(doingPage.getFinalUrl());
 				presellInfoQueue.push(presellPage);
-			}
-			pageIndex++;
-			if (pageIndex < pageCount) {
-				String nextPageUrl = StringUtils.replace(urlTemplate, pageIndexTemplate, String.valueOf(pageIndex));
-				Page nextPage = new Page(getSite().getCode(), 1, nextPageUrl, nextPageUrl);
-				nextPage.setSiteCode(doingPage.getSiteCode());
-				nextPage.setReferer(doingPage.getFinalUrl());
-				getWorkQueue().push(nextPage);
 			}
 		}
 	}

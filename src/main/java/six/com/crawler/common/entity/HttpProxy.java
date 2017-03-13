@@ -18,6 +18,8 @@ public class HttpProxy implements Serializable {
 	private int type;//1.自己独立ip代理   2.阿布代理
 	private String userName;// 代理账户
 	private String password;// 代理密码
+	private String expire;// 有效期20170310120000
+	private String describe;// 代理密码
 	private long lastUseTime;//上一次试用时间
 
 	public String getHost() {
@@ -66,6 +68,22 @@ public class HttpProxy implements Serializable {
 
 	public void setLastUseTime(long lastUseTime) {
 		this.lastUseTime = lastUseTime;
+	}
+	
+	public String getExpire() {
+		return expire;
+	}
+
+	public void setExpire(String expire) {
+		this.expire = expire;
+	}
+
+	public String getDescribe() {
+		return describe;
+	}
+
+	public void setDescribe(String describe) {
+		this.describe = describe;
 	}
 
 	public int hashCode() {

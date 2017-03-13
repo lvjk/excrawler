@@ -3,12 +3,14 @@ package six.com.crawler.common.service;
 import java.util.List;
 import java.util.Map;
 
+import six.com.crawler.admin.api.ResponseMsg;
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.JobParam;
 import six.com.crawler.common.entity.WorkerSnapshot;
 import six.com.crawler.work.extract.ExtractItem;
 import six.com.crawler.common.entity.JobSnapshot;
 import six.com.crawler.common.entity.Node;
+import six.com.crawler.common.entity.PageQuery;
 
 /**
  * @author 作者
@@ -17,13 +19,17 @@ import six.com.crawler.common.entity.Node;
  */
 public interface JobService extends DownloadAndUploadService {
 
+	
 	/**
-	 * 统计节点任务数据信息
-	 * 
+	 * 供控制层调用
+	 * 模糊查询jobName+？
+	 * @param ResponseMsg      返回前段的ResponseMsg
+	 * @param jobName          模糊查询的jobName
+	 * @param pageIndex        分页索引默认从0开始
+	 * @param pageSize         分页大小
 	 * @return
 	 */
-	public Node totalNodeJobInfo(String nodeName);
-
+	public void queryJobs(ResponseMsg<PageQuery<Job>> responseMsg,String jobName,int pageIndex, int pageSize);
 	/**
 	 * 通过参数查询 job jobName String 任务名字 nodeName String 节点名字 isTrigger int 0 or 1
 	 * 是否开启调度
@@ -34,6 +40,12 @@ public interface JobService extends DownloadAndUploadService {
 	public Job queryJob(String jobName);
 
 	/**
+	 * 统计节点任务数据信息
+	 * 
+	 * @return
+	 */
+	public Node totalNodeJobInfo(String nodeName);
+	/**
 	 * 查询job相关的所有信息
 	 * 
 	 * @param jobName
@@ -41,14 +53,6 @@ public interface JobService extends DownloadAndUploadService {
 	 */
 	public Map<String, Object> queryJobInfo(String jobName);
 
-	/**
-	 * 通过参数查询 job jobName String 任务名字 nodeName String 节点名字 isTrigger int 0 or 1
-	 * 是否开启调度
-	 * 
-	 * @param parameterMap
-	 * @return
-	 */
-	public List<Job> fuzzyQuery(String jobName);
 
 	/**
 	 * 通过参数parameters 查询
@@ -72,7 +76,7 @@ public interface JobService extends DownloadAndUploadService {
 	 *            jobName1;jobName2;jobName3;
 	 * @return
 	 */
-	public JobSnapshot queryLastJobSnapshotFromHistory(String jobName);
+	public JobSnapshot queryLastJobSnapshotFromHistory(String excludeJobSnapshotId,String jobName);
 
 	/**
 	 * 通过任务名字查询历史 JobSnapshot
@@ -94,17 +98,21 @@ public interface JobService extends DownloadAndUploadService {
 	public JobSnapshot getJobSnapshotFromRegisterCenter(String nodeName, String jobName);
 
 	/**
-	 * 保存job's JobSnapshot并缓存 此方法只能在job被手动和定时触发执行时调用一次
+	 * job's JobSnapshot缓存 此方法只能在job被手动和定时触发执行时调用一次
 	 * 
 	 * @param jobActivityInfo
 	 */
-	public void registerJobSnapshot(JobSnapshot jobSnapshot);
+	public void registerJobSnapshotToRegisterCenter(JobSnapshot jobSnapshot);
+	
+	public void saveJobSnapshot(JobSnapshot jobSnapshot);
 
 	/**
-	 * 更新 保存的JobSnapshot
+	 * 更新 缓存JobSnapshot
 	 * 
 	 * @param jobActivityInfo
 	 */
+	public void updateJobSnapshotToRegisterCenter(JobSnapshot jobSnapshot);
+	
 	public void updateJobSnapshot(JobSnapshot jobSnapshot);
 
 	
@@ -124,12 +132,6 @@ public interface JobService extends DownloadAndUploadService {
 	 */
 	public void updateWorkSnapshotToRegisterCenter(WorkerSnapshot workerSnapshot, boolean isSaveErrMsg);
 
-	/**
-	 * 默认查询当前节点job
-	 * 
-	 * @return
-	 */
-	public List<Job> queryJobs(int pageIndex, int pageSize);
 
 	/**
 	 * 查询job参数

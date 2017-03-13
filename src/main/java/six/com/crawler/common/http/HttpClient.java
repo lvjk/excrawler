@@ -422,6 +422,8 @@ public class HttpClient implements InitializingBean {
 		OkHttpClient.Builder okHttpClientBuilder = new OkHttpClient.Builder();
 		okHttpClientBuilder.sslSocketFactory(MX509TrustManager.getSSLSocketFactory(),
 				MX509TrustManager.myX509TrustManager);
+		okHttpClientBuilder.connectTimeout(15, TimeUnit.SECONDS);
+		okHttpClientBuilder.writeTimeout(30, TimeUnit.SECONDS);
 		okHttpClientBuilder.readTimeout(30, TimeUnit.SECONDS);
 		okHttpClientBuilder.dispatcher(new Dispatcher());
 		okHttpClientBuilder.followRedirects(true);

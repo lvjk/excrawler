@@ -4,12 +4,14 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import six.com.crawler.common.service.ExtracterService;
 import six.com.crawler.work.extract.ExtractPath;
+import six.com.crawler.work.extract.TestExtractPath;
 
 /**
  * @author 作者
@@ -31,14 +33,21 @@ public class ExtracterApi extends BaseApi {
 	}
 
 
+	@RequestMapping(value = "/crawler/extracter/getExtractPaths/{siteCode}", method = RequestMethod.GET)
+	@ResponseBody
+	public ResponseMsg<List<ExtractPath>> getExtractPaths(@PathVariable("siteCode") String siteCode) {
+		ResponseMsg<List<ExtractPath>> msg = new ResponseMsg<>();
+		List<ExtractPath> result = extracterService.query(siteCode);
+		msg.setData(result);
+		return msg;
+	}
+	
 	@RequestMapping(value = "/crawler/extracter/testExtract", method = RequestMethod.POST)
 	@ResponseBody
 	public ResponseMsg<List<String>> testExtract(
-			ExtractPath extractPath,
-			String testHtml,
-			String testUrl) {
+			TestExtractPath extractPath) {
 		ResponseMsg<List<String>> msg = new ResponseMsg<>();
-		List<String> result = extracterService.testExtract(extractPath, testHtml,testUrl);
+		List<String> result = extracterService.testExtract(extractPath);
 		msg.setData(result);
 		return msg;
 	}

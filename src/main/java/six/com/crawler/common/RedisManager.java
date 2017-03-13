@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.JedisCluster;
+import redis.clients.jedis.ScanResult;
 import six.com.crawler.common.configure.SpiderConfigure;
 import six.com.crawler.common.utils.JavaSerializeUtils;
 
@@ -112,7 +113,7 @@ public class RedisManager implements InitializingBean {
 		});
 	}
 
-	public <T>void lpushAll(String key, List<T> values) {
+	public <T> void lpushAll(String key, List<T> values) {
 		byte[] keyBytes = JavaSerializeUtils.serializeString(key);
 		for (T value : values) {
 			byte[] valueBytes = JavaSerializeUtils.serialize(value);
@@ -208,6 +209,57 @@ public class RedisManager implements InitializingBean {
 		byte[] value = JavaSerializeUtils.serialize(ob);
 		RedisRetryHelper.execute(() -> {
 			return jedisCluster.hset(lKeyByte, vKeyByte, value);
+		});
+	}
+
+	/**
+	 * 扫描 hset 
+	 * @param hkey 
+	 * @param cursorStr 
+	 * @param list 
+	 * @param clz
+	 * @return
+	 */
+	public <T>String hscan(String hkey, String cursorStr,Map<String,T> map, Class<T> clz) {
+		byte[] hKeyByte = JavaSerializeUtils.serializeString(hkey);
+		byte[] cursorByte = JavaSerializeUtils.serializeString(cursorStr);
+		return RedisRetryHelper.execute(() -> {
+			ScanResult<Map.Entry<byte[], byte[]>> scanResult = jedisCluster.hscan(hKeyByte, cursorByte);
+			List<Map.Entry<byte[], byte[]>> scanResultltList = scanResult.getResult();
+			for (int i = 0; i < scanResultltList.size(); i++) {
+				Map.Entry<byte[], byte[]> mapentry = scanResultltList.get(i);
+				byte[] keyBytes = mapentry.getKey();
+				byte[] valueBytes = mapentry.getValue();
+				String putKey= JavaSerializeUtils.unSerializeString(keyBytes);
+				T t = JavaSerializeUtils.unSerialize(valueBytes, clz);
+				map.put(putKey, t);
+			}
+			return scanResult.getStringCursor();
+		});
+	}
+	
+
+	/**
+	 * 扫描 hset 
+	 * @param hkey 
+	 * @param cursorStr 
+	 * @param list 
+	 * @param clz
+	 * @return
+	 */
+	public <T>String hscan(String hkey, String cursorStr,List<T> list, Class<T> clz) {
+		byte[] hKeyByte = JavaSerializeUtils.serializeString(hkey);
+		byte[] cursorByte = JavaSerializeUtils.serializeString(cursorStr);
+		return RedisRetryHelper.execute(() -> {
+			ScanResult<Map.Entry<byte[], byte[]>> scanResult = jedisCluster.hscan(hKeyByte, cursorByte);
+			List<Map.Entry<byte[], byte[]>> scanResultltList = scanResult.getResult();
+			for (int i = 0; i < scanResultltList.size(); i++) {
+				Map.Entry<byte[], byte[]> mapentry = scanResultltList.get(i);
+				byte[] valueBytes = mapentry.getValue();
+				T t = JavaSerializeUtils.unSerialize(valueBytes, clz);
+				list.add(t);
+			}
+			return scanResult.getStringCursor();
 		});
 	}
 

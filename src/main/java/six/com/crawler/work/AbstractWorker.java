@@ -3,7 +3,6 @@ package six.com.crawler.work;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 import java.util.concurrent.locks.StampedLock;
 import java.util.concurrent.locks.Condition;
@@ -17,9 +16,9 @@ import org.slf4j.MDC;
 
 import six.com.crawler.common.DateFormats;
 import six.com.crawler.common.entity.Job;
-import six.com.crawler.common.entity.JobParam;
 import six.com.crawler.common.entity.JobSnapshot;
 import six.com.crawler.common.entity.WorkerErrMsg;
+import six.com.crawler.common.utils.ExceptionUtils;
 import six.com.crawler.common.utils.ThreadUtils;
 import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.common.entity.WorkerSnapshot;
@@ -42,6 +41,8 @@ public abstract class AbstractWorker implements Worker {
 	private AbstractSchedulerManager manager;
 
 	private Job job;
+
+	private volatile WorkerLifecycleState state = WorkerLifecycleState.READY;// 状态
 
 	private volatile WorkerSnapshot workerSnapshot;
 
@@ -66,44 +67,38 @@ public abstract class AbstractWorker implements Worker {
 		this.job = job;
 	}
 
-	/**
-	 * 内部工作方法
-	 * 
-	 * @return 如果没有处理数据 那么返回false 否则返回true
-	 */
-	protected abstract void insideWork() throws Exception;
-
-	private String catchException(Exception exception) {
-		String msg = null;
-		if (null != exception) {
-			StringBuilder msgSb = new StringBuilder();
-			Throwable throwable = exception;
-			while (null != throwable) {
-				msgSb.append(throwable.getClass());
-				msgSb.append(":");
-				msgSb.append(throwable.getMessage());
-				msgSb.append("\n");
-				StackTraceElement[] stackTraceElements = throwable.getStackTrace();
-				if (null != stackTraceElements) {
-					for (StackTraceElement stackTraceElement : stackTraceElements) {
-						msgSb.append("\t\t\t");
-						msgSb.append(stackTraceElement.getClassName());
-						msgSb.append(".");
-						msgSb.append(stackTraceElement.getMethodName());
-						msgSb.append("(");
-						msgSb.append(stackTraceElement.getFileName());
-						msgSb.append(":");
-						msgSb.append(stackTraceElement.getLineNumber());
-						msgSb.append(")");
-						msgSb.append("\n");
-					}
-				}
-				throwable = throwable.getCause();
-			}
-			msg = msgSb.toString();
+	@Override
+	public void init() {
+		String jobHostNode = getJob().getLocalNode();
+		String jobName = getJob().getName();
+		MDC.put("jobName", jobName);
+		String lockKey = jobName + "_worker_init";
+		try {
+			getManager().getRedisManager().lock(lockKey);
+			JobSnapshot jobSnapshot = getManager().getJobService().getJobSnapshotFromRegisterCenter(jobHostNode,
+					jobName);
+			String workerName = getManager().getWorkerNameByJob(job);
+			this.currentNodeName = manager.getCurrentNode().getName();
+			workerSnapshot = new WorkerSnapshot();
+			jobSnapshotId = jobSnapshot.getId();
+			workerSnapshot.setJobSnapshotId(jobSnapshotId);
+			workerSnapshot.setJobName(job.getName());
+			workerSnapshot.setLocalNode(currentNodeName);
+			workerSnapshot.setJobLocalNode(job.getLocalNode());
+			workerSnapshot.setName(workerName);
+			workerSnapshot.setWorkerErrMsgs(new ArrayList<WorkerErrMsg>());
+			this.minWorkFrequency = job.getWorkFrequency();
+			this.maxWorkFrequency = 2 * minWorkFrequency;
+			initWorker(jobSnapshot);
+			getManager().getRegisterCenter().registerWorker(this);
+		} catch (Exception e) {
+			throw new RuntimeException("init crawlWorker err", e);
+		} finally {
+			getManager().getRedisManager().unlock(lockKey);
 		}
-		return msg;
 	}
+
+	protected abstract void initWorker(JobSnapshot jobSnapshot);
 
 	private final void work() {
 		LOG.info("start worker:" + getName());
@@ -122,7 +117,7 @@ public abstract class AbstractWorker implements Worker {
 						insideWork();
 					} catch (Exception e) {
 						LOG.error("worker process err", e);
-						String msg = catchException(e);
+						String msg = ExceptionUtils.getExceptionMsg(e);
 						workerSnapshot.setErrCount(workerSnapshot.getErrCount() + 1);
 						WorkerErrMsg errMsg = new WorkerErrMsg();
 						errMsg.setJobSnapshotId(jobSnapshotId);
@@ -185,6 +180,15 @@ public abstract class AbstractWorker implements Worker {
 			LOG.info("jobWorker [" + getName() + "] is ended");
 		}
 	}
+
+	/**
+	 * 内部工作方法
+	 * 
+	 * @return 如果没有处理数据 那么返回false 否则返回true
+	 */
+	protected abstract void insideWork() throws Exception;
+
+	protected abstract void onError(Exception t);
 
 	/**
 	 * 频率控制
@@ -271,83 +275,6 @@ public abstract class AbstractWorker implements Worker {
 	}
 
 	/**
-	 * 设置 worker状态 ，新至 RunningJobRegisterCenter 并返回之前快照值
-	 * 
-	 * @param state
-	 */
-	protected WorkerLifecycleState getAndSetState(WorkerLifecycleState state) {
-		long stamp = setStateLock.writeLock();
-		WorkerLifecycleState snapshot = this.getState();
-		try {
-			workerSnapshot.setState(state);
-			manager.getRegisterCenter().registerWorker(this);
-		} finally {
-			setStateLock.unlock(stamp);
-		}
-		return snapshot;
-	}
-
-	protected boolean compareAndSetState(WorkerLifecycleState expect, WorkerLifecycleState update) {
-		boolean result = false;
-		if (this.getState() == expect) {
-			long stamp = setStateLock.writeLock();
-			try {
-				if (this.getState() == expect) {
-					workerSnapshot.setState(update);
-					manager.getRegisterCenter().registerWorker(this);
-					result = true;
-				}
-			} finally {
-				setStateLock.unlock(stamp);
-			}
-		}
-		return result;
-	}
-
-	@Override
-	public void init() {
-		String jobHostNode = getJob().getLocalNode();
-		String jobName = getJob().getName();
-		MDC.put("jobName", jobName);
-		String lockKey = jobName + "_worker_init";
-		try {
-			getManager().getRedisManager().lock(lockKey);
-			JobSnapshot jobSnapshot = getManager().getJobService().getJobSnapshotFromRegisterCenter(jobHostNode,
-					jobName);
-			String workerName = getManager().getWorkerNameByJob(job);
-			this.currentNodeName = manager.getCurrentNode().getName();
-			workerSnapshot = new WorkerSnapshot();
-			jobSnapshotId = jobSnapshot.getId();
-			workerSnapshot.setJobSnapshotId(jobSnapshotId);
-			workerSnapshot.setJobName(job.getName());
-			workerSnapshot.setLocalNode(currentNodeName);
-			workerSnapshot.setJobLocalNode(job.getLocalNode());
-			workerSnapshot.setName(workerName);
-			workerSnapshot.setWorkerErrMsgs(new ArrayList<WorkerErrMsg>());
-			this.minWorkFrequency = job.getWorkFrequency();
-			this.maxWorkFrequency = 2 * minWorkFrequency;
-			List<JobParam> jobParameters = manager.getJobService().queryJobParams(jobName);
-			job.setParamList(jobParameters);
-			initWorker(jobSnapshot);
-		} catch (Exception e) {
-			throw new RuntimeException("init crawlWorker err", e);
-		} finally {
-			getManager().getRedisManager().unlock(lockKey);
-		}
-	}
-
-	@Override
-	public final void destroy() {
-		LOG.info("start destroy worker:" + getName());
-		MDC.remove("jobName");
-		insideDestroy();
-	}
-
-	protected abstract void insideDestroy();
-
-	protected abstract void initWorker(JobSnapshot jobSnapshot);
-
-	/**
 	 * 获取 worker name
 	 * 
 	 * @return
@@ -358,7 +285,43 @@ public abstract class AbstractWorker implements Worker {
 
 	@Override
 	public WorkerLifecycleState getState() {
-		return workerSnapshot.getState();
+		return state;
+	}
+
+	/**
+	 * 设置 worker状态 ，新至 RunningJobRegisterCenter 并返回之前快照值
+	 * 
+	 * @param state
+	 */
+	protected WorkerLifecycleState getAndSetState(WorkerLifecycleState updateState) {
+		long stamp = setStateLock.writeLock();
+		WorkerLifecycleState snapshot = this.getState();
+		try {
+			this.state = updateState;
+			workerSnapshot.setState(updateState);
+			manager.getRegisterCenter().registerWorker(this);
+		} finally {
+			setStateLock.unlock(stamp);
+		}
+		return snapshot;
+	}
+
+	protected boolean compareAndSetState(WorkerLifecycleState expectState, WorkerLifecycleState updateState) {
+		boolean result = false;
+		if (this.getState() == expectState) {
+			long stamp = setStateLock.writeLock();
+			try {
+				if (this.getState() == expectState) {
+					this.state = updateState;
+					workerSnapshot.setState(updateState);
+					manager.getRegisterCenter().registerWorker(this);
+					result = true;
+				}
+			} finally {
+				setStateLock.unlock(stamp);
+			}
+		}
+		return result;
 	}
 
 	@Override
@@ -403,8 +366,16 @@ public abstract class AbstractWorker implements Worker {
 		int hash = name.hashCode();
 		return hash;
 	}
+	
+	@Override
+	public final void destroy() {
+		LOG.info("start destroy worker:" + getName());
+		MDC.remove("jobName");
+		insideDestroy();
+	}
 
-	protected abstract void onError(Exception t);
+	protected abstract void insideDestroy();
+
 
 	protected static void writeByte(byte[] data) {
 		try {

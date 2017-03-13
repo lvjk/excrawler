@@ -25,6 +25,7 @@ import six.com.crawler.common.utils.JsoupUtils;
 import six.com.crawler.common.utils.AutoCharsetDetectorUtils.ContentType;
 import six.com.crawler.work.extract.ExtractPath;
 import six.com.crawler.work.extract.PathType;
+import six.com.crawler.work.extract.TestExtractPath;
 
 /**
  * @author six
@@ -108,7 +109,9 @@ public class ExtracterServiceImpl implements ExtracterService {
 	}
 
 	@Override
-	public List<String> testExtract(ExtractPath extractPath, String testHtml, String testUrl) {
+	public List<String> testExtract(TestExtractPath extractPath){
+		String testUrl=extractPath.getTestUrl();
+		String testHtml=extractPath.getTestHtml();
 		List<String> extractResult = null;
 		if (null == extractPath || StringUtils.isBlank(extractPath.getName())
 				|| StringUtils.isBlank(extractPath.getSiteCode()) || StringUtils.isBlank(extractPath.getPath())) {

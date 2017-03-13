@@ -1,6 +1,7 @@
 package six.com.crawler.common.service;
 
 import java.util.List;
+import java.util.Map;
 
 import six.com.crawler.common.entity.DoneInfo;
 import six.com.crawler.common.entity.Page;
@@ -15,15 +16,17 @@ public interface WorkQueueService {
 
 	/**
 	 * 获取队列里的信息
-	 * @return
+	 * @param queueName
+	 * @param queueCursor
+	 * @return  map.put(queueCursor,queueCursor) map.put(list,list)
 	 */
-	public List<Page> getQueueInfo(String queueName);
+	public Map<String,Object> getQueueInfo(String queueName,String queueCursor);
 	
 	/**
 	 * 获取错误队列里的信息
 	 * @return
 	 */
-	public List<Page> getErrQueueInfo(String queueName);
+	public List<Page> getErrQueueInfo(String queueName,int index);
 
 	
 	/**

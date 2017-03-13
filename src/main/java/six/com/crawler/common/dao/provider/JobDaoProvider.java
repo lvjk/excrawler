@@ -2,7 +2,6 @@ package six.com.crawler.common.dao.provider;
 
 import java.util.Map;
 
-
 import org.apache.ibatis.jdbc.SQL;
 
 import six.com.crawler.common.dao.JobDao;
@@ -53,6 +52,28 @@ public class JobDaoProvider extends BaseProvider {
 		buildParameter(sql, parameters);
 		sql.append(" order by `level` asc,`name`");
 		return sql.toString();
+	}
+	
+
+	public String pageQuery(Map<String, Object> queryParams) {
+		String sql="select b.totalSize,a.* "
+				+ " from("
+				+ "		select `name`,"
+				+ "			localNode,"
+				+ "			  `level`,"
+				+ "     workFrequency,"
+				+ "       isScheduled,"
+				+ "         needNodes,"
+				+ "       cronTrigger,"
+				+ "       workerClass,"
+				+ "         queueName,"
+				+ "              user,"
+				+ "         `describe` "
+				+ "       from "+JobDao.TABLE_NAME
+				+ "      where `name` like concat(#{name},'%')"
+				+ "      order by `name` asc ) a,"
+				+ "   (select FOUND_ROWS() totalSize)b limit #{start},#{end}";
+		return sql;
 	}
 	
 	public String save(Job job) {

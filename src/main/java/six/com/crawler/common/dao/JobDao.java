@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.SelectProvider;
 import org.apache.ibatis.annotations.UpdateProvider;
@@ -43,6 +44,21 @@ public interface JobDao extends BaseDao{
 			+ "`user`,"
 			+ "`describe` from "+TABLE_NAME+" where name = #{name} order by `level` asc,`name`")
 	public Job query(String name);
+	
+	
+	@Select("select `name`,"
+			+ " localNode,"
+			+ "   level,"
+			+ "workFrequency,"
+			+ "isScheduled,"
+			+ "needNodes,"
+			+ "cronTrigger,"
+			+ "workerClass,"
+			+ "queueName,"
+			+ "`user`,"
+			+ "`describe` from "+TABLE_NAME+" where localNode = #{localNode} order by `level` asc,`name`")
+	public List<Job> queryByNode(String localNode);
+	
 
 	@Select("select `name`,"
 			+ " localNode,"
@@ -56,7 +72,22 @@ public interface JobDao extends BaseDao{
 			+ "`user`,"
 			+ "`describe` from "+TABLE_NAME+" where name like #{jobName} order by `level` asc,`name`")
 	public List<Job> fuzzyQuery(String jobName);
+	
+	
 
+	/**
+	 * 支持 name%模糊查询
+	 * @param jobName
+	 * @param pageIndex
+	 * @param pageSize
+	 * @return
+	 */
+	@SelectProvider(type = JobDaoProvider.class, method = "pageQuery")
+	public List<Job> pageQuery(@Param("name")String jobName, 
+			@Param("start")int pageIndex, 
+			@Param("end")int pageSize);
+
+	
 	@SelectProvider(type = JobDaoProvider.class, method = "query")
 	public List<Job> queryByParam(Map<String, Object> parameters);
 

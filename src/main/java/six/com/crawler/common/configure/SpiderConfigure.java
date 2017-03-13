@@ -7,6 +7,7 @@ import org.springframework.boot.bind.RelaxedPropertyResolver;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import six.com.crawler.common.entity.NodeType;
 
 /**
  * @author six
@@ -16,19 +17,24 @@ import org.springframework.core.env.Environment;
 public class SpiderConfigure implements EnvironmentAware {
 
 	private RelaxedPropertyResolver propertyResolver;
-	
+
 	private String host;
-	
+
 	private int port;
 
 	private String spidrHome;
 
+	private NodeType nodeType;
+
 	@Override
 	public void setEnvironment(Environment env) {
-		port=env.getProperty("server.port",Integer.class);
+		port = env.getProperty("server.port", Integer.class);
 		this.propertyResolver = new RelaxedPropertyResolver(env, "spider.");
-		host=propertyResolver.getProperty("node.host")==null?"127.0.0.1":propertyResolver.getProperty("node.host");
+		host = propertyResolver.getProperty("node.host") == null ? "127.0.0.1"
+				: propertyResolver.getProperty("node.host");
 		spidrHome = propertyResolver.getProperty("home");
+		String nodeTypeStr = propertyResolver.getProperty("node.type");
+		nodeType = NodeType.valueOf(Integer.valueOf(nodeTypeStr));
 		Properties prop = System.getProperties();
 		String os = prop.getProperty("os.name").toUpperCase();
 		String webdriverDir = spidrHome + File.separatorChar + "webdriver";
@@ -76,14 +82,18 @@ public class SpiderConfigure implements EnvironmentAware {
 		return result;
 	}
 
-	public int getPort(){
+	public NodeType getNodeType() {
+		return nodeType;
+	}
+
+	public int getPort() {
 		return port;
 	}
-	
-	public String getHost(){
+
+	public String getHost() {
 		return host;
 	}
-	
+
 	public String getSpiderHome() {
 		return spidrHome;
 	}

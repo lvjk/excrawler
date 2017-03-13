@@ -3,6 +3,9 @@ package six.com.crawler.common.service.impl;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import six.com.crawler.admin.api.ResponseMsg;
 import six.com.crawler.common.DateFormats;
 import six.com.crawler.common.RedisManager;
 import six.com.crawler.common.dao.JobSnapshotDao;
@@ -37,7 +41,7 @@ import six.com.crawler.common.entity.WorkerSnapshot;
 import six.com.crawler.common.entity.JobSnapshot;
 import six.com.crawler.common.entity.JobSnapshotState;
 import six.com.crawler.common.entity.Node;
-import six.com.crawler.common.entity.QueueInfo;
+import six.com.crawler.common.entity.PageQuery;
 import six.com.crawler.common.entity.WorkerErrMsg;
 import six.com.crawler.common.service.JobService;
 import six.com.crawler.schedule.AbstractSchedulerManager;
@@ -85,6 +89,71 @@ public class JobServiceImpl implements JobService {
 
 	static final String JOB_SERVICE_OPERATION_PRE = "JobService.operation.";
 
+	public void queryJobs(ResponseMsg<PageQuery<Job>> responseMsg, String jobName, int pageIndex, int pageSize) {
+		pageSize = pageSize <= 0 || pageSize > 50 ? 15 : pageSize;
+		PageQuery<Job> pageQuery = new PageQuery<>();
+		List<Job> jobs = null;
+		int totalSize = 0;
+		pageIndex = pageIndex * pageSize;
+		//如果查询jobName==* 那么默认查询 本地节点任务
+		if ("*".equals(jobName)) {
+			jobs = new ArrayList<>();
+			String localNode = getCommonScheduleManager().getCurrentNode().getName();
+			//优先获取运行中的任务
+			List<JobSnapshot> jobSnapshots = getRegisterCenter().getJobSnapshots(localNode);
+			int end=pageIndex+pageSize;
+			if (jobSnapshots.size()>0) {
+				if(jobSnapshots.size()>end){
+					jobSnapshots=jobSnapshots.subList(pageIndex, end);
+				}else if(jobSnapshots.size()>pageIndex&&jobSnapshots.size()<end){
+					jobSnapshots=jobSnapshots.subList(pageIndex, jobSnapshots.size());
+				}else{
+					jobSnapshots=Collections.emptyList();
+				}
+				totalSize = jobSnapshots.size();
+				Job job = null;
+				for (JobSnapshot jobSnapshot : jobSnapshots) {
+					job = jobDao.query(jobSnapshot.getName());
+					jobs.add(job);
+				}
+			}
+			List<Job> queryJobs =jobDao.queryByNode(localNode);
+			totalSize = queryJobs.size();
+			//如果运行中任务数量==0 那么根据本地节点分页查询
+			if(jobs.size()==0){
+				if(queryJobs.size()>end){
+					jobs=queryJobs.subList(pageIndex, end);
+				}else if(queryJobs.size()>pageIndex&&queryJobs.size()<end){
+					jobs=queryJobs.subList(pageIndex, queryJobs.size());
+				}
+			}else{
+				
+				if(jobs.size()<pageSize){
+					for(Job job:queryJobs){
+						if(!jobs.contains(job)){
+							jobs.add(job);
+							if(jobs.size()>=pageSize){
+								break;
+							}
+						}
+					}
+				}
+			}
+		} else {
+			jobs = jobDao.pageQuery(jobName, pageIndex, pageSize);
+			if(jobs.size()>0){
+				totalSize = jobs.get(0).getTotalSize();
+			}
+		}
+		sort(jobs);
+		pageQuery.setTotalSize(totalSize);
+		pageQuery.setTotalPage(totalSize % pageSize == 0 ? totalSize / pageSize : totalSize / pageSize + 1);
+		pageQuery.setList(jobs);
+		pageQuery.setPageIndex(pageIndex);
+		pageQuery.setPageSize(pageSize);
+		responseMsg.setData(pageQuery);
+	}
+
 	public Node totalNodeJobInfo(String nodeName) {
 		return jobDao.totalNodeJobInfo(nodeName);
 	}
@@ -93,12 +162,6 @@ public class JobServiceImpl implements JobService {
 	public Job queryJob(String jobName) {
 		Job job = jobDao.query(jobName);
 		return job;
-	}
-
-	@Override
-	public List<Job> fuzzyQuery(String jobName) {
-		jobName = "%" + jobName + "%";
-		return jobDao.fuzzyQuery(jobName);
 	}
 
 	@Override
@@ -120,13 +183,6 @@ public class JobServiceImpl implements JobService {
 		result.put("paserItems", paserItems);
 		result.put("jobParameters", jobParameters);
 		return result;
-	}
-
-	@Override
-	public List<Job> queryJobs(int pageIndex, int pageSize) {
-		Map<String, Object> parameters = new HashMap<>();
-		List<Job> jobs = jobDao.queryByParam(parameters);
-		return jobs;
 	}
 
 	@Override
@@ -154,12 +210,12 @@ public class JobServiceImpl implements JobService {
 
 			}
 		}
-		registerCenter.delJobSnapshot(nodeName,jobName);
+		registerCenter.delJobSnapshot(nodeName, jobName);
 	}
 
-	public JobSnapshot queryLastJobSnapshotFromHistory(String jobName) {
+	public JobSnapshot queryLastJobSnapshotFromHistory(String excludeJobSnapshotId, String jobName) {
 		JobSnapshot lastJobSnapshot = null;
-		List<JobSnapshot> result = queryJobSnapshotsFromHistory(jobName);
+		List<JobSnapshot> result = jobSnapshotDao.queryLast(excludeJobSnapshotId, jobName);
 		if (null != result && !result.isEmpty()) {
 			lastJobSnapshot = result.get(0);
 		}
@@ -173,15 +229,26 @@ public class JobServiceImpl implements JobService {
 	}
 
 	public JobSnapshot getJobSnapshotFromRegisterCenter(String nodeName, String jobName, String queueName) {
-		JobSnapshot jobSnapshot = getJobSnapshotFromRegisterCenter(nodeName, jobName);
+		JobSnapshot jobSnapshot = null;
+
+		jobSnapshot = getJobSnapshotFromRegisterCenter(nodeName, jobName);
 		if (null == jobSnapshot) {
 			jobSnapshot = new JobSnapshot(nodeName, jobName);
 		}
-		QueueInfo tempQueueInfo = getJobQueueInfos(queueName);
+		String tempProxyKey = RedisWorkQueue.PRE_PROXY_QUEUE_KEY + queueName;
+		int proxySize = redisManager.llen(tempProxyKey);
+
+		String tempRealKey = RedisWorkQueue.PRE_QUEUE_KEY + queueName;
+		int realSize = redisManager.hllen(tempRealKey);
+
+		String tempErrKey = RedisWorkQueue.PRE_ERR_QUEUE_KEY + queueName;
+		int errSize = redisManager.llen(tempErrKey);
+
 		jobSnapshot.setQueueName(queueName);
-		jobSnapshot.setRealQueueCount(tempQueueInfo.getRealQueueSize());
-		jobSnapshot.setProxyQueueCount(tempQueueInfo.getProxyQueueSize());
-		jobSnapshot.setErrQueueCount(tempQueueInfo.getErrQueueCount());
+		jobSnapshot.setProxyQueueCount(proxySize);
+		jobSnapshot.setRealQueueCount(realSize);
+		jobSnapshot.setErrQueueCount(errSize);
+
 		return jobSnapshot;
 	}
 
@@ -211,17 +278,9 @@ public class JobServiceImpl implements JobService {
 			int minProcessTime = -1;
 			int avgProcessTime = 0;
 			int errCount = 0;
-			Date startTime = null;
 			Date endTime = null;
 			for (WorkerSnapshot workerSnapshot : workerSnapshots) {
 				try {
-					if (StringUtils.isNoneBlank(workerSnapshot.getStartTime())) {
-						Date tempStartTime = DateUtils.parseDate(workerSnapshot.getStartTime(),
-								DateFormats.DATE_FORMAT_1);
-						if (null == startTime || tempStartTime.before(startTime)) {
-							startTime = tempStartTime;
-						}
-					}
 					if (StringUtils.isNoneBlank(workerSnapshot.getEndTime())) {
 						Date tempEndTime = DateUtils.parseDate(workerSnapshot.getEndTime(), DateFormats.DATE_FORMAT_1);
 						if (null == endTime || tempEndTime.after(endTime)) {
@@ -243,9 +302,6 @@ public class JobServiceImpl implements JobService {
 				avgProcessTime += workerSnapshot.getAvgProcessTime();
 				errCount += workerSnapshot.getErrCount();
 			}
-			if (null != startTime) {
-				jobSnapshot.setStartTime(DateFormatUtils.format(startTime, DateFormats.DATE_FORMAT_1));
-			}
 			if (null != endTime) {
 				jobSnapshot.setEndTime(DateFormatUtils.format(endTime, DateFormats.DATE_FORMAT_1));
 			}
@@ -259,17 +315,22 @@ public class JobServiceImpl implements JobService {
 		}
 	}
 
-	public void registerJobSnapshot(JobSnapshot jobSnapshot) {
+	public void saveJobSnapshot(JobSnapshot jobSnapshot) {
 		jobSnapshotDao.save(jobSnapshot);
+	}
+
+	public void registerJobSnapshotToRegisterCenter(JobSnapshot jobSnapshot) {
 		registerCenter.registerJobSnapshot(jobSnapshot);
 	}
 
-	@Override
 	public void updateJobSnapshot(JobSnapshot jobSnapshot) {
 		jobSnapshotDao.update(jobSnapshot);
-		registerCenter.updateJobSnapshot(jobSnapshot);
 	}
 
+	@Override
+	public void updateJobSnapshotToRegisterCenter(JobSnapshot jobSnapshot) {
+		registerCenter.updateJobSnapshot(jobSnapshot);
+	}
 
 	@Override
 	public void updateWorkSnapshotToRegisterCenter(WorkerSnapshot workerSnapshot, boolean isSaveErrMsg) {
@@ -279,24 +340,6 @@ public class JobServiceImpl implements JobService {
 			errMsgs.clear();
 		}
 		registerCenter.updateWorkerSnapshot(workerSnapshot);
-	}
-
-	private QueueInfo getJobQueueInfos(String queueName) {
-		QueueInfo tempQueueInfo = new QueueInfo();
-		tempQueueInfo.setQueueName(queueName);
-		String tempProxyKey = RedisWorkQueue.PRE_PROXY_QUEUE_KEY + queueName;
-		int proxySize = redisManager.llen(tempProxyKey);
-		tempQueueInfo.setProxyQueueSize(proxySize);
-
-		String tempRealKey = RedisWorkQueue.PRE_QUEUE_KEY + queueName;
-		int realSize = redisManager.hllen(tempRealKey);
-		tempQueueInfo.setRealQueueSize(realSize);
-
-		String tempErrKey = RedisWorkQueue.PRE_ERR_QUEUE_KEY + queueName;
-		int errSize = redisManager.hllen(tempErrKey);
-		tempQueueInfo.setErrQueueCount(errSize);
-
-		return tempQueueInfo;
 	}
 
 	@Override
@@ -365,6 +408,34 @@ public class JobServiceImpl implements JobService {
 	public List<ExtractItem> queryExtractItems(String jobName) {
 		List<ExtractItem> result = extractItemDao.query(jobName);
 		return result;
+	}
+
+	/**
+	 * 根据job运行状态 级别 名字 排序
+	 * 
+	 * @param jobs
+	 */
+	private void sort(List<Job> jobs) {
+		if (null != jobs && jobs.size() > 1) {
+			jobs.sort(new Comparator<Job>() {
+				@Override
+				public int compare(Job job1, Job job2) {
+					if (commonScheduleManager.isRunning(job1) && !commonScheduleManager.isRunning(job2)) {
+						return -1;
+					} else if (commonScheduleManager.isRunning(job2) && !commonScheduleManager.isRunning(job1)) {
+						return 1;
+					} else {
+						if (job1.getLevel() < job2.getLevel()) {
+							return -1;
+						} else if (job1.getLevel() > job2.getLevel()) {
+							return 1;
+						} else {
+							return job1.getName().compareTo(job2.getName());
+						}
+					}
+				}
+			});
+		}
 	}
 
 	public JobDao getJobDao() {

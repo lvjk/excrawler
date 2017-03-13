@@ -1,6 +1,6 @@
 package six.com.crawler.common.http;
 
-import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,28 +32,30 @@ public class HttpProxyPool {
 		this.siteHttpProxyPoolKey = REDIS_HTTP_PROXY_POOL + "_" + siteCode;
 		this.siteHttpProxyIndexKey = REDIS_HTTP_PROXY_INDEX + "_" + siteCode;
 		this.restTime = restTime;
-		initPool();
 	}
 
 	private void initPool() {
-		redisManager.lock(siteHttpProxyPoolKey);
-		try {
-			poolSize = redisManager.llen(siteHttpProxyPoolKey);
-			if (0 == poolSize) {
-				List<HttpProxy> list = redisManager.lrange(REDIS_HTTP_PROXY_POOL, 0, -1, HttpProxy.class);
-				if (null != list) {
-					for (HttpProxy httpProxy : list) {
-						redisManager.lpush(siteHttpProxyPoolKey, httpProxy);
+		if(0==poolSize){
+			redisManager.lock(siteHttpProxyPoolKey);
+			try {
+				poolSize = redisManager.llen(siteHttpProxyPoolKey);
+				if (0 == poolSize) {
+					Map<String, HttpProxy> map = redisManager.hgetAll(HttpProxyPool.REDIS_HTTP_PROXY_POOL, HttpProxy.class);
+					if (null != map) {
+						for (HttpProxy httpProxy : map.values()) {
+							redisManager.lpush(siteHttpProxyPoolKey, httpProxy);
+						}
+						poolSize = map.size();
 					}
-					poolSize = list.size();
 				}
-			}
-		} finally {
-			redisManager.unlock(siteHttpProxyPoolKey);
+			} finally {
+				redisManager.unlock(siteHttpProxyPoolKey);
+			}	
 		}
 	}
 
 	public HttpProxy getHttpProxy() {
+		initPool();
 		HttpProxy httpProxy = null;
 		if (httpProxyType == HttpProxyType.ENABLE_ONE || httpProxyType == HttpProxyType.ENABLE_MANY) {
 			while (true) {
@@ -101,5 +103,15 @@ public class HttpProxyPool {
 			}
 		}
 		return index;
+	}
+	
+	public void destroy(){
+		redisManager.lock(siteHttpProxyPoolKey);
+		try {		
+			redisManager.del(siteHttpProxyIndexKey);
+			redisManager.del(siteHttpProxyPoolKey);
+		} finally {
+			redisManager.unlock(siteHttpProxyPoolKey);
+		}
 	}
 }
