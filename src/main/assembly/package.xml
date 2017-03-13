@@ -36,12 +36,12 @@
 		</fileSet>
 
 		<!-- 把项目自己编译出来的jar文件，打包进zip文件的根目录 -->
-		<fileSet>
+	<!-- 	<fileSet>
 			<directory>${project.build.directory}</directory>
 			<outputDirectory>bin</outputDirectory>
 			<includes>
 				<include>*.jar</include>
 			</includes>
-		</fileSet>
+		</fileSet>-->
 	</fileSets>
 </assembly> 
