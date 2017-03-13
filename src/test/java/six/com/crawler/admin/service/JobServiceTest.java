@@ -7,10 +7,13 @@ import org.apache.commons.lang3.time.DateFormatUtils;
 import org.junit.Test;
 
 import six.com.crawler.BaseTest;
+import six.com.crawler.admin.api.ResponseMsg;
 import six.com.crawler.common.DateFormats;
+import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.JobParam;
 import six.com.crawler.common.entity.JobSnapshot;
 import six.com.crawler.common.entity.JobSnapshotState;
+import six.com.crawler.common.entity.PageQuery;
 import six.com.crawler.common.entity.WorkerErrMsg;
 import six.com.crawler.common.entity.WorkerSnapshot;
 
@@ -25,14 +28,12 @@ public class JobServiceTest extends BaseTest {
 
 	@Test
 	public void test() {
-		queryJobParams();
-		// Node currentNode = jobWorkerManager.getCurrentNode();
-		// String nodeName = currentNode.getName();
-		// Map<String, Object> parameters = new HashMap<>();
-		// parameters.put("hostNode", nodeName);
-		// parameters.put("isScheduled", 0);
-		// List<Job> list=jobService.query(parameters);
-		// System.out.println(list);
+		ResponseMsg<PageQuery<Job>> responseMsg = new ResponseMsg<>();
+		String jobName = "qichacha";
+		int pageIndex = 0;
+		int pageSize = 2;
+		jobService.queryJobs(responseMsg, jobName, pageIndex, pageSize);
+		System.out.println(responseMsg);
 	}
 
 	public void queryJobParams() {
@@ -50,8 +51,8 @@ public class JobServiceTest extends BaseTest {
 		String jobSnapshotid = jobName + "_" + System.currentTimeMillis();
 		String hostNodeName = "test_hostNode";
 		JobSnapshot jobSnapshot = buildJobSnapshot(jobSnapshotid, jobName, hostNodeName);
-		jobService.registerJobSnapshot(jobSnapshot);
-		jobService.reportJobSnapshot(hostNodeName, jobName);
+		// jobService.registerJobSnapshot(jobSnapshot);
+		// jobService.reportJobSnapshot(hostNodeName, jobName);
 	}
 
 	public void queryJobSnapshot() {
