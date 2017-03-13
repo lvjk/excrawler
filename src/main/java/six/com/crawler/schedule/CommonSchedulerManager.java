@@ -198,7 +198,9 @@ public class CommonSchedulerManager extends AbstractSchedulerManager implements 
 			LOG.error("the " + nodeName + "[" + host + ":" + port + "]has been executed");
 			System.exit(1);
 		}
+
 		currentNode = new Node();
+		currentNode.setType(getConfigure().getNodeType());
 		currentNode.setName(nodeName);
 		currentNode.setHost(host);
 		currentNode.setPort(port);
