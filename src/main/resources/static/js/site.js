@@ -8,26 +8,7 @@ $(function() {
 
 function uploadSiteProfile() {
 	var url="/crawler/site/upload/profile";
-	var formData = new FormData();
-	formData.append("file", $("#siteProfile")[0].files[0]);
-	$.ajax({
-		url : url,
-		type : 'POST',
-		data : formData,
-		// 告诉jQuery不要去处理发送的数据
-		processData : false,
-		// 告诉jQuery不要去设置Content-Type请求头
-		contentType : false,
-		beforeSend : function() {
-			console.log("正在进行，请稍候");
-		},
-		success : function(responseStr) {
-			alert(responseStr.msg);
-		},
-		error : function(responseStr) {
-			console.log("error");
-		}
-	});
+	uploadFile(url,$("#siteProfile")[0].files[0]);
 }
 
 function loadTable() {
@@ -35,12 +16,12 @@ function loadTable() {
 	$.get(url, function(result) {
 		var errCode = result.errCode;
 		if (null == errCode) {
-			showJobTable(result.data);
+			showSiteTable(result.data);
 		}
 	});
 }
 
-function showJobTable(data) {
+function showSiteTable(data) {
 	var table = $('#sites');
 	table.find("tr").remove();
 	var site;
@@ -52,10 +33,10 @@ function showJobTable(data) {
 		$("<td>" + site.mainUrl + "</td>").appendTo(tr);
 		$("<td>" + site.describe + "</td>").appendTo(tr);
 		var siteOperationTd = $("<td></td>");
-		var siteOperation = "<a href=\"/crawler/site/download/profile/"
-				+ site.code + "\"  >下载配置</a>";
+		var siteOperation= "<a href=\"/crawler/site/download/profile/"+ site.code + "\">下载配置</a>";
 		$(siteOperation).appendTo(siteOperationTd);
 		siteOperationTd.appendTo(tr);
 		tr.appendTo(table);
 	}
 }
+

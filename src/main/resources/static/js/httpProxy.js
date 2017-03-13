@@ -26,12 +26,20 @@ function showDataTable(httpProxys){
 		var tr = $("<tr></tr>");
 		var httpProxyHostInputId="httpProxyHost_"+i;
 		var httpProxyPortInputId="httpProxyPort_"+i;
-		$("<td><input id='"+httpProxyHostInputId+"' type='text' value='"+httpProxy.host+"' /></td>")
+		$("<td>"+checkStr(httpProxy.host)+"</td>")
 				.appendTo(tr);
-		$("<td><input id='"+httpProxyPortInputId+"' type='text' value='"+httpProxy.port+"' /></td>")
+		$("<td>"+checkStr(httpProxy.port)+"</td>")
+		.appendTo(tr);
+		$("<td>"+checkStr(httpProxy.userName)+"</td>")
+		.appendTo(tr);
+		$("<td>"+checkStr(httpProxy.password)+"</td>")
+		.appendTo(tr);
+		$("<td>"+checkStr(httpProxy.expire)+"</td>")
+		.appendTo(tr);
+		$("<td>"+checkStr(httpProxy.describe)+"</td>")
 		.appendTo(tr);
 		var httpProxyOperationTd = $("<td></td>");
-		var httpProxyOperation= "<a href=\"javascript:testHttpProxy('" + httpProxyHostInputId+ "','" + httpProxyPortInputId+ "')\">测试</a>&nbsp;";
+		var httpProxyOperation= "<a href=\"javascript:testHttpProxy('" + checkStr(httpProxy.host)+ "','" + checkStr(httpProxy.port)+ "')\">测试</a>&nbsp;";
 		httpProxyOperation += "<a href=\"javascript:delHttpProxy('" + httpProxy.host+ "','" + httpProxy.port+ "')\">删除</a>&nbsp;";
 		$(httpProxyOperation).appendTo(httpProxyOperationTd);
 		httpProxyOperationTd.appendTo(tr);
@@ -41,6 +49,10 @@ function showDataTable(httpProxys){
 	var tr = $("<tr></tr>");
 	$("<td><input id='addHttpProxyHostInput' type='text' /></td>").appendTo(tr);
 	$("<td><input id='addHttpProxyPortInput' type='text' /></td>").appendTo(tr);
+	$("<td><input id='addHttpProxyUserNameInput' type='text' /></td>").appendTo(tr);
+	$("<td><input id='addHttpProxyPassWordInput' type='text' /></td>").appendTo(tr);
+	$("<td><input id='addHttpProxyExpireInput' type='text' /></td>").appendTo(tr);
+	$("<td><input id='addHttpProxyDescribeInput' type='text' /></td>").appendTo(tr);
 	var httpProxyOperationTd = $("<td></td>");
 	var httpProxyOperation= "<a href=\"javascript:addHttpProxy()\">保存</a>&nbsp;";
 	$(httpProxyOperation).appendTo(httpProxyOperationTd);
@@ -59,9 +71,19 @@ function addHttpProxy(){
 		alert("HttpProxy port must not be empty");
 		return;
 	}
+	var httpProxyUserName = $('#addHttpProxyUserNameInput').val();
+	var httpProxyPassWord = $('#addHttpProxyPassWordInput').val();
+	var httpProxyExpire = $('#addHttpProxyExpireInput').val();
+	var httpProxyDescribe = $('#addHttpProxyDescribeInput').val();
+
+	
 	$.post("/crawler/httpPorxy/add", {
 		host : httpProxyHost,
-		port : httpProxyPort
+		port : httpProxyPort,
+		userName:httpProxyUserName,
+		passWord:httpProxyPassWord,
+		expire:httpProxyExpire,
+		describe:httpProxyDescribe
 	}, function(result) {
 		alert(result.msg);
 		location.reload(true);
@@ -69,15 +91,12 @@ function addHttpProxy(){
 }
 
 
-function testHttpProxy(httpProxyHostInputId,httpProxyPortInputId){
-	var httpProxyHost = $('#'+httpProxyHostInputId).val();
-	var httpProxyPort = $('#'+httpProxyPortInputId).val();
+function testHttpProxy(httpProxyHost,httpProxyPort){
 	$.post("/crawler/httpPorxy/test", {
 		host : httpProxyHost,
 		port : httpProxyPort
 	}, function(result) {
 		alert(result.msg);
-		location.reload(true);
 	});
 }
 

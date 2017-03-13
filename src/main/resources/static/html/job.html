@@ -5,12 +5,19 @@
 <title>Job Page</title>
 <script type="text/javascript" src="../js/import.inc.js"></script>
 <script type="text/javascript" src="../js/job.js"></script>
+<script type="text/javascript" src="../js/scheduled.js"></script>
+<script type="text/javascript" src="../js/queue.js"></script>
 </head>
 <body>
 	<div class="tab-pane fade in active" id="tab2">
-		<div class="div-search">
-			<label>任务名:</label> <input id="search_job_name" type="text"
-				class="input-medium search-query">
+		<div id="job_search">
+			<label>任务名:</label> 
+			<input id="search_job_name" type="text" class="input-medium search-query">
+			<input id="pageIndex" type="text" value="0" style="display:none">
+			<input id="pageSize"  type="text" value="15" style="display:none">
+			<input id="totalPage" type="text" style="display:none">
+			<input id="totalSize" type="text" style="display:none">
+			
 			<button id="search_job_bt" class="btn">搜索</button>
 			<input id="jobProfile" type="file" class="file"/>
 			<button id="upload_jobProfile" class="btn">上传站点配置</button>
@@ -25,8 +32,8 @@
 						<th>状态</th>
 						<th>开始时间</th>
 						<th>队列数量</th>
-						<th>异常</th>
 						<th>队列操作</th>
+						<th>异常</th>
 						<th>调度操作</th>
 						<th>运行操作</th>
 						<th>其他操作</th>
@@ -35,6 +42,8 @@
 				<tbody id="jobs">
 				</tbody>
 			</table>
+			<div id="pageInfo">
+			</div>
 		</div>
 		<!--<table class="table table-striped table-hover" id="reportTable1"></table>-->
 
@@ -117,12 +126,53 @@
 				<tr style="font-size: 10px; font-weight: bold;">
 					<td>开始时间</td>
 					<td>结束时间</td>
+					<td>状态</td>
 					<td>平均每次处理时间</td>
 					<td>最大处理时间</td>
 					<td>最小处理时间</td>
 					<td>处理数</td>
 					<td>异常数</td>
 					<td>异常信息</td>
+				</tr>
+			</table>
+		</div>
+		
+		
+		<div id="job_queue_div" style="display: none;">
+			<table class="table table-striped table-hover" style="margin: auto; margin-top: 20px; text-align: center;">
+				<tr style="font-size: 14px; font-weight: bold;">
+					<td colspan="2">
+						<span id="job_queue_div_name"></span>
+						<input type="text" id="errQueueIndex" value="0" style="display:none"/>
+						<input type="text" id="queueCursor" value="0" style="display:none"/>
+					</td>
+				</tr>
+				<tr style="font-size: 10px; font-weight: bold;">
+					<td>URL</td>
+					<td>操作</td>
+				</tr>
+			</table>
+		</div>
+		
+		
+		<div id="job_worker_div" style="display: none;">
+			<table class="table table-striped table-hover" style="margin: auto; margin-top: 20px; text-align: center;">
+				<tr style="font-size: 14px; font-weight: bold;">
+					<td colspan="12"><span id="job_worker_div_name"></span></td>
+				</tr>
+				<tr style="font-size: 10px; font-weight: bold;">
+					<td>名称</td>
+					<td>节点</td>
+					<td>状态</td>
+					<td>开始时间</td>
+					<td>结束时间</td>
+					<td>统计处理数据</td>
+					<td>统计获取数据</td>
+					<td>处理时间</td>
+					<td>最大处理时间</td>
+					<td>最小处理时间</td>
+					<td>平均处理时间</td>
+					<td>异常数量</td>
 				</tr>
 			</table>
 		</div>

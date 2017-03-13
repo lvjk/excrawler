@@ -1,0 +1,153 @@
+<siteProfile>
+	<!--站点code -->
+	<site code="tmsf">
+		<!--站点主页-->
+		<mainUrl>http://www.tmsf.com</mainUrl>
+		<!--站点描述-->
+		<describe>杭州透明售房网</describe>
+	</site>
+
+	<!--  name:路径名字
+		  siteCode:站点code
+		   ranking:路径使用排名
+    extractAttName:路径要获取的值的属性名字  
+		appendHead:在头部追加字符  
+		 appendEnd:在尾部追加字符 
+	compareAttName:用来比较 的att name  
+	containKeyWord:包含的关键字   
+	substringStart:截止字符开始字符，不设值 默认从头开始
+	  substringEnd:截取字符结尾字符,不设值 默认截取到尾部  
+	   replaceWord:要替换的词  
+	  replaceValue:替换的值
+	          path:要抽取的路径path
+		filterPath:需要过滤的路径path
+		  describe:描述-->
+		<extractPath name="projectName" siteCode="tmsf" ranking="1" extractAttName="text" appendHead="" appendEnd="" compareAttName="" containKeyWord="">
+			<path>div[class=lpxqtop]>div>div>span[class=buidname colordg]</path>
+			<filterPath></filterPath>
+			<substringStart></substringStart>
+			<substringEnd></substringEnd>
+			<replaceWord></replaceWord>
+			<replaceValue></replaceValue>
+			<describe>项目名称</describe>
+		</extractPath>
+		<extractPath name="brandName" siteCode="tmsf" ranking="1" extractAttName="text" appendHead="" appendEnd="" compareAttName="" containKeyWord="" >
+			<path>div[class=lpxqtop]>div>div>span[class=extension famwei ft14 mgr10]>ul>li:eq(1)</path>
+			<filterPath></filterPath>
+			<replaceWord></replaceWord>
+			<replaceValue></replaceValue>
+			<describe>推广名称</describe>
+		</extractPath>
+		<extractPath name="propertyType" siteCode="tmsf" ranking="1" extractAttName="text" appendHead="" appendEnd="" compareAttName="" containKeyWord="">
+			<path>div[class=buildtxtbox classones fl famwei]>ul>li:contains(物业类型)</path>
+			<filterPath></filterPath>
+			<replaceWord>物业类型：</replaceWord>
+			<replaceValue></replaceValue>
+			<describe>物业类型</describe>
+		</extractPath>
+		<extractPath name="district" siteCode="tmsf" ranking="1" extractAttName="text" appendHead="" appendEnd="" compareAttName="" containKeyWord="">
+			<path>div[class=website colormg]>a[id=districtname]</path>
+			<filterPath></filterPath>
+			<replaceWord>楼盘</replaceWord>
+			<replaceValue></replaceValue>
+			<describe>行政区</describe>
+		</extractPath>
+		<extractPath name="address" siteCode="tmsf" ranking="1" extractAttName="text" appendHead="" appendEnd="" compareAttName="" containKeyWord="">
+			<path>div[class=buildtxtbox classones fl famwei]>div>div>p:contains(楼盘地址)</path>
+			<filterPath></filterPath>
+			<replaceWord>楼盘地址：</replaceWord>
+			<replaceValue></replaceValue>
+			<describe>楼盘地址</describe>
+		</extractPath>
+		<extractPath name="redecorateStatus" siteCode="tmsf" ranking="1" extractAttName="text" appendHead="" appendEnd="" compareAttName="" containKeyWord="">
+			<path>div[class=buildtxtbox classones fl famwei]>ul>li:contains(装修状况)</path>
+			<filterPath></filterPath>
+			<replaceWord>装修状况：</replaceWord>
+			<replaceValue></replaceValue>
+			<describe>装修状况</describe>
+		</extractPath>
+		<extractPath name="buildStyle" siteCode="tmsf" ranking="1" extractAttName="text" appendHead="" appendEnd="" compareAttName="" containKeyWord="">
+			<path>div[class=buildtxtbox classones fl famwei]>ul>li:contains(建筑形式)</path>
+			<filterPath></filterPath>
+			<replaceWord>建筑形式：</replaceWord>
+			<replaceValue></replaceValue>
+			<describe>建筑形式</describe>
+		</extractPath>
+		<extractPath name="projectCompany" siteCode="tmsf" ranking="1" extractAttName="text" appendHead="" appendEnd="" compareAttName="" containKeyWord="">
+			<path>div[class=buildtxtbox classones fl famwei]>p:contains(项目公司)</path>
+			<filterPath></filterPath>
+			<replaceWord>项目公司：</replaceWord>
+			<replaceValue></replaceValue>
+			<describe>项目公司</describe>
+		</extractPath>
+		<extractPath name="capacityRate" siteCode="tmsf" ranking="1" extractAttName="text" appendHead="" appendEnd="" compareAttName="" containKeyWord="">
+			<path>div[class=buildshowin_contant ft14 colordg]>ul>li:contains(容 积 率)</path>
+			<filterPath></filterPath>
+			<replaceWord>容 积 率：</replaceWord>
+			<replaceValue></replaceValue>
+			<describe>容 积 率</describe>
+		</extractPath>
+		<extractPath name="greeningRate" siteCode="tmsf" ranking="1" extractAttName="text" appendHead="" appendEnd="" compareAttName="" containKeyWord="">
+			<path>div[class=buildshowin_contant ft14 colordg]>ul>li:contains(绿 化 率)</path>
+			<filterPath></filterPath>
+			<replaceWord>绿 化 率：</replaceWord>
+			<replaceValue></replaceValue>
+			<describe>绿 化 率</describe>
+		</extractPath>
+		<extractPath name="coversArea" siteCode="tmsf" ranking="1" extractAttName="text" appendHead="" appendEnd="" compareAttName="" containKeyWord="">
+			<path>div[class=buildshowin_contant ft14 colordg]>ul>li:contains(占地面积)</path>
+			<filterPath></filterPath>
+			<replaceWord>占地面积：</replaceWord>
+			<replaceValue></replaceValue>
+			<describe>占地面积</describe>
+		</extractPath>
+		<extractPath name="buildArea" siteCode="tmsf" ranking="1" extractAttName="text" appendHead="" appendEnd="" compareAttName="" containKeyWord="">
+			<path>div[class=buildshowin_contant ft14 colordg]>ul>li:contains(总建筑面积)</path>
+			<filterPath></filterPath>
+			<replaceWord>总建筑面积：</replaceWord>
+			<replaceValue></replaceValue>
+			<describe>总建筑面积</describe>
+		</extractPath>
+		<extractPath name="totalHouses" siteCode="tmsf" ranking="1" extractAttName="text" appendHead="" appendEnd="" compareAttName="" containKeyWord="">
+			<path>div[class=buildshowin_contant ft14 colordg]>ul>li:contains(总户数)</path>
+			<filterPath></filterPath>
+			<replaceWord>总户数：</replaceWord>
+			<replaceValue></replaceValue>
+			<describe>总户数</describe>
+		</extractPath>
+		<extractPath name="parkingInfo" siteCode="tmsf" ranking="1" extractAttName="text" appendHead="" appendEnd="" compareAttName="" containKeyWord="">
+			<path>div[class=buildshowin_contant ft14 colordg]>ul>li:contains(车位信息)</path>
+			<filterPath></filterPath>
+			<replaceWord>车位信息：</replaceWord>
+			<replaceValue></replaceValue>
+			<describe>车位信息</describe>
+		</extractPath>
+		<extractPath name="propertyCompany" siteCode="tmsf" ranking="1" extractAttName="text" appendHead="" appendEnd="" compareAttName="" containKeyWord="">
+			<path>div[class=buildshowin_contant ft14 colordg]>ul>li:contains(物业公司)</path>
+			<filterPath></filterPath>
+			<replaceWord>物业公司：</replaceWord>
+			<replaceValue></replaceValue>
+			<describe>物业公司</describe>
+		</extractPath>
+		<extractPath name="propertyLife" siteCode="tmsf" ranking="1" extractAttName="text" appendHead="" appendEnd="" compareAttName="" containKeyWord="">
+			<path>div[class=buildshowin_contant ft14 colordg]>ul>li:contains(产权年限)</path>
+			<filterPath></filterPath>
+			<replaceWord>产权年限：</replaceWord>
+			<replaceValue></replaceValue>
+			<describe>产权年限</describe>
+		</extractPath>
+		<extractPath name="presaleUrl" siteCode="tmsf" ranking="1" extractAttName="href" appendHead="" appendEnd="" compareAttName="" containKeyWord="">
+			<path>div[id=buildnavbar]>a:contains(一房一价)</path>
+			<filterPath></filterPath>
+			<replaceWord></replaceWord>
+			<replaceValue></replaceValue>
+			<describe>预售url</describe>
+		</extractPath>
+		<extractPath name="houseUrl" siteCode="tmsf" ranking="1" extractAttName="href" appendHead="" appendEnd="" compareAttName="" containKeyWord="">
+			<path>div[id=buildnavbar]>a:contains(销控表)</path>
+			<filterPath></filterPath>
+			<replaceWord></replaceWord>
+			<replaceValue></replaceValue>
+			<describe>house url</describe>
+		</extractPath>
+</siteProfile>

@@ -1,0 +1,110 @@
+<jobProfile>
+<!--    name:名字
+			hostNode:任务所属节点
+			   level:级别     
+    workFrequencyjob:处理的频率
+	     isScheduled:是否开启调度0:关1开 
+		   needNodes:执行此任务需要的节点数
+		        user:用户  -->
+		<job name="tmsf_project_info"  hostNode="test"  level="1" workFrequency="4000" isScheduled="0"  needNodes="1"  user="admin">
+			<!--队列名 -->
+			<queueName>tmsf_project_info</queueName>
+			<!--cronTrigger 时间 -->
+			<cronTrigger></cronTrigger>
+			<!--job处理的workerclass -->
+			<workerClass>six.com.crawler.work.plugs.TmsfProjectInfoWorker</workerClass>
+			<!--任务描述 -->
+			<describe>杭州透明售房网 项目信息采集任务</describe>
+			<param name="siteCode">tmsf</param><!--站点code-->
+			<param name="downerType">1</param><!--1：okhttp  2httpClient 3:chrome 4phantomjs-->
+			<param name="httpProxyType">2</param><!--http代理类型0:不用 1:一个 2多个-->
+			<param name="loadImages">0</param><!--是否加载图片 0不加载 1加载-->
+			<param name="fixedTableName">ex_dc_tmsf_presale_info</param><!--数据表名-->
+			<param name="isSnapshotTable">0</param><!--是否启用镜像表0:不启用 1启用-->
+			<param name="resultStoreClass">six.com.crawler.work.store.DataBaseStore</param><!--数据保存class -->
+			<param name="dbUrl"><![CDATA[jdbc:mysql://172.18.84.44:3306/test?user=root&password=123456&useUnicode=true&characterEncoding=UTF8]]></param><!--数据库url-->
+			<param name="dbUser">root</param><!--数据库用户名 -->
+			<param name="dbPasswd">123456</param><!--数据库密码-->
+			<param name="dbDriverClassName">com.mysql.jdbc.Driver</param><!--数据库驱动 -->
+			<param name="batchStoreSize">1</param><!--批量存储数量-->
+			<param name="createTableSqlTemplate"><![CDATA[CREATE TABLE `<<tableName>>` (`id` varchar(32) NOT NULL,`projectId` varchar(32) NOT NULL COMMENT '预售项目 名称',`presellName` varchar(200) NOT NULL COMMENT '预售名称',`presellCode` varchar(200) NOT NULL COMMENT '预售证号',`presellIssueDate` varchar(200) DEFAULT NULL COMMENT '预售证核发时间',`presellApplyCompany` varchar(200) DEFAULT NULL COMMENT '预售证申领单位',`issueCompany` varchar(200) DEFAULT NULL COMMENT '发证机关',`superviseBank` varchar(200) DEFAULT NULL COMMENT '资金监管银行',`superviseBankAccount` varchar(200) DEFAULT NULL COMMENT '资金监管银行账号',`presellApprovalProjectName` varchar(200) DEFAULT NULL COMMENT '预售审批项目名称',`developer` varchar(200) DEFAULT NULL COMMENT '开发商名称',`buildingAddress` varchar(200) DEFAULT NULL COMMENT '楼盘坐落',`openingDate` varchar(200) DEFAULT NULL COMMENT '开盘时间',`islive` varchar(200) DEFAULT NULL COMMENT '标示信息是否仍在页面上存在',`collectionDate` datetime DEFAULT NULL,`originUrl` varchar(500) DEFAULT NULL,PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='杭州透明网 预售信息表';]]></param><!--数据保存class -->
+			<param name="insertSqlTemplate"><![CDATA[insert into  <<tableName>>(id,projectId,presellName,presellCode,presellIssueDate,presellApplyCompany,issueCompany,superviseBank,superviseBankAccount,presellApprovalProjectName,developer,buildingAddress,openingDate,collectionDate,originUrl) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)]]></param><!--是否启用镜像表0:不启用 1启用-->	
+		</job>
+
+	<!-- jobName:任务名字
+		   serialNub:抽取顺序
+		    pathName:路径名字
+		     primary:是否是主键 0:不是 1是
+			    type:抽取类型  
+						1:string字符类型
+						2:url类型
+						3:text文本类型
+						4:phone电话类型
+						5:number数字类型
+						6:date日期类型
+						7:meta 页面meta 信息7
+		  outputType:输出类型      
+						0：不输出 	
+						1:输出至保存
+						2:输出到生成新page meta中
+						3:url类型生成新page并输出到对了中
+		   outputKey:输出的key    
+	  mustHaveResult:是否必须有值0:不 1必须-->
+		<extractItem jobName="tmsf_project_info"  serialNub="1" pathName="projectName" primary="1" type="1"   outputType="1" outputKey="projectName" mustHaveResult="1" >
+			<describe>项目名称</describe>
+		</extractItem>
+		<extractItem jobName="tmsf_project_info"  serialNub="2" pathName="brandName" primary="1" type="1"   outputType="1" outputKey="brandName" mustHaveResult="0" >
+			<describe>项目推广名称</describe>
+		</extractItem>
+		<extractItem jobName="tmsf_project_info"  serialNub="3" pathName="propertyType" primary="1" type="1"   outputType="1" outputKey="propertyType" mustHaveResult="0" >
+			<describe>物业类型</describe>
+		</extractItem>
+		<extractItem jobName="tmsf_project_info"  serialNub="4" pathName="district" primary="1" type="1"   outputType="1" outputKey="district" mustHaveResult="0" >
+			<describe>区域</describe>
+		</extractItem>
+		<extractItem jobName="tmsf_project_info"  serialNub="5" pathName="address" primary="1" type="1"   outputType="1" outputKey="address" mustHaveResult="0" >
+			<describe>项目位置</describe>
+		</extractItem>
+		<extractItem jobName="tmsf_project_info"  serialNub="6" pathName="redecorateStatus" primary="1" type="1"   outputType="1" outputKey="redecorateStatus" mustHaveResult="0" >
+			<describe>装修状况</describe>
+		</extractItem>
+		<extractItem jobName="tmsf_project_info"  serialNub="7" pathName="buildStyle" primary="1" type="1"   outputType="1" outputKey="buildStyle" mustHaveResult="0" >
+			<describe>建筑形式</describe>
+		</extractItem>
+		<extractItem jobName="tmsf_project_info"  serialNub="8" pathName="projectCompany" primary="1" type="1"   outputType="1" outputKey="projectCompany" mustHaveResult="0" >
+			<describe>项目公司</describe>
+		</extractItem>
+		<extractItem jobName="tmsf_project_info"  serialNub="9" pathName="capacityRate" primary="1" type="1"   outputType="1" outputKey="capacityRate" mustHaveResult="0" >
+			<describe>容积率</describe>
+		</extractItem>
+		<extractItem jobName="tmsf_project_info"  serialNub="10" pathName="greeningRate" primary="1" type="1"   outputType="1" outputKey="greeningRate" mustHaveResult="0" >
+			<describe>绿化率</describe>
+		</extractItem>
+		<extractItem jobName="tmsf_project_info"  serialNub="11" pathName="coversArea" primary="1" type="1"   outputType="1" outputKey="coversArea" mustHaveResult="0" >
+			<describe>占地面积</describe>
+		</extractItem>
+		<extractItem jobName="tmsf_project_info"  serialNub="12" pathName="buildArea" primary="1" type="1"   outputType="1" outputKey="buildArea" mustHaveResult="0" >
+			<describe>建筑面积</describe>
+		</extractItem>
+		<extractItem jobName="tmsf_project_info"  serialNub="13" pathName="totalHouses" primary="1" type="1"   outputType="1" outputKey="totalHouses" mustHaveResult="0" >
+			<describe>总户数</describe>
+		</extractItem>
+		<extractItem jobName="tmsf_project_info"  serialNub="14" pathName="parkingInfo" primary="1" type="1"   outputType="1" outputKey="parkingInfo" mustHaveResult="0" >
+			<describe>车位信息</describe>
+		</extractItem>
+		<extractItem jobName="tmsf_project_info"  serialNub="15" pathName="propertyCompany" primary="1" type="1"   outputType="1" outputKey="propertyCompany" mustHaveResult="0" >
+			<describe>物业公司</describe>
+		</extractItem>
+		<extractItem jobName="tmsf_project_info"  serialNub="16" pathName="propertyLife" primary="1" type="1"   outputType="1" outputKey="propertyLife" mustHaveResult="0" >
+			<describe>产权年限</describe>
+		</extractItem>
+		<extractItem jobName="tmsf_project_info"  serialNub="17" pathName="longitude" primary="1" type="7"   outputType="1" outputKey="longitude" mustHaveResult="0" >
+			<describe>经度</describe>
+		</extractItem>
+		<extractItem jobName="tmsf_project_info"  serialNub="18" pathName="latitude" primary="1" type="7"   outputType="1" outputKey="latitude" mustHaveResult="0" >
+			<describe>纬度</describe>
+		</extractItem>
+		<extractItem jobName="tmsf_project_info"  serialNub="19" pathName="presaleUrl" primary="1" type="2"   outputType="0" outputKey="presaleUrl" mustHaveResult="0" >
+			<describe>预售页面url</describe>
+		</extractItem>
+</jobProfile>

@@ -1,10 +1,4 @@
-
-$(function() {
-	// 加载数据
-	loadTable("/crawler/job/queues", "get", "");
-});
-
-function loadTable(url, method, params) {
+function loadQueueTable(url, method, params) {
 	if ("get" == method) {
 		$.get(url, function(result) {
 			var errCode = result.errCode;
@@ -38,27 +32,97 @@ function showQueueTable(data) {
 	}
 }
 
+
+function showQueueInfo(queueName) {
+	var queueCursor = $("#queueCursor").val();
+	var url = "/crawler/queue/getQueueInfo/" + queueName+"/"+queueCursor;
+	var job_queue_div = $("#job_queue_div");
+	var job_queue_table=job_queue_div.find("table");
+	$.get(url, function(result) {
+		var dataMap=result.data;
+		var queueCursor=dataMap.queueCursor;
+		var queueData=dataMap.list;
+		if(null!=queueData&&queueData.length>0){
+			$("#queueCursor").val(queueCursor);
+			job_queue_table.find("[name='job_queue_data']").remove();
+			job_queue_div.find("[id='job_queue_div_name']").html("队列[<span style='color:#FF0000'>"+queueName+"</span>]信息");
+			for (var i = 0; i < queueData.length; i++) {
+				var page=queueData[i];
+				var tr = $("<tr name='job_queue_data'></tr>");
+				$("<td><span style='color:#FF0000;font-size:6px;'>" + page.originalUrl + "</span></td>").appendTo(tr);
+				
+				var operationTd = $("<td></td>");
+				var operation = "<a  href=\"javascript:delErrQueue('" + page.pageKey
+				+ "')\">删除</a>&nbsp;";
+				operation += "<a href=\"javascript:fillQueue('" + page.pageKey
+						+ "')\">处理</a>&nbsp;";
+				$(operation).appendTo(operationTd);
+				operationTd.appendTo(tr);
+				tr.appendTo(job_queue_table);
+			}
+			showLayer(job_queue_div);
+		}
+	});
+}
+
+function showErrQueueInfo(queueName) {
+	var errQueueIndex = $("#errQueueIndex").val();
+	var url = "/crawler/queue/getErrQueueInfo/" + queueName+"/"+errQueueIndex;
+	var job_queue_div = $("#job_queue_div");
+	var job_queue_table=job_queue_div.find("table");
+	$.get(url, function(result) {
+		var queueData=result.data;
+		if(null!=queueData&&queueData.length>0){
+			job_queue_table.find("[name='job_queue_data']").remove();
+			job_queue_div.find("[id='job_queue_div_name']").html("异常队列[<span style='color:#FF0000'>"+queueName+"</span>]信息");
+			for (var i = 0; i < queueData.length; i++) {
+				var page=queueData[i];
+				var tr = $("<tr name='job_queue_data'></tr>");
+				$("<td><span style='color:#FF0000;font-size:6px;'>" + page.originalUrl + "</span></td>").appendTo(tr);
+				
+				var operationTd = $("<td></td>");
+				var operation = "<a  href=\"javascript:delErrQueue('" + page.pageKey
+				+ "')\">删除</a>&nbsp;";
+				operation += "<a href=\"javascript:fillQueue('" + page.pageKey
+						+ "')\">处理</a>&nbsp;";
+				$(operation).appendTo(operationTd);
+				operationTd.appendTo(tr);
+				tr.appendTo(job_queue_table);
+			}
+			showLayer(job_queue_div);
+		}
+	});
+}
+
+function delErrQueue(pageKey) {
+	var url = "/crawler/queue/delErrQueue/" + pageKey;
+	$.get(url, function(result) {
+		alert(result.msg);
+	});
+}
+
+function doErrQueue(pageKey) {
+	
+}
+
+
 function repairQueue(queueName) {
 	if (window.confirm("do you repair queue:"+queueName)) {
-		var url = "/crawler/job/queue/repair/" + queueName;
+		var url = "/crawler/queue/repairQueue/" + queueName;
 		$.get(url, function(result) {
 			alert(result.msg);
-			location.reload(true);   
 		});
 	}
 }
-
+//location.reload(true); 
 function cleanQueue(queueName) {
 	if (window.confirm("do you clean queue:"+queueName)) {
-		var url = "/crawler/job/queue/clean/" + queueName;
+		var url = "/crawler/queue/cleanQueue/" + queueName;
 		$.get(url, function(result) {
 			alert(result.msg);
-			location.reload(true); 
 		});
 	}
 }
-
-
 
 
 
