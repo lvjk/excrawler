@@ -15,7 +15,7 @@ PID_FILE=$SPIDER_HOME'/bin/program.pid'
 
 CLASSPATH=${SPIDER_HOME}'/conf'
 
-CLASSPATH=$CLASSPATH;${SPIDER_HOME}'/bin/spider.jar'
+#CLASSPATH=$CLASSPATH;${SPIDER_HOME}'/bin/spider.jar'
 
 
 #-------------------------- class path jar package -----------------------

@@ -6,7 +6,7 @@ set SPIDER_HOME=%SPIDER_HOME:\bin\run.bat=%
 @echo %SPIDER_HOME%
 :::::::::: set conf
 set CLASSPATH=%CLASSPATH%;%SPIDER_HOME%\conf
-set CLASSPATH=%CLASSPATH%;%SPIDER_HOME%\bin\spider.jar
+::::::::::set CLASSPATH=%CLASSPATH%;%SPIDER_HOME%\bin\spider.jar
 
 FOR %%F IN (%SPIDER_HOME%\lib\*.jar) DO call :addcp %%F
 goto extlibe
