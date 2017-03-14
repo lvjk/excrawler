@@ -2,18 +2,13 @@ package six.com.crawler.common.service.impl;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.DateFormatUtils;
-import org.apache.commons.lang3.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import six.com.crawler.admin.api.ResponseMsg;
-import six.com.crawler.common.DateFormats;
 import six.com.crawler.common.RedisManager;
 import six.com.crawler.common.dao.JobSnapshotDao;
 import six.com.crawler.common.dao.JobDao;
@@ -44,7 +38,7 @@ import six.com.crawler.common.entity.Node;
 import six.com.crawler.common.entity.PageQuery;
 import six.com.crawler.common.entity.WorkerErrMsg;
 import six.com.crawler.common.service.JobService;
-import six.com.crawler.schedule.AbstractSchedulerManager;
+import six.com.crawler.schedule.MasterAbstractSchedulerManager;
 import six.com.crawler.schedule.RegisterCenter;
 import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.extract.ExtractItem;
@@ -76,7 +70,7 @@ public class JobServiceImpl implements JobService {
 	private WorkerErrMsgDao workerErrMsgDao;
 
 	@Autowired
-	private AbstractSchedulerManager commonScheduleManager;
+	private MasterAbstractSchedulerManager scheduleManager;
 
 	@Autowired
 	private RedisManager redisManager;
@@ -95,20 +89,19 @@ public class JobServiceImpl implements JobService {
 		List<Job> jobs = null;
 		int totalSize = 0;
 		pageIndex = pageIndex * pageSize;
-		//如果查询jobName==* 那么默认查询 本地节点任务
+		// 如果查询jobName==* 那么默认查询 本地节点任务
 		if ("*".equals(jobName)) {
 			jobs = new ArrayList<>();
-			String localNode = getCommonScheduleManager().getCurrentNode().getName();
-			//优先获取运行中的任务
-			List<JobSnapshot> jobSnapshots = getRegisterCenter().getJobSnapshots(localNode);
-			int end=pageIndex+pageSize;
-			if (jobSnapshots.size()>0) {
-				if(jobSnapshots.size()>end){
-					jobSnapshots=jobSnapshots.subList(pageIndex, end);
-				}else if(jobSnapshots.size()>pageIndex&&jobSnapshots.size()<end){
-					jobSnapshots=jobSnapshots.subList(pageIndex, jobSnapshots.size());
-				}else{
-					jobSnapshots=Collections.emptyList();
+			// 优先获取运行中的任务
+			List<JobSnapshot> jobSnapshots = getRegisterCenter().getJobSnapshots();
+			int end = pageIndex + pageSize;
+			if (jobSnapshots.size() > 0) {
+				if (jobSnapshots.size() > end) {
+					jobSnapshots = jobSnapshots.subList(pageIndex, end);
+				} else if (jobSnapshots.size() > pageIndex && jobSnapshots.size() < end) {
+					jobSnapshots = jobSnapshots.subList(pageIndex, jobSnapshots.size());
+				} else {
+					jobSnapshots = Collections.emptyList();
 				}
 				totalSize = jobSnapshots.size();
 				Job job = null;
@@ -117,31 +110,25 @@ public class JobServiceImpl implements JobService {
 					jobs.add(job);
 				}
 			}
-			List<Job> queryJobs =jobDao.queryByNode(localNode);
-			totalSize = queryJobs.size();
-			//如果运行中任务数量==0 那么根据本地节点分页查询
-			if(jobs.size()==0){
-				if(queryJobs.size()>end){
-					jobs=queryJobs.subList(pageIndex, end);
-				}else if(queryJobs.size()>pageIndex&&queryJobs.size()<end){
-					jobs=queryJobs.subList(pageIndex, queryJobs.size());
+			// 如果查询的运行job小于分页数量那么 再查询数据库补充 pageSize
+			if (jobs.size() < pageSize) {
+				jobName = "";
+				List<Job> queryJobs = jobDao.pageQuery(jobName, pageIndex, pageSize);
+				if (queryJobs.size() > 0) {
+					totalSize = queryJobs.get(0).getTotalSize();
 				}
-			}else{
-				
-				if(jobs.size()<pageSize){
-					for(Job job:queryJobs){
-						if(!jobs.contains(job)){
-							jobs.add(job);
-							if(jobs.size()>=pageSize){
-								break;
-							}
+				for (Job job : queryJobs) {
+					if (!jobs.contains(job)) {
+						jobs.add(job);
+						if (jobs.size() >= pageSize) {
+							break;
 						}
 					}
 				}
 			}
 		} else {
 			jobs = jobDao.pageQuery(jobName, pageIndex, pageSize);
-			if(jobs.size()>0){
+			if (jobs.size() > 0) {
 				totalSize = jobs.get(0).getTotalSize();
 			}
 		}
@@ -197,20 +184,23 @@ public class JobServiceImpl implements JobService {
 	}
 
 	@Transactional
-	public void reportJobSnapshot(String nodeName, String jobName) {
-		JobSnapshot jobSnapshot = getJobSnapshotFromRegisterCenter(nodeName, jobName);
-		jobSnapshotDao.update(jobSnapshot);
-		List<WorkerSnapshot> workerSnapshots = jobSnapshot.getWorkerSnapshots();
-		if (null != workerSnapshots) {
-			workerSnapshotDao.batchSave(workerSnapshots);
-			for (WorkerSnapshot workerSnapshot : workerSnapshots) {
-				if (null != workerSnapshot.getWorkerErrMsgs() && workerSnapshot.getWorkerErrMsgs().size() > 0) {
-					workerErrMsgDao.batchSave(workerSnapshot.getWorkerErrMsgs());
-				}
+	public void reportJobSnapshot(String jobName) {
+		JobSnapshot jobSnapshot = getJobSnapshotFromRegisterCenter(jobName);
+		if (null != jobSnapshot) {
+			jobSnapshotDao.update(jobSnapshot);
+			List<WorkerSnapshot> workerSnapshots = jobSnapshot.getWorkerSnapshots();
+			if (null != workerSnapshots) {
+				workerSnapshotDao.batchSave(workerSnapshots);
+				for (WorkerSnapshot workerSnapshot : workerSnapshots) {
+					if (null != workerSnapshot.getWorkerErrMsgs() && workerSnapshot.getWorkerErrMsgs().size() > 0) {
+						workerErrMsgDao.batchSave(workerSnapshot.getWorkerErrMsgs());
+					}
 
+				}
 			}
+			registerCenter.delWorkerSnapshots(jobName);
+			registerCenter.delJobSnapshot(jobName);
 		}
-		registerCenter.delJobSnapshot(nodeName, jobName);
 	}
 
 	public JobSnapshot queryLastJobSnapshotFromHistory(String excludeJobSnapshotId, String jobName) {
@@ -228,40 +218,51 @@ public class JobServiceImpl implements JobService {
 		return result;
 	}
 
-	public JobSnapshot getJobSnapshotFromRegisterCenter(String nodeName, String jobName, String queueName) {
-		JobSnapshot jobSnapshot = null;
+	public List<JobSnapshot> getJobSnapshotFromRegisterCenter(List<Map<String, String>> list) {
+		List<JobSnapshot> result = null;
+		if (null != list) {
+			result = new ArrayList<JobSnapshot>();
+			String jobName = null;
+			String queueName = null;
+			for (Map<String, String> map : list) {
+				jobName = map.get("name");
+				queueName = map.get("queueName");
+				JobSnapshot jobSnapshot = null;
+				jobSnapshot = getJobSnapshotFromRegisterCenter(jobName);
+				if (null == jobSnapshot) {
+					jobSnapshot = new JobSnapshot(jobName);
+				}
+				String tempProxyKey = RedisWorkQueue.PRE_PROXY_QUEUE_KEY + queueName;
+				int proxySize = redisManager.llen(tempProxyKey);
 
-		jobSnapshot = getJobSnapshotFromRegisterCenter(nodeName, jobName);
-		if (null == jobSnapshot) {
-			jobSnapshot = new JobSnapshot(nodeName, jobName);
+				String tempRealKey = RedisWorkQueue.PRE_QUEUE_KEY + queueName;
+				int realSize = redisManager.hllen(tempRealKey);
+
+				String tempErrKey = RedisWorkQueue.PRE_ERR_QUEUE_KEY + queueName;
+				int errSize = redisManager.llen(tempErrKey);
+
+				jobSnapshot.setQueueName(queueName);
+				jobSnapshot.setProxyQueueCount(proxySize);
+				jobSnapshot.setRealQueueCount(realSize);
+				jobSnapshot.setErrQueueCount(errSize);
+				result.add(jobSnapshot);
+			}
+		} else {
+			result = Collections.emptyList();
 		}
-		String tempProxyKey = RedisWorkQueue.PRE_PROXY_QUEUE_KEY + queueName;
-		int proxySize = redisManager.llen(tempProxyKey);
-
-		String tempRealKey = RedisWorkQueue.PRE_QUEUE_KEY + queueName;
-		int realSize = redisManager.hllen(tempRealKey);
-
-		String tempErrKey = RedisWorkQueue.PRE_ERR_QUEUE_KEY + queueName;
-		int errSize = redisManager.llen(tempErrKey);
-
-		jobSnapshot.setQueueName(queueName);
-		jobSnapshot.setProxyQueueCount(proxySize);
-		jobSnapshot.setRealQueueCount(realSize);
-		jobSnapshot.setErrQueueCount(errSize);
-
-		return jobSnapshot;
+		return result;
 	}
 
 	@Override
-	public JobSnapshot getJobSnapshotFromRegisterCenter(String hostNode, String jobName) {
-		JobSnapshot jobSnapshot = registerCenter.getJobSnapshot(hostNode, jobName);
+	public JobSnapshot getJobSnapshotFromRegisterCenter(String jobName) {
+		JobSnapshot jobSnapshot = registerCenter.getJobSnapshot(jobName);
 		if (null != jobSnapshot) {
 			// 判断任务是否运行过
 			if (jobSnapshot.getEnumState() == JobSnapshotState.EXECUTING
 					|| jobSnapshot.getEnumState() == JobSnapshotState.SUSPEND
 					|| jobSnapshot.getEnumState() == JobSnapshotState.STOP
 					|| jobSnapshot.getEnumState() == JobSnapshotState.FINISHED) {
-				List<WorkerSnapshot> workerSnapshots = getWorkSnapshotsFromRegisterCenter(hostNode, jobName);
+				List<WorkerSnapshot> workerSnapshots = getWorkSnapshotsFromRegisterCenter(jobName);
 				totalWorkerSnapshot(jobSnapshot, workerSnapshots);
 				jobSnapshot.setWorkerSnapshots(workerSnapshots);
 			}
@@ -278,18 +279,7 @@ public class JobServiceImpl implements JobService {
 			int minProcessTime = -1;
 			int avgProcessTime = 0;
 			int errCount = 0;
-			Date endTime = null;
 			for (WorkerSnapshot workerSnapshot : workerSnapshots) {
-				try {
-					if (StringUtils.isNoneBlank(workerSnapshot.getEndTime())) {
-						Date tempEndTime = DateUtils.parseDate(workerSnapshot.getEndTime(), DateFormats.DATE_FORMAT_1);
-						if (null == endTime || tempEndTime.after(endTime)) {
-							endTime = tempEndTime;
-						}
-					}
-				} catch (ParseException e) {
-					LOG.error(e.getMessage());
-				}
 				totalProcessCount += workerSnapshot.getTotalProcessCount();
 				totalResultCount += workerSnapshot.getTotalResultCount();
 				totalProcessTime += workerSnapshot.getTotalProcessTime();
@@ -301,9 +291,6 @@ public class JobServiceImpl implements JobService {
 				}
 				avgProcessTime += workerSnapshot.getAvgProcessTime();
 				errCount += workerSnapshot.getErrCount();
-			}
-			if (null != endTime) {
-				jobSnapshot.setEndTime(DateFormatUtils.format(endTime, DateFormats.DATE_FORMAT_1));
 			}
 			jobSnapshot.setTotalProcessCount(totalProcessCount);
 			jobSnapshot.setTotalResultCount(totalResultCount);
@@ -330,6 +317,10 @@ public class JobServiceImpl implements JobService {
 	@Override
 	public void updateJobSnapshotToRegisterCenter(JobSnapshot jobSnapshot) {
 		registerCenter.updateJobSnapshot(jobSnapshot);
+	}
+	
+	public void delJobSnapshotFromRegisterCenter(String jobName){
+		registerCenter.delJobSnapshot(jobName);
 	}
 
 	@Override
@@ -399,8 +390,8 @@ public class JobServiceImpl implements JobService {
 	}
 
 	@Override
-	public List<WorkerSnapshot> getWorkSnapshotsFromRegisterCenter(String nodeName, String jobName) {
-		List<WorkerSnapshot> result = registerCenter.getWorkerSnapshots(nodeName, jobName);
+	public List<WorkerSnapshot> getWorkSnapshotsFromRegisterCenter(String jobName) {
+		List<WorkerSnapshot> result = registerCenter.getWorkerSnapshots(jobName);
 		return result;
 	}
 
@@ -420,9 +411,9 @@ public class JobServiceImpl implements JobService {
 			jobs.sort(new Comparator<Job>() {
 				@Override
 				public int compare(Job job1, Job job2) {
-					if (commonScheduleManager.isRunning(job1) && !commonScheduleManager.isRunning(job2)) {
+					if (scheduleManager.isRunning(job1) && !scheduleManager.isRunning(job2)) {
 						return -1;
-					} else if (commonScheduleManager.isRunning(job2) && !commonScheduleManager.isRunning(job1)) {
+					} else if (scheduleManager.isRunning(job2) && !scheduleManager.isRunning(job1)) {
 						return 1;
 					} else {
 						if (job1.getLevel() < job2.getLevel()) {
@@ -446,12 +437,12 @@ public class JobServiceImpl implements JobService {
 		this.jobDao = jobDao;
 	}
 
-	public AbstractSchedulerManager getCommonScheduleManager() {
-		return commonScheduleManager;
+	public MasterAbstractSchedulerManager getScheduleManager() {
+		return scheduleManager;
 	}
 
-	public void setCommonScheduleManager(AbstractSchedulerManager commonScheduleManager) {
-		this.commonScheduleManager = commonScheduleManager;
+	public void setScheduleManager(MasterAbstractSchedulerManager scheduleManager) {
+		this.scheduleManager = scheduleManager;
 	}
 
 	public RedisManager getRedisManager() {
@@ -509,5 +500,4 @@ public class JobServiceImpl implements JobService {
 	public void setWorkerErrMsgDao(WorkerErrMsgDao workerErrMsgDao) {
 		this.workerErrMsgDao = workerErrMsgDao;
 	}
-
 }

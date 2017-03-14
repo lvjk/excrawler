@@ -17,10 +17,10 @@ public class JobSnapshot implements Serializable {
 	private static final long serialVersionUID = -5076089473208316846L;
 	private String id;// id
 	private String name;// 任务名
+	private String localNode;// job所属哪个节点名字
 	private JobSnapshotState state=JobSnapshotState.READY;// 任务状态
 	private String tableName;//数据表名
 	private String queueName;// 任务队列名
-	private String localNode;// 宿主节点
 	private String startTime;// 开始时间
 	private String endTime;
 	private int isScheduled;//
@@ -39,8 +39,7 @@ public class JobSnapshot implements Serializable {
 	public JobSnapshot() {
 	}
 
-	public JobSnapshot(String localNode, String name) {
-		this.localNode = localNode;
+	public JobSnapshot(String name) {
 		this.name = name;
 		this.id = name + "_" + DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_2);
 	}
@@ -60,6 +59,15 @@ public class JobSnapshot implements Serializable {
 	public void setName(String name) {
 		this.name = name;
 	}
+	
+	public String getLocalNode() {
+		return localNode;
+	}
+
+	public void setLocalNode(String localNode) {
+		this.localNode = localNode;
+	}
+
 	
 	public int getState() {
 		return state.value();
@@ -87,14 +95,6 @@ public class JobSnapshot implements Serializable {
 
 	public void setQueueName(String queueName) {
 		this.queueName = queueName;
-	}
-
-	public String getLocalNode() {
-		return localNode;
-	}
-
-	public void setLocalNode(String localNode) {
-		this.localNode = localNode;
 	}
 
 	public String getStartTime() {

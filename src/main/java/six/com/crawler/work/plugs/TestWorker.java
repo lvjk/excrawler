@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import six.com.crawler.common.entity.JobSnapshot;
 import six.com.crawler.common.utils.ThreadUtils;
 import six.com.crawler.work.AbstractWorker;
-import six.com.crawler.work.WorkerLifecycleState;
 
 /**
  * @author 作者
@@ -23,9 +22,6 @@ public class TestWorker extends AbstractWorker {
 	protected void insideWork() throws Exception {
 		processCount++;
 		LOG.info("test worker process:" + processCount);
-//		if(processCount>10){
-//			getAndSetState(WorkerLifecycleState.WAITED);
-//		}
 		ThreadUtils.sleep(3000);
 	}
 

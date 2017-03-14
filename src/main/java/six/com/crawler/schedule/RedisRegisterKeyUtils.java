@@ -6,29 +6,37 @@ package six.com.crawler.schedule;
  */
 public class RedisRegisterKeyUtils {
 
-	final static String PRE_REDIS_REGISTER_CENTER = "spider_redis_register_center";
+	final static String PRE_REDIS_REGISTER_CENTER = "exCrawler";
 	
-	public static String getNodesPreKey() {
+	public static String getWorkerNodesPreKey() {
 		StringBuilder keySb = new StringBuilder();
 		keySb.append(PRE_REDIS_REGISTER_CENTER);
 		keySb.append("_nodes");
+		keySb.append("_worker");
 		return keySb.toString();
 	}
 	
-	public static String getNodesKey(String nodeName) {
-		StringBuilder keySb = new StringBuilder();
-		keySb.append(getNodesPreKey());
-		keySb.append("_");
-		keySb.append(nodeName);
-		return keySb.toString();
-	}
-	
-	
-	public static String getResetPreKey(String nodeName) {
+	public static String getMasterNodePreKey() {
 		StringBuilder keySb = new StringBuilder();
 		keySb.append(PRE_REDIS_REGISTER_CENTER);
+		keySb.append("_nodes");
+		keySb.append("_master");
+		return keySb.toString();
+	}
+
+	
+	public static String getWorkerNodeKey(String nodeName) {
+		StringBuilder keySb = new StringBuilder();
+		keySb.append(getWorkerNodesPreKey());
 		keySb.append("_");
 		keySb.append(nodeName);
+		return keySb.toString();
+	}
+	
+	
+	public static String getResetPreKey() {
+		StringBuilder keySb = new StringBuilder();
+		keySb.append(PRE_REDIS_REGISTER_CENTER);
 		return keySb.toString();
 	}
 	/**
@@ -40,11 +48,9 @@ public class RedisRegisterKeyUtils {
 	 *            job's name
 	 * @return job 注册 前缀key
 	 */
-	public static String getJobSnapshotsKey(String nodeName) {
+	public static String getJobSnapshotsKey() {
 		StringBuilder keySb = new StringBuilder();
 		keySb.append(PRE_REDIS_REGISTER_CENTER);
-		keySb.append("_");
-		keySb.append(nodeName);
 		keySb.append("_jobs");
 		return keySb.toString();
 	}
@@ -58,11 +64,9 @@ public class RedisRegisterKeyUtils {
 	 *            workerName 所属的jobName
 	 * @return worker 注册前缀key
 	 */
-	public static String getWorkerSnapshotsKey(String nodeName,String jobName) {
+	public static String getWorkerSnapshotsKey(String jobName) {
 		StringBuilder keySb = new StringBuilder();
 		keySb.append(PRE_REDIS_REGISTER_CENTER);
-		keySb.append("_");
-		keySb.append(nodeName);
 		keySb.append("_");
 		keySb.append(jobName);
 		keySb.append("_workers");
@@ -78,11 +82,9 @@ public class RedisRegisterKeyUtils {
 	 *            workerName 所属的jobName
 	 * @return 获取 worker 的序号分配key
 	 */
-	public static String getWorkerSerialNumbersKey(String nodeName,String jobName) {
+	public static String getWorkerSerialNumbersKey(String jobName) {
 		StringBuilder keySb = new StringBuilder();
 		keySb.append(PRE_REDIS_REGISTER_CENTER);
-		keySb.append("_");
-		keySb.append(nodeName);
 		keySb.append("_");
 		keySb.append(jobName);
 		keySb.append("_workers_sernum");

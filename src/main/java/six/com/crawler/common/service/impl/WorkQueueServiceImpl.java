@@ -28,16 +28,18 @@ import six.com.crawler.work.RedisWorkQueue;
 @Service
 public class WorkQueueServiceImpl implements WorkQueueService {
 
+	private int defaultPageSize = 10;
+
 	@Autowired
 	private RedisManager redisManager;
 
-	public Map<String,Object> getQueueInfo(String queueName,String queueCursor) {
-		Map<String,Object> resultMap=new HashMap<>();
+	public Map<String, Object> getQueueInfo(String queueName, String queueCursor) {
+		Map<String, Object> resultMap = new HashMap<>();
 		String queueKey = RedisWorkQueue.PRE_QUEUE_KEY + queueName;
-		List<Page> list=new ArrayList<>();
-		queueCursor=redisManager.hscan(queueKey, queueCursor, list, Page.class);
+		List<Page> list = new ArrayList<>();
+		queueCursor = redisManager.hscan(queueKey, queueCursor, list, Page.class);
 		resultMap.put("queueCursor", queueCursor);
-		resultMap.put("list",list);
+		resultMap.put("list", list);
 		return resultMap;
 	}
 
@@ -46,7 +48,8 @@ public class WorkQueueServiceImpl implements WorkQueueService {
 	 */
 	public List<Page> getErrQueueInfo(String queueName, int index) {
 		String errQueuekey = RedisWorkQueue.PRE_ERR_QUEUE_KEY + queueName;
-		List<Page> list = redisManager.lrange(errQueuekey, index, index + 10, Page.class);
+		List<Page> list = redisManager.lrange(errQueuekey, index * defaultPageSize, index + defaultPageSize,
+				Page.class);
 		return list;
 	}
 
@@ -115,6 +118,13 @@ public class WorkQueueServiceImpl implements WorkQueueService {
 		return "clean doneQueue[" + queueName + "] succeed";
 	}
 
+	@Override
+	public String againDoErrQueue(String queueName) {
+		RedisWorkQueue queue = new RedisWorkQueue(redisManager, queueName);
+		queue.againDoErrQueue();
+		return "again do errQueue[" + queueName + "] succeed";
+	}
+
 	public QueueInfo getQueueInfos(String queueName) {
 		QueueInfo tempQueueInfo = new QueueInfo();
 		tempQueueInfo.setQueueName(queueName);
@@ -140,5 +150,4 @@ public class WorkQueueServiceImpl implements WorkQueueService {
 	public void setRedisManager(RedisManager redisManager) {
 		this.redisManager = redisManager;
 	}
-
 }

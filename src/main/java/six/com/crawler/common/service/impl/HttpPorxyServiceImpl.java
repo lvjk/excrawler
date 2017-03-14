@@ -11,9 +11,9 @@ import org.springframework.stereotype.Service;
 
 import six.com.crawler.common.entity.HttpProxy;
 import six.com.crawler.common.entity.HttpProxyType;
+import six.com.crawler.common.http.HttpClient;
 import six.com.crawler.common.http.HttpProxyPool;
 import six.com.crawler.common.service.HttpPorxyService;
-import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.common.RedisManager;
 
 /**
@@ -26,7 +26,7 @@ public class HttpPorxyServiceImpl implements HttpPorxyService {
 	final static Logger LOG = LoggerFactory.getLogger(HttpPorxyServiceImpl.class);
 
 	@Autowired
-	private AbstractSchedulerManager schedulerManager;
+	private HttpClient httpClient;
 
 	@Autowired
 	private RedisManager redisManager;
@@ -48,7 +48,7 @@ public class HttpPorxyServiceImpl implements HttpPorxyService {
 
 	@Override
 	public String addHttpProxy(HttpProxy httpProxy) {
-		if (schedulerManager.getHttpClient().isValidHttpProxy(httpProxy)) {
+		if (getHttpClient().isValidHttpProxy(httpProxy)) {
 			redisManager.lock(HttpProxyPool.REDIS_HTTP_PROXY_POOL);
 			try {
 				redisManager.hset(HttpProxyPool.REDIS_HTTP_PROXY_POOL, httpProxy.toString(), httpProxy);
@@ -63,8 +63,9 @@ public class HttpPorxyServiceImpl implements HttpPorxyService {
 
 	@Override
 	public String testHttpProxy(HttpProxy httpProxy) {
-		HttpProxy getHttpProxy=redisManager.hget(HttpProxyPool.REDIS_HTTP_PROXY_POOL, httpProxy.toString(), HttpProxy.class);
-		if (schedulerManager.getHttpClient().isValidHttpProxy(getHttpProxy)) {
+		HttpProxy getHttpProxy = redisManager.hget(HttpProxyPool.REDIS_HTTP_PROXY_POOL, httpProxy.toString(),
+				HttpProxy.class);
+		if (getHttpClient().isValidHttpProxy(getHttpProxy)) {
 			return "this httpProxy[" + getHttpProxy.toString() + "] is valid";
 		} else {
 			return "this httpProxy[" + getHttpProxy.toString() + "] is invalid";
@@ -83,21 +84,21 @@ public class HttpPorxyServiceImpl implements HttpPorxyService {
 	}
 
 	public void delAllHttpProxy() {
-//		redisManager.lock(HttpProxyPool.REDIS_HTTP_PROXY_POOL);
-//		try {
-//			redisManager.del(HttpProxyPool.REDIS_HTTP_PROXY_POOL + "_2");
-//			redisManager.del(HttpProxyPool.REDIS_HTTP_PROXY_POOL);
-//		} finally {
-//			redisManager.unlock(HttpProxyPool.REDIS_HTTP_PROXY_POOL);
-//		}
+		// redisManager.lock(HttpProxyPool.REDIS_HTTP_PROXY_POOL);
+		// try {
+		// redisManager.del(HttpProxyPool.REDIS_HTTP_PROXY_POOL + "_2");
+		// redisManager.del(HttpProxyPool.REDIS_HTTP_PROXY_POOL);
+		// } finally {
+		// redisManager.unlock(HttpProxyPool.REDIS_HTTP_PROXY_POOL);
+		// }
 	}
 
-	public AbstractSchedulerManager getSchedulerManager() {
-		return schedulerManager;
+	public HttpClient getHttpClient() {
+		return httpClient;
 	}
 
-	public void setSchedulerManager(AbstractSchedulerManager schedulerManager) {
-		this.schedulerManager = schedulerManager;
+	public void setHttpClient(HttpClient httpClient) {
+		this.httpClient = httpClient;
 	}
 
 	public RedisManager getRedisManager() {

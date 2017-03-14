@@ -61,9 +61,9 @@ public class RedisWorkQueue implements WorkQueue {
 			while (!isRepair || againGet) {
 				// 先从代理队列里获取头元素数据key 并移除
 				String dataKey = redisManager.lpop(proxyQueueKey, String.class);
-				if (isRepair&&null==dataKey) {
+				if (isRepair && null == dataKey) {
 					break;
-				}else{
+				} else {
 					if (null != dataKey) {
 						// 通过数据key 再获取数据
 						page = redisManager.hget(queueKey, dataKey, Page.class);
@@ -95,11 +95,11 @@ public class RedisWorkQueue implements WorkQueue {
 			if (queueKeyLlen != proxyQueueLlen) {
 				redisManager.del(proxyQueueKey);
 				String cursorStr = "0";
-				Map<String,Page> map = new HashMap<>();
+				Map<String, Page> map = new HashMap<>();
 				do {
-					cursorStr = redisManager.hscan(queueKey,cursorStr, map, Page.class);
-					map.keySet().stream().forEach(mapKey->{
-						redisManager.rpush(proxyQueueKey,mapKey);
+					cursorStr = redisManager.hscan(queueKey, cursorStr, map, Page.class);
+					map.keySet().stream().forEach(mapKey -> {
+						redisManager.rpush(proxyQueueKey, mapKey);
 					});
 					map.clear();
 				} while (!"0".equals(cursorStr));
@@ -219,5 +219,12 @@ public class RedisWorkQueue implements WorkQueue {
 	@Override
 	public void pushErr(Page page) {
 		redisManager.lpush(errQueueKey, page);
+	}
+
+	public void againDoErrQueue() {
+		Page errPage = null;
+		while (null != (errPage = redisManager.lpop(errQueueKey, Page.class))) {
+			push(errPage);
+		}
 	}
 }

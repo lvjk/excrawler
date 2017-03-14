@@ -29,7 +29,7 @@ public class WorkerSnapshot implements Serializable {
 	private int avgProcessTime;// 平均每次任务处理时间
 	private int errCount;// 任务异常数量
 	private List<WorkerErrMsg> workerErrMsgs;//job运行记录 异常集合
-
+	
 	public String getJobSnapshotId() {
 		return jobSnapshotId;
 	}

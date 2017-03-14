@@ -35,23 +35,46 @@ public class RedisRegisterCenter implements RegisterCenter {
 	private RedisManager redisManager;
 
 	@Override
-	public void reset(String nodeName) {
-		String patternKey = RedisRegisterKeyUtils.getResetPreKey(nodeName) + "*";
+	public void repair() {
+		String patternKey = RedisRegisterKeyUtils.getResetPreKey() + "*";
 		Set<String> keys = redisManager.keys(patternKey);
 		for (String key : keys) {
 			redisManager.del(key);
 		}
 	}
 
+	/**
+	 * 通过nodeName获取节点
+	 * 
+	 * @return
+	 */
+	public Node getMasterNode() {
+		String nodesKey = RedisRegisterKeyUtils.getMasterNodePreKey();
+		Node masterNode = redisManager.get(nodesKey, Node.class);
+		return masterNode;
+	}
+
+	/**
+	 * 注册节点
+	 * 
+	 * @param node
+	 * @param hearbeat
+	 *            节点信息的有效期 秒
+	 */
+	public void registerMasterNode(Node masterNode) {
+		String nodesKey = RedisRegisterKeyUtils.getMasterNodePreKey();
+		redisManager.set(nodesKey, masterNode);
+	}
+
 	public Node getNode(String nodeName) {
-		String nodesKey = RedisRegisterKeyUtils.getNodesKey(nodeName);
+		String nodesKey = RedisRegisterKeyUtils.getWorkerNodeKey(nodeName);
 		Node getNode = redisManager.get(nodesKey, Node.class);
 		return getNode;
 	}
 
 	@Override
 	public List<Node> getNodes() {
-		String nodesPreKey = RedisRegisterKeyUtils.getNodesPreKey() + "*";
+		String nodesPreKey = RedisRegisterKeyUtils.getWorkerNodesPreKey()+ "*";
 		Set<String> keys = redisManager.keys(nodesPreKey);
 		List<Node> result = new ArrayList<>();
 		for (String key : keys) {
@@ -61,34 +84,33 @@ public class RedisRegisterCenter implements RegisterCenter {
 		return result;
 	}
 
-	public void registerNode(Node node, int hearbeat) {
-		String nodesKey = RedisRegisterKeyUtils.getNodesKey(node.getName());
-		redisManager.set(nodesKey, node, hearbeat);
+	public void registerNode(Node node,int heartbeat) {
+		String nodesKey = RedisRegisterKeyUtils.getWorkerNodeKey(node.getName());
+		redisManager.set(nodesKey, node,heartbeat);
 	}
 
 	public void delNode(String nodeName) {
-		String nodesKey = RedisRegisterKeyUtils.getNodesKey(nodeName);
+		String nodesKey = RedisRegisterKeyUtils.getWorkerNodeKey(nodeName);
 		redisManager.del(nodesKey);
 	}
 
-	public JobSnapshot getJobSnapshot(String nodeName, String jobName) {
-		String jobSnapshotskeyskey = RedisRegisterKeyUtils.getJobSnapshotsKey(nodeName);
+	public JobSnapshot getJobSnapshot(String jobName) {
+		String jobSnapshotskeyskey = RedisRegisterKeyUtils.getJobSnapshotsKey();
 		JobSnapshot jobSnapshot = redisManager.hget(jobSnapshotskeyskey, jobName, JobSnapshot.class);
 		return jobSnapshot;
 	}
 
-	public List<JobSnapshot> getJobSnapshots(String nodeName) {
-		String jobSnapshotskeyskey = RedisRegisterKeyUtils.getJobSnapshotsKey(nodeName);
+	public List<JobSnapshot> getJobSnapshots() {
+		String jobSnapshotskeyskey = RedisRegisterKeyUtils.getJobSnapshotsKey();
 		Map<String, JobSnapshot> findMap = redisManager.hgetAll(jobSnapshotskeyskey, JobSnapshot.class);
 		return new ArrayList<>(findMap.values());
 	}
 
 	public void registerJobSnapshot(JobSnapshot jobSnapshot) {
-		String nodeName = jobSnapshot.getLocalNode();
 		String jobName = jobSnapshot.getName();
-		String jobSnapshotskey = RedisRegisterKeyUtils.getJobSnapshotsKey(nodeName);
-		String workerkey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(nodeName, jobName);
-		String jobWorkerSerialNumberkey = RedisRegisterKeyUtils.getWorkerSerialNumbersKey(nodeName, jobName);
+		String jobSnapshotskey = RedisRegisterKeyUtils.getJobSnapshotsKey();
+		String workerkey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(jobName);
+		String jobWorkerSerialNumberkey = RedisRegisterKeyUtils.getWorkerSerialNumbersKey(jobName);
 		redisManager.lock(jobSnapshotskey);
 		try {
 			// 先删除 过期job信息
@@ -97,8 +119,6 @@ public class RedisRegisterCenter implements RegisterCenter {
 			redisManager.del(jobWorkerSerialNumberkey);
 			// 先删除 过期workerkey 信息
 			redisManager.del(workerkey);
-			// 先删除 过期本地map worker信息
-			getJobsWorkerMap(jobName).clear();
 			// 注册JobSnapshot
 			updateJobSnapshot(jobSnapshot);
 		} finally {
@@ -107,7 +127,7 @@ public class RedisRegisterCenter implements RegisterCenter {
 	}
 
 	public void updateJobSnapshot(JobSnapshot jobSnapshot) {
-		String jobSnapshotskey = RedisRegisterKeyUtils.getJobSnapshotsKey(jobSnapshot.getLocalNode());
+		String jobSnapshotskey = RedisRegisterKeyUtils.getJobSnapshotsKey();
 		redisManager.lock(jobSnapshotskey);
 		try {
 			redisManager.hset(jobSnapshotskey, jobSnapshot.getName(), jobSnapshot);
@@ -116,13 +136,13 @@ public class RedisRegisterCenter implements RegisterCenter {
 		}
 	}
 
-	public void delJobSnapshot(String nodeName, String jobName) {
-		String jobSnapshotskey = RedisRegisterKeyUtils.getJobSnapshotsKey(nodeName);
+	public void delJobSnapshot(String jobName) {
+		String jobSnapshotskey = RedisRegisterKeyUtils.getJobSnapshotsKey();
 		redisManager.hdel(jobSnapshotskey, jobName);
 	}
 
-	public List<WorkerSnapshot> getWorkerSnapshots(String nodeName, String jobName) {
-		String workerSnapshotkey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(nodeName, jobName);
+	public List<WorkerSnapshot> getWorkerSnapshots(String jobName) {
+		String workerSnapshotkey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(jobName);
 		redisManager.lock(workerSnapshotkey);
 		List<WorkerSnapshot> workerSnapshots = new ArrayList<>();
 		try {
@@ -132,14 +152,6 @@ public class RedisRegisterCenter implements RegisterCenter {
 			redisManager.unlock(workerSnapshotkey);
 		}
 		return workerSnapshots;
-	}
-
-	public List<Worker> getWorkers(String jobName) {
-		return new ArrayList<>(getJobsWorkerMap(jobName).values());
-	}
-
-	public Worker getWorker(String jobName, String workerName) {
-		return getJobsWorkerMap(jobName).get(workerName);
 	}
 
 	public List<Worker> getLocalWorkers() {
@@ -154,25 +166,22 @@ public class RedisRegisterCenter implements RegisterCenter {
 	@Override
 	public void registerWorker(Worker worker) {
 		WorkerSnapshot workerSnapshot = worker.getWorkerSnapshot();
-		String workerSnapshotsKey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(workerSnapshot.getJobLocalNode(),
-				workerSnapshot.getJobName());
+		String workerSnapshotsKey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(workerSnapshot.getJobName());
 		redisManager.lock(workerSnapshotsKey);
 		try {
 			redisManager.hset(workerSnapshotsKey, workerSnapshot.getName(), workerSnapshot);
-			getJobsWorkerMap(workerSnapshot.getJobName()).put(worker.getName(), worker);
 		} finally {
 			redisManager.unlock(workerSnapshotsKey);
 		}
 	}
 
 	public void updateWorkerSnapshot(WorkerSnapshot workerSnapshot) {
-		String workerSnapshotKey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(workerSnapshot.getJobLocalNode(),
-				workerSnapshot.getJobName());
+		String workerSnapshotKey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(workerSnapshot.getJobName());
 		redisManager.hset(workerSnapshotKey, workerSnapshot.getName(), workerSnapshot);
 	}
 
-	public boolean workerIsAllWaited(String nodeName, String jobName) {
-		List<WorkerSnapshot> workerSnapshots = getWorkerSnapshots(nodeName, jobName);
+	public boolean workerIsAllWaited(String jobName) {
+		List<WorkerSnapshot> workerSnapshots = getWorkerSnapshots(jobName);
 		boolean result = true;
 		for (WorkerSnapshot workerSnapshot : workerSnapshots) {
 			// 判断其他工人是否还在运行
@@ -184,16 +193,26 @@ public class RedisRegisterCenter implements RegisterCenter {
 		return result;
 	}
 
-	public void delWorker(String nodeName, String jobName, String workerName) {
-		String Jobkey = RedisRegisterKeyUtils.getJobSnapshotsKey(nodeName);
-		String WorkerSnapshotkey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(nodeName, jobName);
-		String serialNumberkey = RedisRegisterKeyUtils.getWorkerSerialNumbersKey(nodeName, jobName);
+	
+	public void delWorkerSnapshots(String jobName){
+		String Jobkey = RedisRegisterKeyUtils.getJobSnapshotsKey();
+		String WorkerSnapshotkey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(jobName);
+		redisManager.lock(Jobkey);
+		try {
+			redisManager.del(WorkerSnapshotkey);
+		} finally {
+			redisManager.unlock(Jobkey);
+		}
+	}
+
+	public void delWorker1(String jobName, String workerName) {
+		String Jobkey = RedisRegisterKeyUtils.getJobSnapshotsKey();
+		String WorkerSnapshotkey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(jobName);
+		String serialNumberkey = RedisRegisterKeyUtils.getWorkerSerialNumbersKey(jobName);
 		redisManager.lock(Jobkey);
 		try {
 			// 删除注册在redis上的workinfo
 			redisManager.hdel(WorkerSnapshotkey, workerName);
-			// 删除本地缓存里的 worker 实例
-			getJobsWorkerMap(jobName).remove(workerName);
 			// 然后检查此job的worker size是否==0 如果是那么清理此job信息
 			if (redisManager.hgetAll(WorkerSnapshotkey, WorkerSnapshot.class).isEmpty()) {
 				// 先删除 worker过期信息
@@ -211,19 +230,10 @@ public class RedisRegisterCenter implements RegisterCenter {
 	}
 
 	@Override
-	public int getSerNumOfWorkerByJob(String nodeName, String jobName) {
-		String key = RedisRegisterKeyUtils.getWorkerSerialNumbersKey(nodeName, jobName);
+	public int getSerNumOfWorkerByJob(String jobName) {
+		String key = RedisRegisterKeyUtils.getWorkerSerialNumbersKey(jobName);
 		Long sernum = redisManager.getJedisCluster().incr(key);
 		return sernum.intValue();
-	}
-
-	private Map<String, Worker> getJobsWorkerMap(String jobName) {
-		Map<String, Worker> jobsWorkerMap = allJobWorkerMap.get(jobName);
-		if (null == jobsWorkerMap) {
-			jobsWorkerMap = new ConcurrentHashMap<>();
-			allJobWorkerMap.put(jobName, jobsWorkerMap);
-		}
-		return jobsWorkerMap;
 	}
 
 	public RedisManager getRedisManager() {

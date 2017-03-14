@@ -10,27 +10,27 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import six.com.crawler.common.entity.WorkerSnapshot;
-import six.com.crawler.common.service.ScheduledService;
+import six.com.crawler.common.service.MasterScheduledService;
 
 /**
  * @author six
  * @date 2016年1月14日 上午10:10:58 爬虫 调度 api
  */
 @Controller
-public class ScheduledApi extends BaseApi {
+public class MasterScheduledApi extends BaseApi {
 
 	@Autowired
-	private ScheduledService scheduledService;
+	private MasterScheduledService scheduledService;
 
-	public ScheduledService getScheduledService() {
+	public MasterScheduledService getScheduledService() {
 		return scheduledService;
 	}
 
-	public void setScheduledService(ScheduledService scheduledService) {
+	public void setScheduledService(MasterScheduledService scheduledService) {
 		this.scheduledService = scheduledService;
 	}
 
-	@RequestMapping(value = "/crawler/scheduled/execute/{jobName}", method = RequestMethod.GET)
+	@RequestMapping(value = "/crawler/master/scheduled/execute/{jobName}", method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseMsg<String> execute(@PathVariable("jobName") String jobName) {
 		ResponseMsg<String> msg = new ResponseMsg<>();
@@ -39,16 +39,7 @@ public class ScheduledApi extends BaseApi {
 		return msg;
 	}
 
-	@RequestMapping(value = "/crawler/scheduled/assistExecute/{jobName}", method = RequestMethod.GET)
-	@ResponseBody
-	public ResponseMsg<String> assistExecute(@PathVariable("jobName") String jobName) {
-		ResponseMsg<String> msg = new ResponseMsg<>();
-		String result = scheduledService.assistExecute(jobName);
-		msg.setMsg(result);
-		return msg;
-	}
-
-	@RequestMapping(value = "/crawler/scheduled/suspend/{jobName}", method = RequestMethod.GET)
+	@RequestMapping(value = "/crawler/master/scheduled/suspend/{jobName}", method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseMsg<String> suspend(@PathVariable("jobName") String jobName) {
 		ResponseMsg<String> msg = new ResponseMsg<>();
@@ -57,7 +48,7 @@ public class ScheduledApi extends BaseApi {
 		return msg;
 	}
 
-	@RequestMapping(value = "/crawler/scheduled/goon/{jobName}", method = RequestMethod.GET)
+	@RequestMapping(value = "/crawler/master/scheduled/goon/{jobName}", method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseMsg<String> goon(@PathVariable("jobName") String jobName) {
 		ResponseMsg<String> msg = new ResponseMsg<>();
@@ -66,7 +57,7 @@ public class ScheduledApi extends BaseApi {
 		return msg;
 	}
 
-	@RequestMapping(value = "/crawler/scheduled/stop/{jobName}", method = RequestMethod.GET)
+	@RequestMapping(value = "/crawler/master/scheduled/stop/{jobName}", method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseMsg<String> stop(@PathVariable("jobName") String jobName) {
 		ResponseMsg<String> msg = new ResponseMsg<>();
@@ -74,8 +65,17 @@ public class ScheduledApi extends BaseApi {
 		msg.setMsg(result);
 		return msg;
 	}
+	
+	@RequestMapping(value = "/crawler/master/scheduled/end/{jobName}", method = RequestMethod.GET)
+	@ResponseBody
+	public ResponseMsg<String> end(@PathVariable("jobName") String jobName) {
+		ResponseMsg<String> msg = new ResponseMsg<>();
+		String result = scheduledService.end(jobName);
+		msg.setMsg(result);
+		return msg;
+	}
 
-	@RequestMapping(value = "/crawler/scheduled/scheduled/{jobName}/{isScheduled}", method = RequestMethod.GET)
+	@RequestMapping(value = "/crawler/master/scheduled/scheduled/{jobName}/{isScheduled}", method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseMsg<String> scheduled(@PathVariable("jobName") String jobName,
 			@PathVariable("isScheduled") int isScheduled) {
@@ -85,7 +85,7 @@ public class ScheduledApi extends BaseApi {
 		return responseMsg;
 	}
 
-	@RequestMapping(value = "/crawler/scheduled/getWorkerInfo/{jobName}", method = RequestMethod.GET)
+	@RequestMapping(value = "/crawler/master/scheduled/getWorkerInfo/{jobName}", method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseMsg<List<WorkerSnapshot>> getWorkerInfo(@PathVariable("jobName") String jobName) {
 		ResponseMsg<List<WorkerSnapshot>> responseMsg = new ResponseMsg<>();

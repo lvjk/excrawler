@@ -34,80 +34,90 @@ public class HttpProxyPool {
 		this.restTime = restTime;
 	}
 
-	private void initPool() {
-		if(0==poolSize){
-			redisManager.lock(siteHttpProxyPoolKey);
-			try {
-				poolSize = redisManager.llen(siteHttpProxyPoolKey);
-				if (0 == poolSize) {
-					Map<String, HttpProxy> map = redisManager.hgetAll(HttpProxyPool.REDIS_HTTP_PROXY_POOL, HttpProxy.class);
-					if (null != map) {
-						for (HttpProxy httpProxy : map.values()) {
-							redisManager.lpush(siteHttpProxyPoolKey, httpProxy);
-						}
-						poolSize = map.size();
-					}
+	private int initPool() {
+		int poolSize = 0;
+		redisManager.lock(siteHttpProxyPoolKey);
+		try {
+			Map<String, HttpProxy> map = redisManager.hgetAll(HttpProxyPool.REDIS_HTTP_PROXY_POOL, HttpProxy.class);
+			if (null != map) {
+				for (HttpProxy httpProxy : map.values()) {
+					redisManager.lpush(siteHttpProxyPoolKey, httpProxy);
 				}
-			} finally {
-				redisManager.unlock(siteHttpProxyPoolKey);
-			}	
+				poolSize = map.size();
+			}
+
+		} finally {
+			redisManager.unlock(siteHttpProxyPoolKey);
 		}
+		return poolSize;
+
 	}
 
+	/**
+	 * 存在如果同时执行2个一个sitecode任务 先停止一个会导致后续拿不到代理
+	 * 
+	 * @return
+	 */
 	public HttpProxy getHttpProxy() {
-		initPool();
 		HttpProxy httpProxy = null;
 		if (httpProxyType == HttpProxyType.ENABLE_ONE || httpProxyType == HttpProxyType.ENABLE_MANY) {
 			while (true) {
 				int index = getProxyIndex();
-				if (index != -1) {
-					httpProxy = redisManager.lindex(siteHttpProxyPoolKey, index, HttpProxy.class);
-					long nowTime = System.currentTimeMillis();
-					long alreadyRestTime = nowTime - httpProxy.getLastUseTime();
-					LOG.info(
-							siteHttpProxyPoolKey + "[" + httpProxy.toString() + "] alreadyRestTime:" + alreadyRestTime);
-					if (alreadyRestTime >= restTime) {
-						httpProxy.setLastUseTime(nowTime);
-						redisManager.lset(siteHttpProxyPoolKey, index, httpProxy);
-						break;
+				httpProxy = redisManager.lindex(siteHttpProxyPoolKey, index, HttpProxy.class);
+				// 如果获取httpProxy==null 那么初始化站点http代理池
+				if (null == httpProxy) {
+					poolSize = initPool();
+					// 如果初始化代理池size>0 那么继续获取，否则抛异常
+					if (poolSize > 0) {
+						continue;
+					} else {
+						throw new RuntimeException("there isn't httpProxys in the HttpProxyPool["
+								+ HttpProxyPool.REDIS_HTTP_PROXY_POOL + "]");
 					}
-				} else {
+				}
+				long nowTime = System.currentTimeMillis();
+				long alreadyRestTime = nowTime - httpProxy.getLastUseTime();
+				LOG.info(
+						siteHttpProxyPoolKey + "'s index["+index+"] [" + httpProxy.toString() + "] alreadyRestTime:" + alreadyRestTime);
+				if (alreadyRestTime >= restTime) {
+					httpProxy.setLastUseTime(nowTime);
+					redisManager.lset(siteHttpProxyPoolKey, index, httpProxy);
+					break;
+				}
+			
+				if (index != -1) {} else {
 					throw new RuntimeException("get getProxyIndex:-1");
 				}
 			}
-		} else if (httpProxyType == HttpProxyType.ENABLE_ABU) {
-			httpProxy = redisManager.get(REDIS_HTTP_PROXY_POOL + "_2", HttpProxy.class);
 		}
 		return httpProxy;
 	}
 
 	private int getProxyIndex() {
-		int index = -1;
+		int index =0;
 		boolean flag = false;
-		if (poolSize > 0) {
-			try {
-				redisManager.lock(siteHttpProxyPoolKey);
-				do {
-					// 因为 incr 当key不存在时 先设置值=0，然后再自增，所以都是从1开始
-					Long tempIndex = redisManager.incr(siteHttpProxyIndexKey);
-					index = tempIndex.intValue() - 1;
-					if (index >= poolSize) {
-						redisManager.del(siteHttpProxyIndexKey);
-						flag = true;
-					} else {
-						break;
-					}
-				} while (flag);
-			} finally {
-				redisManager.unlock(siteHttpProxyPoolKey);
-			}
+		try {
+			redisManager.lock(siteHttpProxyPoolKey);
+			do {
+				// 因为 incr 当key不存在时 先设置值=0，然后再自增，所以都是从1开始
+				Long tempIndex = redisManager.incr(siteHttpProxyIndexKey);
+				index = tempIndex.intValue() - 1;
+				if (index >= poolSize&&0!=poolSize) {
+					redisManager.del(siteHttpProxyIndexKey);
+					flag = true;
+				} else {
+					break;
+				}
+			} while (flag);
+		} finally {
+			redisManager.unlock(siteHttpProxyPoolKey);
 		}
 		return index;
 	}
-	
-	public void destroy(){
+
+	public void destroy() {
 		redisManager.lock(siteHttpProxyPoolKey);
-		try {		
+		try {
 			redisManager.del(siteHttpProxyIndexKey);
 			redisManager.del(siteHttpProxyPoolKey);
 		} finally {

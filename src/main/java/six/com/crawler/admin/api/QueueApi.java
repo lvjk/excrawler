@@ -83,5 +83,15 @@ public class QueueApi {
 		msg.setMsg(result);
 		return msg;
 	}
+	
+	
+	@RequestMapping(value = "/crawler/queue/againDoErrQueue/{queueName}", method = RequestMethod.GET)
+	@ResponseBody
+	public ResponseMsg<String> againDoErrQueue(@PathVariable("queueName") String queueName) {
+		ResponseMsg<String> msg = new ResponseMsg<>();
+		String result = workQueueService.againDoErrQueue(queueName);
+		msg.setMsg(result);
+		return msg;
+	}
 
 }

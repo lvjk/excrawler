@@ -9,7 +9,7 @@ import six.com.crawler.common.entity.WorkerSnapshot;
 * @E-mail: 359852326@qq.com 
 * @date 创建时间：2017年2月24日 下午10:35:07 
 */
-public interface ScheduledService {
+public interface MasterScheduledService {
 
 	/**
 	 * 执行job
@@ -19,12 +19,6 @@ public interface ScheduledService {
 	 */
 	public String execute(String jobName);
 	
-	/**
-	 * 协助执行任务
-	 * @param jobName
-	 * @return
-	 */
-	public String assistExecute(String jobName);
 	
 	/**
 	 * 暂停执行job
@@ -49,6 +43,14 @@ public interface ScheduledService {
 	 * @return
 	 */
 	public String stop(String jobName);
+	
+	/**
+	 * 结束job
+	 * 
+	 * @param jobName
+	 * @return
+	 */
+	public String end(String jobName);
 	
 	
 	public String scheduled(String jobName);

@@ -85,5 +85,7 @@ public interface WorkQueue {
 	 * @param page
 	 */
 	public void pushErr(Page page);
+	
+	public void againDoErrQueue();
 
 }

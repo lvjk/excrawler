@@ -11,7 +11,7 @@ import org.springframework.boot.test.WebIntegrationTest;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import six.com.crawler.schedule.CommonSchedulerManager;
+import six.com.crawler.schedule.MasterSchedulerManager;
 import six.com.crawler.schedule.RegisterCenter;
 import six.com.crawler.common.RedisManager;
 import six.com.crawler.common.configure.SpiderConfigure;
@@ -43,7 +43,7 @@ public  class BaseTest extends AbstractJUnit4SpringContextTests {
 	protected final static Logger LOG = LoggerFactory.getLogger(BaseTest.class);
 
 	@Autowired
-	public CommonSchedulerManager jobWorkerManager;
+	public MasterSchedulerManager jobWorkerManager;
 
 	@Autowired
 	public SiteService siteService;
@@ -93,6 +93,9 @@ public  class BaseTest extends AbstractJUnit4SpringContextTests {
 	
 	@Autowired
 	public DataTableDao dataTableDao;
+	
+	@Autowired
+	public six.com.crawler.common.email.QQEmailClient QQEmailClient;
 	
 
 	static {

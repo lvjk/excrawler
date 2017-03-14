@@ -1,15 +1,11 @@
 package six.com.crawler.schedule;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import six.com.crawler.common.entity.Job;
-import six.com.crawler.common.entity.Node;
-import six.com.crawler.common.entity.Site;
 import six.com.crawler.common.http.HttpClient;
 import six.com.crawler.common.ocr.ImageDistinguish;
 import six.com.crawler.common.service.ClusterService;
@@ -18,21 +14,25 @@ import six.com.crawler.common.service.JobService;
 import six.com.crawler.common.service.PageService;
 import six.com.crawler.common.service.SiteService;
 import six.com.crawler.common.service.impl.ExtracterServiceImpl;
-import six.com.crawler.work.Worker;
+import six.com.crawler.cluster.ClusterManager;
 import six.com.crawler.common.RedisManager;
 import six.com.crawler.common.configure.SpiderConfigure;
+import six.com.crawler.common.email.QQEmailClient;
 
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年9月25日 下午2:04:35
  */
-public abstract class AbstractSchedulerManager implements SchedulerManager {
+public abstract class AbstractSchedulerManager implements SchedulerManager, InitializingBean {
 
 	final static Logger LOG = LoggerFactory.getLogger(AbstractSchedulerManager.class);
 
 	@Autowired
 	private SpiderConfigure configure;
+
+	@Autowired
+	private ClusterManager clusterManager;
 
 	@Autowired
 	private SiteService siteService;
@@ -60,12 +60,18 @@ public abstract class AbstractSchedulerManager implements SchedulerManager {
 
 	@Autowired
 	private ImageDistinguish imageDistinguish;
-	
+
 	@Autowired
 	private ClusterService clusterService;
 
-
 	private final static String WORKER_NAME_PREFIX = "job_worker";
+	
+	@Autowired
+	private QQEmailClient emailClient;
+
+	public void afterPropertiesSet() {
+		init();
+	}
 
 	/**
 	 * 通过job 获取一个worker name 名字统一有 前缀 : 节点+job 名字
@@ -79,54 +85,17 @@ public abstract class AbstractSchedulerManager implements SchedulerManager {
 		sbd.append(WORKER_NAME_PREFIX).append("_");
 		sbd.append(job.getLocalNode()).append("_");
 		sbd.append(job.getName()).append("_");
-		int serialNumber = getRegisterCenter().getSerNumOfWorkerByJob(job.getLocalNode(), job.getName());
+		int serialNumber = getRegisterCenter().getSerNumOfWorkerByJob(job.getName());
 		sbd.append(serialNumber);
 		return sbd.toString();
 	}
 
-	// 构建 job worker
-	protected Worker buildJobWorker(Job job) {
-		Worker newJobWorker = null;
-		String workerClass = job.getWorkerClass();
-		// 判断是否是htmljob 如果是那么调用 htmlJobWorkerBuilder 构建worker
-		Class<?> clz = null;
-		Constructor<?> constructor = null;
-		try {
-			clz = Class.forName(workerClass);
-		} catch (ClassNotFoundException e) {
-			LOG.error("ClassNotFoundException  err:" + workerClass, e);
-		}
-		if (null != clz) {
-			try {
-				constructor = clz.getConstructor();
-			} catch (NoSuchMethodException e) {
-				LOG.error("NoSuchMethodException getConstructor err:" + clz, e);
-			} catch (SecurityException e) {
-				LOG.error("SecurityException err" + clz, e);
-			}
-			if (null != constructor) {
-				try {
-					newJobWorker = (Worker) constructor.newInstance();
-					newJobWorker.bindManager(this);
-					newJobWorker.bindJob(job);
-				} catch (InstantiationException e) {
-					LOG.error("InstantiationException  err:" + workerClass, e);
-				} catch (IllegalAccessException e) {
-					LOG.error("IllegalAccessException  err:" + workerClass.concat("|")
-							.concat(AbstractSchedulerManager.class.getName()).concat("|").concat(Site.class.getName()),
-							e);
-				} catch (IllegalArgumentException e) {
-					LOG.error("IllegalArgumentException  err:" + workerClass.concat("|")
-							.concat(AbstractSchedulerManager.class.getName()).concat("|").concat(Site.class.getName()),
-							e);
-				} catch (InvocationTargetException e) {
-					LOG.error("InvocationTargetException  err:" + workerClass.concat("|")
-							.concat(AbstractSchedulerManager.class.getName()).concat("|").concat(Site.class.getName()),
-							e);
-				}
-			}
-		}
-		return newJobWorker;
+	public ClusterManager getClusterManager() {
+		return clusterManager;
+	}
+
+	public void setClusterManager(ClusterManager clusterManager) {
+		this.clusterManager = clusterManager;
 	}
 
 	public SpiderConfigure getConfigure() {
@@ -208,7 +177,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager {
 	public void setImageDistinguish(ImageDistinguish imageDistinguish) {
 		this.imageDistinguish = imageDistinguish;
 	}
-	
+
 	public ClusterService getClusterService() {
 		return clusterService;
 	}
@@ -216,6 +185,14 @@ public abstract class AbstractSchedulerManager implements SchedulerManager {
 	public void setClusterService(ClusterService clusterService) {
 		this.clusterService = clusterService;
 	}
+	
+	public QQEmailClient getEmailClient() {
+		return emailClient;
+	}
 
-	public abstract Node getCurrentNode();
+	public void setEmailClient(QQEmailClient emailClient) {
+		this.emailClient = emailClient;
+	}
+
+	protected abstract void init();
 }

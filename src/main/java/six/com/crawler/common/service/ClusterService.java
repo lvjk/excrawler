@@ -12,4 +12,6 @@ import six.com.crawler.common.entity.Node;
 public interface ClusterService {
 
 	List<Node> getClusterInfo();
+	
+	Node getNode(String nodeName);
 }

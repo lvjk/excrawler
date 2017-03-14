@@ -62,8 +62,15 @@ public interface WorkQueueService {
 	/**
 	 * 通过 queueName 修復指定任务队列
 	 * 
-	 * @param queueName
+	 * @param queueName againDoErrQueue
 	 * @return
 	 */
 	public String repairQueue(String queueName);
+	
+	/**
+	 * 将错误队列里的数据重新处理
+	 * @param queueName
+	 * @return
+	 */
+	public String againDoErrQueue(String queueName);
 }

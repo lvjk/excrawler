@@ -50,7 +50,8 @@ public class TmsfHouseInfoWorker extends AbstractCrawlWorker {
 		jsonKeyMap = new HashMap<>();
 		jsonKeyMap.put("buildingName", "buildingname");
 		jsonKeyMap.put("unitName", "unitname");
-		jsonKeyMap.put("houseId", "houseno");
+		jsonKeyMap.put("houseId", "houseid");
+		jsonKeyMap.put("houseNo", "houseno");
 		jsonKeyMap.put("status", "housestatename");
 		jsonKeyMap.put("houseUsage", "houseusage");
 		jsonKeyMap.put("buildingArea", "builtuparea");

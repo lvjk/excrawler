@@ -18,7 +18,23 @@ public interface RegisterCenter {
 	 * 
 	 * @param correctNodeName
 	 */
-	public void reset(String nodeName);
+	public void repair();
+	
+	
+	/**
+	 * 通过nodeName获取节点
+	 * @return
+	 */
+	public Node getMasterNode();
+	
+	/**
+	 * 注册节点
+	 * 
+	 * @param node
+	 * @param hearbeat
+	 *            节点信息的有效期 秒
+	 */
+	public void registerMasterNode(Node masterNode);
 	
 	/**
 	 * 通过nodeName获取节点
@@ -40,7 +56,7 @@ public interface RegisterCenter {
 	 * @param hearbeat
 	 *            节点信息的有效期 秒
 	 */
-	public void registerNode(Node node, int hearbeat);
+	public void registerNode(Node node,int heartbeat);
 	
 	
 	/**
@@ -55,13 +71,14 @@ public interface RegisterCenter {
 	 * @param node
 	 * @return
 	 */
-	public JobSnapshot getJobSnapshot(String nodeName,String jobName);
+	public JobSnapshot getJobSnapshot(String jobName);
 	
 	/**
 	 * 获取所有 JobSnapshot
 	 * @return
 	 */
-	public List<JobSnapshot> getJobSnapshots(String nodeName);
+	public List<JobSnapshot> getJobSnapshots();
+	
 	/**
 	 * 注册job 如果注册前已经存在的话那么会覆盖 把整个job信息注册进去
 	 * 
@@ -81,40 +98,10 @@ public interface RegisterCenter {
 	 * @param nodeName
 	 * @param jobName
 	 */
-	public void delJobSnapshot(String nodeName,String jobName);
+	public void delJobSnapshot(String jobName);
 	
 	
-	/**
-	 * 通过jobName 获取 所有 WorkerSnapshot集合
-	 * 
-	 * @param job
-	 * @return
-	 */
-	public List<WorkerSnapshot> getWorkerSnapshots(String nodeName,String jobName);
-	
-	/**
-	 * 通过jobName 获取 所有 jobWorker 集合
-	 * 
-	 * @param job
-	 * @return
-	 */
-	public List<Worker> getWorkers(String jobName);
-	
-	/**
-	 * 通过workerName 获取 jobWorker 实例
-	 * 
-	 * @param workerName
-	 * @return
-	 */
-	public Worker getWorker(String jobName, String workerName);
-
-	/**
-	 * 获取当前本地worker
-	 * 
-	 * @return
-	 */
-	public List<Worker> getLocalWorkers();
-	
+	public List<WorkerSnapshot> getWorkerSnapshots(String jobName);
 	/**
 	 * 注册 Worker
 	 * 
@@ -129,27 +116,19 @@ public interface RegisterCenter {
 	 */
 	public void updateWorkerSnapshot(WorkerSnapshot workerSnapshot);
 
-	/**
-	 * 检查注册运行job 的workers 是否全部wait
-	 * 
-	 * @param crawlerWorker
-	 * @param job
-	 * @return
-	 */
-	public boolean workerIsAllWaited(String nodeName,String jobName);
 
 	/**
 	 * 删除运行job和worker
 	 * 
 	 * @param job
 	 */
-	public void delWorker(String nodeName,String jobName,String workerName);
+	public void delWorkerSnapshots(String jobName);
 
 	/**
 	 * 
 	 * 
 	 * @return
 	 */
-	public int  getSerNumOfWorkerByJob(String nodeName,String jobName);
+	public int  getSerNumOfWorkerByJob(String jobName);
 
 }

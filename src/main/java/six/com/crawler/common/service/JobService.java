@@ -19,17 +19,21 @@ import six.com.crawler.common.entity.PageQuery;
  */
 public interface JobService extends DownloadAndUploadService {
 
-	
 	/**
-	 * 供控制层调用
-	 * 模糊查询jobName+？
-	 * @param ResponseMsg      返回前段的ResponseMsg
-	 * @param jobName          模糊查询的jobName
-	 * @param pageIndex        分页索引默认从0开始
-	 * @param pageSize         分页大小
+	 * 供控制层调用 模糊查询jobName+？
+	 * 
+	 * @param ResponseMsg
+	 *            返回前段的ResponseMsg
+	 * @param jobName
+	 *            模糊查询的jobName
+	 * @param pageIndex
+	 *            分页索引默认从0开始
+	 * @param pageSize
+	 *            分页大小
 	 * @return
 	 */
-	public void queryJobs(ResponseMsg<PageQuery<Job>> responseMsg,String jobName,int pageIndex, int pageSize);
+	public void queryJobs(ResponseMsg<PageQuery<Job>> responseMsg, String jobName, int pageIndex, int pageSize);
+
 	/**
 	 * 通过参数查询 job jobName String 任务名字 nodeName String 节点名字 isTrigger int 0 or 1
 	 * 是否开启调度
@@ -45,6 +49,7 @@ public interface JobService extends DownloadAndUploadService {
 	 * @return
 	 */
 	public Node totalNodeJobInfo(String nodeName);
+
 	/**
 	 * 查询job相关的所有信息
 	 * 
@@ -52,7 +57,6 @@ public interface JobService extends DownloadAndUploadService {
 	 * @return
 	 */
 	public Map<String, Object> queryJobInfo(String jobName);
-
 
 	/**
 	 * 通过参数parameters 查询
@@ -67,7 +71,7 @@ public interface JobService extends DownloadAndUploadService {
 	 * 
 	 * @param jobName
 	 */
-	public void reportJobSnapshot(String nodeName, String jobName);
+	public void reportJobSnapshot(String jobName);
 
 	/**
 	 * 通过任务名字查询最后一次 JobSnapshot
@@ -76,7 +80,7 @@ public interface JobService extends DownloadAndUploadService {
 	 *            jobName1;jobName2;jobName3;
 	 * @return
 	 */
-	public JobSnapshot queryLastJobSnapshotFromHistory(String excludeJobSnapshotId,String jobName);
+	public JobSnapshot queryLastJobSnapshotFromHistory(String excludeJobSnapshotId, String jobName);
 
 	/**
 	 * 通过任务名字查询历史 JobSnapshot
@@ -87,7 +91,7 @@ public interface JobService extends DownloadAndUploadService {
 	 */
 	public List<JobSnapshot> queryJobSnapshotsFromHistory(String jobName);
 
-	public JobSnapshot getJobSnapshotFromRegisterCenter(String nodeName, String jobName, String queueName);
+	public List<JobSnapshot> getJobSnapshotFromRegisterCenter(List<Map<String, String>> list);
 
 	/**
 	 * 通过job name获取 注册中心 JobSnapshot
@@ -95,7 +99,7 @@ public interface JobService extends DownloadAndUploadService {
 	 * @param jobName
 	 * @return
 	 */
-	public JobSnapshot getJobSnapshotFromRegisterCenter(String nodeName, String jobName);
+	public JobSnapshot getJobSnapshotFromRegisterCenter(String jobName);
 
 	/**
 	 * job's JobSnapshot缓存 此方法只能在job被手动和定时触发执行时调用一次
@@ -103,7 +107,7 @@ public interface JobService extends DownloadAndUploadService {
 	 * @param jobActivityInfo
 	 */
 	public void registerJobSnapshotToRegisterCenter(JobSnapshot jobSnapshot);
-	
+
 	public void saveJobSnapshot(JobSnapshot jobSnapshot);
 
 	/**
@@ -112,10 +116,12 @@ public interface JobService extends DownloadAndUploadService {
 	 * @param jobActivityInfo
 	 */
 	public void updateJobSnapshotToRegisterCenter(JobSnapshot jobSnapshot);
-	
-	public void updateJobSnapshot(JobSnapshot jobSnapshot);
 
+	public void updateJobSnapshot(JobSnapshot jobSnapshot);
 	
+	
+	public void delJobSnapshotFromRegisterCenter(String jobName);
+
 	/**
 	 * 通过任务名字查询任务正在运行活动信息
 	 * 
@@ -123,7 +129,7 @@ public interface JobService extends DownloadAndUploadService {
 	 *            jobName1;jobName2;jobName3;
 	 * @return
 	 */
-	public List<WorkerSnapshot> getWorkSnapshotsFromRegisterCenter(String nodeName, String jobName);
+	public List<WorkerSnapshot> getWorkSnapshotsFromRegisterCenter(String jobName);
 
 	/**
 	 * 更新job的 工作快照 快照至注册中心
@@ -131,7 +137,6 @@ public interface JobService extends DownloadAndUploadService {
 	 * @param jobActivityInfo
 	 */
 	public void updateWorkSnapshotToRegisterCenter(WorkerSnapshot workerSnapshot, boolean isSaveErrMsg);
-
 
 	/**
 	 * 查询job参数

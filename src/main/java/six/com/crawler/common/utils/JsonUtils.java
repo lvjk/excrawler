@@ -114,6 +114,16 @@ public class JsonUtils {
 		}
 		return getGson().toJson(ob);
 	}
+	
+	@SuppressWarnings("unchecked")
+	public static Map<String,Object> toMap(Object ob) {
+		if (null == ob) {
+			throw new RuntimeException("this ob must not null");
+		}
+		String json=getGson().toJson(ob);
+		Map<String,Object> map=toObject(json, Map.class);
+		return map;
+	}
 
 	public static <T> T toObject(String json, Class<T> clz) {
 		if (StringUtils.isBlank(json)) {

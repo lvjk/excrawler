@@ -141,14 +141,21 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 
 	@Override
 	protected void insideWork() throws Exception {
+		long startTime=System.currentTimeMillis();
 		doingPage = workQueue.pull();
+		long endTime=System.currentTimeMillis();
+		LOG.debug("workQueue pull time:" + (endTime-startTime));
 		if (null != doingPage) {
 			try {
 				LOG.info("processor page:" + doingPage.getOriginalUrl());
 				// 1.设置下载器代理
 				downer.setHttpProxy(httpProxyPool.getHttpProxy());
+				startTime=System.currentTimeMillis();
 				// 2. 下载数据
 				downer.down(doingPage);
+				endTime=System.currentTimeMillis();
+				LOG.debug("downer down time:" + (endTime-startTime));
+				startTime=System.currentTimeMillis();
 				// 3. 抽取前操作
 				beforeExtract(doingPage);
 				ResultContext resultContext = null;
@@ -162,11 +169,16 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 				afterExtract(doingPage, resultContext);
 				// 6.组装数据和设置默认字段
 				assembleExtractResult(resultContext);
+				endTime=System.currentTimeMillis();
+				LOG.debug("extracter extract time:" + (endTime-startTime));
+				startTime=System.currentTimeMillis();
 				if (null != store) {
 					// 7.存储数据
 					int storeCount = store.store(resultContext);
 					getWorkerSnapshot().setTotalResultCount(getWorkerSnapshot().getTotalResultCount() + storeCount);
 				}
+				endTime=System.currentTimeMillis();
+				LOG.debug("store time:" + (endTime-startTime));
 				// 8.记录操作数据
 				workQueue.finish(doingPage);// 完成page处理
 				// 9.完成操作

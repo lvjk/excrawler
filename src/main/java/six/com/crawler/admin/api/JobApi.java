@@ -1,6 +1,5 @@
 package six.com.crawler.admin.api;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -35,13 +34,11 @@ public class JobApi extends BaseApi {
 	@RequestMapping(value = "/crawler/job/query/{pageIndex}/{pageSize}/{jobName}", method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseMsg<PageQuery<Job>> queryJobs(@PathVariable("pageIndex") int pageIndex,
-			@PathVariable("pageSize") int pageSize,
-			@PathVariable("jobName") String jobName) {
+			@PathVariable("pageSize") int pageSize, @PathVariable("jobName") String jobName) {
 		ResponseMsg<PageQuery<Job>> responseMsg = createResponseMsg();
 		jobService.queryJobs(responseMsg, jobName, pageIndex, pageSize);
 		return responseMsg;
 	}
-
 
 	@RequestMapping(value = "/crawler/job/save", method = RequestMethod.POST)
 	@ResponseBody
@@ -73,29 +70,11 @@ public class JobApi extends BaseApi {
 	 * @param jobNameList
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
 	@MessageMapping("/jobSnapshot")
 	@SendTo("/topic/job/jobSnapshot")
-	public ResponseMsg<List<JobSnapshot>> jobSnapshot(List<Object> list) {
+	public ResponseMsg<List<JobSnapshot>> jobSnapshot(List<Map<String, String>> list) {
 		ResponseMsg<List<JobSnapshot>> msg = new ResponseMsg<>();
-		List<JobSnapshot> result = new ArrayList<>();
-		if (list != null) {
-			JobSnapshot jobSnapshot = null;
-			for (Object ob : list) {
-				if (ob instanceof Job) {
-					Job job = (Job) ob;
-					jobSnapshot = jobService.getJobSnapshotFromRegisterCenter(job.getLocalNode(), job.getName(),
-							job.getQueueName());
-				} else {
-					Map<String, String> map = (Map<String, String>) ob;
-					jobSnapshot = jobService.getJobSnapshotFromRegisterCenter(map.get("hostNode"), map.get("name"),
-							map.get("queueName"));
-				}
-				if (null != jobSnapshot) {
-					result.add(jobSnapshot);
-				}
-			}
-		}
+		List<JobSnapshot> result = jobService.getJobSnapshotFromRegisterCenter(list);
 		msg.setData(result);
 		return msg;
 	}

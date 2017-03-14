@@ -26,7 +26,7 @@ public class ScheduledJob implements org.quartz.Job {
 				.get(SCHEDULER_MANAGER_KEY);
 		Job job = (Job) context.getJobDetail().getJobDataMap().get(JOB_KEY);
 		LOG.info("定时触发job["+job.getName()+"],提交到待执行队列里");
-		scheduleManager.localExecute(job);
+		scheduleManager.execute(job);
 	}
 
 }

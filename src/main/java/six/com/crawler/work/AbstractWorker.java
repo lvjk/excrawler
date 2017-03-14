@@ -2,7 +2,6 @@ package six.com.crawler.work;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Random;
 import java.util.concurrent.locks.StampedLock;
 import java.util.concurrent.locks.Condition;
@@ -20,7 +19,7 @@ import six.com.crawler.common.entity.JobSnapshot;
 import six.com.crawler.common.entity.WorkerErrMsg;
 import six.com.crawler.common.utils.ExceptionUtils;
 import six.com.crawler.common.utils.ThreadUtils;
-import six.com.crawler.schedule.AbstractSchedulerManager;
+import six.com.crawler.schedule.WorkerAbstractSchedulerManager;
 import six.com.crawler.common.entity.WorkerSnapshot;
 
 /**
@@ -38,9 +37,11 @@ public abstract class AbstractWorker implements Worker {
 	// 用来Condition.await() 和condition.signalAll();
 	private final Condition condition = reentrantLock.newCondition();
 
-	private AbstractSchedulerManager manager;
+	private WorkerAbstractSchedulerManager manager;
 
 	private Job job;
+
+	private JobSnapshot jobSnapshot;
 
 	private volatile WorkerLifecycleState state = WorkerLifecycleState.READY;// 状态
 
@@ -53,14 +54,19 @@ public abstract class AbstractWorker implements Worker {
 
 	private long lastActivityTime;
 
-	private String jobSnapshotId;
-
-	private String currentNodeName;
 	// 随机对象 产生随机控制时间
 	private static Random randomDownSleep = new Random();
 
-	public void bindManager(AbstractSchedulerManager manager) {
+	public void bindManager(WorkerAbstractSchedulerManager manager) {
 		this.manager = manager;
+	}
+
+	public void bindWorkerSnapshot(WorkerSnapshot workerSnapshot) {
+		this.workerSnapshot = workerSnapshot;
+	}
+
+	public void bindJobSnapshot(JobSnapshot jobSnapshot) {
+		this.jobSnapshot = jobSnapshot;
 	}
 
 	public void bindJob(Job job) {
@@ -69,28 +75,14 @@ public abstract class AbstractWorker implements Worker {
 
 	@Override
 	public void init() {
-		String jobHostNode = getJob().getLocalNode();
 		String jobName = getJob().getName();
 		MDC.put("jobName", jobName);
 		String lockKey = jobName + "_worker_init";
 		try {
 			getManager().getRedisManager().lock(lockKey);
-			JobSnapshot jobSnapshot = getManager().getJobService().getJobSnapshotFromRegisterCenter(jobHostNode,
-					jobName);
-			String workerName = getManager().getWorkerNameByJob(job);
-			this.currentNodeName = manager.getCurrentNode().getName();
-			workerSnapshot = new WorkerSnapshot();
-			jobSnapshotId = jobSnapshot.getId();
-			workerSnapshot.setJobSnapshotId(jobSnapshotId);
-			workerSnapshot.setJobName(job.getName());
-			workerSnapshot.setLocalNode(currentNodeName);
-			workerSnapshot.setJobLocalNode(job.getLocalNode());
-			workerSnapshot.setName(workerName);
-			workerSnapshot.setWorkerErrMsgs(new ArrayList<WorkerErrMsg>());
 			this.minWorkFrequency = job.getWorkFrequency();
 			this.maxWorkFrequency = 2 * minWorkFrequency;
 			initWorker(jobSnapshot);
-			getManager().getRegisterCenter().registerWorker(this);
 		} catch (Exception e) {
 			throw new RuntimeException("init crawlWorker err", e);
 		} finally {
@@ -120,7 +112,7 @@ public abstract class AbstractWorker implements Worker {
 						String msg = ExceptionUtils.getExceptionMsg(e);
 						workerSnapshot.setErrCount(workerSnapshot.getErrCount() + 1);
 						WorkerErrMsg errMsg = new WorkerErrMsg();
-						errMsg.setJobSnapshotId(jobSnapshotId);
+						errMsg.setJobSnapshotId(workerSnapshot.getJobSnapshotId());
 						errMsg.setJobName(job.getName());
 						errMsg.setWorkerName(getName());
 						errMsg.setStartTime(
@@ -146,24 +138,17 @@ public abstract class AbstractWorker implements Worker {
 					// 当state == WorkerLifecycleState.WAITED 时
 				} else if (getState() == WorkerLifecycleState.WAITED) {
 					// 通过job向注册中心检查 运行该job的所以worker是否已经全部等待
-					if (currentNodeName.equals(job.getLocalNode())) {
-						boolean isAllWait = getManager().getRegisterCenter().workerIsAllWaited(job.getLocalNode(),
-								job.getName());
-						if (isAllWait) {
-							compareAndSetState(WorkerLifecycleState.WAITED, WorkerLifecycleState.FINISHED);
-							continue;
-						}
+					boolean isAllWait = getManager().workerIsAllWaited(job.getName());
+					if (isAllWait) {
+						compareAndSetState(WorkerLifecycleState.WAITED, WorkerLifecycleState.FINISHED);
+						continue;
 					}
 					signalWait();
 				} else if (getState() == WorkerLifecycleState.SUSPEND) {
-					// 否处于等待中
 					signalWait();
-					// getState() == WorkerLifecycleState.STOPED 时 直接跳出循环
 				} else if (getState() == WorkerLifecycleState.STOPED) {
 					break;
 				} else if (getState() == WorkerLifecycleState.FINISHED) {
-					// 通知job worker 管理工作完成
-					getManager().finishWorkerByJob(job.getLocalNode(), job.getName());
 					break;
 				}
 
@@ -334,8 +319,12 @@ public abstract class AbstractWorker implements Worker {
 		return getState() == WorkerLifecycleState.STARTED;
 	}
 
-	public AbstractSchedulerManager getManager() {
+	public WorkerAbstractSchedulerManager getManager() {
 		return manager;
+	}
+
+	public JobSnapshot getJobSnapshot() {
+		return jobSnapshot;
 	}
 
 	@Override
@@ -366,7 +355,7 @@ public abstract class AbstractWorker implements Worker {
 		int hash = name.hashCode();
 		return hash;
 	}
-	
+
 	@Override
 	public final void destroy() {
 		LOG.info("start destroy worker:" + getName());
@@ -375,7 +364,6 @@ public abstract class AbstractWorker implements Worker {
 	}
 
 	protected abstract void insideDestroy();
-
 
 	protected static void writeByte(byte[] data) {
 		try {

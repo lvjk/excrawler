@@ -14,8 +14,8 @@ import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.WorkerSnapshot;
 import six.com.crawler.common.exception.RedisException;
 import six.com.crawler.common.service.JobService;
-import six.com.crawler.common.service.ScheduledService;
-import six.com.crawler.schedule.AbstractSchedulerManager;
+import six.com.crawler.common.service.MasterScheduledService;
+import six.com.crawler.schedule.MasterAbstractSchedulerManager;
 import six.com.crawler.schedule.RegisterCenter;
 
 /**
@@ -24,14 +24,14 @@ import six.com.crawler.schedule.RegisterCenter;
  * @date 创建时间：2017年2月24日 下午10:36:10
  */
 @Service
-public class ScheduledServiceImpl implements ScheduledService {
+public class MasterScheduledServiceImpl implements MasterScheduledService {
 
-	final static Logger LOG = LoggerFactory.getLogger(ScheduledServiceImpl.class);
+	final static Logger LOG = LoggerFactory.getLogger(MasterScheduledServiceImpl.class);
 
-	static final String JOB_SERVICE_OPERATION_PRE = "scheduled.operation.";
+	static final String JOB_SERVICE_OPERATION_PRE = "master.scheduled.operation.";
 
 	@Autowired
-	private AbstractSchedulerManager commonScheduleManager;
+	private MasterAbstractSchedulerManager scheduleManager;
 
 	@Autowired
 	private RedisManager redisManager;
@@ -55,40 +55,15 @@ public class ScheduledServiceImpl implements ScheduledService {
 			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
 			Job job = jobService.queryJob(jobName);
 			if (null != job) {
-				String localNode = job.getLocalNode();
-				if (commonScheduleManager.isRunning(job)) {
+				if (scheduleManager.isRunning(job)) {
 					msg = "这个任务[" + jobName + "]正在运行";
 				} else {
-					if (!localNode.equals(getCommonScheduleManager().getCurrentNode().getName())) {
-						msg = "这个任务节点[" + localNode + "]不能被此节点["
-								+ getCommonScheduleManager().getCurrentNode().getName() + "]执行,请通过正确的节点执行此任务]";
-					} else {
-						commonScheduleManager.localExecute(job);
-						msg = "提交任务[" + jobName + "]到待执行队列";
-					}
+					scheduleManager.execute(job);
+					msg = "提交任务[" + jobName + "]到待执行队列";
 				}
 			} else {
 				msg = "这个任务[" + jobName + "]不存在";
 			}
-		} catch (RedisException e) {
-			LOG.error("JobService execute job[" + jobName + "] err", e);
-			msg = ResponeMsgManager.SYSTEM_ERR_0001;
-		} catch (Exception e) {
-			LOG.error("JobService execute job[" + jobName + "] err", e);
-			msg = ResponeMsgManager.SYSTEM_ERR_0001;
-		} finally {
-			redisManager.unlock(JOB_SERVICE_OPERATION_PRE + jobName);
-		}
-		return msg;
-	}
-
-	public String assistExecute(String jobName) {
-		String msg = null;
-		try {
-			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
-			Job job = jobService.queryJob(jobName);
-			commonScheduleManager.assistExecute(job);
-			msg = "submit job[" + jobName + "] succeed and will wait to be executed";
 		} catch (RedisException e) {
 			LOG.error("JobService execute job[" + jobName + "] err", e);
 			msg = ResponeMsgManager.SYSTEM_ERR_0001;
@@ -108,11 +83,10 @@ public class ScheduledServiceImpl implements ScheduledService {
 			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
 			Job job = jobService.queryJob(jobName);
 			if (null != job) {
-				String localNode = job.getLocalNode();
-				if (!commonScheduleManager.isRunning(job)) {
+				if (!scheduleManager.isRunning(job)) {
 					msg = "the job[" + jobName + "] is not running and don't suspend";
 				} else {
-					commonScheduleManager.suspendWorkerByJob(localNode, jobName);
+					scheduleManager.suspend(job);
 					msg = "the job[" + jobName + "] have been requested to execute suspend";
 				}
 			} else {
@@ -137,11 +111,10 @@ public class ScheduledServiceImpl implements ScheduledService {
 			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
 			Job job = jobService.queryJob(jobName);
 			if (null != job) {
-				String localNode = job.getLocalNode();
-				if (!commonScheduleManager.isRunning(job)) {
+				if (!scheduleManager.isRunning(job)) {
 					msg = "the job[" + jobName + "] is not running and don't goOn";
 				} else {
-					commonScheduleManager.goOnWorkerByJob(localNode, jobName);
+					scheduleManager.goOn(job);
 					msg = "the job[" + jobName + "] have been requested to execute goOn";
 				}
 			} else {
@@ -167,13 +140,35 @@ public class ScheduledServiceImpl implements ScheduledService {
 			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
 			Job job = jobService.queryJob(jobName);
 			if (null != job) {
-				String localNode = job.getLocalNode();
-				if (!commonScheduleManager.isRunning(job)) {
+				if (!scheduleManager.isRunning(job)) {
 					msg = "the job[" + jobName + "] is not running and don't stop";
 				} else {
-					commonScheduleManager.stopWorkerByJob(localNode, jobName);
+					scheduleManager.stop(job);
 					msg = "the job[" + jobName + "] have been requested to execute stop";
 				}
+			} else {
+				msg = "这个任务[" + jobName + "]不存在";
+			}
+		} catch (RedisException e) {
+			LOG.error("JobService stop job[" + jobName + "] err", e);
+			msg = ResponeMsgManager.SYSTEM_ERR_0001;
+		} catch (Exception e) {
+			LOG.error("JobService stop job[" + jobName + "] err", e);
+			msg = ResponeMsgManager.SYSTEM_ERR_0001;
+		} finally {
+			redisManager.unlock(JOB_SERVICE_OPERATION_PRE + jobName);
+		}
+		return msg;
+	}
+	
+	public String end(String jobName){
+		String msg = null;
+		try {
+			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
+			Job job = jobService.queryJob(jobName);
+			if (null != job) {
+				scheduleManager.end(job);
+				msg = "the job[" + jobName + "] have been requested to execute stop";
 			} else {
 				msg = "这个任务[" + jobName + "]不存在";
 			}
@@ -198,12 +193,12 @@ public class ScheduledServiceImpl implements ScheduledService {
 			// 如果等于1 那么已经开启调度
 			if (job.getIsScheduled() == 1) {
 				job.setIsScheduled(0);
-				commonScheduleManager.cancelScheduled(jobName);
+				scheduleManager.cancelScheduled(jobName);
 				jobService.update(job);
 				msg = "cancel schedule job[" + jobName + "] succeed";
 			} else {
 				job.setIsScheduled(1);
-				commonScheduleManager.scheduled(job);
+				scheduleManager.scheduled(job);
 				msg = "schedule job[" + jobName + "] succeed";
 			}
 			jobService.update(job);
@@ -223,20 +218,19 @@ public class ScheduledServiceImpl implements ScheduledService {
 		Job job = jobService.queryJob(jobName);
 		List<WorkerSnapshot> result = null;
 		if (null != job) {
-			String localNode = job.getLocalNode();
-			result = registerCenter.getWorkerSnapshots(localNode, jobName);
+			result = registerCenter.getWorkerSnapshots(jobName);
 		} else {
 			result = Collections.emptyList();
 		}
 		return result;
 	}
 
-	public AbstractSchedulerManager getCommonScheduleManager() {
-		return commonScheduleManager;
+	public MasterAbstractSchedulerManager getScheduleManager() {
+		return scheduleManager;
 	}
 
-	public void setCommonScheduleManager(AbstractSchedulerManager commonScheduleManager) {
-		this.commonScheduleManager = commonScheduleManager;
+	public void setScheduleManager(MasterAbstractSchedulerManager scheduleManager) {
+		this.scheduleManager = scheduleManager;
 	}
 
 	public RedisManager getRedisManager() {

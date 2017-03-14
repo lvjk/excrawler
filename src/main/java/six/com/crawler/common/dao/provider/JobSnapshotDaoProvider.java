@@ -18,8 +18,8 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 
 	public String query(String jobName) {
 		SQL sql = new SQL();
-		String columns = "id," + "`name`," + "tableName," + "DATE_FORMAT(startTime,'%Y-%m-%d %h:%i:%s') startTime,"
-				+ "DATE_FORMAT(endTime,'%Y-%m-%d %h:%i:%s') endTime," + "`state`," + "totalProcessCount," + "totalResultCount,"
+		String columns = "id," + "`name`," + "tableName," + "DATE_FORMAT(startTime,'%Y-%m-%d %H:%i:%s') startTime,"
+				+ "DATE_FORMAT(endTime,'%Y-%m-%d %H:%i:%s') endTime," + "`state`," + "totalProcessCount," + "totalResultCount,"
 				+ "totalProcessTime," + "avgProcessTime," + "maxProcessTime," + "minProcessTime," + "errCount";
 		sql.SELECT(columns);
 		sql.FROM(JobSnapshotDao.TABLE_NAME);
@@ -30,8 +30,8 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 	
 	public String queryLast(Map<String, Object> map) {
 		SQL sql = new SQL();
-		String columns = "id," + "`name`," + "tableName," + "DATE_FORMAT(startTime,'%Y-%m-%d %h:%i:%s') startTime,"
-				+ "DATE_FORMAT(endTime,'%Y-%m-%d %h:%i:%s') endTime," + "`state`," + "totalProcessCount," + "totalResultCount,"
+		String columns = "id," + "`name`," + "tableName," + "DATE_FORMAT(startTime,'%Y-%m-%d %H:%i:%s') startTime,"
+				+ "DATE_FORMAT(endTime,'%Y-%m-%d %H:%i:%s') endTime," + "`state`," + "totalProcessCount," + "totalResultCount,"
 				+ "totalProcessTime," + "avgProcessTime," + "maxProcessTime," + "minProcessTime," + "errCount";
 		sql.SELECT(columns);
 		sql.FROM(JobSnapshotDao.TABLE_NAME);

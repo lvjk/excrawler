@@ -12,11 +12,25 @@ import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import six.com.crawler.common.configure.SpiderConfigure;
+
 /**
  * @author six
  * @date 2016年8月31日 上午10:00:20
  */
-public class QQEmailClient {
+@Component
+public class QQEmailClient implements InitializingBean {
+
+	final static Logger log = LoggerFactory.getLogger(QQEmailClient.class);
+
+	@Autowired
+	private SpiderConfigure configure;
 
 	private Properties prop;
 	private Authenticator authenticator;
@@ -24,12 +38,14 @@ public class QQEmailClient {
 	private String MAIL_USER;
 	private String MAIL_PWD;
 	private String MAIL_PORT;
+	private String[] adminsMail;
 
-	public QQEmailClient(String MAIL_Host, String MAIL_PORT, String MAIL_USER, String MAIL_PWD) {
-		this.MAIL_Host = MAIL_Host;
-		this.MAIL_PORT = MAIL_PORT;
-		this.MAIL_USER = MAIL_USER;
-		this.MAIL_PWD = MAIL_PWD;
+	public void afterPropertiesSet() {
+		MAIL_Host = getConfigure().getConfig("email.host", "smtp.qq.com");
+		MAIL_PORT = getConfigure().getConfig("email.post", "465");
+		MAIL_USER = getConfigure().getConfig("email.user", "359852326@qq.com");
+		MAIL_PWD = getConfigure().getConfig("email.pwd", "auqoidnoizodbijf");
+		adminsMail = getConfigure().getAdminEmails();
 		prop = new Properties();
 		prop.setProperty("mail.host", this.MAIL_Host);
 		prop.setProperty("mail.transport.protocol", "smtp");
@@ -63,6 +79,38 @@ public class QQEmailClient {
 		Transport.send(message);
 	}
 
+	/**
+	 * 发送email
+	 * 
+	 * @param to
+	 *            目标地
+	 * @param subject
+	 *            主题
+	 * @param message
+	 *            消息
+	 * @throws MessagingException
+	 * @throws AddressException
+	 */
+	public void sendMailToAdmin(String subject, String msg) {
+		if (null != adminsMail) {
+			for (String to : adminsMail) {
+				try {
+					// 1、创建session
+					Session session = Session.getDefaultInstance(prop, authenticator);
+					// 开启Session的debug模式，这样就可以查看到程序发送Email的运行状态
+					session.setDebug(true);
+					// 4、创建邮件
+					Message message = null;
+					message = createSimpleMail(session, to, subject, msg);
+					// 5、发送邮件
+					Transport.send(message);
+				} catch (Exception e) {
+					log.error("send mail[" + subject + "] to admin err:" + msg, e);
+				}
+			}
+		}
+	}
+
 	private MimeMessage createSimpleMail(Session session, String to, String subject, String msg)
 			throws AddressException, MessagingException {
 		// 创建邮件对象
@@ -93,5 +141,13 @@ public class QQEmailClient {
 	 */
 	public void sendMail(String to, String subject, String message, File file) {
 
+	}
+
+	public SpiderConfigure getConfigure() {
+		return configure;
+	}
+
+	public void setConfigure(SpiderConfigure configure) {
+		this.configure = configure;
 	}
 }
