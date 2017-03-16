@@ -17,7 +17,6 @@ public class WorkerSnapshot implements Serializable {
 	private String name;// worker 名
 	private String localNode;//本地节点
 	private String jobName;// 任务名
-	private String jobLocalNode;//任务本地节点
 	private volatile WorkerLifecycleState state = WorkerLifecycleState.READY;// 状态
 	private String startTime="";// 开始时间
 	private String endTime="";//结束时间
@@ -151,14 +150,6 @@ public class WorkerSnapshot implements Serializable {
 
 	public void setLocalNode(String localNode) {
 		this.localNode = localNode;
-	}
-
-	public String getJobLocalNode() {
-		return jobLocalNode;
-	}
-
-	public void setJobLocalNode(String jobLocalNode) {
-		this.jobLocalNode = jobLocalNode;
 	}
 
 }

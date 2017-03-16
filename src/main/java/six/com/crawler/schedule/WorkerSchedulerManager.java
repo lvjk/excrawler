@@ -298,21 +298,4 @@ public class WorkerSchedulerManager extends WorkerAbstractSchedulerManager {
 		Request Request = getHttpClient().buildRequest(callUrl, null, HttpMethod.GET, null, null, null);
 		getHttpClient().executeRequest(Request);
 	}
-
-	@Override
-	public void noticeAdminByEmail(String topic, String msg) {
-		// for (String to : getConfigure().getAdminEmails()) {
-		// // 注册异常 邮件通知管理员
-		// try {
-		// emailClient.sendMail(to, topic, msg);
-		// } catch (MessagingException e) {
-		// LOG.error("notice admin email err:" + to, e);
-		// }
-		// }
-	}
-
-	@Override
-	public void noticeAdminByPhone(String topic, String msg) {
-
-	}
 }

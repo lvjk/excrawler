@@ -34,17 +34,23 @@ import six.com.crawler.work.store.StoreAbstarct;
 /**
  * @author six
  * @date 2016年1月15日 下午6:45:26 爬虫抽象层
+ * 
+ * 当爬虫队列数据为null时  那么就会设置状态为finished
  */
 public abstract class AbstractCrawlWorker extends AbstractWorker {
 
 	final static Logger LOG = LoggerFactory.getLogger(AbstractCrawlWorker.class);
 	// 上次处理数据时间
 	protected int findElementTimeout = 1000;
+	
 	private Site site; // 站点
+	
 	private Downer downer;// 下载器
 	// 解析处理程序
 	private Extracter extracter;
+	
 	private Page doingPage;
+	
 	protected WorkQueue workQueue; // 队列
 	// 存儲处理程序
 	private StoreAbstarct store;
@@ -53,10 +59,8 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 	// 主要的结果key
 	private List<String> primaryKeys;;
 
-	private HttpProxyType httpProxyType;
-
 	private HttpProxyPool httpProxyPool;
-
+	
 	@Override
 	protected final void initWorker(JobSnapshot jobSnapshot) {
 		// 1.初始化 站点code
@@ -78,9 +82,13 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		if (StringUtils.isBlank(httpProxyTypeStr)) {
 			httpProxyTypeStr = "0";
 		}
-		httpProxyType = HttpProxyType.valueOf(Integer.valueOf(httpProxyTypeStr));
-		httpProxyPool = getManager().getHttpPorxyService().buildHttpProxyPool(siteCode, httpProxyType,
-				getWorkFrequency());
+		HttpProxyType httpProxyType = HttpProxyType.valueOf(Integer.valueOf(httpProxyTypeStr));
+		
+		String httpProxyRestTimeStr = getJob().getParam(JobConTextConstants.HTTP_PROXY_REST_TIME);
+		int httpProxyRestTime=Integer.valueOf(httpProxyRestTimeStr);
+		
+		httpProxyPool = getManager().getHttpPorxyService().buildHttpProxyPool(siteCode, httpProxyType,httpProxyRestTime);
+		
 		downer.setHttpProxy(httpProxyPool.getHttpProxy());
 		// 5.初始化内容抽取
 		List<ExtractItem> extractItems = getManager().getJobService().queryExtractItems(getJob().getName());
@@ -105,7 +113,6 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		}
 		String resultStoreClass = getJob().getParam(JobConTextConstants.RESULT_STORE_CLASS);
 		if (StringUtils.isNotBlank(resultStoreClass) && !"null".equalsIgnoreCase(resultStoreClass)) {
-
 			Class<?> storeClz = null;
 			try {
 				storeClz = Class.forName(resultStoreClass);
@@ -188,8 +195,8 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 				throw new RuntimeException("process page err:" + doingPage.getOriginalUrl(), e);
 			}
 		} else {
-			// 没有处理数据时 设置 state == WorkerLifecycleState.SUSPEND
-			compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.WAITED);
+			// 没有处理数据时 设置 state == WorkerLifecycleState.FINISHED
+			compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.FINISHED);
 		}
 	}
 

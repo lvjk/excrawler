@@ -49,7 +49,7 @@ public class WorkerScheduledServiceImpl implements WorkerScheduledService {
 		String msg = null;
 		try {
 			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
-			Job job = jobService.queryJob(jobName);
+			Job job = jobService.get(jobName);
 			if (null != job) {
 				scheduleManager.execute(job);
 				msg = "提交任务[" + jobName + "]到待执行队列";
@@ -73,7 +73,7 @@ public class WorkerScheduledServiceImpl implements WorkerScheduledService {
 		String msg = null;
 		try {
 			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
-			Job job = jobService.queryJob(jobName);
+			Job job = jobService.get(jobName);
 			if (null != job) {
 				scheduleManager.suspend(job);
 				msg = "the job[" + jobName + "] have been requested to execute suspend";
@@ -97,7 +97,7 @@ public class WorkerScheduledServiceImpl implements WorkerScheduledService {
 		String msg = null;
 		try {
 			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
-			Job job = jobService.queryJob(jobName);
+			Job job = jobService.get(jobName);
 			if (null != job) {
 				scheduleManager.goOn(job);
 				msg = "the job[" + jobName + "] have been requested to execute goOn";
@@ -122,7 +122,7 @@ public class WorkerScheduledServiceImpl implements WorkerScheduledService {
 		String msg = null;
 		try {
 			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
-			Job job = jobService.queryJob(jobName);
+			Job job = jobService.get(jobName);
 			if (null != job) {
 				scheduleManager.stop(job);
 				msg = "the job[" + jobName + "] have been requested to execute stop";

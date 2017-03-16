@@ -39,7 +39,7 @@ public class SiteApi extends BaseApi {
 	@ResponseBody
 	public ResponseMsg<List<Site>> querySites(@PathVariable("pageIndex") int pageIndex,
 			@PathVariable("pageSize") int pageSize) {
-		ResponseMsg<List<Site>> msg = new ResponseMsg<>();
+		ResponseMsg<List<Site>> msg = createResponseMsg();
 		List<Site> result = siteService.querySites(pageIndex, pageSize);
 		msg.setData(result);
 		return msg;

@@ -47,7 +47,7 @@ public class ChongqiCqgtfwGovPresellUrlWorker extends AbstractCrawlWorker {
 			LOG.error("pageCount Integer.valueOf(" + pageCountStr + ") err", e);
 		}
 		if (-1 == pageCount) {
-			getAndSetState(WorkerLifecycleState.WAITED);
+			getAndSetState(WorkerLifecycleState.STOPED);
 			throw new RuntimeException("don't find pageCount");
 		}
 		getWorkQueue().clear();

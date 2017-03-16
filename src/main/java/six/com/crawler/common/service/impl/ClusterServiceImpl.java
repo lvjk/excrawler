@@ -25,6 +25,10 @@ public class ClusterServiceImpl implements ClusterService {
 	@Autowired
 	private ClusterManager clusterManager;
 
+	public Node getCurrentNode(){
+		return clusterManager.getCurrentNode();
+	}
+	
 	@Override
 	public List<Node> getClusterInfo() {
 		List<Node> allNodes = clusterManager.getAllNodes();

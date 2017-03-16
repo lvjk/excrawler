@@ -19,7 +19,7 @@ public class ScheduledJob implements org.quartz.Job {
 	public static final String JOB_KEY = "job";
 
 	public static final String SCHEDULER_MANAGER_KEY = "scheduleManager";
-
+	
 	@Override
 	public void execute(JobExecutionContext context) throws JobExecutionException {
 		AbstractSchedulerManager scheduleManager = (AbstractSchedulerManager) context.getJobDetail().getJobDataMap()

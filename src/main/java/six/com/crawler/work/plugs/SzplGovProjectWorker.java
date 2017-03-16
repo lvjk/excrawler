@@ -76,7 +76,7 @@ public class SzplGovProjectWorker extends AbstractCrawlWorker {
 			WebDriverUtils.click(webDriver, nextPageElement, null, findElementTimeout);
 		} else {
 			// 没有处理数据时 设置 state == WorkerLifecycleState.SUSPEND
-			compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.WAITED);
+			compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.FINISHED);
 		}
 
 	}

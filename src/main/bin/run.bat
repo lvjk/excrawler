@@ -15,5 +15,5 @@ SET classPath=%CLASSPATH%;%1
 goto :eof
 :extlibe
 @echo starting spider
-java six.com.crawler.StartMain --spider.home=%SPIDER_HOME%
+java -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=8000,suspend=n -classpath %classPath% six.com.crawler.StartMain --spider.home=%SPIDER_HOME%
 pause

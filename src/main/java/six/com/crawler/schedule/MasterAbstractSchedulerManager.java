@@ -31,7 +31,7 @@ public abstract class MasterAbstractSchedulerManager extends AbstractSchedulerMa
 	 * 
 	 * @param job
 	 */
-	public abstract void cancelScheduled(String jobName);
+	public abstract void cancelScheduled(String jobChainName);
 
 	/**
 	 * 通过job获取此job工作节点

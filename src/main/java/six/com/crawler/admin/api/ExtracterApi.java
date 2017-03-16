@@ -36,7 +36,7 @@ public class ExtracterApi extends BaseApi {
 	@RequestMapping(value = "/crawler/extracter/getExtractPaths/{siteCode}", method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseMsg<List<ExtractPath>> getExtractPaths(@PathVariable("siteCode") String siteCode) {
-		ResponseMsg<List<ExtractPath>> msg = new ResponseMsg<>();
+		ResponseMsg<List<ExtractPath>> msg = createResponseMsg();
 		List<ExtractPath> result = extracterService.query(siteCode);
 		msg.setData(result);
 		return msg;
@@ -46,7 +46,7 @@ public class ExtracterApi extends BaseApi {
 	@ResponseBody
 	public ResponseMsg<List<String>> testExtract(
 			TestExtractPath extractPath) {
-		ResponseMsg<List<String>> msg = new ResponseMsg<>();
+		ResponseMsg<List<String>> msg = createResponseMsg();
 		List<String> result = extracterService.testExtract(extractPath);
 		msg.setData(result);
 		return msg;

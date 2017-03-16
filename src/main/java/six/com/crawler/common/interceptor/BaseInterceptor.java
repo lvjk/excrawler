@@ -6,12 +6,25 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
+import six.com.crawler.common.configure.SpiderConfigure;
+
 /**
  * @author six
  * @date 2016年1月14日 下午2:14:13 基础 拦截器
  */
 public class BaseInterceptor implements HandlerInterceptor {
 
+	private SpiderConfigure configure;
+	
+	public SpiderConfigure getConfigure() {
+		return configure;
+	}
+
+
+	public BaseInterceptor(SpiderConfigure configure){
+		this.configure=configure;
+	}
+	
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {

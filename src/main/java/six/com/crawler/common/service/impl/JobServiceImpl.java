@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+import org.quartz.CronScheduleBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +36,6 @@ import six.com.crawler.common.entity.JobProfile;
 import six.com.crawler.common.entity.WorkerSnapshot;
 import six.com.crawler.common.entity.JobSnapshot;
 import six.com.crawler.common.entity.JobSnapshotState;
-import six.com.crawler.common.entity.Node;
 import six.com.crawler.common.entity.PageQuery;
 import six.com.crawler.common.entity.WorkerErrMsg;
 import six.com.crawler.common.service.JobService;
@@ -51,7 +52,7 @@ import six.com.crawler.work.extract.ExtractItem;
 @Service
 public class JobServiceImpl implements JobService {
 
-	final static Logger LOG = LoggerFactory.getLogger(JobServiceImpl.class);
+	final static Logger log = LoggerFactory.getLogger(JobServiceImpl.class);
 
 	private final static int SAVE_ERR_MSG_MAX = 20;
 	@Autowired
@@ -83,6 +84,13 @@ public class JobServiceImpl implements JobService {
 
 	static final String JOB_SERVICE_OPERATION_PRE = "JobService.operation.";
 
+	public List<Job> queryIsScheduled(){
+		Map<String, Object> parameters=new HashMap<>();
+		parameters.put("isScheduled",1);
+		List<Job> result=jobDao.queryByParam(parameters);
+		return result;
+	}
+	
 	public void queryJobs(ResponseMsg<PageQuery<Job>> responseMsg, String jobName, int pageIndex, int pageSize) {
 		pageSize = pageSize <= 0 || pageSize > 50 ? 15 : pageSize;
 		PageQuery<Job> pageQuery = new PageQuery<>();
@@ -141,12 +149,8 @@ public class JobServiceImpl implements JobService {
 		responseMsg.setData(pageQuery);
 	}
 
-	public Node totalNodeJobInfo(String nodeName) {
-		return jobDao.totalNodeJobInfo(nodeName);
-	}
-
 	@Override
-	public Job queryJob(String jobName) {
+	public Job get(String jobName) {
 		Job job = jobDao.query(jobName);
 		return job;
 	}
@@ -176,11 +180,6 @@ public class JobServiceImpl implements JobService {
 	public List<JobParam> queryJobParams(String jobName) {
 		List<JobParam> result = jobParamDao.queryJobParams(jobName);
 		return result;
-	}
-
-	@Override
-	public void update(Job job) {
-		jobDao.update(job);
 	}
 
 	@Transactional
@@ -318,8 +317,8 @@ public class JobServiceImpl implements JobService {
 	public void updateJobSnapshotToRegisterCenter(JobSnapshot jobSnapshot) {
 		registerCenter.updateJobSnapshot(jobSnapshot);
 	}
-	
-	public void delJobSnapshotFromRegisterCenter(String jobName){
+
+	public void delJobSnapshotFromRegisterCenter(String jobName) {
 		registerCenter.delJobSnapshot(jobName);
 	}
 
@@ -336,7 +335,7 @@ public class JobServiceImpl implements JobService {
 	@Override
 	public ResponseEntity<InputStreamResource> download(String param) {
 		JobProfile profile = new JobProfile();
-		Job job = queryJob(param);
+		Job job = get(param);
 		if (null != job) {
 			List<JobParam> jobParams = queryJobParams(job.getName());
 			job.setParamList(jobParams);
@@ -348,7 +347,7 @@ public class JobServiceImpl implements JobService {
 		try {
 			xml = JobProfile.buildXml(profile);
 		} catch (Exception e) {
-			LOG.error("downloadProfile err:" + param, e);
+			log.error("downloadProfile err:" + param, e);
 		}
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
@@ -381,7 +380,7 @@ public class JobServiceImpl implements JobService {
 				msg = "uploadJobProfile[" + multipartFile.getName() + "] succeed";
 			} catch (Exception e) {
 				msg = "uploadJobProfile[" + multipartFile.getName() + "] err";
-				LOG.error(msg, e);
+				log.error(msg, e);
 			}
 		} else {
 			msg = "uploadJobProfile is empty";
@@ -399,6 +398,71 @@ public class JobServiceImpl implements JobService {
 	public List<ExtractItem> queryExtractItems(String jobName) {
 		List<ExtractItem> result = extractItemDao.query(jobName);
 		return result;
+	}
+
+	public void updateIsScheduled(ResponseMsg<Integer> responseMsg,int version, String name, int isScheduled) {
+		String msg=null;
+		if(!StringUtils.isBlank(name)){
+			if(0==isScheduled||1==isScheduled){
+				int newVersion = version + 1;
+				boolean updateResult = jobDao.updateIsScheduled(version, newVersion, name, isScheduled) == 1;
+				if(updateResult){
+					if(1==isScheduled){
+						Job job=get(name);
+						scheduleManager.scheduled(job);
+						msg = "schedule job[" + name + "] succeed";
+					}else{
+						scheduleManager.cancelScheduled(name);
+						msg = "cancel schedule job[" + name + "] succeed";
+					}
+					responseMsg.setData(newVersion);
+					responseMsg.setIsOk(1);
+				}
+			}else{
+				msg="the job["+name+"]'s isScheduled must be 0 or 1";
+			}
+		}else{
+			msg="the job's name must not be blank";
+		}
+		log.info(msg);
+		responseMsg.setMsg(msg);
+	}
+
+	public void updateCronTrigger(ResponseMsg<Integer> responseMsg, int version, String name, String cronTrigger) {
+		String msg = null;
+		responseMsg.setIsOk(0);
+		if (!StringUtils.isBlank(name)) {
+			if (!StringUtils.isBlank(cronTrigger)) {
+				try {
+					CronScheduleBuilder.cronSchedule(cronTrigger);
+				} catch (Exception e) {
+					msg = "update job[" + name + "]'s cronTrigger[" + cronTrigger + "] is invalid";
+					log.error(msg, e);
+				}
+				if (null == msg) {
+					int newVersion = version + 1;
+					try {
+						int result = jobDao.updateCronTrigger(version, newVersion, name, cronTrigger);
+						if (1 == result) {
+							msg = "update job[" + name + "]'s cronTrigger[" + cronTrigger + "] succeed";
+							responseMsg.setData(newVersion);
+							responseMsg.setIsOk(1);
+						} else {
+							msg = "update job[" + name + "]'s cronTrigger[" + cronTrigger + "] failed";
+						}
+					} catch (Exception e) {
+						msg = "update job[" + name + "]'s cronTrigger[" + cronTrigger + "] system exception";
+						log.error(msg, e);
+					}
+				}
+			} else {
+				msg = "cronTrigger must not be blank";
+			}
+		} else {
+			msg = "job's name must not be blank";
+		}
+		log.info(msg);
+		responseMsg.setMsg(msg);
 	}
 
 	/**

@@ -25,6 +25,7 @@ import six.com.crawler.schedule.RegisterCenter;
  * @author 作者
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年3月13日 下午1:41:16
+ *  集群节点管理类
  */
 @Component
 public class ClusterManager implements InitializingBean {
@@ -153,12 +154,10 @@ public class ClusterManager implements InitializingBean {
 	}
 
 	/**
-	 * 节点注册
-	 * 
+	 * 初始化节点注册
 	 * @param node
 	 */
 	private void initRegisterNode() {
-
 		log.info("the node[" + currentNode.getName() + "] type:" + getConfigure().getNodeType());
 		try {
 			getRedisManager().lock(REGISTER_NODE_LOCK);
@@ -173,14 +172,12 @@ public class ClusterManager implements InitializingBean {
 
 			} // 如果是主节点备份节点或者工作节点 ，
 			else if (NodeType.WORKER == currentNode.getType()) {
-				// 检查主节点是否启动
-				if (null == masterNode) {
+				if (null == masterNode) {// 检查主节点是否启动
 					log.error("please first start the masterNode");
 					System.exit(1);
 				}
 				getRegisterCenter().registerNode(currentNode, Constants.REDIS_REGISTER_CENTER_HEARTBEAT);
-			} // 如果是主节点
-				// 如果是主节点兼工作节点 ，
+			} // 如果是主节点兼工作节点 ，
 			else if (NodeType.MASTER_WORKER == currentNode.getType()) {
 				if (null != masterNode && !masterNode.equals(currentNode)) {
 					log.error("there are many masternode[" + currentNode.getName() + "," + masterNode.getName() + "]");

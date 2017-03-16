@@ -15,18 +15,20 @@ public class Job extends PageQueryEntity implements Serializable {
 	private static final long serialVersionUID = 781122651512874550L;
 
 	private String name;// job 名字
-
-	private String localNode;// job所属哪个节点名字
+	
+	private String nextJobName;// 下一个执行任务
 
 	private int level;// 任务级别
-
+	
+	private String designatedNodeName;//指定节点运行
+	
+	private int needNodes;//工作需要的节点数
+	
+	private int isScheduled;//是否开启定时
+	
+	private String cronTrigger;//cronTrigger 定时
+	
 	private long workFrequency = 1000;// 每次处理时间的阈值 默认1000毫秒
-
-	private int isScheduled;// 0不调度 1调度 是否开启调度
-
-	private int needNodes;// 执行此任务需要的节点数
-
-	private String cronTrigger;// CronTrigger 时间
 
 	private String workerClass;// worker class
 
@@ -35,8 +37,11 @@ public class Job extends PageQueryEntity implements Serializable {
 	private String describe;// 任务描述
 
 	private String user = "admin";// 任务 所属用户
+	
+	private int version;//版本号
 
-	private List<JobParam> paramList;
+	private List<JobParam> paramList;//任务参数
+	
 
 	public String getName() {
 		return name;
@@ -46,12 +51,19 @@ public class Job extends PageQueryEntity implements Serializable {
 		this.name = name;
 	}
 
-	public String getLocalNode() {
-		return localNode;
+	public String getNextJobName() {
+		return nextJobName;
 	}
 
-	public void setLocalNode(String localNode) {
-		this.localNode = localNode;
+	public void setNextJobName(String nextJobName) {
+		this.nextJobName = nextJobName;
+	}
+
+	public String getDesignatedNodeName() {
+		return designatedNodeName;
+	}
+	public void setDesignatedNodeName(String designatedNodeName) {
+		this.designatedNodeName = designatedNodeName;
 	}
 
 	public int getLevel() {
@@ -133,6 +145,14 @@ public class Job extends PageQueryEntity implements Serializable {
 	public void setParamList(List<JobParam> paramList) {
 		this.paramList = paramList;
 	}
+	
+	public int getVersion() {
+		return version;
+	}
+
+	public void setVersion(int version) {
+		this.version = version;
+	}
 
 	public String getParam(String paramKey) {
 		if (StringUtils.isBlank(paramKey)) {
@@ -168,7 +188,7 @@ public class Job extends PageQueryEntity implements Serializable {
 	}
 
 	public int hashCode() {
-		if (null != getName()) {
+		if (null != name) {
 			return name.hashCode();
 		}
 		return 0;

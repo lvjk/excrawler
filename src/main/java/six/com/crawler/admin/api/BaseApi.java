@@ -7,12 +7,14 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
+import six.com.crawler.common.service.ClusterService;
 import six.com.crawler.common.service.DownloadAndUploadService;
 
 /**
@@ -24,6 +26,17 @@ public class BaseApi {
 
 	private final static Logger LOG = LoggerFactory.getLogger(BaseApi.class);
 
+	@Autowired
+	private ClusterService clusterService;
+
+	public ClusterService getClusterService() {
+		return clusterService;
+	}
+
+	public void setClusterService(ClusterService clusterService) {
+		this.clusterService = clusterService;
+	}
+
 	public static HttpServletRequest getRequest() {
 		return ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
 	}
@@ -32,33 +45,33 @@ public class BaseApi {
 		return ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
 	}
 
-	public static <T> ResponseMsg<T> createResponseMsg() {
-		ResponseMsg<T> responseMsg = new ResponseMsg<>();
+	public <T> ResponseMsg<T> createResponseMsg() {
+		ResponseMsg<T> responseMsg = new ResponseMsg<>(clusterService.getCurrentNode().getName());
 		return responseMsg;
 	}
 
 	/**
 	 * 文件下载
-	 * @param downloadAndUploadService 
-	 * @param param 文件下载参数
+	 * 
+	 * @param downloadAndUploadService
+	 * @param param
+	 *            文件下载参数
 	 * @return
 	 */
-	public static ResponseEntity<InputStreamResource> downloadFile(
-			DownloadAndUploadService downloadAndUploadService,
+	public static ResponseEntity<InputStreamResource> downloadFile(DownloadAndUploadService downloadAndUploadService,
 			String param) {
 		return downloadAndUploadService.download(param);
 	}
 
 	/**
 	 * 文件上传
+	 * 
 	 * @param downloadAndUploadService
 	 * @param fileName
 	 * @param input
 	 * @return
 	 */
-	public static String uploadFile(
-			DownloadAndUploadService downloadAndUploadService, 
-			MultipartFile multipartFile) {
+	public static String uploadFile(DownloadAndUploadService downloadAndUploadService, MultipartFile multipartFile) {
 		return downloadAndUploadService.upload(multipartFile);
 	}
 

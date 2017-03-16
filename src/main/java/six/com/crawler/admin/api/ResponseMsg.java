@@ -6,10 +6,14 @@ package six.com.crawler.admin.api;
  */
 public class ResponseMsg<T> {
 
-	private String nodeName;// 响应请求的节点名字
+	private final String nodeName;// 响应请求的节点名字
 	private String msg;// 信息
+	private int isOk;// 信息 1成功 0失败
 	private T data;// 返回数据
 
+	public ResponseMsg(String nodeName){
+		this.nodeName=nodeName;
+	}
 	
 	public String getNodeName() {
 		return nodeName;
@@ -29,5 +33,13 @@ public class ResponseMsg<T> {
 
 	public void setData(T data) {
 		this.data = data;
+	}
+	
+	public int getIsOk() {
+		return isOk;
+	}
+
+	public void setIsOk(int isOk) {
+		this.isOk = isOk;
 	}
 }

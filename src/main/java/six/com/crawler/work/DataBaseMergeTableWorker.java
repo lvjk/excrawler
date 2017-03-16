@@ -54,7 +54,7 @@ public class DataBaseMergeTableWorker extends DataBaseAbstractWorker {
 			}
 		} else {
 			// 没有处理数据时 设置 state == WorkerLifecycleState.SUSPEND
-			compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.WAITED);
+			compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.STOPED);
 		}
 	}
 

@@ -19,6 +19,7 @@ var job_scheduled="job_scheduledTd_";
 
 $(function() {
 	$("#search_job_bt").click(function(){
+		$('#job_search').find('#pageIndex').val(0);
 		searchJob();
 	});
 	$("#create_job_bt").click(function(){
@@ -28,7 +29,8 @@ $(function() {
 		uploadJobProfile();
 	});
 	$("#search_job_name").bind('keydown',function(event){  
-	  if(event.keyCode == "13"){  
+	  if(event.keyCode == "13"){ 
+		  $('#job_search').find('#pageIndex').val(0);
 		  searchJob();
 	  }  
 	});  
@@ -87,46 +89,41 @@ function showJobTable(result) {
 		var i = 0;
 		for (var i = 0; i < jobs.length; i++) {
 			job = jobs[i];
-			var tr = $("<tr title='"+job.describe+"'></tr>");
-			$("<td name='jobName' " +
-					"id='"+job.name + "' " +
-					"hostNode='"+job.localNode + "' " +
-					"queueName='" + job.queueName + "'>" + job.name + "</td>")
-					.appendTo(tr);
+			var tr = $("<tr name='"+job.name+"' title='"+job.describe+"'></tr>");
+			$("<input name='name' style='display:none' type='text' value='"+job.name+"' />").appendTo(tr);
+			$("<input name='version' style='display:none' type='text' value='"+job.version+"' />").appendTo(tr);
+			$("<input name='localNode' style='display:none' type='text' value='"+job.localNode+"' />").appendTo(tr);
+			$("<input name='queueName' style='display:none' type='text' value='"+job.queueName+"' />").appendTo(tr);
+			$("<input name='isScheduled' style='display:none' type='text' value='"+job.isScheduled+"' />").appendTo(tr);
+			
+			$("<td>"+job.name+"</td>").appendTo(tr);
 			var cronTrigger=job.cronTrigger;
 			if(cronTrigger==null||cronTrigger==""||cronTrigger=="null"){
 				cronTrigger="#";
 			}
-			$("<td id='" + job_cronTrigger + job.name + "'>"+cronTrigger+"</td>")
-			.appendTo(tr);
-			$("<td>" + job.level + "</td>")
-			.appendTo(tr);
+			var ctTd=$("<td></td");
+			$("<input name='cronTrigger'  jobName='"+job.name+"' style='display:none' type='text' value='"+cronTrigger+"' />").appendTo(ctTd);
+			$("<a     name='cronTrigger'  style='color:#FF0000;text-decoration:none;' href=\"javascript:editCronTrigger('"+job.name+"')\">"+cronTrigger+"</a>").appendTo(ctTd);
+			ctTd.appendTo(tr);
+			$("<td>" + job.level + "</td>").appendTo(tr);
+			$("<td>" + job.nextJobName + "</td>").appendTo(tr);
 			var state=getState(job.state);
 			var color=getStateColor(state);
-			$("<td name='jobState' id='"+job_state+ job.name + "' style='font-weight:bold;color:"+color+"'>"+ state + "</td>").appendTo(tr);
-			$("<td id='" + job_start_time + job.name + "'></td>").appendTo(tr);
+			$("<td name='state' style='font-weight:bold;color:"+color+"'>"+ state + "</td>").appendTo(tr);
+			$("<td name='startTime'></td>").appendTo(tr);
 			var queueHtml=getQueueHtml(job.queueName,0,0,0);
 			$("<td id='" + job_queue_count + job.name + "'>"+queueHtml+"</td>").appendTo(tr);
-			$("<td><a href=\"javascript:cleanQueue('"+ job.queueName + "')\">清除</a></td>").appendTo(tr);
+			$("<td><a href=\"javascript:cleanQueue('"+ job.queueName + "')\">清除</a>&nbsp;&nbsp;" +
+					"<a href=\"javascript:againDoErrQueue('"+ job.queueName + "')\">do错误队列</a></td>").appendTo(tr);
 			$("<td id='" + job_exception_count + job.name + "'>0</td>").appendTo(tr);
-			var scheduledTd = $("<td id='" + job_scheduled + job.name + "'></td>");
-			var scheduledOperation;
-			if (job.isScheduled == 1) {
-				scheduledOperation = "<a id='scheduled_job_bt_" + job.name + "' isScheduled='"
-				+ job.isScheduled + "' style='color:#FF0000' href=\"javascript:scheduled('"
-				+ job.name + "')\">取消调度</a>&nbsp;";
-			}else{
-				scheduledOperation = "<a id='scheduled_job_bt_" + job.name + "' isScheduled='"
-				+ job.isScheduled + "' style='color:#227700' href=\"javascript:scheduled('"
-				+ job.name + "')\">开启调度</a>&nbsp;";
-			}
+			var scheduledTd = $("<td name='isScheduled'></td>");
+			var scheduledOperation=getIsScheduledShowHtml(job.name,job.isScheduled);
 			$(scheduledOperation).appendTo(scheduledTd);
 			scheduledTd.appendTo(tr);
 			var td = $("<td id='" + job_operation + job.name + "'></td>");
-			var html=getScheduledOperation(job.state,job.name);
+			var html=masterScheduled.getOperation(job.name,job.state);
 			$(html).appendTo(td);
 			td.appendTo(tr);
-
 			var otherTd = $("<td></td>");
 			var otherOperation = "<a  href=\"javascript:showHistoryJobSnapshot('" + job.name
 			+ "')\">记录</a>&nbsp;";
@@ -137,6 +134,12 @@ function showJobTable(result) {
 			otherTd.appendTo(tr);
 			tr.appendTo(table);
 		}
+		table.find("input[name='cronTrigger']").bind('keydown',function(event){  
+			  if(event.keyCode == "13"){ 
+				  var jobName=$(this).attr("jobName");
+				  updateCronTrigger(jobName);  
+			  }  
+		});  
 		$('#pageInfo').html(pageInfo(totalPage,totalSize));
 		window.setTimeout(connection, connectDelayTime);
 	}
@@ -167,39 +170,6 @@ function pageInfo(totalPage,totalSize){
 	return pageInfoHtml;
 }
 
-function getScheduledOperation(state,jobName){
-	var html="";
-	var executeDisplay="inline";
-	var suspendDisplay="none";
-	var goOnDisplay="none";
-	var stopDisplay="none";
-	if (state== 1) {// 当job.state=1 没有调度或者调度状态下 只显示 执行 操作
-		executeDisplay="inline";
-		suspendDisplay="none";
-		goOnDisplay="none";
-		stopDisplay="none";
-	}if (state == 2) {// 当job.state=2 处于等待被执行 不显示任何操作
-		executeDisplay="none";
-		suspendDisplay="none";
-		goOnDisplay="none";
-		stopDisplay="none";
-	}else if (state == 3) { // 当job.state=3 正在执行状态下 显示 暂停 停止 操作
-		executeDisplay="none";
-		suspendDisplay="inline";
-		goOnDisplay="none";
-		stopDisplay="inline";
-	} else if (state == 4) {// 当job.state=4 正在暂停状态下 显示 继续 停止 操作
-		executeDisplay="none";
-		suspendDisplay="none";
-		goOnDisplay="inline";
-		stopDisplay="inline";
-	}
-	html +="<a   id='execute_job_bt_" + jobName+ "' style='display:"+executeDisplay+";' href=\"javascript:execute('"+ jobName+ "')\">执行</a>&nbsp;" 
-			+"<a id='suspend_job_bt_" + jobName+ "' style='display: "+suspendDisplay+";' href=\"javascript:suspend('"+ jobName + "')\">暂停</a>&nbsp;" 
-			+"<a id='goon_job_bt_"+ jobName+ "'     style='display: "+goOnDisplay+";' href=\"javascript:goOn('"+ jobName + "')\">继续</a>&nbsp;" 
-			+"<a id='stop_job_bt_"+ jobName+ "'     style='display: "+stopDisplay+";' href=\"javascript:stop('" +jobName + "')\">终止</a>&nbsp;";
-	return html;
-}
 /**
  * READY(1), WAITING_EXECUTED(2), EXECUTING(3), SUSPEND(4), STOP(5),
  * FINISHED(6);
@@ -240,8 +210,8 @@ function connection() {
 		stompClient = Stomp.over(socket);
 		stompClient.connect({}, function(frame) {
 			connected = true;
-			stompClient.subscribe('/topic/job/jobSnapshot', function(msg) {
-				var data = JSON.parse(msg.body);
+			stompClient.subscribe('/topic/job/jobSnapshot', function(responseMsg) {
+				var data = JSON.parse(responseMsg.body);
 				showJobSnapshots(data.data);
 			});
 		});
@@ -310,13 +280,12 @@ function showJobSnapshots(jobSnapshots) {
 			var jobName = jobSnapshot.name;
 			var state=getState(jobSnapshot.state);
 			var color=getStateColor(state);
+			var jobTr=$("tr[name='"+jobName+"']");
 			if(jobSnapshot.state==3||jobSnapshot.state==4){
-				state="<a  style='color:"+color+"' href=\"javascript:showWorkerInfo('" + jobName+ "')\">"+state+"</a>";
-				$("#"+job_state + jobName).html(state);
-			}else{
-				$("#"+job_state + jobName).css("color",color).html(state);
+				state="<a  style='color:"+color+"' href=\"javascript:showWorkerInfo('" + jobName+ "')\">"+state+"</a>";	
 			}
-			var startTime = $("#" + job_start_time + jobName);
+			jobTr.find("[name='state']").css("color",color).html(state);
+			var startTime =jobTr.find("[name='startTime']");
 			if(jobSnapshot.startTime!=null||jobSnapshot.startTime!="null"||jobSnapshot.startTime!=""){
 				startTime.html(jobSnapshot.startTime);
 			}else{
@@ -325,7 +294,7 @@ function showJobSnapshots(jobSnapshots) {
 			var queueShowStr=getQueueHtml(jobSnapshot.queueName,jobSnapshot.totalProcessCount,jobSnapshot.realQueueCount,jobSnapshot.errQueueCount);
 			$("#" + job_queue_count + jobName).html(queueShowStr);
 			$("#" + job_exception_count + jobName).html(jobSnapshot.errCount);
-			var opetationHtml=getScheduledOperation(jobSnapshot.state,jobSnapshot.name);
+			var opetationHtml=masterScheduled.getOperation(jobSnapshot.name,jobSnapshot.state);
 			$("#" + job_operation + jobName).html(opetationHtml);
 			
 		}
@@ -333,14 +302,14 @@ function showJobSnapshots(jobSnapshots) {
 }
 
 function updateJobInfo() {
-	var jobTds = $("td[name='jobName']");
+	var jobTrs = $('#jobs').find("tr");
 	var jobs = new Array();
 	var job;
-	for (var i = 0; i < jobTds.length; i++) {
+	for (var i = 0; i < jobTrs.length; i++) {
+		var jobTr=$(jobTrs[i]);
 		job=new Object();
-		job.name=$(jobTds[i]).attr("id");
-		job.hostNode=$(jobTds[i]).attr("hostNode");
-		job.queueName=$(jobTds[i]).attr("queueName");
+		job.name=jobTr.find("[name='name']").val();
+		job.queueName=jobTr.find("[name='queueName']").val();
 		jobs[i] =job;
 	}
 	var josn=JSON.stringify(jobs);
@@ -383,6 +352,107 @@ function showJobInfo(jobName) {
 		showLayer(job_detail_div);
 	});
 }
+
+function editCronTrigger(jobName){
+	var ctInput=$("tr[name='"+jobName+"']").find("input[name='cronTrigger']");
+	var ctA=$("tr[name='"+jobName+"']").find("a[name='cronTrigger']");
+	var cronTrigger=ctA.html();
+	if("#"==cronTrigger){
+		cronTrigger="";
+	}
+	ctInput.val(cronTrigger);
+	ctA.css("display","none");
+	ctInput.css("display","inline");
+	
+	var otherCtInput=$("tr[name!='"+jobName+"']").find("input[name='cronTrigger']");
+	var otherCtA=$("tr[name!='"+jobName+"']").find("a[name='cronTrigger']");
+	otherCtInput.css("display","none");
+	otherCtA.css("display","inline");
+}
+
+function updateCronTrigger(jobName){
+	var ctInput=$("tr[name='"+jobName+"']").find("input[name='cronTrigger']");
+	var ctA=$("tr[name='"+jobName+"']").find("a[name='cronTrigger']");
+	var newCronTrigger=ctInput.val();
+	var oldCronTrigger=ctA.html();
+	if(newCronTrigger!=oldCronTrigger){
+		var version=$("tr[name='"+jobName+"']").find("input[name='version']").val();
+		if (window.confirm("你确定要保存job["+jobName+"]的调度时间["+newCronTrigger+"]")) {
+			var url = "/crawler/job/updateCronTrigger";
+			$.post(url, {
+				version:version,
+				name : jobName,
+				cronTrigger : newCronTrigger
+			}, function(responseMsg) {
+				if (responseMsg.isOk == 1) {
+					ctInput.val(newCronTrigger);
+					ctA.html(newCronTrigger);
+					var allCtInput=$("tr").find("input[name='cronTrigger']");
+					var allCtA=$("tr").find("a[name='cronTrigger']");
+					allCtInput.css("display","none");
+					allCtA.css("display","inline");
+				}
+				updateJobVersion(jobName,responseMsg);
+				alert(responseMsg.msg);
+			});
+		}	
+	}
+}
+
+function getIsScheduledShowHtml(jobName, isScheduled) {
+	var scheduledOperation;
+	if (isScheduled == 1) {
+		scheduledOperation = "<a style='color:#FF0000' href=\"javascript:updateIsScheduled('"
+				+ jobName + "')\">取消</a>&nbsp;";
+	} else {
+		scheduledOperation = "<a style='color:#227700' href=\"javascript:updateIsScheduled('"
+				+ jobName + "')\">开启</a>&nbsp;";
+	}
+	return scheduledOperation;
+}
+
+function updateIsScheduled(jobName) {
+	var jobTr = $("tr[name='" + jobName + "']");
+	var version = jobTr.find("input[name='version']").val();
+	var isScheduledInput = jobTr.find("input[name='isScheduled']");
+	var isScheduledTd = jobTr.find("td[name='isScheduled']");
+	var isScheduled = isScheduledInput.val();
+	if (1 == isScheduled || "1" == isScheduled) {
+		msg = '你确定要关闭任务[' + jobName + ']调度吗？';
+		isScheduled=0;
+	} else {
+		msg = '你确定要开启任务[' + jobName + ']调度吗？';
+		isScheduled=1
+	}
+	if (window.confirm(msg)) {
+		var url = "/crawler/job/updateIsScheduled";
+		$.post(url, {
+			version : version,
+			name : jobName,
+			isScheduled:isScheduled
+		}, function(responseMsg) {
+			if (responseMsg.isOk == 1) {
+				var scheduledOperation =getIsScheduledShowHtml(jobName,
+						isScheduled);
+				isScheduledTd.html(scheduledOperation);
+				isScheduledInput.val(isScheduled);
+			}
+			updateJobVersion(jobName,responseMsg);
+			alert(responseMsg.msg);
+		});
+	}
+}
+
+
+function updateJobVersion(jobName,responseMsg){
+	if (responseMsg.isOk == 1) {
+		var jobTr = $("tr[name='" + jobName + "']");
+		var newVersion=responseMsg.data;
+		jobTr.find("input[name='version']").val(newVersion);
+	}
+}
+
+
 
 function showHistoryJobSnapshot(jobName) {
 	var url = "/crawler/job/getHistoryJobSnapshot/" + jobName;

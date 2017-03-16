@@ -17,6 +17,7 @@ function nodesTable(tableid,url,method){
 					node=data[i];
 					var tr=$("<tr></tr>");
 					$("<td>"+node.name+"</td>").appendTo(tr);
+					$("<td>"+node.type+"</td>").appendTo(tr);
 					$("<td>"+node.host+"</td>").appendTo(tr);
 					$("<td>"+node.port+"</td>").appendTo(tr);
 					$("<td>"+node.cpu+"</td>").appendTo(tr);

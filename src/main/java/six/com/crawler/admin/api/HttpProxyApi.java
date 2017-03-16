@@ -33,7 +33,7 @@ public class HttpProxyApi extends BaseApi {
 	@RequestMapping(value = "/crawler/httpPorxy/list", method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseMsg<List<HttpProxy>> getHttpPorxys() {
-		ResponseMsg<List<HttpProxy>> msg = new ResponseMsg<>();
+		ResponseMsg<List<HttpProxy>> msg =createResponseMsg();
 		List<HttpProxy> result = httpPorxyService.getHttpProxys();
 		msg.setData(result);
 		return msg;
@@ -42,7 +42,7 @@ public class HttpProxyApi extends BaseApi {
 	@RequestMapping(value = "/crawler/httpPorxy/add", method = RequestMethod.POST)
 	@ResponseBody
 	public ResponseMsg<String> addHttpPorxys(HttpProxy httpProxy) {
-		ResponseMsg<String> msg = new ResponseMsg<>();
+		ResponseMsg<String> msg = createResponseMsg();
 		String result = httpPorxyService.addHttpProxy(httpProxy);
 		msg.setMsg(result);
 		return msg;
@@ -51,7 +51,7 @@ public class HttpProxyApi extends BaseApi {
 	@RequestMapping(value = "/crawler/httpPorxy/test", method = RequestMethod.POST)
 	@ResponseBody
 	public ResponseMsg<String> testHttpPorxys(HttpProxy httpProxy) {
-		ResponseMsg<String> msg = new ResponseMsg<>();
+		ResponseMsg<String> msg = createResponseMsg();
 		String result = httpPorxyService.testHttpProxy(httpProxy);
 		msg.setMsg(result);
 		return msg;
@@ -60,7 +60,7 @@ public class HttpProxyApi extends BaseApi {
 	@RequestMapping(value = "/crawler/httpPorxy/del", method = RequestMethod.POST)
 	@ResponseBody
 	public ResponseMsg<String> delHttpPorxys(HttpProxy httpProxy) {
-		ResponseMsg<String> msg = new ResponseMsg<>();
+		ResponseMsg<String> msg = createResponseMsg();
 		String result = httpPorxyService.delHttpProxy(httpProxy);
 		msg.setMsg(result);
 		return msg;

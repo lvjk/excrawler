@@ -20,7 +20,6 @@ import six.com.crawler.common.http.HttpMethod;
 import six.com.crawler.common.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.RedisWorkQueue;
-import six.com.crawler.work.WorkerLifecycleState;
 
 /**
  * @author 作者
@@ -133,9 +132,7 @@ public class TmsfProjectListWorker extends AbstractCrawlWorker {
 			projectInfoQueue.push(projectPage);
 		}
 		pageIndex++;
-		if (pageIndex > pageCount) {
-			compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.WAITED);
-		} else {
+		if (pageIndex<=pageCount) {
 			Page page = buildPage(pageIndex, doingPage.getFinalUrl());// 初始化第一页
 			getWorkQueue().push(page);
 		}

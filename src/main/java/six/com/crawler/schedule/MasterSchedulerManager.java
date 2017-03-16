@@ -1,8 +1,8 @@
 package six.com.crawler.schedule;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -13,7 +13,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.StampedLock;
 
 import javax.annotation.PreDestroy;
 
@@ -48,7 +47,6 @@ import six.com.crawler.common.http.HttpResult;
 import six.com.crawler.common.utils.AutoCharsetDetectorUtils.ContentType;
 import six.com.crawler.work.WorkerLifecycleState;
 import six.com.crawler.common.utils.JobTableUtils;
-import six.com.crawler.common.utils.ObjectCheckUtils;
 import six.com.crawler.common.utils.ScheduleUrlUtils;
 
 /**
@@ -60,7 +58,7 @@ import six.com.crawler.common.utils.ScheduleUrlUtils;
  *          1.提交爬虫job至待执行队列,并将job快照注册至注册中心 2.读取待执行任务队列线程读取队列中的job,
  *          判断job是否处于运行中，如果运行中重新返回队列，否则做初始化，呼叫执行爬虫任务线程池执行任务 3.执行爬虫任务线程池执行爬虫任务
  *          4.执行完任务
- *          
+ * 
  *          注意:集群 命令调用还需完善
  * 
  * 
@@ -68,11 +66,9 @@ import six.com.crawler.common.utils.ScheduleUrlUtils;
 @Component
 public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 
-	final static Logger LOG = LoggerFactory.getLogger(MasterSchedulerManager.class);
+	final static Logger log = LoggerFactory.getLogger(MasterSchedulerManager.class);
 	// 记录wait Job
 	private Queue<Job> waitingRunQueue = new ConcurrentLinkedQueue<>();
-
-	private final static StampedLock stampedLock = new StampedLock();
 
 	private final static Lock waitQueueLock = new ReentrantLock();
 
@@ -102,13 +98,13 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 	}
 
 	private void loopReadWaitingJob() {
-		LOG.info("start Thread{loop-read-waitingJob-thread}");
+		log.info("start Thread{loop-read-waitingExecuteJob-thread}");
 		Job job = null;
 		while (true) {
 			job = waitingRunQueue.poll();
 			// 如果获取到Job的那么 那么execute
 			if (null != job) {
-				LOG.info("MASTER node read job[" + job.getName() + "] from waitingQueue to ready execute");
+				log.info("MASTER node read jobChain[" + job.getName() + "] from waitingExecuteQueue to ready execute");
 				doExecute(job);
 			} else {// 如果队列里没有Job的话那么 wait 1000 毫秒
 				waitQueueLock.lock();
@@ -116,7 +112,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 					try {
 						waitQueueCondition.await();
 					} catch (InterruptedException e) {
-						LOG.error("waitQueueCondition await err", e);
+						log.error("waitQueueCondition await err", e);
 					}
 				} finally {
 					waitQueueLock.unlock();
@@ -142,23 +138,21 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 			scheduler = stdSchedulerFactory.getScheduler();
 			scheduler.start();
 		} catch (SchedulerException e) {
-			LOG.error("start scheduler err");
+			log.error("start scheduler err");
 			System.exit(1);
 		}
 	}
 
 	/**
-	 * 加载需要调度的job
+	 * 加载需要调度的job JobChain
 	 */
 	private void loadScheduledJob() {
-		if (NodeType.MASTER == getConfigure().getNodeType()) {
-			LOG.info("start load scheduled job");
-			Map<String, Object> parameters = new HashMap<>();
-			parameters.put("isScheduled", 1);
-			List<Job> jobList = getJobService().query(parameters);
-			int size = null != jobList ? jobList.size() : 0;
-			LOG.info("load Scheduled Job size:" + size);
-			for (Job job : jobList) {
+		if (NodeType.MASTER == getConfigure().getNodeType() || NodeType.MASTER_WORKER == getConfigure().getNodeType()) {
+			log.info("start load scheduled job");
+			List<Job> jobs = getJobService().queryIsScheduled();
+			int size = null != jobs ? jobs.size() : 0;
+			log.info("load Scheduled job size:" + size);
+			for (Job job : jobs) {
 				scheduled(job);
 			}
 		}
@@ -170,18 +164,17 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 	 * @param job
 	 */
 	private void submitWaitQueue(Job job) {
-		if (null == job) {
-			throw new NullPointerException();
-		}
-		waitQueueLock.lock();
-		try {
-			// 如果队里里面没有这个job 才会继续下一步操作
-			if (!waitingRunQueue.contains(job)) {
-				waitingRunQueue.add(job);
-				waitQueueCondition.signalAll();
+		if (null != job) {
+			waitQueueLock.lock();
+			try {
+				// 如果队里里面没有这个job 才会继续下一步操作
+				if (!waitingRunQueue.contains(job)) {
+					waitingRunQueue.add(job);
+					waitQueueCondition.signalAll();
+				}
+			} finally {
+				waitQueueLock.unlock();
 			}
-		} finally {
-			waitQueueLock.unlock();
 		}
 	}
 
@@ -195,7 +188,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 		JobSnapshot jobSnapshot = new JobSnapshot();
 		jobSnapshot.setId(id);
 		jobSnapshot.setName(job.getName());
-		jobSnapshot.setLocalNode(job.getLocalNode());
+		jobSnapshot.setDesignatedNodeName(job.getDesignatedNodeName());
 		jobSnapshot.setState(JobSnapshotState.WAITING_EXECUTED.value());
 		getJobService().registerJobSnapshotToRegisterCenter(jobSnapshot);
 		submitWaitQueue(job);
@@ -212,10 +205,21 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 	public synchronized void doExecute(Job job) {
 		// 判断任务是否在运行
 		if (!isRunning(job)) {
-			int needFreeNodeSize = job.getNeedNodes();
-			List<Node> freeNodes = getClusterManager().getFreeNodes(needFreeNodeSize);
+			log.info("MASTER node execute job[" + job.getName() + "]");
+			//先查看任务是否有指定节点名执行
+			String designatedNodeName=job.getDesignatedNodeName();
+			List<Node> freeNodes=null;
+			if(StringUtils.isNotBlank(designatedNodeName)){
+				Node designatedNode=getClusterManager().getNode(designatedNodeName);
+				freeNodes=Arrays.asList(designatedNode);
+				log.info("get designated node["+designatedNodeName+"] to execute job[" + job.getName() + "]");
+			}else{
+				int needFreeNodeSize = job.getNeedNodes();
+				freeNodes = getClusterManager().getFreeNodes(needFreeNodeSize);
+				// 需要运行节点数量减去本地运行节点1
+				log.info("get many nodes[" + freeNodes.size() + "] to execute job[" + job.getName() + "]");
+			}
 			if (null != freeNodes && freeNodes.size() > 0) {
-				LOG.info("MASTER node execute job[" + job.getName() + "]");
 				List<JobParam> jobParams = getJobService().queryJobParams(job.getName());
 				job.setParamList(jobParams);
 				JobSnapshot jobSnapshot = getJobService().getJobSnapshotFromRegisterCenter(job.getName());
@@ -245,25 +249,22 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 				// 将jobSnapshot更新缓存 这里一定要 saveJobSnapshot
 				getJobService().updateJobSnapshotToRegisterCenter(jobSnapshot);
 				getJobService().saveJobSnapshot(jobSnapshot);
-				// 需要运行节点数量减去本地运行节点1
-				LOG.info("get nodes[" + freeNodes.size() + "] to execute job[" + job.getName() + "]");
 				for (Node freeNode : freeNodes) {
 					String jobName = job.getName();
 					String callUrl = ScheduleUrlUtils.getExecuteJob(freeNode, jobName);
 					Request Request = getHttpClient().buildRequest(callUrl, null, HttpMethod.GET, null, null, null);
 					getHttpClient().executeRequest(Request);
 					jobRunningWorkerSize.computeIfAbsent(jobName, mapKey -> new AtomicInteger()).incrementAndGet();
-					LOG.info("the job[" + job.getName() + "] is executed by node[" + freeNode.getName() + "]");
+					log.info("the job[" + job.getName() + "] is executed by node[" + freeNode.getName() + "]");
 				}
 				return;
 			} else {
-				LOG.error("there is no node to execute job[" + job.getName() + "]");
+				log.error("there is no node to execute job[" + job.getName() + "]");
 			}
 		} else {
-			LOG.error("the job[" + job.getName() + "] is running");
+			log.error("the job[" + job.getName() + "] is running");
 		}
 		getJobService().delJobSnapshotFromRegisterCenter(job.getName());
-
 	}
 
 	/**
@@ -282,7 +283,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 			Request Request = getHttpClient().buildRequest(callUrl, null, HttpMethod.GET, null, null, null);
 			HttpResult result = getHttpClient().executeRequest(Request);
 			String responeMsg = getHttpClient().getHtml(result, ContentType.OTHER);
-			LOG.info(responeMsg);
+			log.info(responeMsg);
 		}
 		JobSnapshot jobSnapshot = getJobService().getJobSnapshotFromRegisterCenter(jobName);
 		jobSnapshot.setState(JobSnapshotState.SUSPEND.value());
@@ -305,7 +306,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 			Request Request = getHttpClient().buildRequest(callUrl, null, HttpMethod.GET, null, null, null);
 			HttpResult result = getHttpClient().executeRequest(Request);
 			String responeMsg = getHttpClient().getHtml(result, ContentType.OTHER);
-			LOG.info(responeMsg);
+			log.info(responeMsg);
 		}
 		JobSnapshot jobSnapshot = getJobService().getJobSnapshotFromRegisterCenter(jobName);
 		jobSnapshot.setState(JobSnapshotState.EXECUTING.value());
@@ -328,7 +329,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 			Request Request = getHttpClient().buildRequest(callUrl, null, HttpMethod.GET, null, null, null);
 			HttpResult result = getHttpClient().executeRequest(Request);
 			String responeMsg = getHttpClient().getHtml(result, ContentType.OTHER);
-			LOG.info(responeMsg);
+			log.info(responeMsg);
 		}
 		JobSnapshot jobSnapshot = getJobService().getJobSnapshotFromRegisterCenter(jobName);
 		jobSnapshot.setState(JobSnapshotState.STOP.value());
@@ -345,7 +346,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 				Request Request = getHttpClient().buildRequest(callUrl, null, HttpMethod.GET, null, null, null);
 				HttpResult result = getHttpClient().executeRequest(Request);
 				String responeMsg = getHttpClient().getHtml(result, ContentType.OTHER);
-				LOG.info(responeMsg);
+				log.info(responeMsg);
 			}
 			jobSnapshot.setState(JobSnapshotState.STOP.value());
 			getJobService().updateJobSnapshotToRegisterCenter(jobSnapshot);
@@ -356,7 +357,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 			Request Request = getHttpClient().buildRequest(callUrl, null, HttpMethod.GET, null, null, null);
 			HttpResult result = getHttpClient().executeRequest(Request);
 			String responeMsg = getHttpClient().getHtml(result, ContentType.OTHER);
-			LOG.info(responeMsg);
+			log.info(responeMsg);
 		}
 	}
 
@@ -375,14 +376,27 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 					}
 				}
 				JobSnapshot jobSnapshot = getJobService().getJobSnapshotFromRegisterCenter(jobName);
+				JobSnapshotState state = null;
 				if (workerSnapshots.size() == finishedCount) {
-					jobSnapshot.setState(JobSnapshotState.FINISHED.value());
+					state = JobSnapshotState.FINISHED;
 				} else {
-					jobSnapshot.setState(JobSnapshotState.STOP.value());
+					state = JobSnapshotState.STOP;
 				}
+				jobSnapshot.setState(state.value());
 				jobSnapshot.setEndTime(DateFormatUtils.format(new Date(), DateFormats.DATE_FORMAT_1));
 				getJobService().updateJobSnapshotToRegisterCenter(jobSnapshot);
 				getJobService().reportJobSnapshot(jobName);
+				// 当任务正常完成时 判断是否有当前任务是否有下个执行任务，如果有的话那么直接执行
+				if (JobSnapshotState.FINISHED == state) {
+					String nextJobName = job.getNextJobName();
+					if (StringUtils.isNotBlank(nextJobName)) {
+						Job nextJob = getJobService().get(nextJobName);
+						if (null != nextJob) {
+							log.info("execute job[" + "jobName" + "]'s nextJob[" + nextJobName + "]");
+							execute(nextJob);
+						}
+					}
+				}
 			}
 		}
 	}
@@ -413,30 +427,27 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 	 * 
 	 * @param job
 	 */
-	public void scheduled(Job job) {
-		ObjectCheckUtils.checkNotNull(job);
-		JobKey jobKey = new JobKey(job.getName(), schedulerGroup);
-		try {
-			boolean existed = scheduler.checkExists(jobKey);
-			if (existed) {
+	public synchronized void scheduled(Job job) {
+		if (null != job) {
+			JobKey jobKey = new JobKey(job.getName(), schedulerGroup);
+			try {
+				boolean existed = scheduler.checkExists(jobKey);
+				if (existed) {
+					return;
+				}
+			} catch (SchedulerException e1) {
+				log.error("scheduler checkExists{" + job.getName() + "} err", e1);
 				return;
 			}
-		} catch (SchedulerException e1) {
-			LOG.error("scheduler checkExists{" + job.getName() + "} err", e1);
-			return;
-		}
-
-		long stamp = stampedLock.writeLock();
-		try {
-			boolean existed = scheduler.checkExists(jobKey);
-			if (existed) {
+			try {
+				boolean existed = scheduler.checkExists(jobKey);
+				if (existed) {
+					return;
+				}
+			} catch (SchedulerException e1) {
+				log.error("scheduler checkExists{" + job.getName() + "} err", e1);
 				return;
 			}
-		} catch (SchedulerException e1) {
-			LOG.error("scheduler checkExists{" + job.getName() + "} err", e1);
-			return;
-		}
-		try {
 			if (StringUtils.isNotBlank(job.getCronTrigger())) {
 				Trigger trigger = TriggerBuilder.newTrigger().withIdentity(job.getName(), schedulerGroup)
 						.withSchedule(CronScheduleBuilder.cronSchedule(job.getCronTrigger())).startNow().build();
@@ -450,13 +461,10 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 				try {
 					scheduler.scheduleJob(jobDetail, trigger);
 				} catch (SchedulerException e) {
-					LOG.error("scheduleJob err:" + job.getName());
+					log.error("scheduleJob err:" + job.getName());
 				}
 
 			}
-
-		} finally {
-			stampedLock.unlock(stamp);
 		}
 	}
 
@@ -465,13 +473,13 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 	 * 
 	 * @param job
 	 */
-	public void cancelScheduled(String jobName) {
+	public synchronized void cancelScheduled(String jobName) {
 		if (StringUtils.isNotBlank(jobName)) {
 			try {
 				JobKey key = new JobKey(jobName, schedulerGroup);
 				scheduler.deleteJob(key);
 			} catch (SchedulerException e) {
-				LOG.error("deleteJobFromScheduled err", e);
+				log.error("deleteJobFromScheduled err", e);
 			}
 		}
 	}
@@ -484,7 +492,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 		try {
 			scheduler.shutdown();
 		} catch (SchedulerException e) {
-			LOG.error("scheduler shutdown err");
+			log.error("scheduler shutdown err");
 		}
 	}
 
@@ -497,27 +505,11 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 			for (WorkerSnapshot workerSnapshot : workerSnapshots) {
 				nodeName = workerSnapshot.getLocalNode();
 				findNode = getClusterManager().getNode(nodeName);
-				nodes.add(findNode);
+				if (null != findNode) {
+					nodes.add(findNode);
+				}
 			}
 		}
 		return nodes;
 	}
-
-	@Override
-	public void noticeAdminByEmail(String topic, String msg) {
-		// for (String to : getConfigure().getAdminEmails()) {
-		// // 注册异常 邮件通知管理员
-		// try {
-		// emailClient.sendMail(to, topic, msg);
-		// } catch (MessagingException e) {
-		// LOG.error("notice admin email err:" + to, e);
-		// }
-		// }
-	}
-
-	@Override
-	public void noticeAdminByPhone(String topic, String msg) {
-
-	}
-
 }

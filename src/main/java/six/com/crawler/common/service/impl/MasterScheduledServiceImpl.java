@@ -53,7 +53,7 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 		String msg = null;
 		try {
 			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
-			Job job = jobService.queryJob(jobName);
+			Job job = jobService.get(jobName);
 			if (null != job) {
 				if (scheduleManager.isRunning(job)) {
 					msg = "这个任务[" + jobName + "]正在运行";
@@ -81,7 +81,7 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 		String msg = null;
 		try {
 			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
-			Job job = jobService.queryJob(jobName);
+			Job job = jobService.get(jobName);
 			if (null != job) {
 				if (!scheduleManager.isRunning(job)) {
 					msg = "the job[" + jobName + "] is not running and don't suspend";
@@ -109,7 +109,7 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 		String msg = null;
 		try {
 			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
-			Job job = jobService.queryJob(jobName);
+			Job job = jobService.get(jobName);
 			if (null != job) {
 				if (!scheduleManager.isRunning(job)) {
 					msg = "the job[" + jobName + "] is not running and don't goOn";
@@ -138,7 +138,7 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 		String msg = null;
 		try {
 			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
-			Job job = jobService.queryJob(jobName);
+			Job job = jobService.get(jobName);
 			if (null != job) {
 				if (!scheduleManager.isRunning(job)) {
 					msg = "the job[" + jobName + "] is not running and don't stop";
@@ -160,12 +160,12 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 		}
 		return msg;
 	}
-	
-	public String end(String jobName){
+
+	public String end(String jobName) {
 		String msg = null;
 		try {
 			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
-			Job job = jobService.queryJob(jobName);
+			Job job = jobService.get(jobName);
 			if (null != job) {
 				scheduleManager.end(job);
 				msg = "the job[" + jobName + "] have been requested to execute stop";
@@ -184,38 +184,8 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 		return msg;
 	}
 
-	@Override
-	public String scheduled(String jobName) {
-		String msg = null;
-		try {
-			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
-			Job job = jobService.queryJob(jobName);
-			// 如果等于1 那么已经开启调度
-			if (job.getIsScheduled() == 1) {
-				job.setIsScheduled(0);
-				scheduleManager.cancelScheduled(jobName);
-				jobService.update(job);
-				msg = "cancel schedule job[" + jobName + "] succeed";
-			} else {
-				job.setIsScheduled(1);
-				scheduleManager.scheduled(job);
-				msg = "schedule job[" + jobName + "] succeed";
-			}
-			jobService.update(job);
-		} catch (RedisException e) {
-			LOG.error("JobService scheduled job[" + jobName + "] err", e);
-			msg = ResponeMsgManager.SYSTEM_ERR_0001;
-		} catch (Exception e) {
-			LOG.error("JobService scheduled job[" + jobName + "] err", e);
-			msg = ResponeMsgManager.SYSTEM_ERR_0001;
-		} finally {
-			redisManager.unlock(JOB_SERVICE_OPERATION_PRE + jobName);
-		}
-		return msg;
-	}
-
 	public List<WorkerSnapshot> getWorkerInfo(String jobName) {
-		Job job = jobService.queryJob(jobName);
+		Job job = jobService.get(jobName);
 		List<WorkerSnapshot> result = null;
 		if (null != job) {
 			result = registerCenter.getWorkerSnapshots(jobName);

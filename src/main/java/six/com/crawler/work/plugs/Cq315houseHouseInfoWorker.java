@@ -69,12 +69,10 @@ public class Cq315houseHouseInfoWorker extends AbstractCrawlWorker {
 	@Override
 	protected void beforeExtract(Page doingPage) {
 		String validCodeUrlCss = "img[id=imgRandom]";
-		String html = doingPage.getPageSrc();
-		Document doc = Jsoup.parse(html);
-		Element validCodeElement = doc.select(validCodeUrlCss).first();
+		Element validCodeElement = doingPage.getDoc().select(validCodeUrlCss).first();
 		String validCodeUrl = validCodeElement.attr("src");
 		validCodeUrl = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), validCodeUrl);
-		Element formElement = doc.select("form[id=form1]").first();
+		Element formElement = doingPage.getDoc().select("form[id=form1]").first();
 		String formAction = formElement.attr("action");
 		formAction = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), formAction);
 		String __VIEWSTATE = formElement.select("input[id=__VIEWSTATE]").first().attr("value");

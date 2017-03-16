@@ -32,7 +32,7 @@ public class WorkerScheduledApi extends BaseApi {
 	@RequestMapping(value = "/crawler/worker/scheduled/execute/{jobName}", method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseMsg<String> execute(@PathVariable("jobName") String jobName) {
-		ResponseMsg<String> msg = new ResponseMsg<>();
+		ResponseMsg<String> msg =createResponseMsg();
 		String result = scheduledService.execute(jobName);
 		msg.setMsg(result);
 		return msg;
@@ -41,7 +41,7 @@ public class WorkerScheduledApi extends BaseApi {
 	@RequestMapping(value = "/crawler/worker/scheduled/suspend/{jobName}", method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseMsg<String> suspend(@PathVariable("jobName") String jobName) {
-		ResponseMsg<String> msg = new ResponseMsg<>();
+		ResponseMsg<String> msg = createResponseMsg();
 		String result = scheduledService.suspend(jobName);
 		msg.setMsg(result);
 		return msg;
@@ -50,7 +50,7 @@ public class WorkerScheduledApi extends BaseApi {
 	@RequestMapping(value = "/crawler/worker/scheduled/goon/{jobName}", method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseMsg<String> goon(@PathVariable("jobName") String jobName) {
-		ResponseMsg<String> msg = new ResponseMsg<>();
+		ResponseMsg<String> msg = createResponseMsg();
 		String result = scheduledService.goOn(jobName);
 		msg.setMsg(result);
 		return msg;
@@ -59,7 +59,7 @@ public class WorkerScheduledApi extends BaseApi {
 	@RequestMapping(value = "/crawler/worker/scheduled/stop/{jobName}", method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseMsg<String> stop(@PathVariable("jobName") String jobName) {
-		ResponseMsg<String> msg = new ResponseMsg<>();
+		ResponseMsg<String> msg = createResponseMsg();
 		String result = scheduledService.stop(jobName);
 		msg.setMsg(result);
 		return msg;

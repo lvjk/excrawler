@@ -56,19 +56,4 @@ public interface SchedulerManager{
 	 */
 	public int getRunningWorkerCount();
 
-	/**
-	 * 通过email 给管理员发送信息
-	 * 
-	 * @param topic
-	 * @param msg
-	 */
-	public void noticeAdminByEmail(String topic, String msg);
-
-	/**
-	 * 通过短信给管理员发送信息
-	 * 
-	 * @param topic
-	 * @param msg
-	 */
-	public void noticeAdminByPhone(String topic, String msg);
 }

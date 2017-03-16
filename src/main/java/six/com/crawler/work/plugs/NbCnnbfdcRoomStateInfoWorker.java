@@ -116,7 +116,9 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker{
 				Page roomPage = new Page(doingPage.getSiteCode(), 1, pageUrl, pageUrl);
 				roomPage.getMetaMap().computeIfAbsent("roomStateId",mapKey->new ArrayList<>()).add(roomStateId);
 				roomPage.setReferer(doingPage.getFinalUrl());
-				roomInfoQueue.push(roomPage);
+				if(!roomInfoQueue.duplicateKey(roomPage.getPageKey())){
+					roomInfoQueue.push(roomPage);
+				}
 			}
 		}
 	}

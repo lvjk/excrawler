@@ -9,7 +9,6 @@ import six.com.crawler.common.entity.JobParam;
 import six.com.crawler.common.entity.WorkerSnapshot;
 import six.com.crawler.work.extract.ExtractItem;
 import six.com.crawler.common.entity.JobSnapshot;
-import six.com.crawler.common.entity.Node;
 import six.com.crawler.common.entity.PageQuery;
 
 /**
@@ -19,6 +18,9 @@ import six.com.crawler.common.entity.PageQuery;
  */
 public interface JobService extends DownloadAndUploadService {
 
+	
+	
+	List<Job> queryIsScheduled();
 	/**
 	 * 供控制层调用 模糊查询jobName+？
 	 * 
@@ -41,14 +43,7 @@ public interface JobService extends DownloadAndUploadService {
 	 * @param parameterMap
 	 * @return
 	 */
-	public Job queryJob(String jobName);
-
-	/**
-	 * 统计节点任务数据信息
-	 * 
-	 * @return
-	 */
-	public Node totalNodeJobInfo(String nodeName);
+	public Job get(String jobName);
 
 	/**
 	 * 查询job相关的所有信息
@@ -146,19 +141,17 @@ public interface JobService extends DownloadAndUploadService {
 	public List<JobParam> queryJobParams(String jobName);
 
 	/**
-	 * 更新job 状态为 state
-	 * 
-	 * @param job
-	 * @param state
-	 */
-	public void update(Job job);
-
-	/**
 	 * 通过job name 查询 解析项
 	 * 
 	 * @param parameterMap
 	 * @return
 	 */
 	public List<ExtractItem> queryExtractItems(String jobName);
+	
+	
+	public void updateIsScheduled(ResponseMsg<Integer> responseMsg,int version, String name, int isScheduled);
+	
+	
+	public void updateCronTrigger(ResponseMsg<Integer> responseMsg,int version,String name,String cronTrigger);
 
 }

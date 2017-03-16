@@ -78,7 +78,7 @@ public class Cq315housePresell1Worker extends AbstractCrawlWorker {
 			throw new RuntimeException("get jsonData is blank");
 		}
 		if (("[]".equals(jsonData) || StringUtils.isBlank(jsonData)) && pageIndex > 1) {
-			compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.WAITED);
+			compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.FINISHED);
 		} else {
 			String proxyJsonKey = "json";
 			jsonData = "{'" + proxyJsonKey + "':" + jsonData + "}";

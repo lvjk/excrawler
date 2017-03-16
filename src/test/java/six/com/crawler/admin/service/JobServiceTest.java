@@ -28,7 +28,7 @@ public class JobServiceTest extends BaseTest {
 
 	@Test
 	public void test() {
-		ResponseMsg<PageQuery<Job>> responseMsg = new ResponseMsg<>();
+		ResponseMsg<PageQuery<Job>> responseMsg = new ResponseMsg<>("test");
 		String jobName = "qichacha";
 		int pageIndex = 0;
 		int pageSize = 2;
@@ -71,7 +71,6 @@ public class JobServiceTest extends BaseTest {
 		workerSnapshot.setJobName(jobName);
 		workerSnapshot.setName(workerName);
 		workerSnapshot.setLocalNode(hostNodeName);
-		workerSnapshot.setJobLocalNode(hostNodeName);
 		workerSnapshot.setStartTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
 		workerSnapshot.setEndTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
 		workerSnapshot.setTotalProcessCount(50);
@@ -99,7 +98,6 @@ public class JobServiceTest extends BaseTest {
 		JobSnapshot jobSnapshot = new JobSnapshot();
 		jobSnapshot.setId(jobName + "_" + System.currentTimeMillis());
 		jobSnapshot.setName(jobName);
-		jobSnapshot.setLocalNode(hostNodeName);
 		jobSnapshot.setState(JobSnapshotState.READY.value());
 		jobSnapshot.setStartTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
 		jobSnapshot.setEndTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));

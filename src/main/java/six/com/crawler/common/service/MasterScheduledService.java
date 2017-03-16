@@ -53,8 +53,5 @@ public interface MasterScheduledService {
 	public String end(String jobName);
 	
 	
-	public String scheduled(String jobName);
-	
-	
 	public List<WorkerSnapshot> getWorkerInfo(String jobName);
 }

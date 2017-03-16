@@ -35,7 +35,7 @@ public class ClusterApi extends BaseApi{
 	@RequestMapping(value = "/crawler/cluster/info", method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseMsg<List<Node>> getClusterInfo() {
-		ResponseMsg<List<Node>> msg = new ResponseMsg<>();
+		ResponseMsg<List<Node>> msg = createResponseMsg();
 		List<Node> result = clusterService.getClusterInfo();
 		msg.setData(result);
 		return msg;

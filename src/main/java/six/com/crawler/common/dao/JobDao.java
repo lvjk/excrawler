@@ -11,7 +11,6 @@ import org.apache.ibatis.annotations.UpdateProvider;
 
 import six.com.crawler.common.dao.provider.JobDaoProvider;
 import six.com.crawler.common.entity.Job;
-import six.com.crawler.common.entity.Node;
 
 /**
  * @author 作者
@@ -24,55 +23,25 @@ public interface JobDao extends BaseDao{
 	String TABLE_NAME="ex_crawler_platform_job";
 	
 	
-	@SelectProvider(type = JobDaoProvider.class, method = "totalNodeJobInfo")
-	Node totalNodeJobInfo(String nodeName);
 	/**
 	 * 通过id查询
 	 * 
-	 * @param id
+	 * @param id nextJobName
 	 * @return
 	 */
 	@Select("select `name`,"
-			+ " localNode,"
+			+ "   nextJobName,"
 			+ "   level,"
-			+ "workFrequency,"
-			+ "isScheduled,"
+			+ " designatedNodeName,"
 			+ "needNodes,"
+			+ "isScheduled,"
 			+ "cronTrigger,"
+			+ "workFrequency,"
 			+ "workerClass,"
 			+ "queueName,"
 			+ "`user`,"
-			+ "`describe` from "+TABLE_NAME+" where name = #{name} order by `level` asc,`name`")
+			+ "`describe`,`version` from "+TABLE_NAME+" where name = #{name}")
 	public Job query(String name);
-	
-	
-	@Select("select `name`,"
-			+ " localNode,"
-			+ "   level,"
-			+ "workFrequency,"
-			+ "isScheduled,"
-			+ "needNodes,"
-			+ "cronTrigger,"
-			+ "workerClass,"
-			+ "queueName,"
-			+ "`user`,"
-			+ "`describe` from "+TABLE_NAME+" where localNode = #{localNode} order by `level` asc,`name`")
-	public List<Job> queryByNode(String localNode);
-	
-
-	@Select("select `name`,"
-			+ " localNode,"
-			+ "   level,"
-			+ "workFrequency,"
-			+ "isScheduled,"
-			+ "needNodes,"
-			+ "cronTrigger,"
-			+ "workerClass,"
-			+ "queueName,"
-			+ "`user`,"
-			+ "`describe` from "+TABLE_NAME+" where name like #{jobName} order by `level` asc,`name`")
-	public List<Job> fuzzyQuery(String jobName);
-	
 	
 
 	/**
@@ -116,12 +85,25 @@ public interface JobDao extends BaseDao{
 	public int del(String jobName);
 
 	/**
-	 * 更新数据
-	 * 
+	 * 更新数据 job的 是否调度 
 	 * @param t
 	 * @return
 	 */
-	@UpdateProvider(type = JobDaoProvider.class, method = "update")
-	public int update(Job job);
-
+	@UpdateProvider(type = JobDaoProvider.class, method = "updateIsScheduled")
+	public int updateIsScheduled(
+			@Param("version")int version,
+			@Param("newVersion")int newVersion,
+			@Param("name")String name,
+			@Param("isScheduled")int isScheduled);
+	/**
+	 * 更新数据 job的 CronTrigger 时间表达式
+	 * @param t
+	 * @return
+	 */
+	@UpdateProvider(type = JobDaoProvider.class, method = "updateCronTrigger")
+	public int updateCronTrigger(
+			@Param("version")int version,
+			@Param("newVersion")int newVersion,
+			@Param("name")String name,
+			@Param("cronTrigger") String cronTrigger);
 }

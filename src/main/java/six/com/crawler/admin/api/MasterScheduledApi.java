@@ -33,7 +33,7 @@ public class MasterScheduledApi extends BaseApi {
 	@RequestMapping(value = "/crawler/master/scheduled/execute/{jobName}", method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseMsg<String> execute(@PathVariable("jobName") String jobName) {
-		ResponseMsg<String> msg = new ResponseMsg<>();
+		ResponseMsg<String> msg = createResponseMsg();
 		String result = scheduledService.execute(jobName);
 		msg.setMsg(result);
 		return msg;
@@ -42,7 +42,7 @@ public class MasterScheduledApi extends BaseApi {
 	@RequestMapping(value = "/crawler/master/scheduled/suspend/{jobName}", method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseMsg<String> suspend(@PathVariable("jobName") String jobName) {
-		ResponseMsg<String> msg = new ResponseMsg<>();
+		ResponseMsg<String> msg = createResponseMsg();
 		String result = scheduledService.suspend(jobName);
 		msg.setMsg(result);
 		return msg;
@@ -51,7 +51,7 @@ public class MasterScheduledApi extends BaseApi {
 	@RequestMapping(value = "/crawler/master/scheduled/goon/{jobName}", method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseMsg<String> goon(@PathVariable("jobName") String jobName) {
-		ResponseMsg<String> msg = new ResponseMsg<>();
+		ResponseMsg<String> msg = createResponseMsg();
 		String result = scheduledService.goOn(jobName);
 		msg.setMsg(result);
 		return msg;
@@ -60,35 +60,26 @@ public class MasterScheduledApi extends BaseApi {
 	@RequestMapping(value = "/crawler/master/scheduled/stop/{jobName}", method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseMsg<String> stop(@PathVariable("jobName") String jobName) {
-		ResponseMsg<String> msg = new ResponseMsg<>();
+		ResponseMsg<String> msg = createResponseMsg();
 		String result = scheduledService.stop(jobName);
 		msg.setMsg(result);
 		return msg;
 	}
-	
+
 	@RequestMapping(value = "/crawler/master/scheduled/end/{jobName}", method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseMsg<String> end(@PathVariable("jobName") String jobName) {
-		ResponseMsg<String> msg = new ResponseMsg<>();
+		ResponseMsg<String> msg = createResponseMsg();
 		String result = scheduledService.end(jobName);
 		msg.setMsg(result);
 		return msg;
 	}
 
-	@RequestMapping(value = "/crawler/master/scheduled/scheduled/{jobName}/{isScheduled}", method = RequestMethod.GET)
-	@ResponseBody
-	public ResponseMsg<String> scheduled(@PathVariable("jobName") String jobName,
-			@PathVariable("isScheduled") int isScheduled) {
-		ResponseMsg<String> responseMsg = new ResponseMsg<>();
-		String msg = scheduledService.scheduled(jobName);
-		responseMsg.setMsg(msg);
-		return responseMsg;
-	}
 
 	@RequestMapping(value = "/crawler/master/scheduled/getWorkerInfo/{jobName}", method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseMsg<List<WorkerSnapshot>> getWorkerInfo(@PathVariable("jobName") String jobName) {
-		ResponseMsg<List<WorkerSnapshot>> responseMsg = new ResponseMsg<>();
+		ResponseMsg<List<WorkerSnapshot>> responseMsg = createResponseMsg();
 		List<WorkerSnapshot> result = scheduledService.getWorkerInfo(jobName);
 		responseMsg.setData(result);
 		return responseMsg;

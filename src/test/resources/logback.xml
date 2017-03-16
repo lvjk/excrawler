@@ -51,7 +51,7 @@
 
 	<!-- Enable FILE and STDOUT appenders for all log messages. <appender-ref 
 		ref="file" /> By default, only log at level INFO and above. -->
-	<root level="INFO">
+	<root level="debug">
 		<appender-ref ref="console" />
 	</root>
 

@@ -4,6 +4,9 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.JobSnapshot;
 import six.com.crawler.common.entity.Site;
@@ -21,6 +24,8 @@ import six.com.crawler.work.Worker;
  */
 public abstract class WorkerAbstractSchedulerManager extends AbstractSchedulerManager {
 
+	final static Logger log = LoggerFactory.getLogger(WorkerAbstractSchedulerManager.class);
+
 	/**
 	 * 检查注册运行job 的workers 是否全部wait
 	 * 
@@ -29,14 +34,16 @@ public abstract class WorkerAbstractSchedulerManager extends AbstractSchedulerMa
 	 * @return
 	 */
 	public abstract boolean workerIsAllWaited(String jobName);
+
 	/**
 	 * 通知master 调度中心 worker运行结束 任务
+	 * 
 	 * @param worker
 	 * @param jobName
 	 */
 
 	// 构建 job worker
-	protected Worker buildJobWorker(Job job,JobSnapshot jobSnapshot ) {
+	protected Worker buildJobWorker(Job job, JobSnapshot jobSnapshot) {
 		Worker newJobWorker = null;
 		String workerClass = job.getWorkerClass();
 		// 判断是否是htmljob 如果是那么调用 htmlJobWorkerBuilder 构建worker
@@ -45,15 +52,15 @@ public abstract class WorkerAbstractSchedulerManager extends AbstractSchedulerMa
 		try {
 			clz = Class.forName(workerClass);
 		} catch (ClassNotFoundException e) {
-			LOG.error("ClassNotFoundException  err:" + workerClass, e);
+			log.error("ClassNotFoundException  err:" + workerClass, e);
 		}
 		if (null != clz) {
 			try {
 				constructor = clz.getConstructor();
 			} catch (NoSuchMethodException e) {
-				LOG.error("NoSuchMethodException getConstructor err:" + clz, e);
+				log.error("NoSuchMethodException getConstructor err:" + clz, e);
 			} catch (SecurityException e) {
-				LOG.error("SecurityException err" + clz, e);
+				log.error("SecurityException err" + clz, e);
 			}
 			if (null != constructor) {
 				try {
@@ -63,7 +70,6 @@ public abstract class WorkerAbstractSchedulerManager extends AbstractSchedulerMa
 					workerSnapshot.setJobSnapshotId(jobSnapshot.getId());
 					workerSnapshot.setJobName(job.getName());
 					workerSnapshot.setLocalNode(getClusterManager().getCurrentNode().getName());
-					workerSnapshot.setJobLocalNode(job.getLocalNode());
 					workerSnapshot.setName(workerName);
 					workerSnapshot.setWorkerErrMsgs(new ArrayList<WorkerErrMsg>());
 
@@ -73,17 +79,17 @@ public abstract class WorkerAbstractSchedulerManager extends AbstractSchedulerMa
 					newJobWorker.bindJob(job);
 
 				} catch (InstantiationException e) {
-					LOG.error("InstantiationException  err:" + workerClass, e);
+					log.error("InstantiationException  err:" + workerClass, e);
 				} catch (IllegalAccessException e) {
-					LOG.error("IllegalAccessException  err:" + workerClass.concat("|")
+					log.error("IllegalAccessException  err:" + workerClass.concat("|")
 							.concat(AbstractSchedulerManager.class.getName()).concat("|").concat(Site.class.getName()),
 							e);
 				} catch (IllegalArgumentException e) {
-					LOG.error("IllegalArgumentException  err:" + workerClass.concat("|")
+					log.error("IllegalArgumentException  err:" + workerClass.concat("|")
 							.concat(AbstractSchedulerManager.class.getName()).concat("|").concat(Site.class.getName()),
 							e);
 				} catch (InvocationTargetException e) {
-					LOG.error("InvocationTargetException  err:" + workerClass.concat("|")
+					log.error("InvocationTargetException  err:" + workerClass.concat("|")
 							.concat(AbstractSchedulerManager.class.getName()).concat("|").concat(Site.class.getName()),
 							e);
 				}

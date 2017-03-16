@@ -12,12 +12,11 @@ public interface JobConTextConstants {
 	
 	// 下载器类型
 	String DOWNER_TYPE = "downerType";
-
+	//代理类型
 	String HTTP_PROXY_TYPE = "httpProxyType";
-
-	// 种子页面 md5
-	String SEED_PAGE = "seedPages";
-
+	//代理休息时间
+	String HTTP_PROXY_REST_TIME = "httpProxyRestTime";
+	
 	String BATCH_SIZE = "batchSize";
 
 	// 结果存储key

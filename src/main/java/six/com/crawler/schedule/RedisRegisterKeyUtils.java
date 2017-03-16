@@ -6,25 +6,28 @@ package six.com.crawler.schedule;
  */
 public class RedisRegisterKeyUtils {
 
-	final static String PRE_REDIS_REGISTER_CENTER = "exCrawler";
-	
+	// node注册前缀
+	final static String REDIS_REGISTER_CENTER_NODE_PRE = "exCrawler_nodes";
+
+	// 非node 信息注册的前缀
+	final static String REDIS_REGISTER_CENTER_OTHER_PRE = "exCrawler_other";
+
 	public static String getWorkerNodesPreKey() {
 		StringBuilder keySb = new StringBuilder();
-		keySb.append(PRE_REDIS_REGISTER_CENTER);
+		keySb.append(REDIS_REGISTER_CENTER_NODE_PRE);
 		keySb.append("_nodes");
 		keySb.append("_worker");
 		return keySb.toString();
 	}
-	
+
 	public static String getMasterNodePreKey() {
 		StringBuilder keySb = new StringBuilder();
-		keySb.append(PRE_REDIS_REGISTER_CENTER);
+		keySb.append(REDIS_REGISTER_CENTER_NODE_PRE);
 		keySb.append("_nodes");
 		keySb.append("_master");
 		return keySb.toString();
 	}
 
-	
 	public static String getWorkerNodeKey(String nodeName) {
 		StringBuilder keySb = new StringBuilder();
 		keySb.append(getWorkerNodesPreKey());
@@ -32,13 +35,13 @@ public class RedisRegisterKeyUtils {
 		keySb.append(nodeName);
 		return keySb.toString();
 	}
-	
-	
+
 	public static String getResetPreKey() {
 		StringBuilder keySb = new StringBuilder();
-		keySb.append(PRE_REDIS_REGISTER_CENTER);
+		keySb.append(REDIS_REGISTER_CENTER_OTHER_PRE);
 		return keySb.toString();
 	}
+
 	/**
 	 * 获取 jobSnapshot 注册 key 前缀=PRE_REDIS_REGISTER_CENTER+nodeName+"_jobs"
 	 * 
@@ -50,14 +53,14 @@ public class RedisRegisterKeyUtils {
 	 */
 	public static String getJobSnapshotsKey() {
 		StringBuilder keySb = new StringBuilder();
-		keySb.append(PRE_REDIS_REGISTER_CENTER);
+		keySb.append(REDIS_REGISTER_CENTER_OTHER_PRE);
 		keySb.append("_jobs");
 		return keySb.toString();
 	}
 
-
 	/**
 	 * 获取 WorkerSnapshot 注册前缀key
+	 * 
 	 * @param nodeName
 	 *            job 所属的node name
 	 * @param jobName
@@ -66,7 +69,7 @@ public class RedisRegisterKeyUtils {
 	 */
 	public static String getWorkerSnapshotsKey(String jobName) {
 		StringBuilder keySb = new StringBuilder();
-		keySb.append(PRE_REDIS_REGISTER_CENTER);
+		keySb.append(REDIS_REGISTER_CENTER_OTHER_PRE);
 		keySb.append("_");
 		keySb.append(jobName);
 		keySb.append("_workers");
@@ -84,7 +87,7 @@ public class RedisRegisterKeyUtils {
 	 */
 	public static String getWorkerSerialNumbersKey(String jobName) {
 		StringBuilder keySb = new StringBuilder();
-		keySb.append(PRE_REDIS_REGISTER_CENTER);
+		keySb.append(REDIS_REGISTER_CENTER_OTHER_PRE);
 		keySb.append("_");
 		keySb.append(jobName);
 		keySb.append("_workers_sernum");

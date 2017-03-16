@@ -120,7 +120,7 @@ public abstract class AbstractWorker implements Worker {
 						errMsg.setMsg(msg);
 						workerSnapshot.getWorkerErrMsgs().add(errMsg);
 						// 通知管理员异常
-						getManager().noticeAdminByEmail("worker process err", e.getMessage());
+						//getManager().getEmailClient().sendMailToAdmin("worker process err",msg);
 						onError(e);
 					}
 					// 频率控制

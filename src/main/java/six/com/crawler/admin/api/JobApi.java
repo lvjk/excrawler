@@ -49,7 +49,7 @@ public class JobApi extends BaseApi {
 	@RequestMapping(value = "/crawler/job/queryjobinfo/{jobName}", method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseMsg<Map<String, Object>> queryJobInfo(@PathVariable("jobName") String jobName) {
-		ResponseMsg<Map<String, Object>> msg = new ResponseMsg<>();
+		ResponseMsg<Map<String, Object>> msg = createResponseMsg();
 		Map<String, Object> result = jobService.queryJobInfo(jobName);
 		msg.setData(result);
 		return msg;
@@ -58,7 +58,7 @@ public class JobApi extends BaseApi {
 	@RequestMapping(value = "/crawler/job/getHistoryJobSnapshot/{jobName}", method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseMsg<List<JobSnapshot>> getHistoryJobSnapshot(@PathVariable("jobName") String jobName) {
-		ResponseMsg<List<JobSnapshot>> msg = new ResponseMsg<>();
+		ResponseMsg<List<JobSnapshot>> msg = createResponseMsg();
 		List<JobSnapshot> result = jobService.queryJobSnapshotsFromHistory(jobName);
 		msg.setData(result);
 		return msg;
@@ -73,7 +73,7 @@ public class JobApi extends BaseApi {
 	@MessageMapping("/jobSnapshot")
 	@SendTo("/topic/job/jobSnapshot")
 	public ResponseMsg<List<JobSnapshot>> jobSnapshot(List<Map<String, String>> list) {
-		ResponseMsg<List<JobSnapshot>> msg = new ResponseMsg<>();
+		ResponseMsg<List<JobSnapshot>> msg = createResponseMsg();
 		List<JobSnapshot> result = jobService.getJobSnapshotFromRegisterCenter(list);
 		msg.setData(result);
 		return msg;
@@ -84,7 +84,29 @@ public class JobApi extends BaseApi {
 	public ResponseMsg<List<Job>> getLoclaAllJobs() {
 		return null;
 	}
-
+	
+	@RequestMapping(value = "/crawler/job/updateIsScheduled", method = RequestMethod.POST)
+	@ResponseBody
+	public ResponseMsg<Integer> updateIsScheduled(
+			@RequestParam("version")int version,
+			@RequestParam("name")String name,
+			@RequestParam("isScheduled")int isScheduled) {
+		ResponseMsg<Integer> responseMsg = createResponseMsg();
+		jobService.updateIsScheduled(responseMsg,version,name, isScheduled);
+		return responseMsg;
+	}
+	
+	@RequestMapping(value = "/crawler/job/updateCronTrigger", method = RequestMethod.POST)
+	@ResponseBody
+	public ResponseMsg<Integer> updateCronTrigger(
+			@RequestParam("version")int version,
+			@RequestParam("name")String name,
+			@RequestParam("cronTrigger")String cronTrigger) {
+		ResponseMsg<Integer> responseMsg = createResponseMsg();
+		jobService.updateCronTrigger(responseMsg,version,name, cronTrigger);
+		return responseMsg;
+	}
+	
 	@RequestMapping(value = "/crawler/job/upload/profile", method = RequestMethod.POST)
 	@ResponseBody
 	public ResponseMsg<String> uploadFile(@RequestParam("file") MultipartFile multipartFile) {

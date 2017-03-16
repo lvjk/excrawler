@@ -1,7 +1,5 @@
 package six.com.crawler.schedule;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -26,8 +24,6 @@ import six.com.crawler.common.email.QQEmailClient;
  */
 public abstract class AbstractSchedulerManager implements SchedulerManager, InitializingBean {
 
-	final static Logger LOG = LoggerFactory.getLogger(AbstractSchedulerManager.class);
-
 	@Autowired
 	private SpiderConfigure configure;
 
@@ -45,7 +41,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 
 	@Autowired
 	private JobService jobService;
-
+	
 	@Autowired
 	private RedisManager redisManager;
 
@@ -83,7 +79,6 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	public String getWorkerNameByJob(Job job) {
 		StringBuilder sbd = new StringBuilder();
 		sbd.append(WORKER_NAME_PREFIX).append("_");
-		sbd.append(job.getLocalNode()).append("_");
 		sbd.append(job.getName()).append("_");
 		int serialNumber = getRegisterCenter().getSerNumOfWorkerByJob(job.getName());
 		sbd.append(serialNumber);
@@ -137,6 +132,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	public void setJobService(JobService jobService) {
 		this.jobService = jobService;
 	}
+	
 
 	public RedisManager getRedisManager() {
 		return redisManager;
