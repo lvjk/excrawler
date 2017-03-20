@@ -18,8 +18,8 @@ import six.com.crawler.common.exception.AbstractHttpException;
 import six.com.crawler.common.utils.UrlUtils;
 import six.com.crawler.common.utils.AutoCharsetDetectorUtils.ContentType;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.downer.exception.DownerException;
-import six.com.crawler.work.downer.exception.ExecuteRequestDownHtmlProcessorException;
+import six.com.crawler.work.exception.DownerException;
+import six.com.crawler.work.exception.ExecuteRequestDownHtmlProcessorException;
 
 /**
  * @author six

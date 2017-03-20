@@ -7,7 +7,7 @@ package six.com.crawler.admin.api;
 public class ResponseMsg<T> {
 
 	private final String nodeName;// 响应请求的节点名字
-	private String msg;// 信息
+	private String msg="";// 信息
 	private int isOk;// 信息 1成功 0失败
 	private T data;// 返回数据
 

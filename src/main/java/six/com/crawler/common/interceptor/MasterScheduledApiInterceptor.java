@@ -1,5 +1,6 @@
 package six.com.crawler.common.interceptor;
 
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -9,34 +10,43 @@ import org.springframework.web.servlet.ModelAndView;
 import six.com.crawler.cluster.ClusterManager;
 
 /**
- * @author six
- * @date 2016年1月14日 下午2:14:13 基础 拦截器
+ * @author 作者
+ * @E-mail: 359852326@qq.com
+ * @date 创建时间：2017年3月17日 下午4:16:02
  */
-public class BaseInterceptor implements HandlerInterceptor {
+public class MasterScheduledApiInterceptor implements HandlerInterceptor {
 
 	ClusterManager clusterManager;
-	
 
-	public BaseInterceptor(ClusterManager clusterManager){
-		this.clusterManager=clusterManager;
+	public MasterScheduledApiInterceptor(ClusterManager clusterManager) {
+		this.clusterManager = clusterManager;
 	}
-	
+
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
-
+//		if (handler instanceof org.springframework.web.method.HandlerMethod) {
+//			HandlerMethod handlerMethod = (org.springframework.web.method.HandlerMethod) handler;
+//			OnlyVisitByWorker onlyVisitByWorker = handlerMethod.getMethodAnnotation(OnlyVisitByWorker.class);
+//			if (null != onlyVisitByWorker) {
+//				request.getLocalAddr();
+//			}
+//		}
 		return true;
 	}
 
 	@Override
 	public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler,
 			ModelAndView modelAndView) throws Exception {
+		// TODO Auto-generated method stub
 
 	}
 
 	@Override
 	public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
 			throws Exception {
+		// TODO Auto-generated method stub
+
 	}
 
 }

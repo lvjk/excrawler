@@ -1,5 +1,6 @@
 package six.com.crawler.common.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -31,14 +32,22 @@ public class ClusterServiceImpl implements ClusterService {
 	
 	@Override
 	public List<Node> getClusterInfo() {
-		List<Node> allNodes = clusterManager.getAllNodes();
-		allNodes.add(0, clusterManager.getMasterNode());
+		List<Node> allNodes=new ArrayList<>();
+		Node masterNode=clusterManager.getMasterNode();
+		if(null!=masterNode){
+			allNodes.add(masterNode);
+		}
+		List<Node> workerNodes = clusterManager.getWorkerNodes();
+		if(null!=workerNodes){
+			for(Node workerNode:workerNodes){
+				if(!allNodes.contains(workerNode)){
+					allNodes.add(workerNode);
+				}
+			}
+		}
 		return allNodes;
 	}
 
-	public Node getNode(String nodeName) {
-		return clusterManager.getNode(nodeName);
-	}
 
 	public ClusterManager getClusterManager() {
 		return clusterManager;

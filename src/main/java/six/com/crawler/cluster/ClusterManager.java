@@ -3,7 +3,15 @@ package six.com.crawler.cluster;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.PreDestroy;
+
 import org.apache.commons.lang3.StringUtils;
+import org.apache.curator.RetryPolicy;
+import org.apache.curator.RetrySleeper;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -11,28 +19,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import six.com.crawler.common.RedisManager;
-import six.com.crawler.common.configure.SpiderConfigure;
 import six.com.crawler.common.email.QQEmailClient;
 import six.com.crawler.common.entity.Node;
 import six.com.crawler.common.entity.NodeType;
-import six.com.crawler.common.http.HttpClient;
-import six.com.crawler.common.utils.ThreadUtils;
-import six.com.crawler.schedule.Constants;
-import six.com.crawler.schedule.MasterAbstractSchedulerManager;
-import six.com.crawler.schedule.RegisterCenter;
+import six.com.crawler.common.utils.JavaSerializeUtils;
+import six.com.crawler.configure.SpiderConfigure;
 
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
- * @date 创建时间：2017年3月13日 下午1:41:16
- *  集群节点管理类
+ * @date 创建时间：2017年3月13日 下午1:41:16 集群节点管理类 所有集群服务最基本的依赖
  */
 @Component
 public class ClusterManager implements InitializingBean {
 
 	final static Logger log = LoggerFactory.getLogger(ClusterManager.class);
-
-	private final String REGISTER_NODE_LOCK = "redis_register_node";
 
 	public final int executeCommandRetryCount = 3;
 
@@ -40,16 +41,7 @@ public class ClusterManager implements InitializingBean {
 	private SpiderConfigure configure;
 
 	@Autowired
-	private HttpClient httpClient;
-
-	@Autowired
-	private MasterAbstractSchedulerManager masterAbstractSchedulerManager;
-
-	@Autowired
 	private RedisManager redisManager;
-
-	@Autowired
-	private RegisterCenter registerCenter;
 
 	@Autowired
 	private QQEmailClient emailClient;
@@ -57,35 +49,91 @@ public class ClusterManager implements InitializingBean {
 	// 当前节点
 	private Node currentNode;
 
-	// 节点心跳线程
-	private Thread heartbeatThread;
+	private CuratorFramework zKClient;
 
+	@Autowired
+	private ClusterManagerClient clusterManagerClient;
+
+	/**
+	 * 分布式锁保证每个节点都是有序的初始化注册
+	 */
 	public void afterPropertiesSet() {
-		// 初始化当前节点信息
-		initCurrentNode();
-		// 初始化复位节点
-		initResetMasterNode();
-		// 初始化注册当前节点
-		initRegisterNode();
-		// 初始节点心跳注册
-		initHeatbeatToMaster();
+		String lockKey = "cluster_manager_init";
+		try {
+			redisManager.lock(lockKey);
+			// 初始化zKClient
+			initZKClient();
+			// 初始化当前节点信息
+			initCurrentNode();
+			// 初始化注册当前节点
+			initRegisterNode();
+		} catch (Exception e) {
+			log.error("init clusterManager err", e);
+			System.exit(1);
+		} finally {
+			redisManager.unlock(lockKey);
+		}
+	}
+
+	protected void initZKClient() {
+		String connectString = getConfigure().getConfig("zookeeper.host", null);
+		// 检查 nodeName是否有注册过。如果注册过那么检查 ip 和端口是相同
+		if (StringUtils.isBlank(connectString)) {
+			log.error("the zookeeper's host is blank");
+			System.exit(1);
+		}
+		zKClient = CuratorFrameworkFactory.newClient(connectString, new RetryPolicy() {
+			@Override
+			public boolean allowRetry(int arg0, long arg1, RetrySleeper arg2) {
+				return false;
+			}
+		});
+		zKClient.start();
+		try {
+			zKClient.blockUntilConnected();
+		} catch (InterruptedException e) {
+			log.error("connect zooKeeper[" + connectString + "] err", e);
+			System.exit(1);
+		}
+		try {
+			Stat stat = zKClient.checkExists().forPath(ZooKeeperPathUtils.getRootPath());
+			if (null == stat) {
+				zKClient.create().withMode(CreateMode.PERSISTENT).forPath(ZooKeeperPathUtils.getRootPath());
+			}
+			stat = zKClient.checkExists().forPath(ZooKeeperPathUtils.getMasterNodesPath());
+			if (null == stat) {
+				zKClient.create().withMode(CreateMode.PERSISTENT).forPath(ZooKeeperPathUtils.getMasterNodesPath());
+			}
+
+			stat = zKClient.checkExists().forPath(ZooKeeperPathUtils.getMasterStandbyNodesPath());
+			if (null == stat) {
+				zKClient.create().withMode(CreateMode.PERSISTENT)
+						.forPath(ZooKeeperPathUtils.getMasterStandbyNodesPath());
+			}
+		} catch (Exception e) {
+			log.error("init zooKeeper's persistent path err", e);
+			System.exit(1);
+		}
+	}
+
+	protected void initRegisterNode() {
+		NodeRegisterEvent event = NodeRegisterEventFactory.createNodeRegisterEvent(currentNode);
+		if (!event.register(this, zKClient)) {
+			log.error("register node[" + currentNode.getName() + "] to zooKeeper failed");
+			System.exit(1);
+		}
 	}
 
 	private void initCurrentNode() {
 		// 获取节点配置
 		String host = getConfigure().getHost();
 		int port = getConfigure().getPort();
+		// int trafficPort = getConfigure().getConfig("node.trafficPort", 8085);
 		int runningJobMaxSize = getConfigure().getConfig("worker.running.max.size", 20);
 		String nodeName = getConfigure().getConfig("node.name", null);
 		// 检查节点名字是否设置
 		if (StringUtils.isBlank(nodeName)) {
 			log.error("don't set node's name ,please set it ,then to start");
-			System.exit(1);
-		}
-		Node existedNode = getRegisterCenter().getNode(nodeName);
-		// 检查 nodeName是否有注册过。如果注册过那么检查 ip 和端口是相同
-		if (null != existedNode && !(existedNode.getHost().equals(host) && existedNode.getPort() == port)) {
-			log.error("the " + nodeName + "[" + host + ":" + port + "]has been executed");
 			System.exit(1);
 		}
 		// 检查节点类型
@@ -95,139 +143,81 @@ public class ClusterManager implements InitializingBean {
 		currentNode.setName(nodeName);
 		currentNode.setHost(host);
 		currentNode.setPort(port);
+		// currentNode.setTrafficPort(trafficPort);
 		currentNode.setRunningJobMaxSize(runningJobMaxSize);
-	}
-
-	/**
-	 * 因为redis注册中心节点数据的有效期是 Constants.REDIS_REGISTER_CENTER_HEARTBEAT 秒
-	 * 所以每次心跳更新时间应该要小于 有效期 所以
-	 * sleeptime=Constants.REDIS_REGISTER_CENTER_HEARTBEAT*1000-1000;
-	 */
-	private void initHeatbeatToMaster() {
-		// 如果是工作节点，那么初始化 跟master节点的心跳
-		if (getCurrentNode().getType() == NodeType.WORKER || getCurrentNode().getType() == NodeType.MASTER_WORKER) {
-			// 初始化 心跳线程
-			heartbeatThread = new Thread(() -> {
-				log.info("running heartbeat thread");
-				long sleepTime = Constants.REDIS_REGISTER_CENTER_HEARTBEAT * 1000 - 1000;
-				while (true) {
-					try {
-						Node masterNode = getMasterNode();
-						if (null == masterNode) {
-							emailClient.sendMailToAdmin("missing master node", "missing master node");
-							log.error("missing master node");
-						}
-						getRegisterCenter().registerNode(currentNode, Constants.REDIS_REGISTER_CENTER_HEARTBEAT);
-						ThreadUtils.sleep(sleepTime);
-						log.debug("the node[" + currentNode.getName() + "] heartbeat");
-					} catch (Exception e) {
-						log.error("the node[" + currentNode.getName() + "] heartbeat err", e);
-					}
-				}
-			}, "Heartbeat-Thread");
-			heartbeatThread.setDaemon(true);
-			// 启动心跳线程
-			heartbeatThread.start();
-		}
+		log.info("the node[" + nodeName + "] type:" + nodeType);
 	}
 
 	public Node getMasterNode() {
-		return getRegisterCenter().getMasterNode();
-	}
-
-	/**
-	 * 节点注册
-	 * 
-	 * @param node
-	 */
-	private void initResetMasterNode() {
-		if (NodeType.MASTER == currentNode.getType() || NodeType.MASTER_WORKER == currentNode.getType()) {
-			try {
-				masterAbstractSchedulerManager.stopAll();
-				getRegisterCenter().repair();
-			} catch (Exception e) {
-				log.error("init reset master node", e);
-				getEmailClient().sendMailToAdmin("init reset master node", "init reset master node");
-				System.exit(1);
-			}
-		}
-	}
-
-	/**
-	 * 初始化节点注册
-	 * @param node
-	 */
-	private void initRegisterNode() {
-		log.info("the node[" + currentNode.getName() + "] type:" + getConfigure().getNodeType());
+		Node masterNode = null;
 		try {
-			getRedisManager().lock(REGISTER_NODE_LOCK);
-			Node masterNode = getMasterNode();
-			if (NodeType.MASTER == currentNode.getType()) {
-				if (null != masterNode && !masterNode.equals(currentNode)) {
-					log.error("there are many masternode[" + currentNode.getName() + "," + masterNode.getName() + "]");
-					System.exit(1);
-				}
-				getRegisterCenter().registerMasterNode(currentNode);
-			} else if (NodeType.MASTER_STANDBY == currentNode.getType()) {
-
-			} // 如果是主节点备份节点或者工作节点 ，
-			else if (NodeType.WORKER == currentNode.getType()) {
-				if (null == masterNode) {// 检查主节点是否启动
-					log.error("please first start the masterNode");
-					System.exit(1);
-				}
-				getRegisterCenter().registerNode(currentNode, Constants.REDIS_REGISTER_CENTER_HEARTBEAT);
-			} // 如果是主节点兼工作节点 ，
-			else if (NodeType.MASTER_WORKER == currentNode.getType()) {
-				if (null != masterNode && !masterNode.equals(currentNode)) {
-					log.error("there are many masternode[" + currentNode.getName() + "," + masterNode.getName() + "]");
-					System.exit(1);
-				}
-				getRegisterCenter().registerMasterNode(currentNode);
-				getRegisterCenter().registerNode(currentNode, Constants.REDIS_REGISTER_CENTER_HEARTBEAT);
-			} else {
-				log.error("unkown node type:" + currentNode.getType());
-				System.exit(1);
+			List<String> masterNodePaths = zKClient.getChildren().forPath(ZooKeeperPathUtils.getMasterNodesPath());
+			if (null != masterNodePaths & masterNodePaths.size() == 1) {
+				String masterNodePath = ZooKeeperPathUtils.getMasterNodePath(masterNodePaths.get(0));
+				byte[] data = zKClient.getData().forPath(masterNodePath);
+				masterNode = JavaSerializeUtils.unSerialize(data, Node.class);
 			}
 		} catch (Exception e) {
-			log.error("registerNode err", e);
-			System.exit(1);
-		} finally {
-			getRedisManager().unlock(REGISTER_NODE_LOCK);
+			log.error("", e);
 		}
+		return masterNode;
 	}
 
-	public List<Node> getAllNodes() {
-		List<Node> allNodes = registerCenter.getNodes();
+	public List<Node> getWorkerNodes() {
+		List<Node> allNodes = new ArrayList<>();
+		try {
+			String workerNodesPath = ZooKeeperPathUtils.getWorkerNodesPath();
+			List<String> workerNodePaths = zKClient.getChildren().forPath(workerNodesPath);
+			for (String workerNodePath : workerNodePaths) {
+				byte[] data = zKClient.getData().forPath(workerNodesPath + "/" + workerNodePath);
+				Node workerNode = JavaSerializeUtils.unSerialize(data, Node.class);
+				allNodes.add(workerNode);
+			}
+		} catch (Exception e) {
+			log.error("", e);
+		}
 		return allNodes;
 	}
 
-	public Node getNode(String nodeName) {
-		Node node = registerCenter.getNode(nodeName);
-		return node;
+	public Node getWorkerNode(String nodeName) {
+		Node workerNode = null;
+		try {
+			byte[] data = zKClient.getData().forPath(ZooKeeperPathUtils.getWorkerNodePath(nodeName));
+			workerNode = JavaSerializeUtils.unSerialize(data, Node.class);
+		} catch (Exception e) {
+			log.error("", e);
+		}
+		return workerNode;
 	}
 
-	public List<Node> getFreeNodes(int needFresNodes) {
-		List<Node> freeNodes = new ArrayList<>();
-		List<Node> allNodes = registerCenter.getNodes();
-		for (Node node : allNodes) {
-			if (isValid(node)) {
-				freeNodes.add(node);
-				if (freeNodes.size() >= needFresNodes) {
-					break;
+	public List<Node> getFreeWorkerNodes(int needFresNodes) {
+		List<Node> freeNodes = new ArrayList<>(needFresNodes);
+		List<Node> allWorkerNodes = getWorkerNodes();
+		for (Node workerNode : allWorkerNodes) {
+			if (workerNode.getType() != NodeType.MASTER) {
+				Node newestNode=null;
+				if(!getCurrentNode().equals(workerNode)){
+					newestNode = clusterManagerClient.getCurrentNode(workerNode);
+				}else{
+					newestNode=getCurrentNode();
+				}
+				if (newestNode.getRunningJobSize() < newestNode.getRunningJobMaxSize()) {
+					freeNodes.add(workerNode);
+					if (freeNodes.size() >= needFresNodes) {
+						break;
+					}
 				}
 			}
 		}
 		return freeNodes;
 	}
 
-	private boolean isValid(Node node) {
-		if (node.getType() != NodeType.MASTER && node.getRunningJobSize() < node.getRunningJobMaxSize()) {
-			return true;
+	@PreDestroy
+	public void destroy() {
+		if (null != zKClient) {
+			zKClient.close();
 		}
-		return false;
 	}
-
 
 	public SpiderConfigure getConfigure() {
 		return configure;
@@ -235,22 +225,6 @@ public class ClusterManager implements InitializingBean {
 
 	public void setConfigure(SpiderConfigure configure) {
 		this.configure = configure;
-	}
-
-	public HttpClient getHttpClient() {
-		return httpClient;
-	}
-
-	public void setHttpClient(HttpClient httpClient) {
-		this.httpClient = httpClient;
-	}
-
-	public MasterAbstractSchedulerManager getMasterAbstractSchedulerManager() {
-		return masterAbstractSchedulerManager;
-	}
-
-	public void setMasterAbstractSchedulerManager(MasterAbstractSchedulerManager masterAbstractSchedulerManager) {
-		this.masterAbstractSchedulerManager = masterAbstractSchedulerManager;
 	}
 
 	public Node getCurrentNode() {
@@ -265,20 +239,20 @@ public class ClusterManager implements InitializingBean {
 		this.redisManager = redisManager;
 	}
 
-	public RegisterCenter getRegisterCenter() {
-		return registerCenter;
-	}
-
-	public void setRegisterCenter(RegisterCenter registerCenter) {
-		this.registerCenter = registerCenter;
-	}
-
 	public QQEmailClient getEmailClient() {
 		return emailClient;
 	}
 
 	public void setEmailClient(QQEmailClient emailClient) {
 		this.emailClient = emailClient;
+	}
+
+	public ClusterManagerClient getClusterManagerClient() {
+		return clusterManagerClient;
+	}
+
+	public void setClusterManagerClient(ClusterManagerClient clusterManagerClient) {
+		this.clusterManagerClient = clusterManagerClient;
 	}
 
 }

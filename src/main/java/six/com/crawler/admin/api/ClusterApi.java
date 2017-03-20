@@ -40,4 +40,13 @@ public class ClusterApi extends BaseApi{
 		msg.setData(result);
 		return msg;
 	} 
+	
+	@RequestMapping(value = "/crawler/cluster/getCurrentNode", method = RequestMethod.GET)
+	@ResponseBody
+	public ResponseMsg<Node> getCurrentNode() {
+		ResponseMsg<Node> msg = createResponseMsg();
+		Node currentNode = clusterService.getCurrentNode();
+		msg.setData(currentNode);
+		return msg;
+	} 
 }

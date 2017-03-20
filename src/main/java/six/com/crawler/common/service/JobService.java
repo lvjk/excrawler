@@ -66,7 +66,7 @@ public interface JobService extends DownloadAndUploadService {
 	 * 
 	 * @param jobName
 	 */
-	public void reportJobSnapshot(String jobName);
+	public void reportJobSnapshot(JobSnapshot jobSnapshot);
 
 	/**
 	 * 通过任务名字查询最后一次 JobSnapshot
@@ -88,35 +88,11 @@ public interface JobService extends DownloadAndUploadService {
 
 	public List<JobSnapshot> getJobSnapshotFromRegisterCenter(List<Map<String, String>> list);
 
-	/**
-	 * 通过job name获取 注册中心 JobSnapshot
-	 * 
-	 * @param jobName
-	 * @return
-	 */
-	public JobSnapshot getJobSnapshotFromRegisterCenter(String jobName);
-
-	/**
-	 * job's JobSnapshot缓存 此方法只能在job被手动和定时触发执行时调用一次
-	 * 
-	 * @param jobActivityInfo
-	 */
-	public void registerJobSnapshotToRegisterCenter(JobSnapshot jobSnapshot);
-
 	public void saveJobSnapshot(JobSnapshot jobSnapshot);
 
-	/**
-	 * 更新 缓存JobSnapshot
-	 * 
-	 * @param jobActivityInfo
-	 */
-	public void updateJobSnapshotToRegisterCenter(JobSnapshot jobSnapshot);
 
 	public void updateJobSnapshot(JobSnapshot jobSnapshot);
 	
-	
-	public void delJobSnapshotFromRegisterCenter(String jobName);
-
 	/**
 	 * 通过任务名字查询任务正在运行活动信息
 	 * 

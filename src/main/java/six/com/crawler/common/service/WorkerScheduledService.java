@@ -3,40 +3,47 @@ package six.com.crawler.common.service;
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
- * @date 创建时间：2017年3月13日 下午12:25:31
+ * @date 创建时间：2017年3月17日 下午3:41:04
  */
 public interface WorkerScheduledService {
 
 	/**
-	 * 执行job
+	 * 执行任务
 	 * 
 	 * @param jobName
 	 * @return
 	 */
-	public String execute(String jobName);
+	public boolean execute(String jobName);
 
 	/**
-	 * 暂停执行job
+	 * 暂停任务
 	 * 
 	 * @param jobName
 	 * @return
 	 */
-	public String suspend(String jobName);
+	public boolean suspend(String jobName);
 
 	/**
-	 * 继续执行job
+	 * 继续任务
 	 * 
 	 * @param jobName
 	 * @return
 	 */
-	public String goOn(String jobName);
+	public boolean goOn(String jobName);
 
 	/**
-	 * 终止执行job
+	 * 停止任务
 	 * 
 	 * @param jobName
 	 * @return
 	 */
-	public String stop(String jobName);
+	public boolean stop(String jobName);
 
+	/**
+	 * 全部停止
+	 * 
+	 * @param jobName
+	 * @return
+	 */
+	public boolean stopAll();
 }

@@ -18,7 +18,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import six.com.crawler.common.configure.SpiderConfigure;
+import six.com.crawler.configure.SpiderConfigure;
 
 /**
  * @author six

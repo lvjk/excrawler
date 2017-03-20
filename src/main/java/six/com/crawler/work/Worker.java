@@ -3,7 +3,7 @@ package six.com.crawler.work;
 import six.com.crawler.common.entity.Job;
 import six.com.crawler.common.entity.JobSnapshot;
 import six.com.crawler.common.entity.WorkerSnapshot;
-import six.com.crawler.schedule.WorkerAbstractSchedulerManager;
+import six.com.crawler.schedule.WorkerSchedulerManager;
 
 /**
  * @author six
@@ -12,9 +12,9 @@ import six.com.crawler.schedule.WorkerAbstractSchedulerManager;
 public interface Worker extends WorkerLifecycle {
 
 	void bindWorkerSnapshot(WorkerSnapshot workerSnapshot);
-	
-	void bindManager(WorkerAbstractSchedulerManager manager);
-	
+
+	void bindManager(WorkerSchedulerManager manager);
+
 	void bindJobSnapshot(JobSnapshot jobSnapshot);
 
 	void bindJob(Job job);
@@ -29,7 +29,7 @@ public interface Worker extends WorkerLifecycle {
 	 * 
 	 * @return
 	 */
-	WorkerAbstractSchedulerManager getManager();
+	WorkerSchedulerManager getManager();
 
 	/**
 	 * 获取 worker name
@@ -60,6 +60,7 @@ public interface Worker extends WorkerLifecycle {
 	long getLastActivityTime();
 
 	JobSnapshot getJobSnapshot();
+
 	/**
 	 * 获取work Job
 	 * 

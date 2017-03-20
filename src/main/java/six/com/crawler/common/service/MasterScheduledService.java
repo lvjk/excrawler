@@ -44,13 +44,16 @@ public interface MasterScheduledService {
 	 */
 	public String stop(String jobName);
 	
+	
+	
+	public void startWorker(String jobName);
 	/**
 	 * 结束job
 	 * 
 	 * @param jobName
 	 * @return
 	 */
-	public String end(String jobName);
+	public void endWorker(String jobName) ;
 	
 	
 	public List<WorkerSnapshot> getWorkerInfo(String jobName);

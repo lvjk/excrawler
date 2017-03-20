@@ -82,7 +82,6 @@ public class ScheduleUrlUtils {
 		return callUrl;
 	}
 	
-	
 	/**
 	 * 拼接调度工作节点完成任务url
 	 * 
@@ -90,8 +89,21 @@ public class ScheduleUrlUtils {
 	 * @param jobName
 	 * @return
 	 */
-	public static String getEndJob(Node masterNode, String jobName) {
-		String callUrl = "http://" + masterNode.getHost() + ":" + masterNode.getPort() + "/crawler/master/scheduled/end/" + jobName;
+	public static String getStartWorer(Node masterNode, String jobName,String workerName) {
+		String callUrl = "http://" + masterNode.getHost() + ":" + masterNode.getPort() 
+						+ "/crawler/master/scheduled/startWorker/" + jobName+"/"+workerName;
+		return callUrl;
+	}
+	/**
+	 * 拼接调度工作节点完成任务url
+	 * 
+	 * @param node
+	 * @param jobName
+	 * @return
+	 */
+	public static String getEndWorer(Node masterNode, String jobName,String workerName) {
+		String callUrl = "http://" + masterNode.getHost() + ":" + masterNode.getPort() 
+						+ "/crawler/master/scheduled/endWorker/" + jobName+"/"+workerName;
 		return callUrl;
 	}
 }

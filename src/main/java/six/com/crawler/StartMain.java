@@ -10,8 +10,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
-import six.com.crawler.common.configure.SpiderConfigure;
+import six.com.crawler.cluster.ClusterManager;
 import six.com.crawler.common.interceptor.BaseInterceptor;
+import six.com.crawler.common.interceptor.MasterScheduledApiInterceptor;
+import six.com.crawler.common.interceptor.WorkerScheduledApiInterceptor;
 
 /**
  * @author six
@@ -23,28 +25,28 @@ import six.com.crawler.common.interceptor.BaseInterceptor;
 public class StartMain extends WebMvcConfigurerAdapter {
 
 	protected final static Logger log = LoggerFactory.getLogger(StartMain.class);
-	
+
 	@Autowired
-	private SpiderConfigure configure;
-	
-	public SpiderConfigure getConfigure() {
-		return configure;
+	private ClusterManager clusterManager;
+
+	public ClusterManager getClusterManager() {
+		return clusterManager;
 	}
 
-	public void setConfigure(SpiderConfigure configure) {
-		this.configure = configure;
+	public void setClusterManager(ClusterManager configure) {
+		this.clusterManager = configure;
 	}
-	
+
 	public static void main(String[] args) {
-		String spiderHome=null;
-		if(args==null||args.length==0){
+		String spiderHome = null;
+		if (args == null || args.length == 0) {
 			System.out.println("please set spider home");
 			log.info("please set spider home");
-		}else{
-			spiderHome=args[0];
-			System.out.println("set spider home:"+spiderHome);
-			log.info("set spider home:"+spiderHome);
-			SpringApplication.run(StartMain.class,spiderHome);
+		} else {
+			spiderHome = args[0];
+			System.out.println("set spider home:" + spiderHome);
+			log.info("set spider home:" + spiderHome);
+			SpringApplication.run(StartMain.class, spiderHome);
 		}
 	}
 
@@ -55,6 +57,8 @@ public class StartMain extends WebMvcConfigurerAdapter {
 	 * @param registry
 	 */
 	public void addInterceptors(InterceptorRegistry registry) {
-		registry.addInterceptor(new BaseInterceptor(configure)).addPathPatterns("/**");
+		registry.addInterceptor(new BaseInterceptor(clusterManager)).addPathPatterns("/**");
+		registry.addInterceptor(new MasterScheduledApiInterceptor(clusterManager)).addPathPatterns("/crawler/master/**");
+		registry.addInterceptor(new WorkerScheduledApiInterceptor(clusterManager)).addPathPatterns("/crawler/worker/**");
 	}
 }

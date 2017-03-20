@@ -25,7 +25,7 @@ import six.com.crawler.common.utils.ThreadUtils;
 import six.com.crawler.work.downer.Downer;
 import six.com.crawler.work.downer.DownerManager;
 import six.com.crawler.work.downer.DownerType;
-import six.com.crawler.work.downer.exception.DownerException;
+import six.com.crawler.work.exception.DownerException;
 import six.com.crawler.work.extract.ExtractItem;
 import six.com.crawler.work.extract.Extracter;
 import six.com.crawler.work.extract.CssSelectExtracter;
@@ -35,22 +35,22 @@ import six.com.crawler.work.store.StoreAbstarct;
  * @author six
  * @date 2016年1月15日 下午6:45:26 爬虫抽象层
  * 
- * 当爬虫队列数据为null时  那么就会设置状态为finished
+ *       当爬虫队列数据为null时 那么就会设置状态为finished
  */
 public abstract class AbstractCrawlWorker extends AbstractWorker {
 
 	final static Logger LOG = LoggerFactory.getLogger(AbstractCrawlWorker.class);
 	// 上次处理数据时间
 	protected int findElementTimeout = 1000;
-	
+
 	private Site site; // 站点
-	
+
 	private Downer downer;// 下载器
 	// 解析处理程序
 	private Extracter extracter;
-	
+
 	private Page doingPage;
-	
+
 	protected WorkQueue workQueue; // 队列
 	// 存儲处理程序
 	private StoreAbstarct store;
@@ -60,7 +60,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 	private List<String> primaryKeys;;
 
 	private HttpProxyPool httpProxyPool;
-	
+
 	@Override
 	protected final void initWorker(JobSnapshot jobSnapshot) {
 		// 1.初始化 站点code
@@ -83,12 +83,19 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 			httpProxyTypeStr = "0";
 		}
 		HttpProxyType httpProxyType = HttpProxyType.valueOf(Integer.valueOf(httpProxyTypeStr));
-		
+
 		String httpProxyRestTimeStr = getJob().getParam(JobConTextConstants.HTTP_PROXY_REST_TIME);
-		int httpProxyRestTime=Integer.valueOf(httpProxyRestTimeStr);
-		
-		httpProxyPool = getManager().getHttpPorxyService().buildHttpProxyPool(siteCode, httpProxyType,httpProxyRestTime);
-		
+		httpProxyRestTimeStr = httpProxyRestTimeStr == null ? "0" : httpProxyRestTimeStr;
+		int httpProxyRestTime = 0;
+		try {
+			httpProxyRestTime = Integer.valueOf(httpProxyRestTimeStr);
+		} catch (Exception e) {
+			LOG.error("job[" + getJob().getName() + "] param[" + httpProxyRestTime + "] is invalid:"
+					+ httpProxyRestTimeStr, e);
+		}
+		httpProxyPool = getManager().getHttpPorxyService().buildHttpProxyPool(siteCode, httpProxyType,
+				httpProxyRestTime);
+
 		downer.setHttpProxy(httpProxyPool.getHttpProxy());
 		// 5.初始化内容抽取
 		List<ExtractItem> extractItems = getManager().getJobService().queryExtractItems(getJob().getName());
@@ -148,21 +155,21 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 
 	@Override
 	protected void insideWork() throws Exception {
-		long startTime=System.currentTimeMillis();
+		long startTime = System.currentTimeMillis();
 		doingPage = workQueue.pull();
-		long endTime=System.currentTimeMillis();
-		LOG.debug("workQueue pull time:" + (endTime-startTime));
+		long endTime = System.currentTimeMillis();
+		LOG.debug("workQueue pull time:" + (endTime - startTime));
 		if (null != doingPage) {
 			try {
 				LOG.info("processor page:" + doingPage.getOriginalUrl());
 				// 1.设置下载器代理
 				downer.setHttpProxy(httpProxyPool.getHttpProxy());
-				startTime=System.currentTimeMillis();
+				startTime = System.currentTimeMillis();
 				// 2. 下载数据
 				downer.down(doingPage);
-				endTime=System.currentTimeMillis();
-				LOG.debug("downer down time:" + (endTime-startTime));
-				startTime=System.currentTimeMillis();
+				endTime = System.currentTimeMillis();
+				LOG.debug("downer down time:" + (endTime - startTime));
+				startTime = System.currentTimeMillis();
 				// 3. 抽取前操作
 				beforeExtract(doingPage);
 				ResultContext resultContext = null;
@@ -176,16 +183,16 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 				afterExtract(doingPage, resultContext);
 				// 6.组装数据和设置默认字段
 				assembleExtractResult(resultContext);
-				endTime=System.currentTimeMillis();
-				LOG.debug("extracter extract time:" + (endTime-startTime));
-				startTime=System.currentTimeMillis();
+				endTime = System.currentTimeMillis();
+				LOG.debug("extracter extract time:" + (endTime - startTime));
+				startTime = System.currentTimeMillis();
 				if (null != store) {
 					// 7.存储数据
 					int storeCount = store.store(resultContext);
 					getWorkerSnapshot().setTotalResultCount(getWorkerSnapshot().getTotalResultCount() + storeCount);
 				}
-				endTime=System.currentTimeMillis();
-				LOG.debug("store time:" + (endTime-startTime));
+				endTime = System.currentTimeMillis();
+				LOG.debug("store time:" + (endTime - startTime));
 				// 8.记录操作数据
 				workQueue.finish(doingPage);// 完成page处理
 				// 9.完成操作
@@ -304,7 +311,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 			// 判断内部处理是否可处理,如果不可处理那么这里默认处理
 			if (!insideExceptionResult) {
 				String msg = null;
-				if (null== insideException
+				if (null == insideException
 						&& doingPage.getRetryProcess() < Constants.WOKER_PROCESS_PAGE_MAX_RETRY_COUNT) {
 					doingPage.setRetryProcess(doingPage.getRetryProcess() + 1);
 					workQueue.retryPush(doingPage);
@@ -358,7 +365,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		if (null != downer) {
 			downer.close();
 		}
-		if(null!=httpProxyPool){
+		if (null != httpProxyPool) {
 			httpProxyPool.destroy();
 		}
 	}

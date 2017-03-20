@@ -19,7 +19,7 @@ import six.com.crawler.common.entity.JobSnapshot;
 import six.com.crawler.common.entity.WorkerErrMsg;
 import six.com.crawler.common.utils.ExceptionUtils;
 import six.com.crawler.common.utils.ThreadUtils;
-import six.com.crawler.schedule.WorkerAbstractSchedulerManager;
+import six.com.crawler.schedule.WorkerSchedulerManager;
 import six.com.crawler.common.entity.WorkerSnapshot;
 
 /**
@@ -37,7 +37,7 @@ public abstract class AbstractWorker implements Worker {
 	// 用来Condition.await() 和condition.signalAll();
 	private final Condition condition = reentrantLock.newCondition();
 
-	private WorkerAbstractSchedulerManager manager;
+	private WorkerSchedulerManager manager;
 
 	private Job job;
 
@@ -57,7 +57,7 @@ public abstract class AbstractWorker implements Worker {
 	// 随机对象 产生随机控制时间
 	private static Random randomDownSleep = new Random();
 
-	public void bindManager(WorkerAbstractSchedulerManager manager) {
+	public void bindManager(WorkerSchedulerManager manager) {
 		this.manager = manager;
 	}
 
@@ -100,7 +100,7 @@ public abstract class AbstractWorker implements Worker {
 		try {
 			while (true) {
 				// 更新job 活动信息
-				manager.getJobService().updateWorkSnapshotToRegisterCenter(workerSnapshot, false);
+				manager.updateWorkSnapshot(workerSnapshot, false);
 				// 当状态为running时才会正常工作
 				if (getState() == WorkerLifecycleState.STARTED) {
 					long processTime = System.currentTimeMillis();
@@ -161,7 +161,7 @@ public abstract class AbstractWorker implements Worker {
 				workerSnapshot.setAvgProcessTime(
 						workerSnapshot.getTotalProcessTime() / workerSnapshot.getTotalProcessCount());
 			}
-			manager.getJobService().updateWorkSnapshotToRegisterCenter(workerSnapshot, true);
+			manager.updateWorkSnapshot(workerSnapshot, true);
 			LOG.info("jobWorker [" + getName() + "] is ended");
 		}
 	}
@@ -284,7 +284,7 @@ public abstract class AbstractWorker implements Worker {
 		try {
 			this.state = updateState;
 			workerSnapshot.setState(updateState);
-			manager.getRegisterCenter().registerWorker(this);
+			manager.updateWorkerSnapshot(workerSnapshot);
 		} finally {
 			setStateLock.unlock(stamp);
 		}
@@ -299,7 +299,7 @@ public abstract class AbstractWorker implements Worker {
 				if (this.getState() == expectState) {
 					this.state = updateState;
 					workerSnapshot.setState(updateState);
-					manager.getRegisterCenter().registerWorker(this);
+					manager.updateWorkerSnapshot(workerSnapshot);
 					result = true;
 				}
 			} finally {
@@ -319,7 +319,7 @@ public abstract class AbstractWorker implements Worker {
 		return getState() == WorkerLifecycleState.STARTED;
 	}
 
-	public WorkerAbstractSchedulerManager getManager() {
+	public WorkerSchedulerManager getManager() {
 		return manager;
 	}
 

@@ -15,5 +15,4 @@ public interface ClusterService {
 	
 	Node getCurrentNode();
 	
-	Node getNode(String nodeName);
 }

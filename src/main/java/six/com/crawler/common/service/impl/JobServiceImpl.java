@@ -37,10 +37,8 @@ import six.com.crawler.common.entity.WorkerSnapshot;
 import six.com.crawler.common.entity.JobSnapshot;
 import six.com.crawler.common.entity.JobSnapshotState;
 import six.com.crawler.common.entity.PageQuery;
-import six.com.crawler.common.entity.WorkerErrMsg;
 import six.com.crawler.common.service.JobService;
 import six.com.crawler.schedule.MasterAbstractSchedulerManager;
-import six.com.crawler.schedule.RegisterCenter;
 import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.extract.ExtractItem;
 
@@ -54,7 +52,6 @@ public class JobServiceImpl implements JobService {
 
 	final static Logger log = LoggerFactory.getLogger(JobServiceImpl.class);
 
-	private final static int SAVE_ERR_MSG_MAX = 20;
 	@Autowired
 	private JobDao jobDao;
 
@@ -75,9 +72,6 @@ public class JobServiceImpl implements JobService {
 
 	@Autowired
 	private RedisManager redisManager;
-
-	@Autowired
-	private RegisterCenter registerCenter;
 
 	@Autowired
 	private ExtractItemDao extractItemDao;
@@ -101,7 +95,7 @@ public class JobServiceImpl implements JobService {
 		if ("*".equals(jobName)) {
 			jobs = new ArrayList<>();
 			// 优先获取运行中的任务
-			List<JobSnapshot> jobSnapshots = getRegisterCenter().getJobSnapshots();
+			List<JobSnapshot> jobSnapshots =scheduleManager.getJobSnapshots();
 			int end = pageIndex + pageSize;
 			if (jobSnapshots.size() > 0) {
 				if (jobSnapshots.size() > end) {
@@ -183,8 +177,7 @@ public class JobServiceImpl implements JobService {
 	}
 
 	@Transactional
-	public void reportJobSnapshot(String jobName) {
-		JobSnapshot jobSnapshot = getJobSnapshotFromRegisterCenter(jobName);
+	public void reportJobSnapshot(JobSnapshot jobSnapshot) {
 		if (null != jobSnapshot) {
 			jobSnapshotDao.update(jobSnapshot);
 			List<WorkerSnapshot> workerSnapshots = jobSnapshot.getWorkerSnapshots();
@@ -197,8 +190,6 @@ public class JobServiceImpl implements JobService {
 
 				}
 			}
-			registerCenter.delWorkerSnapshots(jobName);
-			registerCenter.delJobSnapshot(jobName);
 		}
 	}
 
@@ -227,9 +218,12 @@ public class JobServiceImpl implements JobService {
 				jobName = map.get("name");
 				queueName = map.get("queueName");
 				JobSnapshot jobSnapshot = null;
-				jobSnapshot = getJobSnapshotFromRegisterCenter(jobName);
+				jobSnapshot = scheduleManager.getJobSnapshot(jobName);
 				if (null == jobSnapshot) {
 					jobSnapshot = new JobSnapshot(jobName);
+				}else{
+					List<WorkerSnapshot> workerSnapshots=scheduleManager.getWorkerSnapshots(jobName);
+					scheduleManager.totalWorkerSnapshot(jobSnapshot, workerSnapshots);
 				}
 				String tempProxyKey = RedisWorkQueue.PRE_PROXY_QUEUE_KEY + queueName;
 				int proxySize = redisManager.llen(tempProxyKey);
@@ -252,9 +246,8 @@ public class JobServiceImpl implements JobService {
 		return result;
 	}
 
-	@Override
-	public JobSnapshot getJobSnapshotFromRegisterCenter(String jobName) {
-		JobSnapshot jobSnapshot = registerCenter.getJobSnapshot(jobName);
+	public JobSnapshot getJobSnapshotFromRegisterCenter1(String jobName) {
+		JobSnapshot jobSnapshot = scheduleManager.getJobSnapshot(jobName);
 		if (null != jobSnapshot) {
 			// 判断任务是否运行过
 			if (jobSnapshot.getEnumState() == JobSnapshotState.EXECUTING
@@ -262,76 +255,22 @@ public class JobServiceImpl implements JobService {
 					|| jobSnapshot.getEnumState() == JobSnapshotState.STOP
 					|| jobSnapshot.getEnumState() == JobSnapshotState.FINISHED) {
 				List<WorkerSnapshot> workerSnapshots = getWorkSnapshotsFromRegisterCenter(jobName);
-				totalWorkerSnapshot(jobSnapshot, workerSnapshots);
+				//totalWorkerSnapshot(jobSnapshot, workerSnapshots);
 				jobSnapshot.setWorkerSnapshots(workerSnapshots);
 			}
 		}
 		return jobSnapshot;
 	}
 
-	private void totalWorkerSnapshot(JobSnapshot jobSnapshot, List<WorkerSnapshot> workerSnapshots) {
-		if (null != jobSnapshot && null != workerSnapshots && !workerSnapshots.isEmpty()) {
-			int totalProcessCount = 0;
-			int totalResultCount = 0;
-			int totalProcessTime = 0;
-			int maxProcessTime = 0;
-			int minProcessTime = -1;
-			int avgProcessTime = 0;
-			int errCount = 0;
-			for (WorkerSnapshot workerSnapshot : workerSnapshots) {
-				totalProcessCount += workerSnapshot.getTotalProcessCount();
-				totalResultCount += workerSnapshot.getTotalResultCount();
-				totalProcessTime += workerSnapshot.getTotalProcessTime();
-				if (workerSnapshot.getMaxProcessTime() > maxProcessTime) {
-					maxProcessTime = workerSnapshot.getMaxProcessTime();
-				}
-				if (-1 == minProcessTime || workerSnapshot.getMinProcessTime() < minProcessTime) {
-					minProcessTime = workerSnapshot.getMinProcessTime();
-				}
-				avgProcessTime += workerSnapshot.getAvgProcessTime();
-				errCount += workerSnapshot.getErrCount();
-			}
-			jobSnapshot.setTotalProcessCount(totalProcessCount);
-			jobSnapshot.setTotalResultCount(totalResultCount);
-			jobSnapshot.setTotalProcessTime(totalProcessTime / workerSnapshots.size());
-			jobSnapshot.setMaxProcessTime(maxProcessTime);
-			jobSnapshot.setMinProcessTime(minProcessTime);
-			jobSnapshot.setAvgProcessTime(avgProcessTime / workerSnapshots.size());
-			jobSnapshot.setErrCount(errCount);
-		}
-	}
-
 	public void saveJobSnapshot(JobSnapshot jobSnapshot) {
 		jobSnapshotDao.save(jobSnapshot);
-	}
-
-	public void registerJobSnapshotToRegisterCenter(JobSnapshot jobSnapshot) {
-		registerCenter.registerJobSnapshot(jobSnapshot);
 	}
 
 	public void updateJobSnapshot(JobSnapshot jobSnapshot) {
 		jobSnapshotDao.update(jobSnapshot);
 	}
 
-	@Override
-	public void updateJobSnapshotToRegisterCenter(JobSnapshot jobSnapshot) {
-		registerCenter.updateJobSnapshot(jobSnapshot);
-	}
-
-	public void delJobSnapshotFromRegisterCenter(String jobName) {
-		registerCenter.delJobSnapshot(jobName);
-	}
-
-	@Override
-	public void updateWorkSnapshotToRegisterCenter(WorkerSnapshot workerSnapshot, boolean isSaveErrMsg) {
-		List<WorkerErrMsg> errMsgs = workerSnapshot.getWorkerErrMsgs();
-		if (null != errMsgs && ((isSaveErrMsg && errMsgs.size() > 0) || errMsgs.size() >= SAVE_ERR_MSG_MAX)) {
-			workerErrMsgDao.batchSave(errMsgs);
-			errMsgs.clear();
-		}
-		registerCenter.updateWorkerSnapshot(workerSnapshot);
-	}
-
+	
 	@Override
 	public ResponseEntity<InputStreamResource> download(String param) {
 		JobProfile profile = new JobProfile();
@@ -390,7 +329,7 @@ public class JobServiceImpl implements JobService {
 
 	@Override
 	public List<WorkerSnapshot> getWorkSnapshotsFromRegisterCenter(String jobName) {
-		List<WorkerSnapshot> result = registerCenter.getWorkerSnapshots(jobName);
+		List<WorkerSnapshot> result = scheduleManager.getWorkerSnapshots(jobName);
 		return result;
 	}
 
@@ -525,13 +464,6 @@ public class JobServiceImpl implements JobService {
 		this.jobParamDao = jobParamDao;
 	}
 
-	public RegisterCenter getRegisterCenter() {
-		return registerCenter;
-	}
-
-	public void setRegisterCenter(RegisterCenter registerCenter) {
-		this.registerCenter = registerCenter;
-	}
 
 	public JobSnapshotDao getJobSnapshotDao() {
 		return jobSnapshotDao;
@@ -563,5 +495,10 @@ public class JobServiceImpl implements JobService {
 
 	public void setWorkerErrMsgDao(WorkerErrMsgDao workerErrMsgDao) {
 		this.workerErrMsgDao = workerErrMsgDao;
+	}
+
+	@Override
+	public void updateWorkSnapshotToRegisterCenter(WorkerSnapshot workerSnapshot, boolean isSaveErrMsg) {
+		
 	}
 }

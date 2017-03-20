@@ -1,4 +1,4 @@
-package six.com.crawler.work.downer.exception;
+package six.com.crawler.work.exception;
 /**
  *@author six    
  *@date 2016年8月30日 下午2:42:32  

@@ -1,4 +1,4 @@
-package six.com.crawler.common.configure;
+package six.com.crawler.configure;
 
 import javax.sql.DataSource;
 

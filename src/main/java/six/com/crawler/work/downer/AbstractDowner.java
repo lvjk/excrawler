@@ -12,7 +12,7 @@ import six.com.crawler.common.entity.HttpProxy;
 import six.com.crawler.common.entity.Page;
 import six.com.crawler.common.http.HttpResult;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.downer.exception.DownerException;
+import six.com.crawler.work.exception.DownerException;
 
 /**
  * @author sixliu E-mail:359852326@qq.com

@@ -23,8 +23,8 @@ import org.springframework.stereotype.Component;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.ScanResult;
-import six.com.crawler.common.configure.SpiderConfigure;
 import six.com.crawler.common.utils.JavaSerializeUtils;
+import six.com.crawler.configure.SpiderConfigure;
 
 /**
  * @author 作者

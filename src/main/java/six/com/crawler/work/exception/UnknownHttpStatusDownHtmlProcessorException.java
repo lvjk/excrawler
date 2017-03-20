@@ -1,4 +1,4 @@
-package six.com.crawler.work.downer.exception;
+package six.com.crawler.work.exception;
 
 /**
  * @author six

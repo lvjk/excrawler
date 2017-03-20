@@ -9,18 +9,18 @@ import org.springframework.web.servlet.ModelAndView;
 import six.com.crawler.cluster.ClusterManager;
 
 /**
- * @author six
- * @date 2016年1月14日 下午2:14:13 基础 拦截器
+ * @author 作者
+ * @E-mail: 359852326@qq.com
+ * @date 创建时间：2017年3月17日 下午3:39:16
  */
-public class BaseInterceptor implements HandlerInterceptor {
+public class WorkerScheduledApiInterceptor implements HandlerInterceptor {
 
 	ClusterManager clusterManager;
-	
 
-	public BaseInterceptor(ClusterManager clusterManager){
-		this.clusterManager=clusterManager;
+	public WorkerScheduledApiInterceptor(ClusterManager clusterManager) {
+		this.clusterManager = clusterManager;
 	}
-	
+
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {

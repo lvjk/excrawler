@@ -1,4 +1,4 @@
-package six.com.crawler.common.configure;
+package six.com.crawler.configure;
 
 import java.io.File;
 import java.util.Properties;

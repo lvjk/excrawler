@@ -16,7 +16,6 @@ import six.com.crawler.common.exception.RedisException;
 import six.com.crawler.common.service.JobService;
 import six.com.crawler.common.service.MasterScheduledService;
 import six.com.crawler.schedule.MasterAbstractSchedulerManager;
-import six.com.crawler.schedule.RegisterCenter;
 
 /**
  * @author 作者
@@ -35,9 +34,6 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 
 	@Autowired
 	private RedisManager redisManager;
-
-	@Autowired
-	private RegisterCenter registerCenter;
 
 	@Autowired
 	private JobService jobService;
@@ -161,34 +157,19 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 		return msg;
 	}
 
-	public String end(String jobName) {
-		String msg = null;
-		try {
-			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
-			Job job = jobService.get(jobName);
-			if (null != job) {
-				scheduleManager.end(job);
-				msg = "the job[" + jobName + "] have been requested to execute stop";
-			} else {
-				msg = "这个任务[" + jobName + "]不存在";
-			}
-		} catch (RedisException e) {
-			LOG.error("JobService stop job[" + jobName + "] err", e);
-			msg = ResponeMsgManager.SYSTEM_ERR_0001;
-		} catch (Exception e) {
-			LOG.error("JobService stop job[" + jobName + "] err", e);
-			msg = ResponeMsgManager.SYSTEM_ERR_0001;
-		} finally {
-			redisManager.unlock(JOB_SERVICE_OPERATION_PRE + jobName);
-		}
-		return msg;
+	public void startWorker(String jobName) {
+		scheduleManager.startWorker(jobName);
+	}
+
+	public void endWorker(String jobName) {
+		scheduleManager.endWorer(jobName);
 	}
 
 	public List<WorkerSnapshot> getWorkerInfo(String jobName) {
 		Job job = jobService.get(jobName);
 		List<WorkerSnapshot> result = null;
 		if (null != job) {
-			result = registerCenter.getWorkerSnapshots(jobName);
+			result = scheduleManager.getWorkerSnapshots(jobName);
 		} else {
 			result = Collections.emptyList();
 		}
@@ -209,14 +190,6 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 
 	public void setRedisManager(RedisManager redisManager) {
 		this.redisManager = redisManager;
-	}
-
-	public RegisterCenter getRegisterCenter() {
-		return registerCenter;
-	}
-
-	public void setRegisterCenter(RegisterCenter registerCenter) {
-		this.registerCenter = registerCenter;
 	}
 
 	public JobService getJobService() {

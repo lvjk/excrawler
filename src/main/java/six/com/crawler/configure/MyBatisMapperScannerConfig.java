@@ -1,4 +1,4 @@
-package six.com.crawler.common.configure;
+package six.com.crawler.configure;
 
 import org.mybatis.spring.mapper.MapperScannerConfigurer;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;

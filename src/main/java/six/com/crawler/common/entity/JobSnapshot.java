@@ -17,6 +17,7 @@ public class JobSnapshot implements Serializable {
 	private static final long serialVersionUID = -5076089473208316846L;
 	private String id;// id
 	private String name;// 任务名
+	private String nextJobName;// 下一个执行任务
 	private String designatedNodeName;// 指定节点
 	private JobSnapshotState state=JobSnapshotState.READY;// 任务状态
 	private String tableName;//数据表名
@@ -58,6 +59,14 @@ public class JobSnapshot implements Serializable {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+	
+	public String getNextJobName() {
+		return nextJobName;
+	}
+
+	public void setNextJobName(String nextJobName) {
+		this.nextJobName = nextJobName;
 	}
 	
 	public String getDesignatedNodeName() {

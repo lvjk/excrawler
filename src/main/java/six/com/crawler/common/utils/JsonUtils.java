@@ -134,6 +134,12 @@ public class JsonUtils {
 		TypeToken<T> typeToken = TypeToken.of(clz);
 		return getGson().fromJson(json.toString(), typeToken.getType());
 	}
+	
+	public static <T> T mapToObject(Map<String, Object> map, Class<T> clz) {
+		String json=toJson(map);
+		TypeToken<T> typeToken = TypeToken.of(clz);
+		return getGson().fromJson(json, typeToken.getType());
+	}
 
 	@SuppressWarnings("unchecked")
 	public static void main(String[] args) {

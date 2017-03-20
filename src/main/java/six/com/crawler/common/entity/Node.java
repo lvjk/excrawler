@@ -15,9 +15,10 @@ public class Node implements Serializable {
 	private String name;// 节点名字
 	private NodeType type;// 节点类型
 	private String host;// 节点host
+	private int trafficPort;// 节点间通信port
 	private int port;// 节点服务端口
 	private int cpu;// cpu使用情况
-	private int mem;// 内存使用情况
+	private float mem;// 内存使用情况
 	private int runningJobMaxSize;// 节点最大运行任务数
 	private int totalJobSize;// 节点总任务数
 	private int totalScheduleJobSize;// 节点调度总任务数
@@ -48,6 +49,14 @@ public class Node implements Serializable {
 		this.host = host;
 	}
 
+	public int getTrafficPort() {
+		return trafficPort;
+	}
+
+	public void setTrafficPort(int trafficPort) {
+		this.trafficPort = trafficPort;
+	}
+	
 	public int getPort() {
 		return port;
 	}
@@ -64,11 +73,11 @@ public class Node implements Serializable {
 		this.cpu = cpu;
 	}
 
-	public int getMem() {
+	public float getMem() {
 		return mem;
 	}
 
-	public void setMem(int mem) {
+	public void setMem(float mem) {
 		this.mem = mem;
 	}
 

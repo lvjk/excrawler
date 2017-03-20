@@ -7,7 +7,7 @@ import six.com.crawler.common.entity.Job;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年9月25日 下午2:04:20
  */
-public interface SchedulerManager{
+public interface SchedulerManager {
 
 	/**
 	 * 执行任务
@@ -39,8 +39,7 @@ public interface SchedulerManager{
 	 * @return
 	 */
 	public void stop(Job job);
-	
-	
+
 	/**
 	 * 停止所有任务
 	 * 
@@ -50,10 +49,9 @@ public interface SchedulerManager{
 	public void stopAll();
 
 	/**
-	 * 获取运行的job数
-	 * 
+	 * job worker 是否全部waited
+	 * @param jobName
 	 * @return
 	 */
-	public int getRunningWorkerCount();
-
+	public abstract boolean workerIsAllWaited(String jobName);
 }

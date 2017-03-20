@@ -3,7 +3,7 @@ package six.com.rpc.remoting.netty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import six.com.crawler.common.configure.SpiderConfigure;
+import six.com.crawler.configure.SpiderConfigure;
 
 /**
  * @author sixliu E-mail:359852326@qq.com

@@ -1,4 +1,4 @@
-package six.com.crawler.work.downer.exception;
+package six.com.crawler.work.exception;
 
 import six.com.crawler.common.exception.BaseException;
 

@@ -6,39 +6,12 @@ package six.com.crawler.schedule;
  */
 public class RedisRegisterKeyUtils {
 
-	// node注册前缀
-	final static String REDIS_REGISTER_CENTER_NODE_PRE = "exCrawler_nodes";
-
 	// 非node 信息注册的前缀
-	final static String REDIS_REGISTER_CENTER_OTHER_PRE = "exCrawler_other";
-
-	public static String getWorkerNodesPreKey() {
-		StringBuilder keySb = new StringBuilder();
-		keySb.append(REDIS_REGISTER_CENTER_NODE_PRE);
-		keySb.append("_nodes");
-		keySb.append("_worker");
-		return keySb.toString();
-	}
-
-	public static String getMasterNodePreKey() {
-		StringBuilder keySb = new StringBuilder();
-		keySb.append(REDIS_REGISTER_CENTER_NODE_PRE);
-		keySb.append("_nodes");
-		keySb.append("_master");
-		return keySb.toString();
-	}
-
-	public static String getWorkerNodeKey(String nodeName) {
-		StringBuilder keySb = new StringBuilder();
-		keySb.append(getWorkerNodesPreKey());
-		keySb.append("_");
-		keySb.append(nodeName);
-		return keySb.toString();
-	}
+	final static String REDIS_CACHE_PRE = "exCrawler_cache";
 
 	public static String getResetPreKey() {
 		StringBuilder keySb = new StringBuilder();
-		keySb.append(REDIS_REGISTER_CENTER_OTHER_PRE);
+		keySb.append(REDIS_CACHE_PRE);
 		return keySb.toString();
 	}
 
@@ -53,7 +26,7 @@ public class RedisRegisterKeyUtils {
 	 */
 	public static String getJobSnapshotsKey() {
 		StringBuilder keySb = new StringBuilder();
-		keySb.append(REDIS_REGISTER_CENTER_OTHER_PRE);
+		keySb.append(REDIS_CACHE_PRE);
 		keySb.append("_jobs");
 		return keySb.toString();
 	}
@@ -69,7 +42,7 @@ public class RedisRegisterKeyUtils {
 	 */
 	public static String getWorkerSnapshotsKey(String jobName) {
 		StringBuilder keySb = new StringBuilder();
-		keySb.append(REDIS_REGISTER_CENTER_OTHER_PRE);
+		keySb.append(REDIS_CACHE_PRE);
 		keySb.append("_");
 		keySb.append(jobName);
 		keySb.append("_workers");
@@ -87,7 +60,7 @@ public class RedisRegisterKeyUtils {
 	 */
 	public static String getWorkerSerialNumbersKey(String jobName) {
 		StringBuilder keySb = new StringBuilder();
-		keySb.append(REDIS_REGISTER_CENTER_OTHER_PRE);
+		keySb.append(REDIS_CACHE_PRE);
 		keySb.append("_");
 		keySb.append(jobName);
 		keySb.append("_workers_sernum");
