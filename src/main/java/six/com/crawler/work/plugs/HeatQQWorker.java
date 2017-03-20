@@ -12,9 +12,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.commons.lang3.time.DateUtils;
 
-import six.com.crawler.common.entity.Page;
-import six.com.crawler.common.entity.ResultContext;
-import six.com.crawler.common.utils.JsonUtils;
+import six.com.crawler.entity.Page;
+import six.com.crawler.entity.ResultContext;
+import six.com.crawler.utils.JsonUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 
 /**

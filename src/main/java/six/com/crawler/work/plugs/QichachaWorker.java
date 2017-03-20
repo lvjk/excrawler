@@ -13,10 +13,10 @@ import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import six.com.crawler.common.entity.Page;
-import six.com.crawler.common.entity.ResultContext;
-import six.com.crawler.common.utils.JsoupUtils;
-import six.com.crawler.common.utils.JsoupUtils.TableResult;
+import six.com.crawler.entity.Page;
+import six.com.crawler.entity.ResultContext;
+import six.com.crawler.utils.JsoupUtils;
+import six.com.crawler.utils.JsoupUtils.TableResult;
 import six.com.crawler.work.AbstractCrawlWorker;
 
 /**

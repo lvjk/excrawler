@@ -6,8 +6,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import six.com.crawler.common.entity.Page;
-import six.com.crawler.common.entity.ResultContext;
+import six.com.crawler.entity.Page;
+import six.com.crawler.entity.ResultContext;
 import six.com.crawler.work.AbstractCrawlWorker;
 
 public class NbCnnbfdcPresellInfoWorker extends AbstractCrawlWorker {

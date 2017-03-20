@@ -35,16 +35,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import six.com.crawler.common.DateFormats;
-import six.com.crawler.common.constants.JobConTextConstants;
-import six.com.crawler.common.entity.Job;
-import six.com.crawler.common.entity.JobParam;
-import six.com.crawler.common.entity.JobSnapshot;
-import six.com.crawler.common.entity.JobSnapshotState;
-import six.com.crawler.common.entity.Node;
-import six.com.crawler.common.entity.NodeType;
-import six.com.crawler.common.entity.WorkerSnapshot;
+import six.com.crawler.constants.JobConTextConstants;
+import six.com.crawler.entity.Job;
+import six.com.crawler.entity.JobParam;
+import six.com.crawler.entity.JobSnapshot;
+import six.com.crawler.entity.JobSnapshotState;
+import six.com.crawler.entity.Node;
+import six.com.crawler.entity.NodeType;
+import six.com.crawler.entity.WorkerSnapshot;
+import six.com.crawler.utils.JobTableUtils;
 import six.com.crawler.work.WorkerLifecycleState;
-import six.com.crawler.common.utils.JobTableUtils;
 
 /**
  * @author sixliu E-mail:359852326@qq.com

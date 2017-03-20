@@ -20,10 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import okhttp3.Cookie;
 import okhttp3.CookieJar;
 import okhttp3.HttpUrl;
-import six.com.crawler.common.utils.JavaSerializeUtils;
-import six.com.crawler.common.utils.MD5Utils;
-import six.com.crawler.common.utils.UrlUtils;
 import six.com.crawler.configure.SpiderConfigure;
+import six.com.crawler.utils.JavaSerializeUtils;
+import six.com.crawler.utils.MD5Utils;
+import six.com.crawler.utils.UrlUtils;
 
 /**
  * @author six

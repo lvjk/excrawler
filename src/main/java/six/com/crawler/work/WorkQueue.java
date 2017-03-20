@@ -1,6 +1,6 @@
 package six.com.crawler.work;
 
-import six.com.crawler.common.entity.Page;
+import six.com.crawler.entity.Page;
 
 /**
  * @author sixliu E-mail:359852326@qq.com

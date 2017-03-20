@@ -3,8 +3,8 @@ package six.com.crawler.common;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import six.com.crawler.common.exception.RedisException;
-import six.com.crawler.common.utils.ThreadUtils;
+import six.com.crawler.exception.RedisException;
+import six.com.crawler.utils.ThreadUtils;
 
 /**
  * @author 作者

@@ -11,12 +11,12 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import six.com.crawler.common.entity.Page;
-import six.com.crawler.common.entity.ResultContext;
-import six.com.crawler.common.http.HttpMethod;
-import six.com.crawler.common.utils.JsoupUtils;
-import six.com.crawler.common.utils.UrlUtils;
-import six.com.crawler.common.utils.JsoupUtils.TableResult;
+import six.com.crawler.entity.Page;
+import six.com.crawler.entity.ResultContext;
+import six.com.crawler.http.HttpMethod;
+import six.com.crawler.utils.JsoupUtils;
+import six.com.crawler.utils.UrlUtils;
+import six.com.crawler.utils.JsoupUtils.TableResult;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.RedisWorkQueue;
 

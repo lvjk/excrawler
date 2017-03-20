@@ -7,9 +7,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.jsoup.nodes.Element;
 
-import six.com.crawler.common.entity.Page;
-import six.com.crawler.common.entity.ResultContext;
-import six.com.crawler.common.http.HttpMethod;
+import six.com.crawler.entity.Page;
+import six.com.crawler.entity.ResultContext;
+import six.com.crawler.http.HttpMethod;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.RedisWorkQueue;
 

@@ -5,9 +5,9 @@ import java.util.List;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
-import six.com.crawler.common.entity.HttpProxy;
-import six.com.crawler.common.entity.Page;
-import six.com.crawler.common.http.HttpResult;
+import six.com.crawler.entity.HttpProxy;
+import six.com.crawler.entity.Page;
+import six.com.crawler.http.HttpResult;
 import six.com.crawler.work.exception.DownerException;
 
 /**

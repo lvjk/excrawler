@@ -9,10 +9,10 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
-import six.com.crawler.common.entity.Page;
-import six.com.crawler.common.utils.JsoupUtils;
-import six.com.crawler.common.utils.TelPhoneUtils;
-import six.com.crawler.common.utils.UrlUtils;
+import six.com.crawler.entity.Page;
+import six.com.crawler.utils.JsoupUtils;
+import six.com.crawler.utils.TelPhoneUtils;
+import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 
 /**

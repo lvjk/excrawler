@@ -3,9 +3,9 @@ package six.com.crawler.work.plugs;
 import java.util.ArrayList;
 import java.util.List;
 
-import six.com.crawler.common.entity.Page;
-import six.com.crawler.common.entity.PageType;
-import six.com.crawler.common.entity.ResultContext;
+import six.com.crawler.entity.Page;
+import six.com.crawler.entity.PageType;
+import six.com.crawler.entity.ResultContext;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.RedisWorkQueue;
 

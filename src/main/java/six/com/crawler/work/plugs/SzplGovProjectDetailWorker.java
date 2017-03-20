@@ -11,13 +11,13 @@ import org.jsoup.nodes.Element;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
-import six.com.crawler.common.entity.Page;
-import six.com.crawler.common.entity.PageType;
-import six.com.crawler.common.entity.ResultContext;
-import six.com.crawler.common.utils.JsoupUtils;
-import six.com.crawler.common.utils.UrlUtils;
-import six.com.crawler.common.utils.WebDriverUtils;
-import six.com.crawler.common.utils.JsoupUtils.TableResult;
+import six.com.crawler.entity.Page;
+import six.com.crawler.entity.PageType;
+import six.com.crawler.entity.ResultContext;
+import six.com.crawler.utils.JsoupUtils;
+import six.com.crawler.utils.UrlUtils;
+import six.com.crawler.utils.WebDriverUtils;
+import six.com.crawler.utils.JsoupUtils.TableResult;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.RedisWorkQueue;
 

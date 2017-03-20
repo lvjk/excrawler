@@ -3,8 +3,8 @@ package six.com.crawler.schedule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import six.com.crawler.cluster.ClusterManager;
-import six.com.crawler.common.entity.Node;
+import six.com.crawler.entity.Node;
+import six.com.crawler.node.NodeManager;
 
 /**
  * @author 作者
@@ -15,9 +15,9 @@ import six.com.crawler.common.entity.Node;
 public class MasterSchedulerManagerClient extends RemotingClient {
 
 	@Autowired
-	private ClusterManager clusterManager;
+	private NodeManager clusterManager;
 
-	public ClusterManager getClusterManager() {
+	public NodeManager getClusterManager() {
 		return clusterManager;
 	}
 

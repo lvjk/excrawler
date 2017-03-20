@@ -9,9 +9,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import six.com.crawler.common.constants.JobConTextConstants;
-import six.com.crawler.common.utils.DbHelper;
-import six.com.crawler.common.utils.JobTableUtils;
+import six.com.crawler.constants.JobConTextConstants;
+import six.com.crawler.utils.DbHelper;
+import six.com.crawler.utils.JobTableUtils;
 
 /**
  * @author 作者

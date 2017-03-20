@@ -14,13 +14,13 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import six.com.crawler.common.DateFormats;
-import six.com.crawler.common.entity.Job;
-import six.com.crawler.common.entity.JobSnapshot;
-import six.com.crawler.common.entity.WorkerErrMsg;
-import six.com.crawler.common.utils.ExceptionUtils;
-import six.com.crawler.common.utils.ThreadUtils;
+import six.com.crawler.entity.Job;
+import six.com.crawler.entity.JobSnapshot;
+import six.com.crawler.entity.WorkerErrMsg;
+import six.com.crawler.entity.WorkerSnapshot;
 import six.com.crawler.schedule.WorkerSchedulerManager;
-import six.com.crawler.common.entity.WorkerSnapshot;
+import six.com.crawler.utils.ExceptionUtils;
+import six.com.crawler.utils.ThreadUtils;
 
 /**
  * @author sixliu E-mail:359852326@qq.com

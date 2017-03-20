@@ -8,10 +8,10 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.nodes.Element;
 
-import six.com.crawler.common.entity.Page;
-import six.com.crawler.common.entity.ResultContext;
-import six.com.crawler.common.utils.JsoupUtils;
-import six.com.crawler.common.utils.JsoupUtils.TableResult;
+import six.com.crawler.entity.Page;
+import six.com.crawler.entity.ResultContext;
+import six.com.crawler.utils.JsoupUtils;
+import six.com.crawler.utils.JsoupUtils.TableResult;
 import six.com.crawler.work.AbstractCrawlWorker;
 
 public class NbCnnbfdcRoomInfoWorker extends AbstractCrawlWorker{

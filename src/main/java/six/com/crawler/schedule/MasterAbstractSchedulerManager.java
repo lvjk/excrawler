@@ -2,7 +2,7 @@ package six.com.crawler.schedule;
 
 import java.rmi.Remote;
 
-import six.com.crawler.common.entity.Job;
+import six.com.crawler.entity.Job;
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com

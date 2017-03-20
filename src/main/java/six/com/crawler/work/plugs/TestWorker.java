@@ -3,8 +3,8 @@ package six.com.crawler.work.plugs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import six.com.crawler.common.entity.JobSnapshot;
-import six.com.crawler.common.utils.ThreadUtils;
+import six.com.crawler.entity.JobSnapshot;
+import six.com.crawler.utils.ThreadUtils;
 import six.com.crawler.work.AbstractWorker;
 
 /**

@@ -8,8 +8,8 @@ import java.util.List;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import six.com.crawler.common.entity.Job;
-import six.com.crawler.common.entity.Node;
+import six.com.crawler.entity.Job;
+import six.com.crawler.entity.Node;
 
 /**
  * @author 作者

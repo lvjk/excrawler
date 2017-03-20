@@ -13,10 +13,10 @@ import org.slf4j.LoggerFactory;
 
 import com.alibaba.druid.pool.DruidDataSource;
 
-import six.com.crawler.common.constants.JobConTextConstants;
-import six.com.crawler.common.entity.JobSnapshot;
-import six.com.crawler.common.utils.DbHelper;
-import six.com.crawler.common.utils.JobTableUtils;
+import six.com.crawler.constants.JobConTextConstants;
+import six.com.crawler.entity.JobSnapshot;
+import six.com.crawler.utils.DbHelper;
+import six.com.crawler.utils.JobTableUtils;
 import six.com.crawler.work.AbstractWorker;
 
 /**

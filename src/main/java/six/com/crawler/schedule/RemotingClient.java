@@ -6,11 +6,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import okhttp3.Request;
-import six.com.crawler.common.entity.Node;
-import six.com.crawler.common.http.HttpClient;
-import six.com.crawler.common.http.HttpMethod;
-import six.com.crawler.common.http.HttpResult;
-import six.com.crawler.common.utils.AutoCharsetDetectorUtils.ContentType;
+import six.com.crawler.entity.Node;
+import six.com.crawler.http.HttpClient;
+import six.com.crawler.http.HttpMethod;
+import six.com.crawler.http.HttpResult;
+import six.com.crawler.utils.AutoCharsetDetectorUtils.ContentType;
 
 /**
  * @author 作者

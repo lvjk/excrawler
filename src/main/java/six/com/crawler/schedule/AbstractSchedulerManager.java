@@ -8,25 +8,25 @@ import java.util.Map;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import six.com.crawler.common.http.HttpClient;
-import six.com.crawler.common.ocr.ImageDistinguish;
-import six.com.crawler.common.service.ClusterService;
-import six.com.crawler.common.service.HttpPorxyService;
-import six.com.crawler.common.service.JobService;
-import six.com.crawler.common.service.PageService;
-import six.com.crawler.common.service.SiteService;
-import six.com.crawler.common.service.impl.ExtracterServiceImpl;
 import six.com.crawler.configure.SpiderConfigure;
+import six.com.crawler.email.QQEmailClient;
+import six.com.crawler.entity.Job;
+import six.com.crawler.entity.JobSnapshot;
+import six.com.crawler.entity.JobSnapshotState;
+import six.com.crawler.entity.Node;
+import six.com.crawler.entity.WorkerSnapshot;
+import six.com.crawler.http.HttpClient;
+import six.com.crawler.node.NodeManager;
+import six.com.crawler.ocr.ImageDistinguish;
+import six.com.crawler.service.ClusterService;
+import six.com.crawler.service.HttpPorxyService;
+import six.com.crawler.service.JobService;
+import six.com.crawler.service.PageService;
+import six.com.crawler.service.SiteService;
+import six.com.crawler.service.WorkerErrMsgService;
+import six.com.crawler.service.impl.ExtracterServiceImpl;
 import six.com.crawler.work.WorkerLifecycleState;
-import six.com.crawler.cluster.ClusterManager;
 import six.com.crawler.common.RedisManager;
-import six.com.crawler.common.email.QQEmailClient;
-import six.com.crawler.common.entity.Job;
-import six.com.crawler.common.entity.JobSnapshot;
-import six.com.crawler.common.entity.JobSnapshotState;
-import six.com.crawler.common.entity.Node;
-import six.com.crawler.common.entity.WorkerSnapshot;
-import six.com.crawler.common.service.WorkerErrMsgService;
 
 /**
  * @author 作者
@@ -41,7 +41,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	private SpiderConfigure configure;
 
 	@Autowired
-	private ClusterManager clusterManager;
+	private NodeManager clusterManager;
 
 	@Autowired
 	private SiteService siteService;
@@ -237,11 +237,11 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		getRedisManager().hset(workerSnapshotKey, workerSnapshot.getName(), workerSnapshot);
 	}
 
-	public ClusterManager getClusterManager() {
+	public NodeManager getClusterManager() {
 		return clusterManager;
 	}
 
-	public void setClusterManager(ClusterManager clusterManager) {
+	public void setClusterManager(NodeManager clusterManager) {
 		this.clusterManager = clusterManager;
 	}
 

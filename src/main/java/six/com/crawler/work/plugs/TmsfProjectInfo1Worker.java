@@ -6,9 +6,9 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.nodes.Element;
 
-import six.com.crawler.common.entity.Page;
-import six.com.crawler.common.entity.PageType;
-import six.com.crawler.common.entity.ResultContext;
+import six.com.crawler.entity.Page;
+import six.com.crawler.entity.PageType;
+import six.com.crawler.entity.ResultContext;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.Constants;
 import six.com.crawler.work.RedisWorkQueue;

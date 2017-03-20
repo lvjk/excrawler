@@ -3,7 +3,7 @@ package six.com.crawler.schedule;
 
 import org.springframework.stereotype.Component;
 
-import six.com.crawler.common.entity.Node;
+import six.com.crawler.entity.Node;
 
 /**
  * @author 作者

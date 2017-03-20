@@ -1,8 +1,8 @@
 package six.com.crawler.work;
 
-import six.com.crawler.common.entity.Job;
-import six.com.crawler.common.entity.JobSnapshot;
-import six.com.crawler.common.entity.WorkerSnapshot;
+import six.com.crawler.entity.Job;
+import six.com.crawler.entity.JobSnapshot;
+import six.com.crawler.entity.WorkerSnapshot;
 import six.com.crawler.schedule.WorkerSchedulerManager;
 
 /**

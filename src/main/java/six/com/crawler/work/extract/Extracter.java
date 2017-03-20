@@ -1,7 +1,7 @@
 package six.com.crawler.work.extract;
 
-import six.com.crawler.common.entity.Page;
-import six.com.crawler.common.entity.ResultContext;
+import six.com.crawler.entity.Page;
+import six.com.crawler.entity.ResultContext;
 
 /**
  * @author 作者

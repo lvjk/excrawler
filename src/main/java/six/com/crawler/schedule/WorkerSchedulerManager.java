@@ -19,12 +19,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import six.com.crawler.common.entity.Job;
-import six.com.crawler.common.entity.JobParam;
-import six.com.crawler.common.entity.JobSnapshot;
-import six.com.crawler.common.entity.Site;
-import six.com.crawler.common.entity.WorkerErrMsg;
-import six.com.crawler.common.entity.WorkerSnapshot;
+import six.com.crawler.entity.Job;
+import six.com.crawler.entity.JobParam;
+import six.com.crawler.entity.JobSnapshot;
+import six.com.crawler.entity.Site;
+import six.com.crawler.entity.WorkerErrMsg;
+import six.com.crawler.entity.WorkerSnapshot;
 import six.com.crawler.work.Worker;
 import six.com.crawler.work.WorkerLifecycleState;
 

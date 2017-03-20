@@ -10,8 +10,8 @@ import org.slf4j.LoggerFactory;
 
 import com.alibaba.druid.pool.DruidDataSource;
 
-import six.com.crawler.common.constants.JobConTextConstants;
-import six.com.crawler.common.entity.JobSnapshot;
+import six.com.crawler.constants.JobConTextConstants;
+import six.com.crawler.entity.JobSnapshot;
 
 /**
  * @author 作者

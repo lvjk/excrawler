@@ -14,11 +14,11 @@ import org.openqa.selenium.WebElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import six.com.crawler.common.entity.Page;
-import six.com.crawler.common.entity.ResultContext;
-import six.com.crawler.common.utils.ThreadUtils;
-import six.com.crawler.common.utils.UrlUtils;
-import six.com.crawler.common.utils.WebDriverUtils;
+import six.com.crawler.entity.Page;
+import six.com.crawler.entity.ResultContext;
+import six.com.crawler.utils.ThreadUtils;
+import six.com.crawler.utils.UrlUtils;
+import six.com.crawler.utils.WebDriverUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.RedisWorkQueue;
 

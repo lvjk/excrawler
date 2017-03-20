@@ -10,12 +10,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import six.com.crawler.common.entity.Page;
-import six.com.crawler.common.entity.PageType;
-import six.com.crawler.common.entity.ResultContext;
-import six.com.crawler.common.http.HttpMethod;
-import six.com.crawler.common.utils.JsonUtils;
-import six.com.crawler.common.utils.UrlUtils;
+import six.com.crawler.entity.Page;
+import six.com.crawler.entity.PageType;
+import six.com.crawler.entity.ResultContext;
+import six.com.crawler.http.HttpMethod;
+import six.com.crawler.utils.JsonUtils;
+import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.Constants;
 import six.com.crawler.work.RedisWorkQueue;

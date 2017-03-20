@@ -1,6 +1,6 @@
 package six.com.crawler.schedule;
 
-import six.com.crawler.common.entity.Job;
+import six.com.crawler.entity.Job;
 
 /**
  * @author 作者

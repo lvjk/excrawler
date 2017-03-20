@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import six.com.crawler.common.RedisManager;
-import six.com.crawler.common.entity.Page;
+import six.com.crawler.entity.Page;
 
 /**
  * @author 作者

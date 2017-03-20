@@ -17,10 +17,10 @@ import org.openqa.selenium.remote.ErrorHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import six.com.crawler.common.entity.HttpProxy;
-import six.com.crawler.common.entity.Page;
-import six.com.crawler.common.http.HttpResult;
-import six.com.crawler.common.utils.WebDriverUtils;
+import six.com.crawler.entity.HttpProxy;
+import six.com.crawler.entity.Page;
+import six.com.crawler.http.HttpResult;
+import six.com.crawler.utils.WebDriverUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.exception.DownerException;
 

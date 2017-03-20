@@ -1,6 +1,6 @@
 package six.com.crawler.work.store;
 
-import six.com.crawler.common.exception.BaseException;
+import six.com.crawler.exception.BaseException;
 
 /** 
 * @author  作者 

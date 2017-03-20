@@ -6,9 +6,9 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import six.com.crawler.cluster.ClusterManager;
-import six.com.crawler.common.entity.Node;
-import six.com.crawler.common.entity.NodeType;
+import six.com.crawler.entity.Node;
+import six.com.crawler.entity.NodeType;
+import six.com.crawler.node.NodeManager;
 
 /**
  * @author 作者
@@ -20,7 +20,7 @@ public class MasterSchedulerManagerRepair implements InitializingBean {
 
 	final static Logger log = LoggerFactory.getLogger(MasterSchedulerManagerRepair.class);
 	@Autowired
-	private ClusterManager clusterManager;
+	private NodeManager clusterManager;
 
 	@Autowired
 	private MasterSchedulerManager masterSchedulerManager;
@@ -33,11 +33,11 @@ public class MasterSchedulerManagerRepair implements InitializingBean {
 		this.masterSchedulerManager = masterSchedulerManager;
 	}
 
-	public ClusterManager getClusterManager() {
+	public NodeManager getClusterManager() {
 		return clusterManager;
 	}
 
-	public void setClusterManager(ClusterManager clusterManager) {
+	public void setClusterManager(NodeManager clusterManager) {
 		this.clusterManager = clusterManager;
 	}
 

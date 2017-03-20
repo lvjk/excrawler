@@ -6,7 +6,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import six.com.crawler.common.entity.ResultContext;
+import six.com.crawler.entity.ResultContext;
 import six.com.crawler.work.AbstractWorker;
 
 /**

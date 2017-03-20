@@ -10,10 +10,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
-import six.com.crawler.cluster.ClusterManager;
-import six.com.crawler.common.interceptor.BaseInterceptor;
-import six.com.crawler.common.interceptor.MasterScheduledApiInterceptor;
-import six.com.crawler.common.interceptor.WorkerScheduledApiInterceptor;
+import six.com.crawler.interceptor.BaseInterceptor;
+import six.com.crawler.interceptor.MasterScheduledApiInterceptor;
+import six.com.crawler.interceptor.WorkerScheduledApiInterceptor;
+import six.com.crawler.node.NodeManager;
 
 /**
  * @author six
@@ -27,13 +27,13 @@ public class StartMain extends WebMvcConfigurerAdapter {
 	protected final static Logger log = LoggerFactory.getLogger(StartMain.class);
 
 	@Autowired
-	private ClusterManager clusterManager;
+	private NodeManager clusterManager;
 
-	public ClusterManager getClusterManager() {
+	public NodeManager getClusterManager() {
 		return clusterManager;
 	}
 
-	public void setClusterManager(ClusterManager configure) {
+	public void setClusterManager(NodeManager configure) {
 		this.clusterManager = configure;
 	}
 

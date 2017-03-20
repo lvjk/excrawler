@@ -2,8 +2,8 @@ package six.com.crawler.work.extract;
 
 import java.util.List;
 
-import six.com.crawler.common.entity.Page;
-import six.com.crawler.common.entity.ResultContext;
+import six.com.crawler.entity.Page;
+import six.com.crawler.entity.ResultContext;
 import six.com.crawler.work.AbstractCrawlWorker;
 
 /**
