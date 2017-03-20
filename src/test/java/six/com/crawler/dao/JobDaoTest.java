@@ -6,9 +6,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import six.com.crawler.BaseTest;
-import six.com.crawler.common.dao.JobDao;
-import six.com.crawler.common.entity.Job;
-import six.com.crawler.common.entity.JobSnapshotState;
+import six.com.crawler.dao.JobDao;
+import six.com.crawler.entity.Job;
+import six.com.crawler.entity.JobSnapshotState;
 
 /**
  * @author 作者

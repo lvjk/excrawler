@@ -10,7 +10,7 @@ import java.util.List;
 
 import com.alibaba.druid.pool.DruidDataSource;
 
-import six.com.crawler.common.utils.DbHelper;
+import six.com.crawler.utils.DbHelper;
 
 /**
  * @author 作者

@@ -6,7 +6,7 @@ import java.util.List;
 import org.junit.Test;
 
 import six.com.crawler.BaseTest;
-import six.com.crawler.common.entity.WorkerSnapshot;
+import six.com.crawler.entity.WorkerSnapshot;
 
 /** 
 * @author  作者 

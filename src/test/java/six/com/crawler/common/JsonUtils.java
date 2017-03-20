@@ -19,7 +19,7 @@ public class JsonUtils {
 		map.put("name", value);
 		System.out.println(map);
 		value=StringUtils.replace(value, "\\", "\\\\");
-		Object ob=six.com.crawler.common.utils.JsonUtils.toObject(value, Map.class);
+		Object ob=six.com.crawler.utils.JsonUtils.toObject(value, Map.class);
 		System.out.println(ob);
 	}
 

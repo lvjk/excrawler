@@ -12,22 +12,21 @@ import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import six.com.crawler.schedule.MasterSchedulerManager;
-import six.com.crawler.schedule.RegisterCenter;
+import six.com.crawler.service.ExtracterService;
+import six.com.crawler.service.HttpPorxyService;
+import six.com.crawler.service.JobService;
+import six.com.crawler.service.SiteService;
 import six.com.crawler.common.RedisManager;
-import six.com.crawler.common.configure.SpiderConfigure;
-import six.com.crawler.common.dao.DataTableDao;
-import six.com.crawler.common.dao.JobSnapshotDao;
-import six.com.crawler.common.dao.JobDao;
-import six.com.crawler.common.dao.JobParamDao;
-import six.com.crawler.common.dao.PageDao;
-import six.com.crawler.common.dao.ExtractPathDao;
-import six.com.crawler.common.dao.SiteDao;
-import six.com.crawler.common.http.HttpClient;
-import six.com.crawler.common.ocr.ImageDistinguish;
-import six.com.crawler.common.service.HttpPorxyService;
-import six.com.crawler.common.service.JobService;
-import six.com.crawler.common.service.ExtracterService;
-import six.com.crawler.common.service.SiteService;
+import six.com.crawler.configure.SpiderConfigure;
+import six.com.crawler.dao.DataTableDao;
+import six.com.crawler.dao.ExtractPathDao;
+import six.com.crawler.dao.JobDao;
+import six.com.crawler.dao.JobParamDao;
+import six.com.crawler.dao.JobSnapshotDao;
+import six.com.crawler.dao.PageDao;
+import six.com.crawler.dao.SiteDao;
+import six.com.crawler.http.HttpClient;
+import six.com.crawler.ocr.ImageDistinguish;
 
 /**
  * @author sixliu E-mail:359852326@qq.com
@@ -50,9 +49,6 @@ public  class BaseTest extends AbstractJUnit4SpringContextTests {
 
 	@Autowired
 	public ExtracterService paserPathService;
-
-	@Autowired
-	public RegisterCenter registerCenter;
 
 	@Autowired
 	public HttpPorxyService httpPorxyService;
@@ -95,7 +91,7 @@ public  class BaseTest extends AbstractJUnit4SpringContextTests {
 	public DataTableDao dataTableDao;
 	
 	@Autowired
-	public six.com.crawler.common.email.QQEmailClient QQEmailClient;
+	public six.com.crawler.email.QQEmailClient QQEmailClient;
 	
 
 	static {

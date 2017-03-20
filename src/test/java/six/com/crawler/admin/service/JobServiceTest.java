@@ -7,15 +7,15 @@ import org.apache.commons.lang3.time.DateFormatUtils;
 import org.junit.Test;
 
 import six.com.crawler.BaseTest;
-import six.com.crawler.admin.api.ResponseMsg;
+import six.com.crawler.api.ResponseMsg;
 import six.com.crawler.common.DateFormats;
-import six.com.crawler.common.entity.Job;
-import six.com.crawler.common.entity.JobParam;
-import six.com.crawler.common.entity.JobSnapshot;
-import six.com.crawler.common.entity.JobSnapshotState;
-import six.com.crawler.common.entity.PageQuery;
-import six.com.crawler.common.entity.WorkerErrMsg;
-import six.com.crawler.common.entity.WorkerSnapshot;
+import six.com.crawler.entity.Job;
+import six.com.crawler.entity.JobParam;
+import six.com.crawler.entity.JobSnapshot;
+import six.com.crawler.entity.JobSnapshotState;
+import six.com.crawler.entity.PageQuery;
+import six.com.crawler.entity.WorkerErrMsg;
+import six.com.crawler.entity.WorkerSnapshot;
 
 /**
  * @author 作者

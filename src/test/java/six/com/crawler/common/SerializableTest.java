@@ -3,10 +3,10 @@ package six.com.crawler.common;
 import java.util.ArrayList;
 import java.util.List;
 
-import six.com.crawler.common.entity.Page;
-import six.com.crawler.common.entity.PageType;
-import six.com.crawler.common.utils.AutoKryoUtils;
-import six.com.crawler.common.utils.JavaSerializeUtils;
+import six.com.crawler.entity.Page;
+import six.com.crawler.entity.PageType;
+import six.com.crawler.utils.AutoKryoUtils;
+import six.com.crawler.utils.JavaSerializeUtils;
 import six.com.crawler.work.downer.DownerType;
 
 /**

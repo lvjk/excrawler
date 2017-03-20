@@ -7,8 +7,8 @@ import java.util.List;
 import org.junit.Test;
 
 import six.com.crawler.BaseTest;
-import six.com.crawler.common.ocr.ImageUtils;
-import six.com.crawler.common.ocr.ProxyBufferedImage;
+import six.com.crawler.ocr.ImageUtils;
+import six.com.crawler.ocr.ProxyBufferedImage;
 
 /**
  * @author 作者

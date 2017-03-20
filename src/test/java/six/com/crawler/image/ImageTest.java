@@ -22,9 +22,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import six.com.crawler.BaseTest;
-import six.com.crawler.common.ocr.ImageUtils;
-import six.com.crawler.common.utils.JsUtils;
-import six.com.crawler.common.utils.WebDriverUtils;
+import six.com.crawler.ocr.ImageUtils;
+import six.com.crawler.utils.JsUtils;
+import six.com.crawler.utils.WebDriverUtils;
 import six.com.crawler.work.downer.ChromeDowner;
 
 /**

@@ -3,7 +3,7 @@ package six.com.crawler.dao;
 import org.junit.Test;
 
 import six.com.crawler.BaseTest;
-import six.com.crawler.common.entity.Site;
+import six.com.crawler.entity.Site;
 
 /**
  * @author 作者

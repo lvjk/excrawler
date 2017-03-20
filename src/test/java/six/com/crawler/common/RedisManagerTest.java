@@ -6,7 +6,7 @@ import java.util.List;
 import org.junit.Test;
 
 import six.com.crawler.BaseTest;
-import six.com.crawler.common.entity.Page;
+import six.com.crawler.entity.Page;
 import six.com.crawler.work.RedisWorkQueue;
 
 /**

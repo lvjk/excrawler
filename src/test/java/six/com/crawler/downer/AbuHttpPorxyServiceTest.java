@@ -16,11 +16,11 @@ import org.slf4j.LoggerFactory;
 
 import okhttp3.Request;
 import six.com.crawler.BaseTest;
-import six.com.crawler.common.entity.HttpProxy;
-import six.com.crawler.common.http.HttpConstant;
-import six.com.crawler.common.http.HttpMethod;
-import six.com.crawler.common.http.HttpResult;
-import six.com.crawler.common.utils.AutoCharsetDetectorUtils.ContentType;
+import six.com.crawler.entity.HttpProxy;
+import six.com.crawler.http.HttpConstant;
+import six.com.crawler.http.HttpMethod;
+import six.com.crawler.http.HttpResult;
+import six.com.crawler.utils.AutoCharsetDetectorUtils.ContentType;
 
 /**
  * @author 作者

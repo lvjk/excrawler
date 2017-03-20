@@ -8,7 +8,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import six.com.crawler.BaseTest;
-import six.com.crawler.common.dao.ExtractPathDao;
+import six.com.crawler.dao.ExtractPathDao;
 import six.com.crawler.work.extract.ExtractPath;
 
 /**

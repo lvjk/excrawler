@@ -5,9 +5,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
-
-
-import six.com.crawler.common.ocr.ImageUtils;
+import six.com.crawler.ocr.ImageUtils;
 
 /** 
 * @author  作者 

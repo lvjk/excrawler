@@ -5,8 +5,8 @@ import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
 
-import six.com.crawler.common.entity.JobProfile;
-import six.com.crawler.common.entity.SiteProfile;
+import six.com.crawler.entity.JobProfile;
+import six.com.crawler.entity.SiteProfile;
 
 /**
  * @author 作者

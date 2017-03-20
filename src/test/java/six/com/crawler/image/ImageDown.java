@@ -11,10 +11,10 @@ import org.junit.Test;
 
 import okhttp3.Request;
 import six.com.crawler.BaseTest;
-import six.com.crawler.common.http.HttpConstant;
-import six.com.crawler.common.http.HttpMethod;
-import six.com.crawler.common.http.HttpResult;
-import six.com.crawler.common.utils.ThreadUtils;
+import six.com.crawler.http.HttpConstant;
+import six.com.crawler.http.HttpMethod;
+import six.com.crawler.http.HttpResult;
+import six.com.crawler.utils.ThreadUtils;
 
 /**
  * @author 作者
