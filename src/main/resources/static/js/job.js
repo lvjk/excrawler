@@ -282,7 +282,7 @@ function showJobSnapshots(jobSnapshots) {
 			var color=getStateColor(state);
 			var jobTr=$("tr[name='"+jobName+"']");
 			if(jobSnapshot.state==3||jobSnapshot.state==4){
-				state="<a  style='color:"+color+"' href=\"javascript:showWorkerInfo('" + jobName+ "')\">"+state+"</a>";	
+				state="<a  style='color:"+color+"' href=\"javascript:masterScheduled.showWorkerInfo('" + jobName+ "')\">"+state+"</a>";	
 			}
 			jobTr.find("[name='state']").css("color",color).html(state);
 			var startTime =jobTr.find("[name='startTime']");

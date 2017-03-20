@@ -141,7 +141,7 @@ var masterScheduled = {
 							.appendTo(tr);
 					$("<td><span>" + workerSnapshot.localNode + "</span></td>")
 							.appendTo(tr);
-					var state = getWorkerStateText(workerSnapshot.state);
+					var state = masterScheduled.getWorkerStateText(workerSnapshot.state);
 					$("<td><span>" + state + "</span></td>").appendTo(tr);
 					$("<td><span>" + workerSnapshot.startTime + "</span></td>")
 							.appendTo(tr);
