@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import six.com.crawler.annotation.OnlyVisitByWorker;
 import six.com.crawler.entity.WorkerSnapshot;
 import six.com.crawler.service.MasterScheduledService;
 
@@ -67,25 +66,6 @@ public class MasterScheduledApi extends BaseApi {
 		return msg;
 	}
 
-	@OnlyVisitByWorker
-	@RequestMapping(value = "/crawler/master/scheduled/startWorker/{jobName}", method = RequestMethod.GET)
-	@ResponseBody
-	public ResponseMsg<String> end(@PathVariable("jobName") String jobName) {
-		ResponseMsg<String> msg = createResponseMsg();
-		scheduledService.startWorker(jobName);
-		msg.setIsOk(1);
-		return msg;
-	}
-
-	@OnlyVisitByWorker
-	@RequestMapping(value = "/crawler/master/scheduled/endWorker/{jobName}", method = RequestMethod.GET)
-	@ResponseBody
-	public ResponseMsg<String> endWorker(@PathVariable("jobName") String jobName) {
-		ResponseMsg<String> msg = createResponseMsg();
-		scheduledService.endWorker(jobName);
-		msg.setIsOk(1);
-		return msg;
-	}
 
 	@RequestMapping(value = "/crawler/master/scheduled/getWorkerInfo/{jobName}", method = RequestMethod.GET)
 	@ResponseBody

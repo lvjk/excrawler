@@ -7,5 +7,5 @@ package six.com.crawler.node;
  */
 public abstract class NodeCommand {
 
-	public abstract void execute(NodeManager clusterManager);
+	public abstract Object execute(Object param);
 }

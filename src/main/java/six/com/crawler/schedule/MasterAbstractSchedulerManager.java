@@ -3,6 +3,7 @@ package six.com.crawler.schedule;
 import java.rmi.Remote;
 
 import six.com.crawler.entity.Job;
+import six.com.crawler.node.NodeCommand;
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
@@ -12,6 +13,24 @@ public abstract class MasterAbstractSchedulerManager extends AbstractSchedulerMa
 
 	protected final void init() {
 		doInit();
+		
+		getNodeManager().register(ScheduledJobCommand.startWorker, new NodeCommand() {
+			@Override
+			public Object execute(Object param) {
+				String jobName = (String) param;
+				MasterAbstractSchedulerManager.this.startWorker(jobName);
+				return null;
+			}
+		});
+
+		getNodeManager().register(ScheduledJobCommand.endWorker, new NodeCommand() {
+			@Override
+			public Object execute(Object param) {
+				String jobName = (String) param;
+				MasterAbstractSchedulerManager.this.endWorker(jobName);
+				return null;
+			}
+		});
 	}
 
 	protected abstract void doInit();
@@ -30,7 +49,7 @@ public abstract class MasterAbstractSchedulerManager extends AbstractSchedulerMa
 	 * @param jobName
 	 * @param WorkName
 	 */
-	public abstract void endWorer(String jobName);
+	public abstract void endWorker(String jobName);
 	
 	public abstract void repair();
 

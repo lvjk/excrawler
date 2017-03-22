@@ -18,7 +18,7 @@ import six.com.crawler.entity.WorkerSnapshot;
 import six.com.crawler.http.HttpClient;
 import six.com.crawler.node.NodeManager;
 import six.com.crawler.ocr.ImageDistinguish;
-import six.com.crawler.service.ClusterService;
+import six.com.crawler.service.NodeManagerService;
 import six.com.crawler.service.HttpPorxyService;
 import six.com.crawler.service.JobService;
 import six.com.crawler.service.PageService;
@@ -41,7 +41,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	private SpiderConfigure configure;
 
 	@Autowired
-	private NodeManager clusterManager;
+	private NodeManager nodeManager;
 
 	@Autowired
 	private SiteService siteService;
@@ -68,7 +68,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	private ImageDistinguish imageDistinguish;
 
 	@Autowired
-	private ClusterService clusterService;
+	private NodeManagerService clusterService;
 
 	@Autowired
 	private QQEmailClient emailClient;
@@ -88,8 +88,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	 * @param job
 	 * @return
 	 */
-	public boolean isRunning(Job job) {
-		String jobName = job.getName();
+	public boolean isRunning(String jobName) {
 		JobSnapshot jobSnapshot = getJobSnapshot(jobName);
 		return null != jobSnapshot && (jobSnapshot.getEnumState() == JobSnapshotState.EXECUTING
 				|| jobSnapshot.getEnumState() == JobSnapshotState.SUSPEND);
@@ -104,7 +103,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 			Node findNode = null;
 			for (WorkerSnapshot workerSnapshot : workerSnapshots) {
 				nodeName = workerSnapshot.getLocalNode();
-				findNode = getClusterManager().getWorkerNode(nodeName);
+				findNode = getNodeManager().getWorkerNode(nodeName);
 				if (null != findNode) {
 					nodes.add(findNode);
 				}
@@ -237,12 +236,12 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		getRedisManager().hset(workerSnapshotKey, workerSnapshot.getName(), workerSnapshot);
 	}
 
-	public NodeManager getClusterManager() {
-		return clusterManager;
+	public NodeManager getNodeManager() {
+		return nodeManager;
 	}
 
-	public void setClusterManager(NodeManager clusterManager) {
-		this.clusterManager = clusterManager;
+	public void setNodeManager(NodeManager nodeManager) {
+		this.nodeManager = nodeManager;
 	}
 
 	public SpiderConfigure getConfigure() {
@@ -318,11 +317,11 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		this.imageDistinguish = imageDistinguish;
 	}
 
-	public ClusterService getClusterService() {
+	public NodeManagerService getClusterService() {
 		return clusterService;
 	}
 
-	public void setClusterService(ClusterService clusterService) {
+	public void setClusterService(NodeManagerService clusterService) {
 		this.clusterService = clusterService;
 	}
 	

@@ -17,7 +17,7 @@ public class MyBatisMapperScannerConfig {
 	public MapperScannerConfigurer mapperScannerConfigurer() {
 		MapperScannerConfigurer mapperScannerConfigurer = new MapperScannerConfigurer();
 		mapperScannerConfigurer.setSqlSessionFactoryBeanName("sqlSessionFactory");
-		mapperScannerConfigurer.setBasePackage("six.com.crawler.common.dao");
+		mapperScannerConfigurer.setBasePackage("six.com.crawler.dao");
 		return mapperScannerConfigurer;
 	}
 }

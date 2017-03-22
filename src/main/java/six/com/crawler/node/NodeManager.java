@@ -23,6 +23,11 @@ import six.com.crawler.configure.SpiderConfigure;
 import six.com.crawler.email.QQEmailClient;
 import six.com.crawler.entity.Node;
 import six.com.crawler.entity.NodeType;
+import six.com.crawler.rpc.NettyRpcServer;
+import six.com.crawler.rpc.protocol.RpcProtocol;
+import six.com.crawler.rpc.protocol.RpcRequest;
+import six.com.crawler.rpc.protocol.RpcResponse;
+import six.com.crawler.rpc.NettyRpcCilent;
 import six.com.crawler.utils.JavaSerializeUtils;
 
 /**
@@ -51,8 +56,9 @@ public class NodeManager implements InitializingBean {
 
 	private CuratorFramework zKClient;
 
-	@Autowired
-	private NodeManagerClient clusterManagerClient;
+	private NettyRpcServer nettyRpcServer;
+
+	private NettyRpcCilent nettyRpcCilent;
 
 	/**
 	 * 分布式锁保证每个节点都是有序的初始化注册
@@ -67,6 +73,18 @@ public class NodeManager implements InitializingBean {
 			initCurrentNode();
 			// 初始化注册当前节点
 			initRegisterNode();
+			// 初始化节点server
+			String localHost = getCurrentNode().getHost();
+			int trafficPort = getCurrentNode().getTrafficPort();
+			nettyRpcServer = new NettyRpcServer(localHost, trafficPort);
+			nettyRpcCilent = new NettyRpcCilent();
+			register("getCurrentNode", new NodeCommand() {
+				@Override
+				public Object execute(Object param) {
+					return getCurrentNode();
+				}
+			});
+
 		} catch (Exception e) {
 			log.error("init clusterManager err", e);
 			System.exit(1);
@@ -128,7 +146,7 @@ public class NodeManager implements InitializingBean {
 		// 获取节点配置
 		String host = getConfigure().getHost();
 		int port = getConfigure().getPort();
-		// int trafficPort = getConfigure().getConfig("node.trafficPort", 8085);
+		int trafficPort = getConfigure().getConfig("node.trafficPort", 8180);
 		int runningJobMaxSize = getConfigure().getConfig("worker.running.max.size", 20);
 		String nodeName = getConfigure().getConfig("node.name", null);
 		// 检查节点名字是否设置
@@ -143,7 +161,7 @@ public class NodeManager implements InitializingBean {
 		currentNode.setName(nodeName);
 		currentNode.setHost(host);
 		currentNode.setPort(port);
-		// currentNode.setTrafficPort(trafficPort);
+		currentNode.setTrafficPort(trafficPort);
 		currentNode.setRunningJobMaxSize(runningJobMaxSize);
 		log.info("the node[" + nodeName + "] type:" + nodeType);
 	}
@@ -195,11 +213,11 @@ public class NodeManager implements InitializingBean {
 		List<Node> allWorkerNodes = getWorkerNodes();
 		for (Node workerNode : allWorkerNodes) {
 			if (workerNode.getType() != NodeType.MASTER) {
-				Node newestNode=null;
-				if(!getCurrentNode().equals(workerNode)){
-					newestNode = clusterManagerClient.getCurrentNode(workerNode);
-				}else{
-					newestNode=getCurrentNode();
+				Node newestNode = null;
+				if (!getCurrentNode().equals(workerNode)) {
+					newestNode = (Node) execute(workerNode, "getCurrentNode", null);
+				} else {
+					newestNode = getCurrentNode();
 				}
 				if (newestNode.getRunningJobSize() < newestNode.getRunningJobMaxSize()) {
 					freeNodes.add(workerNode);
@@ -212,8 +230,40 @@ public class NodeManager implements InitializingBean {
 		return freeNodes;
 	}
 
+	public Object execute(Node node, String commandName, Object param) {
+		String id = getCurrentNode().getHost() + "@" + node.getHost() + ":" + node.getTrafficPort() + "/" + commandName
+				+ "/" + System.currentTimeMillis();
+		RpcRequest rpcRequest = new RpcRequest();
+		rpcRequest.setId(id);
+		rpcRequest.setType(RpcProtocol.REQUEST);
+		rpcRequest.setCommand(commandName);
+		rpcRequest.setCallHost(node.getHost());
+		rpcRequest.setCallPort(node.getTrafficPort());
+		rpcRequest.setOriginHost(getCurrentNode().getHost());
+		rpcRequest.setParam(param);
+		RpcResponse rpcResponse = nettyRpcCilent.execute(rpcRequest);
+		return rpcResponse.getResult();
+	}
+
+	public void register(String commandName, NodeCommand nodeCommand) {
+		nettyRpcServer.register(commandName, nodeCommand);
+		log.info("register nodeCommand:" + commandName);
+	}
+
+	public void remove(String commandName) {
+		nettyRpcServer.remove(commandName);
+		log.info("remove nodeCommand:" + commandName);
+	}
+
 	@PreDestroy
 	public void destroy() {
+		if (null != nettyRpcCilent) {
+			nettyRpcCilent.destroy();
+		}
+
+		if (null != nettyRpcServer) {
+			nettyRpcServer.destroy();
+		}
 		if (null != zKClient) {
 			zKClient.close();
 		}
@@ -246,13 +296,4 @@ public class NodeManager implements InitializingBean {
 	public void setEmailClient(QQEmailClient emailClient) {
 		this.emailClient = emailClient;
 	}
-
-	public NodeManagerClient getClusterManagerClient() {
-		return clusterManagerClient;
-	}
-
-	public void setClusterManagerClient(NodeManagerClient clusterManagerClient) {
-		this.clusterManagerClient = clusterManagerClient;
-	}
-
 }

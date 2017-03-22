@@ -78,13 +78,13 @@ public class JobServiceImpl implements JobService {
 
 	static final String JOB_SERVICE_OPERATION_PRE = "JobService.operation.";
 
-	public List<Job> queryIsScheduled(){
-		Map<String, Object> parameters=new HashMap<>();
-		parameters.put("isScheduled",1);
-		List<Job> result=jobDao.queryByParam(parameters);
+	public List<Job> queryIsScheduled() {
+		Map<String, Object> parameters = new HashMap<>();
+		parameters.put("isScheduled", 1);
+		List<Job> result = jobDao.queryByParam(parameters);
 		return result;
 	}
-	
+
 	public void queryJobs(ResponseMsg<PageQuery<Job>> responseMsg, String jobName, int pageIndex, int pageSize) {
 		pageSize = pageSize <= 0 || pageSize > 50 ? 15 : pageSize;
 		PageQuery<Job> pageQuery = new PageQuery<>();
@@ -95,7 +95,7 @@ public class JobServiceImpl implements JobService {
 		if ("*".equals(jobName)) {
 			jobs = new ArrayList<>();
 			// 优先获取运行中的任务
-			List<JobSnapshot> jobSnapshots =scheduleManager.getJobSnapshots();
+			List<JobSnapshot> jobSnapshots = scheduleManager.getJobSnapshots();
 			int end = pageIndex + pageSize;
 			if (jobSnapshots.size() > 0) {
 				if (jobSnapshots.size() > end) {
@@ -221,8 +221,8 @@ public class JobServiceImpl implements JobService {
 				jobSnapshot = scheduleManager.getJobSnapshot(jobName);
 				if (null == jobSnapshot) {
 					jobSnapshot = new JobSnapshot(jobName);
-				}else{
-					List<WorkerSnapshot> workerSnapshots=scheduleManager.getWorkerSnapshots(jobName);
+				} else {
+					List<WorkerSnapshot> workerSnapshots = scheduleManager.getWorkerSnapshots(jobName);
 					scheduleManager.totalWorkerSnapshot(jobSnapshot, workerSnapshots);
 				}
 				String tempProxyKey = RedisWorkQueue.PRE_PROXY_QUEUE_KEY + queueName;
@@ -255,7 +255,7 @@ public class JobServiceImpl implements JobService {
 					|| jobSnapshot.getEnumState() == JobSnapshotState.STOP
 					|| jobSnapshot.getEnumState() == JobSnapshotState.FINISHED) {
 				List<WorkerSnapshot> workerSnapshots = getWorkSnapshotsFromRegisterCenter(jobName);
-				//totalWorkerSnapshot(jobSnapshot, workerSnapshots);
+				// totalWorkerSnapshot(jobSnapshot, workerSnapshots);
 				jobSnapshot.setWorkerSnapshots(workerSnapshots);
 			}
 		}
@@ -270,7 +270,6 @@ public class JobServiceImpl implements JobService {
 		jobSnapshotDao.update(jobSnapshot);
 	}
 
-	
 	@Override
 	public ResponseEntity<InputStreamResource> download(String param) {
 		JobProfile profile = new JobProfile();
@@ -339,29 +338,29 @@ public class JobServiceImpl implements JobService {
 		return result;
 	}
 
-	public void updateIsScheduled(ResponseMsg<Integer> responseMsg,int version, String name, int isScheduled) {
-		String msg=null;
-		if(!StringUtils.isBlank(name)){
-			if(0==isScheduled||1==isScheduled){
+	public void updateIsScheduled(ResponseMsg<Integer> responseMsg, int version, String name, int isScheduled) {
+		String msg = null;
+		if (!StringUtils.isBlank(name)) {
+			if (0 == isScheduled || 1 == isScheduled) {
 				int newVersion = version + 1;
 				boolean updateResult = jobDao.updateIsScheduled(version, newVersion, name, isScheduled) == 1;
-				if(updateResult){
-					if(1==isScheduled){
-						Job job=get(name);
+				if (updateResult) {
+					if (1 == isScheduled) {
+						Job job = get(name);
 						scheduleManager.scheduled(job);
 						msg = "schedule job[" + name + "] succeed";
-					}else{
+					} else {
 						scheduleManager.cancelScheduled(name);
 						msg = "cancel schedule job[" + name + "] succeed";
 					}
 					responseMsg.setData(newVersion);
 					responseMsg.setIsOk(1);
 				}
-			}else{
-				msg="the job["+name+"]'s isScheduled must be 0 or 1";
+			} else {
+				msg = "the job[" + name + "]'s isScheduled must be 0 or 1";
 			}
-		}else{
-			msg="the job's name must not be blank";
+		} else {
+			msg = "the job's name must not be blank";
 		}
 		log.info(msg);
 		responseMsg.setMsg(msg);
@@ -414,9 +413,10 @@ public class JobServiceImpl implements JobService {
 			jobs.sort(new Comparator<Job>() {
 				@Override
 				public int compare(Job job1, Job job2) {
-					if (scheduleManager.isRunning(job1) && !scheduleManager.isRunning(job2)) {
+					if (scheduleManager.isRunning(job1.getName()) && !scheduleManager.isRunning(job2.getName())) {
 						return -1;
-					} else if (scheduleManager.isRunning(job2) && !scheduleManager.isRunning(job1)) {
+					} else if (scheduleManager.isRunning(job2.getName())
+							&& !scheduleManager.isRunning(job1.getName())) {
 						return 1;
 					} else {
 						if (job1.getLevel() < job2.getLevel()) {
@@ -464,7 +464,6 @@ public class JobServiceImpl implements JobService {
 		this.jobParamDao = jobParamDao;
 	}
 
-
 	public JobSnapshotDao getJobSnapshotDao() {
 		return jobSnapshotDao;
 	}
@@ -499,6 +498,6 @@ public class JobServiceImpl implements JobService {
 
 	@Override
 	public void updateWorkSnapshotToRegisterCenter(WorkerSnapshot workerSnapshot, boolean isSaveErrMsg) {
-		
+
 	}
 }

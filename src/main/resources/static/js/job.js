@@ -1,7 +1,7 @@
 var stompClient = null;
 var connected = false;
 var connectDelayTime = 1000;
-var updateJobDelayTime = 1000;
+var updateJobDelayTime =2000;
 var job_state = "job_state_";
 var job_start_time = "job_start_time_";
 var job_end_time = "job_end_time_";

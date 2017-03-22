@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import six.com.crawler.entity.Node;
-import six.com.crawler.service.ClusterService;
+import six.com.crawler.service.NodeManagerService;
 
 /** 
 * @author  作者 
@@ -21,13 +21,13 @@ import six.com.crawler.service.ClusterService;
 public class ClusterApi extends BaseApi{
 
 	@Autowired
-	private ClusterService clusterService;
+	private NodeManagerService clusterService;
 	
-	public ClusterService getClusterService() {
+	public NodeManagerService getClusterService() {
 		return clusterService;
 	}
 
-	public void setClusterService(ClusterService clusterService) {
+	public void setClusterService(NodeManagerService clusterService) {
 		this.clusterService = clusterService;
 	}
 

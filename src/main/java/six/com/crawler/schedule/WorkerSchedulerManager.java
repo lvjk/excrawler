@@ -2,7 +2,6 @@ package six.com.crawler.schedule;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.rmi.Remote;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -16,7 +15,6 @@ import javax.annotation.PreDestroy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import six.com.crawler.entity.Job;
@@ -26,7 +24,6 @@ import six.com.crawler.entity.Site;
 import six.com.crawler.entity.WorkerErrMsg;
 import six.com.crawler.entity.WorkerSnapshot;
 import six.com.crawler.work.Worker;
-import six.com.crawler.work.WorkerLifecycleState;
 
 /**
  * @author 作者
@@ -34,7 +31,7 @@ import six.com.crawler.work.WorkerLifecycleState;
  * @date 创建时间：2017年3月13日 上午11:33:37
  */
 @Component
-public class WorkerSchedulerManager extends AbstractSchedulerManager implements Remote {
+public class WorkerSchedulerManager extends WorkerAbstractSchedulerManager {
 
 	final static Logger log = LoggerFactory.getLogger(MasterSchedulerManager.class);
 
@@ -48,21 +45,10 @@ public class WorkerSchedulerManager extends AbstractSchedulerManager implements 
 
 	private ExecutorService executor;
 	
-	@Autowired
-	private MasterSchedulerManagerClient masterSchedulerManagerClient;
-
-	public MasterSchedulerManagerClient getMasterSchedulerManagerClient() {
-		return masterSchedulerManagerClient;
-	}
-
-	public void setMasterSchedulerManagerClient(MasterSchedulerManagerClient masterSchedulerManagerClient) {
-		this.masterSchedulerManagerClient = masterSchedulerManagerClient;
-	}
-
-	protected void init() {
-		workerRunningMaxSize = getClusterManager().getCurrentNode().getRunningJobMaxSize();
+	protected void doInit() {
+		workerRunningMaxSize = getNodeManager().getCurrentNode().getRunningJobMaxSize();
 		executor = Executors.newFixedThreadPool(workerRunningMaxSize, new JobWorkerThreadFactory());
-		// 初始化 读取等待执行任务线程 线程
+		
 	}
 
 	/**
@@ -92,31 +78,30 @@ public class WorkerSchedulerManager extends AbstractSchedulerManager implements 
 	 * 
 	 * @param job
 	 */
-	public synchronized void execute(Job job) {
-		String key = "workerSchedulerManager_doExecute_" + job.getName();
-		getRedisManager().lock(key);
-		try {
-			log.info("worker node[" + getClusterManager().getCurrentNode().getName() + "] execute job[" + job.getName()
-					+ "]");
-			log.info("buiild job[" + job.getName() + "] worker");
-			List<JobParam> jobParams = getJobService().queryJobParams(job.getName());
-			job.setParamList(jobParams);
-			JobSnapshot jobSnapshot = getJobSnapshot(job.getName());
-			if (null == jobSnapshot || jobSnapshot.getId() == null) {
-				throw new RuntimeException("the job's jobSnapshot is not be init");
+	public synchronized void execute(String jobName) {
+		String key = "workerSchedulerManager_doExecute_" + jobName;
+		Job job=getJobService().get(jobName);
+		if(null!=job){
+			log.info("worker node[" + getNodeManager().getCurrentNode().getName() + "] execute job[" + job.getName()
+			+ "]");
+			getRedisManager().lock(key);
+			try {
+				log.info("buiild job[" + job.getName() + "] worker");
+				List<JobParam> jobParams = getJobService().queryJobParams(job.getName());
+				job.setParamList(jobParams);
+				JobSnapshot jobSnapshot = getJobSnapshot(job.getName());
+				if (null == jobSnapshot || jobSnapshot.getId() == null) {
+					throw new RuntimeException("the job's jobSnapshot is not be init");
+				}
+				Worker worker = buildJobWorker(job, jobSnapshot);
+				executor.execute(() -> {
+					log.info("start execute job[" + job.getName() + "]'s worker[" + worker.getName() + "]");
+					executeWorker(worker);
+				});
+				log.info("the job[" + job.getName() + "] is be executed by worker[" + worker.getName() + "]");
+			} finally {
+				getRedisManager().unlock(key);
 			}
-			Worker worker = buildJobWorker(job, jobSnapshot);
-			executor.execute(() -> {
-				log.info("start execute job[" + job.getName() + "]'s worker[" + worker.getName() + "]");
-				executeWorker(worker);
-			});
-			// 等待worker.getState() == WorkerLifecycleState.STARTED 时返回true
-			log.info("waiting job[" + job.getName() + "]'s worker to started");
-			while (worker.getState() == WorkerLifecycleState.READY) {
-			}
-			log.info("the job[" + job.getName() + "] is be executed by worker[" + worker.getName() + "]");
-		} finally {
-			getRedisManager().unlock(key);
 		}
 	}
 
@@ -126,8 +111,7 @@ public class WorkerSchedulerManager extends AbstractSchedulerManager implements 
 	 * @param job
 	 * @return
 	 */
-	public synchronized void suspend(Job job) {
-		String jobName = job.getName();
+	public synchronized void suspend(String jobName) {
 		Map<String, Worker> workers = getWorkers(jobName);
 		for (Worker worker : workers.values()) {
 			worker.suspend();
@@ -140,8 +124,7 @@ public class WorkerSchedulerManager extends AbstractSchedulerManager implements 
 	 * @param job
 	 * @return
 	 */
-	public synchronized void goOn(Job job) {
-		String jobName = job.getName();
+	public synchronized void goOn(String jobName) {
 		Map<String, Worker> workers = getWorkers(jobName);
 		for (Worker worker : workers.values()) {
 			worker.goOn();
@@ -154,8 +137,7 @@ public class WorkerSchedulerManager extends AbstractSchedulerManager implements 
 	 * @param job
 	 * @return
 	 */
-	public synchronized void stop(Job job) {
-		String jobName = job.getName();
+	public synchronized void stop(String jobName) {
 		Map<String, Worker> workers = getWorkers(jobName);
 		for (Worker worker : workers.values()) {
 			worker.stop();
@@ -195,8 +177,8 @@ public class WorkerSchedulerManager extends AbstractSchedulerManager implements 
 					.computeIfAbsent(worker.getJob().getName(), mapKey -> new ConcurrentHashMap<String, Worker>())
 					.put(worker.getName(), worker);
 			updateWorkerSnapshot(workerSnapshot);
-			getClusterManager().getCurrentNode().setRunningJobSize(runningWroker.incrementAndGet());
-			masterSchedulerManagerClient.startWorker(jobName);
+			getNodeManager().getCurrentNode().setRunningJobSize(runningWroker.incrementAndGet());
+			getNodeManager().execute(getNodeManager().getMasterNode(), ScheduledJobCommand.startWorker,jobName);
 		} finally {
 			getRedisManager().unlock(workerSnapshotsKey);
 		}
@@ -212,7 +194,7 @@ public class WorkerSchedulerManager extends AbstractSchedulerManager implements 
 		String workerSnapshotsKey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(jobName);
 		try {
 			getRedisManager().lock(workerSnapshotsKey);
-			getClusterManager().getCurrentNode().setRunningJobSize(runningWroker.decrementAndGet());
+			getNodeManager().getCurrentNode().setRunningJobSize(runningWroker.decrementAndGet());
 			Map<String, Worker> jobWorkerMap = localJobWorkersMap.get(jobName);
 			if (null != jobWorkerMap) {
 				jobWorkerMap.remove(workerName);
@@ -220,7 +202,7 @@ public class WorkerSchedulerManager extends AbstractSchedulerManager implements 
 					localJobWorkersMap.remove(jobName);
 				}
 			}
-			masterSchedulerManagerClient.endWorker(jobName);
+			getNodeManager().execute(getNodeManager().getMasterNode(), ScheduledJobCommand.endWorker,jobName);
 		} finally {
 			getRedisManager().unlock(workerSnapshotsKey);
 		}
@@ -276,7 +258,7 @@ public class WorkerSchedulerManager extends AbstractSchedulerManager implements 
 					WorkerSnapshot workerSnapshot = new WorkerSnapshot();
 					workerSnapshot.setJobSnapshotId(jobSnapshot.getId());
 					workerSnapshot.setJobName(job.getName());
-					workerSnapshot.setLocalNode(getClusterManager().getCurrentNode().getName());
+					workerSnapshot.setLocalNode(getNodeManager().getCurrentNode().getName());
 					workerSnapshot.setName(workerName);
 					workerSnapshot.setWorkerErrMsgs(new ArrayList<WorkerErrMsg>());
 

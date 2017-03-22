@@ -1,6 +1,5 @@
 package six.com.crawler.schedule;
 
-import six.com.crawler.entity.Job;
 
 /**
  * @author 作者
@@ -14,7 +13,7 @@ public interface SchedulerManager {
 	 * 
 	 * @param job
 	 */
-	public void execute(Job job);
+	public void execute(String jobName);
 
 	/**
 	 * 暂停任务
@@ -22,7 +21,7 @@ public interface SchedulerManager {
 	 * @param job
 	 * @return
 	 */
-	public void suspend(Job job);
+	public void suspend(String jobName);
 
 	/**
 	 * 继续任务
@@ -30,7 +29,7 @@ public interface SchedulerManager {
 	 * @param job
 	 * @return
 	 */
-	public void goOn(Job job);
+	public void goOn(String jobName);
 
 	/**
 	 * 停止任务
@@ -38,7 +37,7 @@ public interface SchedulerManager {
 	 * @param job
 	 * @return
 	 */
-	public void stop(Job job);
+	public void stop(String jobName);
 
 	/**
 	 * 停止所有任务

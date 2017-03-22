@@ -3,6 +3,7 @@ package six.com.crawler.service.impl;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,12 +50,11 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 		String msg = null;
 		try {
 			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
-			Job job = jobService.get(jobName);
-			if (null != job) {
-				if (scheduleManager.isRunning(job)) {
+			if (StringUtils.isNotBlank(jobName)) {
+				if (scheduleManager.isRunning(jobName)) {
 					msg = "这个任务[" + jobName + "]正在运行";
 				} else {
-					scheduleManager.execute(job);
+					scheduleManager.execute(jobName);
 					msg = "提交任务[" + jobName + "]到待执行队列";
 				}
 			} else {
@@ -77,12 +77,11 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 		String msg = null;
 		try {
 			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
-			Job job = jobService.get(jobName);
-			if (null != job) {
-				if (!scheduleManager.isRunning(job)) {
+			if (StringUtils.isNotBlank(jobName)) {
+				if (!scheduleManager.isRunning(jobName)) {
 					msg = "the job[" + jobName + "] is not running and don't suspend";
 				} else {
-					scheduleManager.suspend(job);
+					scheduleManager.suspend(jobName);
 					msg = "the job[" + jobName + "] have been requested to execute suspend";
 				}
 			} else {
@@ -105,12 +104,11 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 		String msg = null;
 		try {
 			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
-			Job job = jobService.get(jobName);
-			if (null != job) {
-				if (!scheduleManager.isRunning(job)) {
+			if (StringUtils.isNotBlank(jobName)) {
+				if (!scheduleManager.isRunning(jobName)) {
 					msg = "the job[" + jobName + "] is not running and don't goOn";
 				} else {
-					scheduleManager.goOn(job);
+					scheduleManager.goOn(jobName);
 					msg = "the job[" + jobName + "] have been requested to execute goOn";
 				}
 			} else {
@@ -134,12 +132,11 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 		String msg = null;
 		try {
 			redisManager.lock(JOB_SERVICE_OPERATION_PRE + jobName);
-			Job job = jobService.get(jobName);
-			if (null != job) {
-				if (!scheduleManager.isRunning(job)) {
+			if (StringUtils.isNotBlank(jobName)) {
+				if (!scheduleManager.isRunning(jobName)) {
 					msg = "the job[" + jobName + "] is not running and don't stop";
 				} else {
-					scheduleManager.stop(job);
+					scheduleManager.stop(jobName);
 					msg = "the job[" + jobName + "] have been requested to execute stop";
 				}
 			} else {
@@ -157,13 +154,6 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 		return msg;
 	}
 
-	public void startWorker(String jobName) {
-		scheduleManager.startWorker(jobName);
-	}
-
-	public void endWorker(String jobName) {
-		scheduleManager.endWorer(jobName);
-	}
 
 	public List<WorkerSnapshot> getWorkerInfo(String jobName) {
 		Job job = jobService.get(jobName);

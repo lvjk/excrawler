@@ -31,7 +31,6 @@ import org.quartz.TriggerBuilder;
 import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import six.com.crawler.common.DateFormats;
@@ -79,16 +78,6 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 
 	private final static String schedulerGroup = "exCrawler";
 
-	@Autowired
-	private WorkerScheduledClient workerScheduledClient;
-
-	public WorkerScheduledClient getWorkerScheduledClient() {
-		return workerScheduledClient;
-	}
-
-	public void setWorkerScheduledClient(WorkerScheduledClient workerScheduledClient) {
-		this.workerScheduledClient = workerScheduledClient;
-	}
 
 	protected void doInit() {
 		initScheduler();
@@ -101,6 +90,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 		executeWaitQueueThread.start();
 		// 加载 当前节点 需要调度的任务
 		loadScheduledJob();
+
 	}
 
 	private void loopReadWaitingJob() {
@@ -189,16 +179,22 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 	 * 
 	 * @param job
 	 */
-	public void execute(Job job) {
-		String id = job.getName() + "_" + DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_2);
-		JobSnapshot jobSnapshot = new JobSnapshot();
-		jobSnapshot.setId(id);
-		jobSnapshot.setName(job.getName());
-		jobSnapshot.setNextJobName(job.getNextJobName());
-		jobSnapshot.setDesignatedNodeName(job.getDesignatedNodeName());
-		jobSnapshot.setState(JobSnapshotState.WAITING_EXECUTED.value());
-		registerJobSnapshot(jobSnapshot);
-		submitWaitQueue(job);
+	public void execute(String jobName) {
+		Job job = getJobService().get(jobName);
+		if (null != job) {
+			String id = job.getName() + "_"
+					+ DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_2);
+			JobSnapshot jobSnapshot = new JobSnapshot();
+			jobSnapshot.setId(id);
+			jobSnapshot.setName(job.getName());
+			jobSnapshot.setNextJobName(job.getNextJobName());
+			jobSnapshot.setDesignatedNodeName(job.getDesignatedNodeName());
+			jobSnapshot.setState(JobSnapshotState.WAITING_EXECUTED.value());
+			registerJobSnapshot(jobSnapshot);
+			submitWaitQueue(job);
+		} else {
+			log.info("ready to execute job[" + jobName + "] is null");
+		}
 	}
 
 	/**
@@ -218,12 +214,12 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 				// 先查看任务是否有指定节点名执行
 				String designatedNodeName = job.getDesignatedNodeName();
 				if (StringUtils.isNotBlank(designatedNodeName)) {
-					Node designatedNode = getClusterManager().getWorkerNode(designatedNodeName);
+					Node designatedNode = getNodeManager().getWorkerNode(designatedNodeName);
 					freeNodes = Arrays.asList(designatedNode);
 					log.info("get designated node[" + designatedNodeName + "] to execute job[" + job.getName() + "]");
 				} else {
 					int needFreeNodeSize = job.getNeedNodes();
-					freeNodes = getClusterManager().getFreeWorkerNodes(needFreeNodeSize);
+					freeNodes = getNodeManager().getFreeWorkerNodes(needFreeNodeSize);
 					// 需要运行节点数量减去本地运行节点1
 					log.info("get many nodes[" + freeNodes.size() + "] to execute job[" + job.getName() + "]");
 				}
@@ -257,16 +253,20 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 					// 将jobSnapshot更新缓存 这里一定要 saveJobSnapshot
 					updateJobSnapshot(jobSnapshot);
 					getJobService().saveJobSnapshot(jobSnapshot);
+					int callSucceedCount=0;
 					for (Node freeNode : freeNodes) {
 						try {
-							workerScheduledClient.execute(freeNode, job.getName());
+							getNodeManager().execute(freeNode, ScheduledJobCommand.execute,job.getName());
+							callSucceedCount++;
 							log.info("Already request worker node[" + freeNode.getName() + "] to execut the job["
 									+ job.getName() + "]");
 						} catch (Exception e) {
 							log.error("get node[" + freeNode.getName() + "]'s workerSchedulerManager err", e);
 						}
 					}
-					return;
+					if(callSucceedCount>0){
+						return;
+					}
 				} else {
 					log.error("there is no node to execute job[" + job.getName() + "]");
 				}
@@ -288,14 +288,12 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 	 * @param jobName
 	 *            任务name
 	 */
-	public synchronized void suspend(Job job) {
-		String jobName = job.getName();
+	public synchronized void suspend(String jobName) {
 		List<Node> nodes = getWorkerNode(jobName);
 		for (Node node : nodes) {
 			try {
-				workerScheduledClient.suspend(node, job.getName());
-				log.info("Already request worker node[" + node.getName() + "] to suspend the job[" + job.getName()
-						+ "]");
+				getNodeManager().execute(node, ScheduledJobCommand.suspend,jobName);
+				log.info("Already request worker node[" + node.getName() + "] to suspend the job[" + jobName + "]");
 			} catch (Exception e) {
 				log.error("get node[" + node.getName() + "]'s workerSchedulerManager err", e);
 			}
@@ -313,13 +311,12 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 	 * @param jobName
 	 *            任务name
 	 */
-	public synchronized void goOn(Job job) {
-		String jobName = job.getName();
+	public synchronized void goOn(String jobName) {
 		List<Node> nodes = getWorkerNode(jobName);
 		for (Node node : nodes) {
 			try {
-				workerScheduledClient.goOn(node, job.getName());
-				log.info("Already request worker node[" + node.getName() + "] to goOn the job[" + job.getName() + "]");
+				getNodeManager().execute(node, ScheduledJobCommand.goOn,jobName);
+				log.info("Already request worker node[" + node.getName() + "] to goOn the job[" + jobName + "]");
 			} catch (Exception e) {
 				log.error("get node[" + node.getName() + "]'s workerSchedulerManager err", e);
 			}
@@ -337,13 +334,12 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 	 * @param jobName
 	 *            任务name
 	 */
-	public synchronized void stop(Job job) {
-		String jobName = job.getName();
+	public synchronized void stop(String jobName) {
 		List<Node> nodes = getWorkerNode(jobName);
 		for (Node node : nodes) {
 			try {
-				workerScheduledClient.stop(node, job.getName());
-				log.info("Already request worker node[" + node.getName() + "] to stop the job[" + job.getName() + "]");
+				getNodeManager().execute(node, ScheduledJobCommand.stop,jobName);
+				log.info("Already request worker node[" + node.getName() + "] to stop the job[" + jobName + "]");
 			} catch (Exception e) {
 				log.error("get node[" + node.getName() + "]'s workerSchedulerManager err", e);
 			}
@@ -355,14 +351,14 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 
 	public synchronized void stopAll() {
 		List<JobSnapshot> allJobs = getJobSnapshots();
-		Node currentNode = getClusterManager().getCurrentNode();
+		Node currentNode = getNodeManager().getCurrentNode();
 		for (JobSnapshot jobSnapshot : allJobs) {
 			Job job = getJobService().get(jobSnapshot.getName());
 			List<Node> nodes = getWorkerNode(job.getName());
 			for (Node node : nodes) {
 				if (!currentNode.equals(node)) {
 					try {
-						workerScheduledClient.stop(node, job.getName());
+						getNodeManager().execute(node, ScheduledJobCommand.stop,job.getName());
 						log.info("Already request worker node[" + node.getName() + "] to stop the job[" + job.getName()
 								+ "]");
 					} catch (Exception e) {
@@ -371,11 +367,11 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 				}
 			}
 		}
-		List<Node> nodes = getClusterManager().getWorkerNodes();
+		List<Node> nodes = getNodeManager().getWorkerNodes();
 		for (Node node : nodes) {
 			if (!currentNode.equals(node)) {
 				try {
-					workerScheduledClient.stopAll(node);
+					getNodeManager().execute(node, ScheduledJobCommand.stopAll,null);
 					log.info("Already request worker node[" + node.getName() + "] to stop all");
 				} catch (Exception e) {
 					log.error("get node[" + node.getName() + "]'s workerSchedulerManager err", e);
@@ -392,7 +388,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 	/**
 	 * worker结束时调用此方法计数减1，如果计数==0的话那么导出job运行报告
 	 */
-	public synchronized void endWorer(String jobName) {
+	public synchronized void endWorker(String jobName) {
 		if (0 == jobRunningWorkerSize.get(jobName).decrementAndGet()) {
 			jobRunningWorkerSize.remove(jobName);
 			List<WorkerSnapshot> workerSnapshots = getWorkerSnapshots(jobName);
@@ -419,11 +415,8 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 			if (JobSnapshotState.FINISHED == state) {
 				String nextJobName = jobSnapshot.getNextJobName();
 				if (StringUtils.isNotBlank(nextJobName)) {
-					Job nextJob = getJobService().get(nextJobName);
-					if (null != nextJob) {
-						log.info("execute job[" + "jobName" + "]'s nextJob[" + nextJobName + "]");
-						execute(nextJob);
-					}
+					log.info("execute job[" + "jobName" + "]'s nextJob[" + nextJobName + "]");
+					execute(nextJobName);
 				}
 			}
 		}
@@ -461,7 +454,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 				JobBuilder jobBuilder = JobBuilder.newJob(ScheduledJob.class);
 				jobBuilder.withIdentity(jobKey);
 				JobDataMap newJobDataMap = new JobDataMap();
-				newJobDataMap.put(ScheduledJob.JOB_KEY, job);
+				newJobDataMap.put(ScheduledJob.JOB_NAME_KEY, job.getName());
 				newJobDataMap.put(ScheduledJob.SCHEDULER_MANAGER_KEY, this);
 				jobBuilder.setJobData(newJobDataMap);
 				JobDetail jobDetail = jobBuilder.build();
@@ -533,7 +526,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 			Node findNode = null;
 			for (WorkerSnapshot workerSnapshot : workerSnapshots) {
 				nodeName = workerSnapshot.getLocalNode();
-				findNode = getClusterManager().getWorkerNode(nodeName);
+				findNode = getNodeManager().getWorkerNode(nodeName);
 				if (null != findNode) {
 					nodes.add(findNode);
 				}

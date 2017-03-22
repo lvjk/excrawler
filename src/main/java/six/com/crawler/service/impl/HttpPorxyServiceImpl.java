@@ -84,13 +84,12 @@ public class HttpPorxyServiceImpl implements HttpPorxyService {
 	}
 
 	public void delAllHttpProxy() {
-		// redisManager.lock(HttpProxyPool.REDIS_HTTP_PROXY_POOL);
-		// try {
-		// redisManager.del(HttpProxyPool.REDIS_HTTP_PROXY_POOL + "_2");
-		// redisManager.del(HttpProxyPool.REDIS_HTTP_PROXY_POOL);
-		// } finally {
-		// redisManager.unlock(HttpProxyPool.REDIS_HTTP_PROXY_POOL);
-		// }
+		redisManager.lock(HttpProxyPool.REDIS_HTTP_PROXY_POOL);
+		try {
+			redisManager.del(HttpProxyPool.REDIS_HTTP_PROXY_POOL);
+		} finally {
+			redisManager.unlock(HttpProxyPool.REDIS_HTTP_PROXY_POOL);
+		}
 	}
 
 	public HttpClient getHttpClient() {
