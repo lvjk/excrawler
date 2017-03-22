@@ -23,11 +23,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import six.com.crawler.api.ResponseMsg;
-import six.com.crawler.common.RedisManager;
 import six.com.crawler.dao.ExtractItemDao;
 import six.com.crawler.dao.JobDao;
 import six.com.crawler.dao.JobParamDao;
 import six.com.crawler.dao.JobSnapshotDao;
+import six.com.crawler.dao.RedisManager;
 import six.com.crawler.dao.WorkerErrMsgDao;
 import six.com.crawler.dao.WorkerSnapshotDao;
 import six.com.crawler.entity.Job;
@@ -194,11 +194,7 @@ public class JobServiceImpl implements JobService {
 	}
 
 	public JobSnapshot queryLastJobSnapshotFromHistory(String excludeJobSnapshotId, String jobName) {
-		JobSnapshot lastJobSnapshot = null;
-		List<JobSnapshot> result = jobSnapshotDao.queryLast(excludeJobSnapshotId, jobName);
-		if (null != result && !result.isEmpty()) {
-			lastJobSnapshot = result.get(0);
-		}
+		JobSnapshot lastJobSnapshot = jobSnapshotDao.queryLast(excludeJobSnapshotId, jobName);
 		return lastJobSnapshot;
 	}
 

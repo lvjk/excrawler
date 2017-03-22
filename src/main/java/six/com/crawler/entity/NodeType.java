@@ -7,8 +7,26 @@ package six.com.crawler.entity;
  */
 public enum NodeType {
 
-	//主节点           备用主节点                            工作节点          主节点工作节点
-	MASTER(0), MASTER_STANDBY(1), WORKER(2),MASTER_WORKER(3);
+	/**
+	 * 主节点 
+	 */
+	MASTER(0), 
+	/**
+	 * 备用主节点    
+	 */
+	MASTER_STANDBY(1), 
+	/**
+	 * 工作节点
+	 */
+	WORKER(2),
+	/**
+	 * 主节点工作节点
+	 */
+	MASTER_WORKER(3),
+	/**
+	 * 单机节点
+	 */
+	SINGLE(4);
 
 	final int value;
 
@@ -29,6 +47,8 @@ public enum NodeType {
 			return WORKER;
 		}  else if (3 == type) {
 			return MASTER_WORKER;
+		} else if (4 == type) {
+			return SINGLE;
 		}else {
 			return WORKER;
 		}

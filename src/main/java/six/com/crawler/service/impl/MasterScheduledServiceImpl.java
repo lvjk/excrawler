@@ -9,8 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import six.com.crawler.common.RedisManager;
 import six.com.crawler.common.ResponeMsgManager;
+import six.com.crawler.dao.RedisManager;
 import six.com.crawler.entity.Job;
 import six.com.crawler.entity.WorkerSnapshot;
 import six.com.crawler.exception.RedisException;

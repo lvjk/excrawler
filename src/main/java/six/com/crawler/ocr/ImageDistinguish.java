@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import six.com.crawler.common.RedisManager;
+import six.com.crawler.dao.RedisManager;
 
 /**
  * @author 作者

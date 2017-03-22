@@ -22,7 +22,7 @@ public interface JobSnapshotDao extends BaseDao{
 	public List<JobSnapshot> query(String jobName);
 	
 	@SelectProvider(type = JobSnapshotDaoProvider.class, method = "queryLast")
-	public List<JobSnapshot> queryLast(@Param("excludeJobSnapshotId")String excludeJobSnapshotId
+	public JobSnapshot queryLast(@Param("excludeJobSnapshotId")String excludeJobSnapshotId
 			,@Param("jobName")String jobName);
 	
 	@InsertProvider(type = JobSnapshotDaoProvider.class, method = "save")

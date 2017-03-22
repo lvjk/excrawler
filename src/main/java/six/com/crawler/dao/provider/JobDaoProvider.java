@@ -80,6 +80,27 @@ public class JobDaoProvider extends BaseProvider {
 		return sql;
 	}
 	
+	public String queryIsScheduled(){
+		StringBuilder sql = new StringBuilder();
+		sql.append("select `name`,"
+				+ "   nextJobName,"
+				+ "   level,"
+				+ " designatedNodeName,"
+				+ "needNodes,"
+				+ "isScheduled,"
+				+ "cronTrigger,"
+				+ "workFrequency,"
+				+ "workerClass,"
+				+ "queueName,"
+				+ "`user`,"
+				+ "`describe`,"
+				+ "`version`");
+		sql.append(" from "+JobDao.TABLE_NAME);
+		sql.append(" where isScheduled=1");
+		return sql.toString();
+	
+	}
+	
 	public String save(Job job) {
 		String columns = "`name`,"
 				+ "nextJobName,"

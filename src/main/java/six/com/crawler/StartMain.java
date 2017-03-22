@@ -18,6 +18,23 @@ import six.com.crawler.node.NodeManager;
 /**
  * @author six
  * @date 2016年5月30日 下午2:47:46 程序启动入口类
+ * 
+ *       整个系统分层
+ *       <p>
+ * 		对外api层
+ *       </p>
+ *       <p>
+ * 		服务层
+ *       </p>
+ *       <p>
+ * 		任务调度层
+ *       </p>
+ *       <p>
+ * 		节点基础层
+ *       </p>
+ *       <p>
+ * 		数据存储层
+ *       </p>
  */
 @ComponentScan
 @Configuration
@@ -58,7 +75,9 @@ public class StartMain extends WebMvcConfigurerAdapter {
 	 */
 	public void addInterceptors(InterceptorRegistry registry) {
 		registry.addInterceptor(new BaseInterceptor(clusterManager)).addPathPatterns("/**");
-		registry.addInterceptor(new MasterScheduledApiInterceptor(clusterManager)).addPathPatterns("/crawler/master/**");
-		registry.addInterceptor(new WorkerScheduledApiInterceptor(clusterManager)).addPathPatterns("/crawler/worker/**");
+		registry.addInterceptor(new MasterScheduledApiInterceptor(clusterManager))
+				.addPathPatterns("/crawler/master/**");
+		registry.addInterceptor(new WorkerScheduledApiInterceptor(clusterManager))
+				.addPathPatterns("/crawler/worker/**");
 	}
 }

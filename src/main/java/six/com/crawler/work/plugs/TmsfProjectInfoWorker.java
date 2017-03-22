@@ -4,8 +4,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
@@ -51,38 +49,42 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void beforeExtract(Page doingPage) {
-		String html = doingPage.getPageSrc();
-		Document doc = Jsoup.parse(html);
-		Elements mapDivs = doc.select(mapDivCss);
-		if (null != mapDivs && !mapDivs.isEmpty()) {
-			Element longitude_latitude_div = doc.select(longitude_latitude_div_css).first();
-			String text = longitude_latitude_div.html();
-			String start = "var point = new BMap.Point(";
-			String end = ")";
-			String[] result = StringUtils.substringsBetween(text, start, end);
-			if (null == result || result.length != 1) {
-				throw new RuntimeException("find longitude and latitude err");
-			}
-			String longitudeLatitudeStr = result[0];
-			longitudeLatitudeStr = StringUtils.replace(longitudeLatitudeStr, "'", "");
-			String[] longitudeAndLatitude = StringUtils.split(longitudeLatitudeStr, ",");
-			if (longitudeAndLatitude.length != 2) {
-				throw new RuntimeException("find longitude and latitude err");
-			}
-			double longitude = 0;
-			double latitude = 0;
-			for (String numStr : longitudeAndLatitude) {
-				double num = Double.valueOf(numStr);
-				if (num > longitudeMin && num < longitudeMax) {
-					longitude = num;
-				} else {
-					latitude = num;
+		String projectNameCss = "div[id=head]>ul>li";
+		Elements projectNameElements = doingPage.getDoc().select(projectNameCss);
+		if (null != projectNameElements && !projectNameElements.isEmpty()) {
+			projectInfo1Queue.push(doingPage);
+			getWorkQueue().finish(doingPage);
+		}else{
+			Elements mapDivs = doingPage.getDoc().select(mapDivCss);
+			if (null != mapDivs && !mapDivs.isEmpty()) {
+				Element longitude_latitude_div = doingPage.getDoc().select(longitude_latitude_div_css).first();
+				String text = longitude_latitude_div.html();
+				String start = "var point = new BMap.Point(";
+				String end = ")";
+				String[] result = StringUtils.substringsBetween(text, start, end);
+				if (null == result || result.length != 1) {
+					throw new RuntimeException("find longitude and latitude err");
 				}
+				String longitudeLatitudeStr = result[0];
+				longitudeLatitudeStr = StringUtils.replace(longitudeLatitudeStr, "'", "");
+				String[] longitudeAndLatitude = StringUtils.split(longitudeLatitudeStr, ",");
+				if (longitudeAndLatitude.length != 2) {
+					throw new RuntimeException("find longitude and latitude err");
+				}
+				double longitude = 0;
+				double latitude = 0;
+				for (String numStr : longitudeAndLatitude) {
+					double num = Double.valueOf(numStr);
+					if (num > longitudeMin && num < longitudeMax) {
+						longitude = num;
+					} else {
+						latitude = num;
+					}
+				}
+				doingPage.getMetaMap().put("latitude", Arrays.asList(String.valueOf(latitude)));
+				doingPage.getMetaMap().put("longitude", Arrays.asList(String.valueOf(longitude)));
 			}
-			doingPage.getMetaMap().put("latitude", Arrays.asList(String.valueOf(latitude)));
-			doingPage.getMetaMap().put("longitude", Arrays.asList(String.valueOf(longitude)));
 		}
-
 	}
 
 	@Override
@@ -91,13 +93,6 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected boolean insideOnError(Exception t, Page doingPage) {
-		String projectNameCss = "div[id=head]>ul>li";
-		Elements projectNameElements = doingPage.getDoc().select(projectNameCss);
-		if (null != projectNameElements && !projectNameElements.isEmpty()) {
-			projectInfo1Queue.push(doingPage);
-			getWorkQueue().finish(doingPage);
-			return true;
-		}
 		return false;
 	}
 

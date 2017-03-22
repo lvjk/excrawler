@@ -9,6 +9,16 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import six.com.crawler.configure.SpiderConfigure;
+import six.com.crawler.dao.ExtractItemDao;
+import six.com.crawler.dao.ExtractPathDao;
+import six.com.crawler.dao.HttpProxyDao;
+import six.com.crawler.dao.JobDao;
+import six.com.crawler.dao.JobParamDao;
+import six.com.crawler.dao.JobSnapshotDao;
+import six.com.crawler.dao.RedisManager;
+import six.com.crawler.dao.SiteDao;
+import six.com.crawler.dao.WorkerErrMsgDao;
+import six.com.crawler.dao.WorkerSnapshotDao;
 import six.com.crawler.email.QQEmailClient;
 import six.com.crawler.entity.Job;
 import six.com.crawler.entity.JobSnapshot;
@@ -18,15 +28,7 @@ import six.com.crawler.entity.WorkerSnapshot;
 import six.com.crawler.http.HttpClient;
 import six.com.crawler.node.NodeManager;
 import six.com.crawler.ocr.ImageDistinguish;
-import six.com.crawler.service.NodeManagerService;
-import six.com.crawler.service.HttpPorxyService;
-import six.com.crawler.service.JobService;
-import six.com.crawler.service.PageService;
-import six.com.crawler.service.SiteService;
-import six.com.crawler.service.WorkerErrMsgService;
-import six.com.crawler.service.impl.ExtracterServiceImpl;
 import six.com.crawler.work.WorkerLifecycleState;
-import six.com.crawler.common.RedisManager;
 
 /**
  * @author 作者
@@ -44,22 +46,34 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	private NodeManager nodeManager;
 
 	@Autowired
-	private SiteService siteService;
+	private SiteDao siteDao;
+	
+	@Autowired
+	private ExtractPathDao extractPathDao;
 
 	@Autowired
-	private ExtracterServiceImpl paserPathService;
+	private JobDao jobDao;
+	
+	@Autowired
+	private JobSnapshotDao jobSnapshotDao;
 
 	@Autowired
-	private JobService jobService;
+	private JobParamDao jobParamDao;
+	
+	@Autowired
+	private ExtractItemDao extractItemDao;
+	
+	@Autowired
+	private WorkerSnapshotDao workerSnapshotDao;
+	
+	@Autowired
+	private WorkerErrMsgDao workerErrMsgDao;
 	
 	@Autowired
 	private RedisManager redisManager;
 
 	@Autowired
-	private PageService pageService;
-
-	@Autowired
-	private HttpPorxyService httpPorxyService;
+	private HttpProxyDao httpProxyDao;
 
 	@Autowired
 	private HttpClient httpClient;
@@ -68,14 +82,8 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	private ImageDistinguish imageDistinguish;
 
 	@Autowired
-	private NodeManagerService clusterService;
-
-	@Autowired
 	private QQEmailClient emailClient;
 
-	@Autowired
-	private WorkerErrMsgService WorkerErrMsgService;
-	
 	protected abstract void init();
 
 	public void afterPropertiesSet() {
@@ -251,31 +259,71 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	public void setConfigure(SpiderConfigure configure) {
 		this.configure = configure;
 	}
-
-	public ExtracterServiceImpl getPaserPathService() {
-		return paserPathService;
+	
+	public SiteDao getSiteDao() {
+		return siteDao;
 	}
 
-	public void setPaserPathService(ExtracterServiceImpl paserPathService) {
-		this.paserPathService = paserPathService;
+	public void setSiteDao(SiteDao siteDao) {
+		this.siteDao = siteDao;
 	}
 
-	public SiteService getSiteService() {
-		return siteService;
+	public ExtractPathDao getExtractPathDao() {
+		return extractPathDao;
 	}
 
-	public void setSiteService(SiteService siteService) {
-		this.siteService = siteService;
+	public void setExtractPathDao(ExtractPathDao extractPathDao) {
+		this.extractPathDao = extractPathDao;
 	}
 
-	public JobService getJobService() {
-		return jobService;
+
+	public JobDao getJobDao() {
+		return jobDao;
 	}
 
-	public void setJobService(JobService jobService) {
-		this.jobService = jobService;
+	public void setJobDao(JobDao jobDao) {
+		this.jobDao = jobDao;
 	}
 	
+	public JobSnapshotDao getJobSnapshotDao() {
+		return jobSnapshotDao;
+	}
+
+	public void setJobSnapshotDao(JobSnapshotDao jobSnapshotDao) {
+		this.jobSnapshotDao = jobSnapshotDao;
+	}
+	
+	public JobParamDao getJobParamDao() {
+		return jobParamDao;
+	}
+
+	public void setJobParamDao(JobParamDao jobParamDao) {
+		this.jobParamDao = jobParamDao;
+	}
+	
+	public ExtractItemDao getExtractItemDao() {
+		return extractItemDao;
+	}
+
+	public void setExtractItemDao(ExtractItemDao extractItemDao) {
+		this.extractItemDao = extractItemDao;
+	}
+	
+	public WorkerSnapshotDao getWorkerSnapshotDao() {
+		return workerSnapshotDao;
+	}
+
+	public void setWorkerSnapshotDao(WorkerSnapshotDao workerSnapshotDao) {
+		this.workerSnapshotDao = workerSnapshotDao;
+	}
+	
+	public WorkerErrMsgDao getWorkerErrMsgDao() {
+		return workerErrMsgDao;
+	}
+
+	public void setWorkerErrMsgDao(WorkerErrMsgDao workerErrMsgDao) {
+		this.workerErrMsgDao = workerErrMsgDao;
+	}
 
 	public RedisManager getRedisManager() {
 		return redisManager;
@@ -285,20 +333,12 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		this.redisManager = redisManager;
 	}
 
-	public PageService getPageService() {
-		return pageService;
+	public HttpProxyDao getHttpProxyDao() {
+		return httpProxyDao;
 	}
 
-	public void setPageService(PageService pageService) {
-		this.pageService = pageService;
-	}
-
-	public HttpPorxyService getHttpPorxyService() {
-		return httpPorxyService;
-	}
-
-	public void setHttpPorxyService(HttpPorxyService httpPorxyService) {
-		this.httpPorxyService = httpPorxyService;
+	public void setHttpProxyDao(HttpProxyDao httpProxyDao) {
+		this.httpProxyDao = httpProxyDao;
 	}
 
 	public HttpClient getHttpClient() {
@@ -317,13 +357,6 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		this.imageDistinguish = imageDistinguish;
 	}
 
-	public NodeManagerService getClusterService() {
-		return clusterService;
-	}
-
-	public void setClusterService(NodeManagerService clusterService) {
-		this.clusterService = clusterService;
-	}
 	
 	public QQEmailClient getEmailClient() {
 		return emailClient;
@@ -333,13 +366,6 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		this.emailClient = emailClient;
 	}
 	
-	
-	public WorkerErrMsgService getWorkerErrMsgService() {
-		return WorkerErrMsgService;
-	}
 
-	public void setWorkerErrMsgService(WorkerErrMsgService workerErrMsgService) {
-		WorkerErrMsgService = workerErrMsgService;
-	}
 
 }

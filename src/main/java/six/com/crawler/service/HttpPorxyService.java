@@ -3,8 +3,6 @@ package six.com.crawler.service;
 import java.util.List;
 
 import six.com.crawler.entity.HttpProxy;
-import six.com.crawler.entity.HttpProxyType;
-import six.com.crawler.http.HttpProxyPool;
 
 /**
  * @author 作者
@@ -13,12 +11,6 @@ import six.com.crawler.http.HttpProxyPool;
  */
 public interface HttpPorxyService {
 
-	/**
-	 * 根据siteCode 初始化一个 http代理池
-	 * @param siteCode
-	 */
-	public HttpProxyPool buildHttpProxyPool(String siteCode,HttpProxyType httpProxyType,long restTime);
-	
 
 	public List<HttpProxy> getHttpProxys();
 

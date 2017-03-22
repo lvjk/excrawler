@@ -50,7 +50,7 @@ public abstract class AbstractExtracter implements Extracter {
 			int ranking = 0;
 			List<ExtractPath> pathList = extractPathMap.get(extractItem.getPathName());
 			if (null == pathList) {
-				pathList = worker.getManager().getPaserPathService().query(extractItem.getPathName(),
+				pathList = worker.getManager().getExtractPathDao().query(extractItem.getPathName(),
 						worker.getSite().getCode());
 				extractPathMap.put(extractItem.getPathName(), pathList);
 			}

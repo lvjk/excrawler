@@ -59,6 +59,10 @@ public interface JobDao extends BaseDao{
 	
 	@SelectProvider(type = JobDaoProvider.class, method = "query")
 	public List<Job> queryByParam(Map<String, Object> parameters);
+	
+	
+	@SelectProvider(type = JobDaoProvider.class, method = "queryIsScheduled")
+	public List<Job> queryIsScheduled();
 
 	/**
 	 * 保存数据

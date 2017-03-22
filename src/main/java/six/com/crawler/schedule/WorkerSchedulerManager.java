@@ -80,14 +80,14 @@ public class WorkerSchedulerManager extends WorkerAbstractSchedulerManager {
 	 */
 	public synchronized void execute(String jobName) {
 		String key = "workerSchedulerManager_doExecute_" + jobName;
-		Job job=getJobService().get(jobName);
+		Job job=getJobDao().query(jobName);
 		if(null!=job){
 			log.info("worker node[" + getNodeManager().getCurrentNode().getName() + "] execute job[" + job.getName()
 			+ "]");
 			getRedisManager().lock(key);
 			try {
 				log.info("buiild job[" + job.getName() + "] worker");
-				List<JobParam> jobParams = getJobService().queryJobParams(job.getName());
+				List<JobParam> jobParams = getJobParamDao().queryJobParams(job.getName());
 				job.setParamList(jobParams);
 				JobSnapshot jobSnapshot = getJobSnapshot(job.getName());
 				if (null == jobSnapshot || jobSnapshot.getId() == null) {
@@ -290,7 +290,7 @@ public class WorkerSchedulerManager extends WorkerAbstractSchedulerManager {
 	public void updateWorkSnapshot(WorkerSnapshot workerSnapshot, boolean isSaveErrMsg) {
 		List<WorkerErrMsg> errMsgs = workerSnapshot.getWorkerErrMsgs();
 		if (null != errMsgs && ((isSaveErrMsg && errMsgs.size() > 0) || errMsgs.size() >= SAVE_ERR_MSG_MAX)) {
-			getWorkerErrMsgService().batchSave(errMsgs);
+			getWorkerErrMsgDao().batchSave(errMsgs);
 			errMsgs.clear();
 		}
 		updateWorkerSnapshot(workerSnapshot);

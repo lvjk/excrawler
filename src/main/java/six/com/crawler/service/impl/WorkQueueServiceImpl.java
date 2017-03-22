@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 
 import com.esotericsoftware.minlog.Log;
 
-import six.com.crawler.common.RedisManager;
+import six.com.crawler.dao.RedisManager;
 import six.com.crawler.entity.DoneInfo;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.QueueInfo;

@@ -7,7 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import six.com.crawler.common.RedisManager;
+import six.com.crawler.dao.RedisManager;
 import six.com.crawler.entity.Page;
 
 /**

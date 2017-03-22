@@ -1,4 +1,4 @@
-package six.com.crawler.common;
+package six.com.crawler.dao;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

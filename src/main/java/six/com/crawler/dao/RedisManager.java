@@ -1,4 +1,4 @@
-package six.com.crawler.common;
+package six.com.crawler.dao;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;

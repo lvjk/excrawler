@@ -68,7 +68,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		if (StringUtils.isBlank(siteCode)) {
 			throw new NullPointerException("please set siteCode");
 		}
-		site = getManager().getSiteService().querySite(siteCode);
+		site = getManager().getSiteDao().query(siteCode);
 		// 2.初始化工作对了
 		String queueName = getJob().getQueueName();
 		if (StringUtils.isBlank(queueName)) {
@@ -93,12 +93,10 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 			LOG.error("job[" + getJob().getName() + "] param[" + httpProxyRestTime + "] is invalid:"
 					+ httpProxyRestTimeStr, e);
 		}
-		httpProxyPool = getManager().getHttpPorxyService().buildHttpProxyPool(siteCode, httpProxyType,
-				httpProxyRestTime);
-
+		httpProxyPool =new HttpProxyPool(getManager().getRedisManager(), siteCode, httpProxyType, httpProxyRestTime);
 		downer.setHttpProxy(httpProxyPool.getHttpProxy());
 		// 5.初始化内容抽取
-		List<ExtractItem> extractItems = getManager().getJobService().queryExtractItems(getJob().getName());
+		List<ExtractItem> extractItems = getManager().getExtractItemDao().query(getJob().getName());
 		if (null != extractItems && !extractItems.isEmpty()) {
 			primaryKeys = new ArrayList<>();
 			outResultKey = new ArrayList<>();

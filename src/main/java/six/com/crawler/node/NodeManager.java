@@ -18,8 +18,8 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import six.com.crawler.common.RedisManager;
 import six.com.crawler.configure.SpiderConfigure;
+import six.com.crawler.dao.RedisManager;
 import six.com.crawler.email.QQEmailClient;
 import six.com.crawler.entity.Node;
 import six.com.crawler.entity.NodeType;
@@ -33,7 +33,8 @@ import six.com.crawler.utils.JavaSerializeUtils;
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
- * @date 创建时间：2017年3月13日 下午1:41:16 集群节点管理类 所有集群服务最基本的依赖
+ * @date 创建时间：2017年3月13日 下午1:41:16 
+ * 集群节点管理类 所有集群服务最基本的依赖
  */
 @Component
 public class NodeManager implements InitializingBean {
@@ -64,33 +65,37 @@ public class NodeManager implements InitializingBean {
 	 * 分布式锁保证每个节点都是有序的初始化注册
 	 */
 	public void afterPropertiesSet() {
+		// 初始化当前节点信息
+		initCurrentNode();
 		String lockKey = "cluster_manager_init";
 		try {
-			redisManager.lock(lockKey);
-			// 初始化zKClient
-			initZKClient();
-			// 初始化当前节点信息
-			initCurrentNode();
-			// 初始化注册当前节点
-			initRegisterNode();
-			// 初始化节点server
-			String localHost = getCurrentNode().getHost();
-			int trafficPort = getCurrentNode().getTrafficPort();
-			nettyRpcServer = new NettyRpcServer(localHost, trafficPort);
-			nettyRpcCilent = new NettyRpcCilent();
-			register("getCurrentNode", new NodeCommand() {
-				@Override
-				public Object execute(Object param) {
-					return getCurrentNode();
-				}
-			});
-
+			//判断是否是单机模式 
+			if(getCurrentNode().getType()!=NodeType.SINGLE){
+				redisManager.lock(lockKey);
+				// 初始化zKClient
+				initZKClient();
+				// 初始化注册当前节点
+				initRegisterNode();
+			}
 		} catch (Exception e) {
 			log.error("init clusterManager err", e);
 			System.exit(1);
 		} finally {
 			redisManager.unlock(lockKey);
 		}
+		/**
+		 * 初始化 节点server和client 通信
+		 */
+		String localHost = getCurrentNode().getHost();
+		int trafficPort = getCurrentNode().getTrafficPort();
+		nettyRpcServer = new NettyRpcServer(localHost, trafficPort);
+		nettyRpcCilent = new NettyRpcCilent();
+		register("getCurrentNode", new NodeCommand() {
+			@Override
+			public Object execute(Object param) {
+				return getCurrentNode();
+			}
+		});
 	}
 
 	protected void initZKClient() {
@@ -168,31 +173,39 @@ public class NodeManager implements InitializingBean {
 
 	public Node getMasterNode() {
 		Node masterNode = null;
-		try {
-			List<String> masterNodePaths = zKClient.getChildren().forPath(ZooKeeperPathUtils.getMasterNodesPath());
-			if (null != masterNodePaths & masterNodePaths.size() == 1) {
-				String masterNodePath = ZooKeeperPathUtils.getMasterNodePath(masterNodePaths.get(0));
-				byte[] data = zKClient.getData().forPath(masterNodePath);
-				masterNode = JavaSerializeUtils.unSerialize(data, Node.class);
+		if(getCurrentNode().getType()!=NodeType.SINGLE){
+			try {
+				List<String> masterNodePaths = zKClient.getChildren().forPath(ZooKeeperPathUtils.getMasterNodesPath());
+				if (null != masterNodePaths & masterNodePaths.size() == 1) {
+					String masterNodePath = ZooKeeperPathUtils.getMasterNodePath(masterNodePaths.get(0));
+					byte[] data = zKClient.getData().forPath(masterNodePath);
+					masterNode = JavaSerializeUtils.unSerialize(data, Node.class);
+				}
+			} catch (Exception e) {
+				log.error("", e);
 			}
-		} catch (Exception e) {
-			log.error("", e);
+		}else{
+			masterNode=getCurrentNode();
 		}
 		return masterNode;
 	}
 
 	public List<Node> getWorkerNodes() {
 		List<Node> allNodes = new ArrayList<>();
-		try {
-			String workerNodesPath = ZooKeeperPathUtils.getWorkerNodesPath();
-			List<String> workerNodePaths = zKClient.getChildren().forPath(workerNodesPath);
-			for (String workerNodePath : workerNodePaths) {
-				byte[] data = zKClient.getData().forPath(workerNodesPath + "/" + workerNodePath);
-				Node workerNode = JavaSerializeUtils.unSerialize(data, Node.class);
-				allNodes.add(workerNode);
+		if(getCurrentNode().getType()!=NodeType.SINGLE){
+			try {
+				String workerNodesPath = ZooKeeperPathUtils.getWorkerNodesPath();
+				List<String> workerNodePaths = zKClient.getChildren().forPath(workerNodesPath);
+				for (String workerNodePath : workerNodePaths) {
+					byte[] data = zKClient.getData().forPath(workerNodesPath + "/" + workerNodePath);
+					Node workerNode = JavaSerializeUtils.unSerialize(data, Node.class);
+					allNodes.add(workerNode);
+				}
+			} catch (Exception e) {
+				log.error("", e);
 			}
-		} catch (Exception e) {
-			log.error("", e);
+		}else{
+			allNodes.add(currentNode);
 		}
 		return allNodes;
 	}
