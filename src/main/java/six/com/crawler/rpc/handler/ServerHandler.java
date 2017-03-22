@@ -86,8 +86,8 @@ public class ServerHandler extends SimpleChannelInboundHandler<RpcMsg> {
 				ctx.close();
 				log.error("the msg is too big from channel[" + address + "]", cause);
 			} else if (signalErr.getType() == Signals.READER_IDLE) {
-				log.error("the channel[" + address + "] is reader idle and will be close", cause);
 				ch.close();
+				log.error("the channel[" + address + "] is reader idle and will be close", cause);
 			}
 		} else {
 			ch.close();
