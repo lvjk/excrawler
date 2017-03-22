@@ -34,7 +34,7 @@ public class HttpPorxyServiceTest extends BaseTest {
 	}
 
 	public void capacityTest() {
-		HttpProxyPool httpProxyPool=httpPorxyService.buildHttpProxyPool("HttpPorxyServiceTest", HttpProxyType.ENABLE_MANY, 0);
+		HttpProxyPool httpProxyPool=new HttpProxyPool(redisManager, "HttpPorxyServiceTest",HttpProxyType.ENABLE_MANY, 0);
 		final CountDownLatch countDownLatch = new CountDownLatch(2);
 		new Thread(() -> {
 			long start = System.currentTimeMillis();
@@ -80,7 +80,7 @@ public class HttpPorxyServiceTest extends BaseTest {
 	}
 
 	public void useTest() {
-		HttpProxyPool httpProxyPool=httpPorxyService.buildHttpProxyPool("HttpPorxyServiceTest", HttpProxyType.ENABLE_MANY, 0);
+		HttpProxyPool httpProxyPool=new HttpProxyPool(redisManager, "HttpPorxyServiceTest",HttpProxyType.ENABLE_MANY, 0);
 		for (int i = 0; i < loopCount; i++) {
 			HttpProxy httpProxy = httpProxyPool.getHttpProxy();
 			LOG.info("useTest use httpProxy:" + httpProxy.toString());
