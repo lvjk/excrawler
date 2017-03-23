@@ -18,6 +18,7 @@ import six.com.crawler.utils.JsoupUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.utils.JsoupUtils.TableResult;
 import six.com.crawler.work.AbstractCrawlWorker;
+import six.com.crawler.work.Constants;
 import six.com.crawler.work.RedisWorkQueue;
 
 /**
@@ -55,7 +56,7 @@ public class TmsfPresellInfo1Worker extends AbstractCrawlWorker {
 
 	@Override
 	protected void beforeExtract(Page doingPage) {
-		String tableCss = "//dd[@id='myCont2']/div/table";
+		String tableCss = "dd[id=myCont2]>div>table";
 		Elements tableElements = doingPage.getDoc().select(tableCss);
 		List<TableResult> tableResults = new ArrayList<>();
 		for (Element tableElement : tableElements) {
@@ -68,7 +69,7 @@ public class TmsfPresellInfo1Worker extends AbstractCrawlWorker {
 					String key = tableKeyMap.get(mapKey);
 					String value = tableResult.getValue();
 					if (StringUtils.contains(tableResult.getKey(), "资金监管银行")) {
-						String[] texts = StringUtils.split(tableResult.getValue(), "\n");
+						String[] texts = StringUtils.split(tableResult.getValue(), " ");
 						for (String text : texts) {
 							value = text;
 							if (NumberUtils.isNumber(text)) {
@@ -94,28 +95,30 @@ public class TmsfPresellInfo1Worker extends AbstractCrawlWorker {
 
 	@Override
 	protected void onComplete(Page doingPage, ResultContext resultContext) {
-		String formCss = "//form[@id='search']";
+		String formCss = "form[id=search]";
 		Element formElement = doingPage.getDoc().select(formCss).first();
 		String formAction = formElement.attr("action");
 
-		String sidCss = "//input[@id='sid']";
+		String sidCss = "input[id=sid]";
 		Element sidElement = doingPage.getDoc().select(sidCss).first();
 		String sid = sidElement.attr("value");
 
-		String propertyidCss = "//input[@id='propertyid']";
+		String propertyidCss = "input[id=propertyid]";
 		Element propertyidElement = doingPage.getDoc().select(propertyidCss).first();
 		String propertyid = propertyidElement.attr("value");
 
-		String tidCss = "//input[@id='tid']";
+		String tidCss = "input[id=tid]";
 		Element tidElement = doingPage.getDoc().select(tidCss).first();
 		String tid = tidElement.attr("value");
 
-		String presellCss = "//input[@id='presellid']";
+		String presellCss = "input[id=presellid]";
 		Element presellElement = doingPage.getDoc().select(presellCss).first();
 		String presellid = presellElement.attr("value");
 
-		String buildingidCss = "//div[@id='yf_one']/dl[2]/dd/a";
+		String buildingidCss = "div[id=yf_one]>dl:eq(1)>dd>a";
 		Elements buildingidElements = doingPage.getDoc().select(buildingidCss);
+		
+		String presellId = resultContext.getOutResults().get(0).get(Constants.DEFAULT_RESULT_ID);
 		for (Element buildingidElement : buildingidElements) {
 			String buildingid = buildingidElement.attr("href");
 			buildingid = StringUtils.substringBetween(buildingid, "javascript:doBuilding('", "')");
@@ -130,6 +133,7 @@ public class TmsfPresellInfo1Worker extends AbstractCrawlWorker {
 			houseInfoPage.setReferer(doingPage.getFinalUrl());
 			houseInfoPage.setMethod(HttpMethod.POST);
 			houseInfoPage.setParameters(paramMap);
+			houseInfoPage.getMetaMap().put("presellId", Arrays.asList(presellId));
 			houseInfoQueue.push(houseInfoPage);
 		}
 	}

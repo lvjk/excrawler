@@ -40,7 +40,8 @@ public class TmsfHouseInfo1Worker extends AbstractCrawlWorker {
 		jsonKeyMap = new HashMap<>();
 		jsonKeyMap.put("buildingName", "buildingname");
 		jsonKeyMap.put("unitName", "unitname");
-		jsonKeyMap.put("houseId", "houseno");
+		jsonKeyMap.put("houseId", "houseid");
+		jsonKeyMap.put("houseNo", "houseno");
 		jsonKeyMap.put("status", "housestatename");
 		jsonKeyMap.put("houseUsage", "houseusage");
 		jsonKeyMap.put("buildingArea", "builtuparea");
@@ -105,6 +106,7 @@ public class TmsfHouseInfo1Worker extends AbstractCrawlWorker {
 		Map<String, Object> map = JsonUtils.toObject(houseInfoJson, Map.class);
 		List<Map<String, Object>> houseList = (List<Map<String, Object>>) map.get("list");
 		List<String> presellIds=new ArrayList<>();
+		String sysPresellId=doingPage.getMeta("presellId").get(0);
 		for (Map<String, Object> houseMap : houseList) {
 			String internalidOb = houseMap.get("internalid").toString();
 			if (null == internalidOb || StringUtils.isBlank(internalidOb.toString())) {
@@ -124,7 +126,7 @@ public class TmsfHouseInfo1Worker extends AbstractCrawlWorker {
 				doingPage.getMetaMap().computeIfAbsent(field, mapKey -> new ArrayList<>())
 				.add(null != valueOb ? valueOb.toString() : "");
 			}
-			presellIds.add(presellId);
+			presellIds.add(sysPresellId);
 		}                           
 		doingPage.getMetaMap().put("presellId",presellIds);
 	}

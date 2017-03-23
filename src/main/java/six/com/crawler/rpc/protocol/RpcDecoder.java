@@ -1,64 +1,61 @@
 package six.com.crawler.rpc.protocol;
 
+import java.net.SocketAddress;
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.ReplayingDecoder;
-import six.com.crawler.rpc.Signal;
+import io.netty.handler.codec.ByteToMessageDecoder;
 import six.com.crawler.rpc.Signals;
 import six.com.crawler.utils.JavaSerializeUtils;
 
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
- * @date 创建时间：2017年3月20日 下午3:21:38
+ * @date 创建时间：2017年3月23日 上午8:50:07
  */
-public class RpcDecoder extends ReplayingDecoder<RpcDecoder.State> implements RpcProtocol {
-	/**
-	 * 读取消息状态位
-	 * @author six
-	 * @email  359852326@qq.com
-	 */
-	enum State {
-		HEADER_MSGTYPE, HEADER_BODY_LENGTH, BODY
-	}
-	
-	public RpcDecoder() {
-		super(State.HEADER_MSGTYPE);
-	}
+public class RpcDecoder extends ByteToMessageDecoder implements RpcProtocol {
+
+	final static Logger log = LoggerFactory.getLogger(RpcDecoder.class);
 
 	@Override
-	protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-		byte msgType = RpcProtocol.UNKNOW;
-		int dataLength = 0;
-		try {
-			switch (state()) {
-			case HEADER_MSGTYPE:
-				msgType = in.readByte();
-				checkMsgType(msgType);
-				checkpoint(State.HEADER_BODY_LENGTH);
-				// 判断是否是心跳数据包，如果是只需要读取数据类型即可
-				if (RpcProtocol.HEARTBEAT == msgType) {
+	protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> out) throws Exception {
+		if (buffer.readableBytes() >= RpcProtocol.HEAD_MIN_LENGTH) {
+			buffer.markReaderIndex();
+			byte msgType = buffer.readByte();
+			if (msgType == RpcProtocol.HEARTBEAT) {
+				log.info("received heartbeat from " + getRemoteAddress(ctx.channel()));
+			} else if (msgType != RpcProtocol.REQUEST && msgType != RpcProtocol.RESPONSE) {
+				buffer.resetReaderIndex();
+				log.error("received illegal msg type[" + msgType + "] from" + getRemoteAddress(ctx.channel()));
+				throw Signals.ILLEGAL_MSG_ERR;
+			} else {
+				int dataLength = buffer.readInt();
+				// 如果dataLength过大，可能导致问题
+				if (buffer.readableBytes() < dataLength) {
+					buffer.resetReaderIndex();
 					return;
 				}
-			case HEADER_BODY_LENGTH:
-				dataLength = in.readInt();
-				checkBodyLength(dataLength);
-				checkpoint(State.BODY);
-			case BODY:
+				if (RpcProtocol.MAX_BODY_SIZE > 0 && dataLength > RpcProtocol.MAX_BODY_SIZE) {
+					throw Signals.BODY_TOO_BIG_ERR;
+				}
+
+				byte[] data = new byte[dataLength];
+				buffer.readBytes(data);
 				switch (msgType) {
+				case RpcProtocol.HEARTBEAT: {
+					break;
+				}
 				case RpcProtocol.REQUEST: {
-					byte[] body = new byte[dataLength];
-					in.readBytes(body);
-					RpcRequest rpcRequest = JavaSerializeUtils.unSerialize(body, RpcRequest.class);
+					RpcRequest rpcRequest = JavaSerializeUtils.unSerialize(data, RpcRequest.class);
 					out.add(rpcRequest);
 					break;
 				}
 				case RpcProtocol.RESPONSE: {
-					byte[] body = new byte[dataLength]; // 传输正常
-					in.readBytes(body);
-					RpcResponse rpcResponse = JavaSerializeUtils.unSerialize(body, RpcResponse.class);
+					RpcResponse rpcResponse = JavaSerializeUtils.unSerialize(data, RpcResponse.class);
 					out.add(rpcResponse);
 					break;
 				}
@@ -66,22 +63,18 @@ public class RpcDecoder extends ReplayingDecoder<RpcDecoder.State> implements Rp
 					throw Signals.ILLEGAL_MSG_ERR;
 				}
 			}
-		} finally {
-			checkpoint(State.HEADER_MSGTYPE);
 		}
+
 	}
 
-	private static void checkMsgType(byte magic) throws Signal {
-		if (magic != RpcProtocol.REQUEST && magic != RpcProtocol.RESPONSE && magic != RpcProtocol.HEARTBEAT) {
-			throw Signals.ILLEGAL_MSG_ERR;
+	public static String getRemoteAddress(io.netty.channel.Channel channel) {
+		String address = "";
+		SocketAddress remote = channel.remoteAddress();
+		if (remote != null) {
+			address = remote.toString();
 		}
-	}
+		return address;
 
-	private static int checkBodyLength(int size) throws Signal {
-		if (size > RpcProtocol.MAX_BODY_SIZE) {
-			throw Signals.BODY_TOO_BIG_ERR;
-		}
-		return size;
 	}
 
 }

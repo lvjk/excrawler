@@ -24,6 +24,10 @@ public class RpcRequest extends RpcMsg implements Serializable {
 	// 呼叫参数
 	private Object param;
 	
+	public RpcRequest() {
+		super(RpcProtocol.REQUEST);
+	}
+	
 	public String getOriginHost() {
 		return originHost;
 	}

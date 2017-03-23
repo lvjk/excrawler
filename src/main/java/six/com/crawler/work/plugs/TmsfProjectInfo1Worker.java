@@ -1,5 +1,6 @@
 package six.com.crawler.work.plugs;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -40,35 +41,56 @@ public class TmsfProjectInfo1Worker extends AbstractCrawlWorker{
 
 	@Override
 	protected void beforeExtract(Page doingPage) {
-		Element script = doingPage.getDoc().select(mapDivCss).first();
+		mapDivCss="div[id=container]";
+		Element divElement = doingPage.getDoc().select(mapDivCss).first();
+		Element script=divElement.parent().select("script").first();
 		//pageLoad('万星·悦城可售883套','119.784346','29.863116','21077908');
 		if (null != script) {
 			String scriptHtml=script.html();
-			String[] tempLongitudeAndLatitude=StringUtils.split(scriptHtml,"','");
-			if (tempLongitudeAndLatitude.length != 4) {
-				throw new RuntimeException("find longitude and latitude err");
-			}
-			double longitude = 0;
-			double latitude = 0;
-			String[] longitudeAndLatitude=new String[2];
-			longitudeAndLatitude[0]=tempLongitudeAndLatitude[1];
-			longitudeAndLatitude[1]=tempLongitudeAndLatitude[2];
-			for (String numStr : longitudeAndLatitude) {
-				double num = Double.valueOf(numStr);
-				if (num > longitudeMin && num < longitudeMax) {
-					longitude = num;
-				} else {
-					latitude = num;
+			if(StringUtils.contains(scriptHtml, "pageLoad")){
+				String[] tempLongitudeAndLatitude=StringUtils.split(scriptHtml,"','");
+				if (tempLongitudeAndLatitude.length !=6) {
+					throw new RuntimeException("find longitude and latitude err");
 				}
+				double longitude = 0;
+				double latitude = 0;
+				String[] longitudeAndLatitude=new String[2];
+				longitudeAndLatitude[0]=tempLongitudeAndLatitude[2];
+				longitudeAndLatitude[1]=tempLongitudeAndLatitude[3];
+				for (String numStr : longitudeAndLatitude) {
+					double num = Double.valueOf(numStr);
+					if (num > longitudeMin && num < longitudeMax) {
+						longitude = num;
+					} else {
+						latitude = num;
+					}
+				}
+				doingPage.getMetaMap().put("latitude", Arrays.asList(String.valueOf(latitude)));
+				doingPage.getMetaMap().put("longitude", Arrays.asList(String.valueOf(longitude)));
 			}
-			doingPage.getMetaMap().put("latitude", Arrays.asList(String.valueOf(latitude)));
-			doingPage.getMetaMap().put("longitude", Arrays.asList(String.valueOf(longitude)));
 		}
 	}
 
 	@Override
 	protected void afterExtract(Page doingPage, ResultContext resultContext) {
-		
+		List<String> fields=new ArrayList<>();
+		fields.add("capacityRate");
+		fields.add("greeningRate");
+		fields.add("coversArea");
+		fields.add("buildArea");
+		fields.add("totalHouses");
+		fields.add("parkingInfo");
+		fields.add("propertyLife");
+		for(String field:fields){
+			List<String> list=resultContext.getExtractResult(field);
+			if(null!=list&&list.size()>0){
+				String value=list.get(0);
+				if(null!=value&&value.length()>45){
+					list.clear();
+					list.add("");
+				}
+			}
+		}
 	}
 
 	@Override

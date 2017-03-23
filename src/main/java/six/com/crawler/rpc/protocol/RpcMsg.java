@@ -13,6 +13,10 @@ public abstract class RpcMsg implements Serializable{
 	private String id;
 	private byte type;//1请求 2响应
 	
+	public RpcMsg(byte type){
+		this.type=type;
+	}
+	
 	public String getId() {
 		return id;
 	}
@@ -23,9 +27,5 @@ public abstract class RpcMsg implements Serializable{
 	
 	public byte getType() {
 		return type;
-	}
-
-	public void setType(byte type) {
-		this.type = type;
 	}
 }

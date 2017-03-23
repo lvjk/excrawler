@@ -36,8 +36,7 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 		sql.SELECT(columns);
 		sql.FROM(JobSnapshotDao.TABLE_NAME);
 		sql.WHERE("`name`=#{jobName}");
-		sql.WHERE("`id`!=#{excludeJobSnapshotId}");
-		sql.ORDER_BY("startTime desc");
+		sql.ORDER_BY("startTime desc limit 0,1");
 		return sql.toString();
 	}
 

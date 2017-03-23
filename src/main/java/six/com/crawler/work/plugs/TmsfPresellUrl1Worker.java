@@ -35,24 +35,24 @@ public class TmsfPresellUrl1Worker extends AbstractCrawlWorker {
 
 	@Override
 	protected void beforeExtract(Page doingPage) {
-		String formCss = "//form[@id='search']";
+		String formCss = "form[id=search]";
 		Element formElement = doingPage.getDoc().select(formCss).first();
 		String formAction = formElement.attr("action");
 
-		String sidCss = "//input[@id='sid']";
+		String sidCss = "input[id=sid]";
 		Element sidElement = doingPage.getDoc().select(sidCss).first();
 		String sid = sidElement.attr("value");
 
-		String propertyidCss = "//input[@id='propertyid']";
+		String propertyidCss = "input[id=propertyid]";
 		Element propertyidElement = doingPage.getDoc().select(propertyidCss).first();
 		String propertyid = propertyidElement.attr("value");
 
-		String tidCss = "//input[@id='tid']";
+		String tidCss = "input[id=tid]";
 		Element tidElement = doingPage.getDoc().select(tidCss).first();
 		String tid = tidElement.attr("value");
 		String buildingid = "";
 
-		String presellCss = "//div[@id='yf_one']/dl[1]/dd/a";
+		String presellCss = "div[id=yf_one]>dl:eq(0)>dd>a";
 		Elements presellElements = doingPage.getDoc().select(presellCss);
 		for (Element presellElement : presellElements) {
 			String presellid = presellElement.attr("href");

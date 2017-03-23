@@ -24,7 +24,6 @@ import six.com.crawler.email.QQEmailClient;
 import six.com.crawler.entity.Node;
 import six.com.crawler.entity.NodeType;
 import six.com.crawler.rpc.NettyRpcServer;
-import six.com.crawler.rpc.protocol.RpcProtocol;
 import six.com.crawler.rpc.protocol.RpcRequest;
 import six.com.crawler.rpc.protocol.RpcResponse;
 import six.com.crawler.rpc.NettyRpcCilent;
@@ -33,8 +32,7 @@ import six.com.crawler.utils.JavaSerializeUtils;
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
- * @date 创建时间：2017年3月13日 下午1:41:16 
- * 集群节点管理类 所有集群服务最基本的依赖
+ * @date 创建时间：2017年3月13日 下午1:41:16 集群节点管理类 所有集群服务最基本的依赖
  */
 @Component
 public class NodeManager implements InitializingBean {
@@ -69,8 +67,8 @@ public class NodeManager implements InitializingBean {
 		initCurrentNode();
 		String lockKey = "cluster_manager_init";
 		try {
-			//判断是否是单机模式 
-			if(getCurrentNode().getType()!=NodeType.SINGLE){
+			// 判断是否是单机模式
+			if (getCurrentNode().getType() != NodeType.SINGLE) {
 				redisManager.lock(lockKey);
 				// 初始化zKClient
 				initZKClient();
@@ -173,7 +171,7 @@ public class NodeManager implements InitializingBean {
 
 	public Node getMasterNode() {
 		Node masterNode = null;
-		if(getCurrentNode().getType()!=NodeType.SINGLE){
+		if (getCurrentNode().getType() != NodeType.SINGLE) {
 			try {
 				List<String> masterNodePaths = zKClient.getChildren().forPath(ZooKeeperPathUtils.getMasterNodesPath());
 				if (null != masterNodePaths & masterNodePaths.size() == 1) {
@@ -184,15 +182,15 @@ public class NodeManager implements InitializingBean {
 			} catch (Exception e) {
 				log.error("", e);
 			}
-		}else{
-			masterNode=getCurrentNode();
+		} else {
+			masterNode = getCurrentNode();
 		}
 		return masterNode;
 	}
 
 	public List<Node> getWorkerNodes() {
 		List<Node> allNodes = new ArrayList<>();
-		if(getCurrentNode().getType()!=NodeType.SINGLE){
+		if (getCurrentNode().getType() != NodeType.SINGLE) {
 			try {
 				String workerNodesPath = ZooKeeperPathUtils.getWorkerNodesPath();
 				List<String> workerNodePaths = zKClient.getChildren().forPath(workerNodesPath);
@@ -204,7 +202,7 @@ public class NodeManager implements InitializingBean {
 			} catch (Exception e) {
 				log.error("", e);
 			}
-		}else{
+		} else {
 			allNodes.add(currentNode);
 		}
 		return allNodes;
@@ -212,11 +210,15 @@ public class NodeManager implements InitializingBean {
 
 	public Node getWorkerNode(String nodeName) {
 		Node workerNode = null;
-		try {
-			byte[] data = zKClient.getData().forPath(ZooKeeperPathUtils.getWorkerNodePath(nodeName));
-			workerNode = JavaSerializeUtils.unSerialize(data, Node.class);
-		} catch (Exception e) {
-			log.error("", e);
+		if (getCurrentNode().getType() != NodeType.SINGLE) {
+			try {
+				byte[] data = zKClient.getData().forPath(ZooKeeperPathUtils.getWorkerNodePath(nodeName));
+				workerNode = JavaSerializeUtils.unSerialize(data, Node.class);
+			} catch (Exception e) {
+				log.error("", e);
+			}
+		} else {
+			workerNode = currentNode;
 		}
 		return workerNode;
 	}
@@ -248,7 +250,6 @@ public class NodeManager implements InitializingBean {
 				+ "/" + System.currentTimeMillis();
 		RpcRequest rpcRequest = new RpcRequest();
 		rpcRequest.setId(id);
-		rpcRequest.setType(RpcProtocol.REQUEST);
 		rpcRequest.setCommand(commandName);
 		rpcRequest.setCallHost(node.getHost());
 		rpcRequest.setCallPort(node.getTrafficPort());

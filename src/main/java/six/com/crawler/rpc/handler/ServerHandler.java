@@ -11,7 +11,7 @@ import six.com.crawler.rpc.RpcServer;
 import six.com.crawler.rpc.Signal;
 import six.com.crawler.rpc.Signals;
 import six.com.crawler.rpc.protocol.RpcMsg;
-import six.com.crawler.rpc.protocol.RpcProtocol;
+
 import six.com.crawler.rpc.protocol.RpcRequest;
 import six.com.crawler.rpc.protocol.RpcResponse;
 import six.com.crawler.utils.ExceptionUtils;
@@ -39,7 +39,6 @@ public class ServerHandler extends SimpleChannelInboundHandler<RpcMsg> {
 		} else {
 			String errMsg = "ServerHandler messageReceived type not support: class=" + msg.getClass();
 			rpcesponse = new RpcResponse();
-			rpcesponse.setType(RpcProtocol.RESPONSE);
 			rpcesponse.setMsg(errMsg);
 			log.error(errMsg);
 		}
@@ -50,7 +49,6 @@ public class ServerHandler extends SimpleChannelInboundHandler<RpcMsg> {
 		NodeCommand nodeCommand = rpcServer.get(rpcRequest.getCommand());
 		RpcResponse rpcResponse = new RpcResponse();
 		rpcResponse.setId(rpcRequest.getId());
-		rpcResponse.setType(RpcProtocol.RESPONSE);
 		if (null != nodeCommand) {
 			log.info("server received coommand[" + rpcRequest.getCommand() + "] from " + rpcRequest.getOriginHost());
 			try {

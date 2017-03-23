@@ -22,6 +22,10 @@ public class RpcResponse extends RpcMsg implements Serializable{
 	private String msg;
 	
 	private Exception exception;
+	
+	public RpcResponse() {
+		super(RpcProtocol.RESPONSE);
+	}
 
 
 	public Exception getException() {

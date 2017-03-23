@@ -194,7 +194,7 @@ public class JobServiceImpl implements JobService {
 	}
 
 	public JobSnapshot queryLastJobSnapshotFromHistory(String excludeJobSnapshotId, String jobName) {
-		JobSnapshot lastJobSnapshot = jobSnapshotDao.queryLast(excludeJobSnapshotId, jobName);
+		JobSnapshot lastJobSnapshot = jobSnapshotDao.queryLast(jobName);
 		return lastJobSnapshot;
 	}
 

@@ -36,6 +36,9 @@ public class ResultContext {
 		return results.remove(resultKey);
 	}
 
+	public Map<String, List<String>> getAll(){
+		return results;
+	}
 	public void addoutResult(Map<String, String> dataMap) {
 		outResults.add(dataMap);
 	}

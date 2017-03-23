@@ -54,6 +54,7 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 		if (null != projectNameElements && !projectNameElements.isEmpty()) {
 			projectInfo1Queue.push(doingPage);
 			getWorkQueue().finish(doingPage);
+			throw new RuntimeException("different pages:"+doingPage.getFinalUrl());
 		}else{
 			Elements mapDivs = doingPage.getDoc().select(mapDivCss);
 			if (null != mapDivs && !mapDivs.isEmpty()) {
