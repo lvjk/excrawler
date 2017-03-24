@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
+import six.com.crawler.exception.BaseException;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.Constants;
@@ -47,15 +48,25 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 
 	}
 
+	class DifferentPages extends BaseException {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -8769450490734642014L;
+
+		public DifferentPages(String message) {
+			super(message);
+		}
+	}
+
 	@Override
 	protected void beforeExtract(Page doingPage) {
 		String projectNameCss = "div[id=head]>ul>li";
 		Elements projectNameElements = doingPage.getDoc().select(projectNameCss);
 		if (null != projectNameElements && !projectNameElements.isEmpty()) {
-			projectInfo1Queue.push(doingPage);
-			getWorkQueue().finish(doingPage);
-			throw new RuntimeException("different pages:"+doingPage.getFinalUrl());
-		}else{
+			throw new DifferentPages("different pages");
+		} else {
 			Elements mapDivs = doingPage.getDoc().select(mapDivCss);
 			if (null != mapDivs && !mapDivs.isEmpty()) {
 				Element longitude_latitude_div = doingPage.getDoc().select(longitude_latitude_div_css).first();
@@ -94,6 +105,11 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected boolean insideOnError(Exception t, Page doingPage) {
+		if (t instanceof DifferentPages) {
+			projectInfo1Queue.push(doingPage);
+			getWorkQueue().finish(doingPage);
+			return true;
+		}
 		return false;
 	}
 

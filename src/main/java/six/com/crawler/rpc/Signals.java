@@ -17,4 +17,6 @@ public class Signals {
 	public static final Signal BODY_TOO_BIG_ERR = new Signal(MSG_TOO_BIG, "msg is too big");
 	/** Read idle 链路检测 */
 	public static final Signal READER_IDLE_ERR = new Signal(READER_IDLE, "reader idle");
+	/** Read idle 链路检测 */
+	public static final Signal UN_SERIALIZE_ERR = new Signal(READER_IDLE, "did not unSerialize");
 }

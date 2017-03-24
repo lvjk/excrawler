@@ -15,12 +15,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import okhttp3.Request;
+import six.com.crawler.api.ResponseMsg;
 import six.com.crawler.dao.ExtractPathDao;
 import six.com.crawler.entity.Page;
 import six.com.crawler.http.HttpClient;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.http.HttpResult;
-import six.com.crawler.service.ExtracterService;
+import six.com.crawler.service.ExtractPathService;
 import six.com.crawler.utils.JsoupUtils;
 import six.com.crawler.utils.AutoCharsetDetectorUtils.ContentType;
 import six.com.crawler.work.extract.ExtractPath;
@@ -32,9 +33,9 @@ import six.com.crawler.work.extract.TestExtractPath;
  * @date 2016年8月18日 上午10:19:11 解析规则服务器
  */
 @Component
-public class ExtracterServiceImpl implements ExtracterService {
+public class ExtractPathServiceImpl implements ExtractPathService {
 
-	final static Logger LOG = LoggerFactory.getLogger(ExtracterServiceImpl.class);
+	final static Logger LOG = LoggerFactory.getLogger(ExtractPathServiceImpl.class);
 	@Autowired
 	private ExtractPathDao pathdao;
 
@@ -67,6 +68,12 @@ public class ExtracterServiceImpl implements ExtracterService {
 	public List<ExtractPath> query(String pathName, String siteCode) {
 		List<ExtractPath> result = pathdao.query(pathName, siteCode);
 		return result;
+	}
+
+	public void fuzzyQuery(ResponseMsg<List<ExtractPath>> responseMsg,String pathName, String siteCode) {
+		List<ExtractPath> result = pathdao.fuzzyQuery(pathName, siteCode);
+		responseMsg.setData(result);
+		responseMsg.setIsOk(1);
 	}
 
 	/**
@@ -109,9 +116,9 @@ public class ExtracterServiceImpl implements ExtracterService {
 	}
 
 	@Override
-	public List<String> testExtract(TestExtractPath extractPath){
-		String testUrl=extractPath.getTestUrl();
-		String testHtml=extractPath.getTestHtml();
+	public List<String> testExtract(TestExtractPath extractPath) {
+		String testUrl = extractPath.getTestUrl();
+		String testHtml = extractPath.getTestHtml();
 		List<String> extractResult = null;
 		if (null == extractPath || StringUtils.isBlank(extractPath.getName())
 				|| StringUtils.isBlank(extractPath.getSiteCode()) || StringUtils.isBlank(extractPath.getPath())) {
@@ -139,7 +146,7 @@ public class ExtracterServiceImpl implements ExtracterService {
 
 	@Override
 	public void updateExtractPath(ExtractPath path) {
-	
+
 	}
 
 	public void delExtractPathBySiteCide(String siteCode) {

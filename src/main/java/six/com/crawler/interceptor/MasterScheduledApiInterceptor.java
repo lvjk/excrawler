@@ -1,18 +1,21 @@
 package six.com.crawler.interceptor;
 
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
+import six.com.crawler.entity.Node;
+import six.com.crawler.entity.NodeType;
 import six.com.crawler.node.NodeManager;
 
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年3月17日 下午4:16:02
+ * 控制页面 必须访问 master节点页面
+ * 
  */
 public class MasterScheduledApiInterceptor implements HandlerInterceptor {
 
@@ -25,28 +28,31 @@ public class MasterScheduledApiInterceptor implements HandlerInterceptor {
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
-//		if (handler instanceof org.springframework.web.method.HandlerMethod) {
-//			HandlerMethod handlerMethod = (org.springframework.web.method.HandlerMethod) handler;
-//			OnlyVisitByWorker onlyVisitByWorker = handlerMethod.getMethodAnnotation(OnlyVisitByWorker.class);
-//			if (null != onlyVisitByWorker) {
-//				request.getLocalAddr();
-//			}
-//		}
+		if (clusterManager.getCurrentNode().getType() != NodeType.SINGLE
+				&&clusterManager.getCurrentNode().getType() != NodeType.MASTER
+				&& clusterManager.getCurrentNode().getType() != NodeType.MASTER_WORKER) {
+			Node masterNode = clusterManager.getMasterNode();
+			if (null != masterNode) {
+				response.sendRedirect(getMasterIndex(masterNode));
+			}
+			return false;
+		}
 		return true;
 	}
 
 	@Override
 	public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler,
 			ModelAndView modelAndView) throws Exception {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
 			throws Exception {
-		// TODO Auto-generated method stub
+	}
 
+	private static String getMasterIndex(Node masterNode) {
+		String indexUrl = "http://" + masterNode.getHost() + ":" + masterNode.getPort() + "/crawler";
+		return indexUrl;
 	}
 
 }

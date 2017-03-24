@@ -188,7 +188,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 			jobSnapshot.setName(job.getName());
 			jobSnapshot.setNextJobName(job.getNextJobName());
 			jobSnapshot.setDesignatedNodeName(job.getDesignatedNodeName());
-			jobSnapshot.setState(JobSnapshotState.WAITING_EXECUTED.value());
+			jobSnapshot.setStatus(JobSnapshotState.WAITING_EXECUTED.value());
 			registerJobSnapshot(jobSnapshot);
 			submitWaitQueue(job);
 		} else {
@@ -232,7 +232,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 					if ("1".equals(isSnapshotTable)) {
 						JobSnapshot lastJobSnapshot = getJobSnapshotDao().queryLast(job.getName());
 						if (null != lastJobSnapshot && StringUtils.isNotBlank(lastJobSnapshot.getTableName())
-								&& lastJobSnapshot.getEnumState() != JobSnapshotState.FINISHED) {
+								&& lastJobSnapshot.getEnumStatus() != JobSnapshotState.FINISHED) {
 							tempTbaleName = lastJobSnapshot.getTableName();
 						} else {
 							String jobStart = StringUtils.remove(jobSnapshot.getId(), job.getName() + "_");
@@ -247,7 +247,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 					jobSnapshot.setStartTime(DateFormatUtils.format(nowDate, DateFormats.DATE_FORMAT_1));
 					jobSnapshot.setEndTime(DateFormatUtils.format(nowDate, DateFormats.DATE_FORMAT_1));
 					jobSnapshot.setTableName(tempTbaleName);
-					jobSnapshot.setState(JobSnapshotState.EXECUTING.value());
+					jobSnapshot.setStatus(JobSnapshotState.EXECUTING.value());
 					// 将jobSnapshot更新缓存 这里一定要 saveJobSnapshot
 					updateJobSnapshot(jobSnapshot);
 					getJobSnapshotDao().save(jobSnapshot);
@@ -300,7 +300,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 		}
 		if (callSuccessedCount == nodes.size()) {
 			JobSnapshot jobSnapshot = getJobSnapshot(jobName);
-			jobSnapshot.setState(JobSnapshotState.SUSPEND.value());
+			jobSnapshot.setStatus(JobSnapshotState.SUSPEND.value());
 			updateJobSnapshot(jobSnapshot);
 		}
 	}
@@ -327,7 +327,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 		}
 		if (callSuccessedCount > 0) {
 			JobSnapshot jobSnapshot = getJobSnapshot(jobName);
-			jobSnapshot.setState(JobSnapshotState.EXECUTING.value());
+			jobSnapshot.setStatus(JobSnapshotState.EXECUTING.value());
 			updateJobSnapshot(jobSnapshot);
 		}
 
@@ -355,7 +355,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 		}
 		if (callSuccessedCount == nodes.size()) {
 			JobSnapshot jobSnapshot = getJobSnapshot(jobName);
-			jobSnapshot.setState(JobSnapshotState.STOP.value());
+			jobSnapshot.setStatus(JobSnapshotState.STOP.value());
 			updateJobSnapshot(jobSnapshot);
 		}
 	}
@@ -416,7 +416,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 			} else {
 				state = JobSnapshotState.STOP;
 			}
-			jobSnapshot.setState(state.value());
+			jobSnapshot.setStatus(state.value());
 			jobSnapshot.setEndTime(DateFormatUtils.format(new Date(), DateFormats.DATE_FORMAT_1));
 			totalWorkerSnapshot(jobSnapshot, getWorkerSnapshots(jobName));
 			reportJobSnapshot(jobSnapshot);
@@ -542,8 +542,8 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 	public boolean isRunning(Job job) {
 		String jobName = job.getName();
 		JobSnapshot jobSnapshot = getJobSnapshot(jobName);
-		return null != jobSnapshot && (jobSnapshot.getEnumState() == JobSnapshotState.EXECUTING
-				|| jobSnapshot.getEnumState() == JobSnapshotState.SUSPEND);
+		return null != jobSnapshot && (jobSnapshot.getEnumStatus() == JobSnapshotState.EXECUTING
+				|| jobSnapshot.getEnumStatus() == JobSnapshotState.SUSPEND);
 	}
 
 	public List<Node> getWorkerNode(String jobName) {

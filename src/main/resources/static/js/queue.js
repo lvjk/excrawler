@@ -93,8 +93,7 @@ function showErrQueueInfo(queueName) {
 				var operationTd = $("<td></td>");
 				var operation = "<a  href=\"javascript:delErrQueue('"
 						+ page.pageKey + "')\">删除</a>&nbsp;";
-				operation += "<a href=\"javascript:fillQueue('" + page.pageKey
-						+ "')\">处理</a>&nbsp;";
+				operation += "<a href=\"javascript:againDoErrQueue('"+queueName+"')\">全部处理</a>&nbsp;";
 				$(operation).appendTo(operationTd);
 				operationTd.appendTo(tr);
 				tr.appendTo(job_queue_table);
@@ -123,7 +122,7 @@ function repairQueue(queueName) {
 		});
 	}
 }
-// location.reload(true); againDoErrQueue
+
 function cleanQueue(queueName) {
 	if (window.confirm("do you clean queue:" + queueName)) {
 		var url = "/crawler/queue/cleanQueue/" + queueName;

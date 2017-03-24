@@ -101,15 +101,20 @@ public class TmsfProjectInfo1Worker extends AbstractCrawlWorker{
 	@Override
 	protected void onComplete(Page doingPage, ResultContext resultContext) {
 		List<String> sellControlUrls = resultContext.getExtractResult("sellControlUrl_1");
-		if (null != sellControlUrls && sellControlUrls.size() > 0) {
-			String sellControlUrl = sellControlUrls.get(0);
-			String projectId = resultContext.getOutResults().get(0).get(Constants.DEFAULT_RESULT_ID);
-			Page sellControlPage = new Page(doingPage.getSiteCode(), 1, sellControlUrl, sellControlUrl);
-			sellControlPage.setReferer(doingPage.getFinalUrl());
-			sellControlPage.setType(PageType.DATA.value());
-			sellControlPage.getMetaMap().put("projectId", Arrays.asList(projectId));
-			sellControlUrlQueue.push(sellControlPage);
+		String projectId = resultContext.getOutResults().get(0).get(Constants.DEFAULT_RESULT_ID);
+		if(StringUtils.isBlank(projectId)){
+			throw new RuntimeException("system id is blank");
+		}else{
+			if (null != sellControlUrls && sellControlUrls.size() > 0) {
+				String sellControlUrl = sellControlUrls.get(0);
+				Page sellControlPage = new Page(doingPage.getSiteCode(), 1, sellControlUrl, sellControlUrl);
+				sellControlPage.setReferer(doingPage.getFinalUrl());
+				sellControlPage.setType(PageType.DATA.value());
+				sellControlPage.getMetaMap().put("projectId", Arrays.asList(projectId));
+				sellControlUrlQueue.push(sellControlPage);
+			}
 		}
+		
 	}
 
 

@@ -1,11 +1,12 @@
-package six.com.crawler.node;
+package six.com.crawler.rpc;
 
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年3月14日 下午5:33:33
  */
-public abstract class NodeCommand {
+@FunctionalInterface
+public interface  RpcService{
 
-	public abstract Object execute(Object param);
+	public Object execute(Object param);
 }

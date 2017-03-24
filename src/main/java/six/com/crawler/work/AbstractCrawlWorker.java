@@ -197,7 +197,8 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 				onComplete(doingPage, resultContext);
 				LOG.info("finished processor page:" + doingPage.getOriginalUrl());
 			} catch (Exception e) {
-				throw new RuntimeException("process page err:" + doingPage.getOriginalUrl(), e);
+				LOG.error("process page err:" +doingPage.getOriginalUrl());
+				throw e;
 			}
 		} else {
 			// 没有处理数据时 设置 state == WorkerLifecycleState.FINISHED
@@ -294,7 +295,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 	protected void onError(Exception e) {
 		if (null != doingPage) {
 			if (e instanceof DownerException) {
-				long restTime = 1000 * 10;
+				long restTime = 1000 * 5;
 				LOG.info("perhaps server is too busy,it's time for having a rest(" + restTime + ")");
 				ThreadUtils.sleep(restTime);
 			}
@@ -326,7 +327,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		}
 	}
 
-	private String getResultID(List<String> keyValues) {
+	public static String getResultID(List<String> keyValues) {
 		StringBuilder newValue = new StringBuilder();
 		for (String value : keyValues) {
 			newValue.append(value);
@@ -334,6 +335,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		String id = MD5Utils.MD5(newValue.toString());
 		return id;
 	}
+	
 
 	public WorkQueue getWorkQueue() {
 		return workQueue;

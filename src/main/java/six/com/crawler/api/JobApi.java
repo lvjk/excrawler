@@ -107,6 +107,28 @@ public class JobApi extends BaseApi {
 		return responseMsg;
 	}
 	
+	@RequestMapping(value = "/crawler/job/updateNextJobName", method = RequestMethod.POST)
+	@ResponseBody
+	public ResponseMsg<Integer> updateNextJobName(
+			@RequestParam("version")int version,
+			@RequestParam("name")String name,
+			@RequestParam("nextJobName")String nextJobName) {
+		ResponseMsg<Integer> responseMsg = createResponseMsg();
+		jobService.updateNextJobName(responseMsg,version,name,nextJobName);
+		return responseMsg;
+	}
+	
+	@RequestMapping(value = "/crawler/job/updateJobSnapshotStatus", method = RequestMethod.POST)
+	@ResponseBody
+	public ResponseMsg<Integer> updateJobSnapshotStatus(
+			@RequestParam("version")int version,
+			@RequestParam("id")String id,
+			@RequestParam("status")int status) {
+		ResponseMsg<Integer> responseMsg = createResponseMsg();
+		jobService.updateJobSnapshotStatus(responseMsg, version, id, status);
+		return responseMsg;
+	}
+	
 	@RequestMapping(value = "/crawler/job/upload/profile", method = RequestMethod.POST)
 	@ResponseBody
 	public ResponseMsg<String> uploadFile(@RequestParam("file") MultipartFile multipartFile) {

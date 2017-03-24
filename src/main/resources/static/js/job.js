@@ -1,7 +1,7 @@
 var stompClient = null;
 var connected = false;
 var connectDelayTime = 1000;
-var updateJobDelayTime =2000;
+var updateJobDelayTime =1000;
 var job_state = "job_state_";
 var job_start_time = "job_start_time_";
 var job_end_time = "job_end_time_";
@@ -83,63 +83,80 @@ function showJobTable(result) {
 		var pageSize=result.data.pageSize;
 		var totalPage=result.data.totalPage;
 		var totalSize=result.data.totalSize;
-		var table = $('#jobs');
-		table.find("tr").remove();
+		var jobDiv=$('#job_div');
+		var table = jobDiv.find('table');
+		table.find("tr[class=job]").remove();
 		var job;
 		var i = 0;
 		for (var i = 0; i < jobs.length; i++) {
 			job = jobs[i];
-			var tr = $("<tr name='"+job.name+"' title='"+job.describe+"'></tr>");
+			var tr = $("<tr class='job' name='"+job.name+"' title='"+job.describe+"'></tr>");
 			$("<input name='name' style='display:none' type='text' value='"+job.name+"' />").appendTo(tr);
 			$("<input name='version' style='display:none' type='text' value='"+job.version+"' />").appendTo(tr);
 			$("<input name='localNode' style='display:none' type='text' value='"+job.localNode+"' />").appendTo(tr);
 			$("<input name='queueName' style='display:none' type='text' value='"+job.queueName+"' />").appendTo(tr);
 			$("<input name='isScheduled' style='display:none' type='text' value='"+job.isScheduled+"' />").appendTo(tr);
-			
-			$("<td>"+job.name+"</td>").appendTo(tr);
+			$("<td title='"+job.name+"'>"+job.name+"</td>").appendTo(tr);
 			var cronTrigger=job.cronTrigger;
+			var ctTd=$("<td></td");
+			$("<input name='cronTrigger'  flag='"+job.name+"' style='display:none' type='text' value='"+cronTrigger+"' />").appendTo(ctTd);
+			$("<input name='update_cronTrigger'  flag='"+job.name+"'  style='display:none' type='text' value='"+cronTrigger+"' />").appendTo(ctTd);
 			if(cronTrigger==null||cronTrigger==""||cronTrigger=="null"){
 				cronTrigger="#";
 			}
-			var ctTd=$("<td></td");
-			$("<input name='cronTrigger'  jobName='"+job.name+"' style='display:none' type='text' value='"+cronTrigger+"' />").appendTo(ctTd);
 			$("<a     name='cronTrigger'  style='color:#FF0000;text-decoration:none;' href=\"javascript:editCronTrigger('"+job.name+"')\">"+cronTrigger+"</a>").appendTo(ctTd);
 			ctTd.appendTo(tr);
-			$("<td>" + job.level + "</td>").appendTo(tr);
-			$("<td>" + job.nextJobName + "</td>").appendTo(tr);
-			var state=getState(job.state);
-			var color=getStateColor(state);
-			$("<td name='state' style='font-weight:bold;color:"+color+"'>"+ state + "</td>").appendTo(tr);
-			$("<td name='startTime'></td>").appendTo(tr);
-			var queueHtml=getQueueHtml(job.queueName,0,0,0);
-			$("<td id='" + job_queue_count + job.name + "'>"+queueHtml+"</td>").appendTo(tr);
-			$("<td><a href=\"javascript:cleanQueue('"+ job.queueName + "')\">清除</a>&nbsp;&nbsp;" +
-					"<a href=\"javascript:againDoErrQueue('"+ job.queueName + "')\">do错误队列</a></td>").appendTo(tr);
-			$("<td id='" + job_exception_count + job.name + "'>0</td>").appendTo(tr);
+			
 			var scheduledTd = $("<td name='isScheduled'></td>");
 			var scheduledOperation=getIsScheduledShowHtml(job.name,job.isScheduled);
 			$(scheduledOperation).appendTo(scheduledTd);
 			scheduledTd.appendTo(tr);
+			
+			var nextJobName=job.nextJobName;
+			if(nextJobName==null||nextJobName==""||nextJobName=="null"){
+				nextJobName="#";
+			}
+			var nextJobNameTd=$("<td title='"+job.nextJobName+"'></td");
+			$("<input name='nextJobName'  flag='"+job.name+"' style='display:none' type='text' value='"+job.nextJobName+"' />").appendTo(nextJobNameTd);
+			$("<input name='update_nextJobName'  flag='"+job.name+"'  style='display:none' type='text' value='"+job.nextJobName+"' />").appendTo(nextJobNameTd);
+			$("<a     name='nextJobName'  style='color:#FF0000;text-decoration:none;' href=\"javascript:editNextJob('"+job.name+"')\">"+nextJobName+"</a>").appendTo(nextJobNameTd);
+			nextJobNameTd.appendTo(tr);
+			
+			var status=getState(job.status);
+			var color=getStateColor(status);
+			$("<td name='state' style='font-weight:bold;color:"+color+"'>"+ status + "</td>").appendTo(tr);
+			$("<td name='startTime'></td>").appendTo(tr);
+			var queueHtml=getQueueHtml(job.queueName,0,0,0);
+			$("<td id='" + job_queue_count + job.name + "'>"+queueHtml+"</td>").appendTo(tr);
+			$("<td><a href=\"javascript:cleanQueue('"+ job.queueName + "')\">清除</a></td>").appendTo(tr);
+			
+			$("<td id='" + job_exception_count + job.name + "'>0</td>").appendTo(tr);
+			
+			
 			var td = $("<td id='" + job_operation + job.name + "'></td>");
 			var html=masterScheduled.getOperation(job.name,job.state);
 			$(html).appendTo(td);
 			td.appendTo(tr);
 			var otherTd = $("<td></td>");
-			var otherOperation = "<a  href=\"javascript:showHistoryJobSnapshot('" + job.name
-			+ "')\">记录</a>&nbsp;";
-			otherOperation += "<a href=\"javascript:showJobInfo('" + job.name
-					+ "')\">详细</a>&nbsp;";
+			var otherOperation="<a href=\"javascript:showHistoryJobSnapshot('" + job.name+ "')\">记录</a>&nbsp;";
+			otherOperation += "<a href=\"javascript:showJobInfo('" + job.name+ "')\">详细</a>&nbsp;";
 			otherOperation += "<a href=\"/crawler/job/download/profile/"+ job.name+"\"  >下载</a>";
 			$(otherOperation).appendTo(otherTd);
 			otherTd.appendTo(tr);
 			tr.appendTo(table);
 		}
-		table.find("input[name='cronTrigger']").bind('keydown',function(event){  
+		table.find("input[name='update_cronTrigger']").bind('keydown',function(event){  
 			  if(event.keyCode == "13"){ 
-				  var jobName=$(this).attr("jobName");
+				  var jobName=$(this).attr("flag");
 				  updateCronTrigger(jobName);  
 			  }  
 		});  
+		table.find("input[name='update_nextJobName']").bind('keydown',function(event){  
+			  if(event.keyCode == "13"){ 
+				  var jobName=$(this).attr("flag");
+				  updateNextJobName(jobName);  
+			  }  
+		}); 
 		$('#pageInfo').html(pageInfo(totalPage,totalSize));
 		window.setTimeout(connection, connectDelayTime);
 	}
@@ -273,30 +290,43 @@ function getQueueHtml(queueName,totalProcessCount,queueCountCount,errQueueCount)
 }
 
 
+/**
+ * 动态显示job 运行信息
+ * @param jobSnapshots
+ * @returns
+ */
 function showJobSnapshots(jobSnapshots) {
 	if(null!=jobSnapshots){
 		for (var i = 0; i < jobSnapshots.length; i++) {
 			var jobSnapshot = jobSnapshots[i];
 			var jobName = jobSnapshot.name;
-			var state=getState(jobSnapshot.state);
-			var color=getStateColor(state);
 			var jobTr=$("tr[name='"+jobName+"']");
-			if(jobSnapshot.state==3||jobSnapshot.state==4){
-				state="<a  style='color:"+color+"' href=\"javascript:masterScheduled.showWorkerInfo('" + jobName+ "')\">"+state+"</a>";	
-			}
-			jobTr.find("[name='state']").css("color",color).html(state);
-			var startTime =jobTr.find("[name='startTime']");
-			if(jobSnapshot.startTime!=null||jobSnapshot.startTime!="null"||jobSnapshot.startTime!=""){
-				startTime.html(jobSnapshot.startTime);
-			}else{
-				startTime.html("");
+			var oldStatus=jobTr.find("[name='state']").text();
+			var newStatus=getState(jobSnapshot.status);
+			//只有当状态发生改变时才更新一下内容
+			if(oldStatus!=newStatus){
+				var color=getStateColor(newStatus);
+				if(jobSnapshot.status==3||jobSnapshot.status==4){
+					newStatus="<a  style='color:"+color+"' href=\"javascript:masterScheduled.showWorkerInfo('" + jobName+ "')\">"+newStatus+"</a>";	
+				}
+				jobTr.find("[name='state']").css("color",color).html(newStatus);
+				var startTime=jobSnapshot.startTime;
+				var startTimeTd =jobTr.find("[name='startTime']");
+				var oldStartTime=startTimeTd.html();
+				if(""==oldStartTime&&startTime!=null&&startTime!="null"&&startTime!=""){
+					startTime=startTime.substring(5,startTime.length);
+					startTimeTd.html(startTime);
+				}
+				if(""!=oldStartTime&&(startTime==null||startTime=="null"||startTime=="")){
+					startTimeTd.html("");
+				}
+				
+				var opetationHtml=masterScheduled.getOperation(jobSnapshot.name,jobSnapshot.status);
+				$("#" + job_operation + jobName).html(opetationHtml);
 			}
 			var queueShowStr=getQueueHtml(jobSnapshot.queueName,jobSnapshot.totalProcessCount,jobSnapshot.realQueueCount,jobSnapshot.errQueueCount);
 			$("#" + job_queue_count + jobName).html(queueShowStr);
-			$("#" + job_exception_count + jobName).html(jobSnapshot.errCount);
-			var opetationHtml=masterScheduled.getOperation(jobSnapshot.name,jobSnapshot.state);
-			$("#" + job_operation + jobName).html(opetationHtml);
-			
+			$("#" + job_exception_count + jobName).html(jobSnapshot.errCount);	
 		}
 	}
 }
@@ -353,30 +383,48 @@ function showJobInfo(jobName) {
 	});
 }
 
+
+
 function editCronTrigger(jobName){
-	var ctInput=$("tr[name='"+jobName+"']").find("input[name='cronTrigger']");
-	var ctA=$("tr[name='"+jobName+"']").find("a[name='cronTrigger']");
-	var cronTrigger=ctA.html();
-	if("#"==cronTrigger){
-		cronTrigger="";
-	}
-	ctInput.val(cronTrigger);
+	var allTr=$('#jobs').find("tr");
+	var tr=$("tr[name='"+jobName+"']");
+	var ctInput=tr.find("input[name='cronTrigger']");
+	var updateCtInput=tr.find("input[name='update_cronTrigger']");
+	var ctA=tr.find("a[name='cronTrigger']");
+	var cronTrigger=ctInput.val();
+	updateCtInput.val(cronTrigger);
 	ctA.css("display","none");
-	ctInput.css("display","inline");
-	
-	var otherCtInput=$("tr[name!='"+jobName+"']").find("input[name='cronTrigger']");
-	var otherCtA=$("tr[name!='"+jobName+"']").find("a[name='cronTrigger']");
-	otherCtInput.css("display","none");
-	otherCtA.css("display","inline");
+	updateCtInput.css("display","inline");
+	updateCtInput.focus();
+	liveInput(allTr,updateCtInput,"cronTrigger");
+	liveInput(allTr,updateCtInput,"nextJobName");
+}
+
+function editNextJob(jobName){
+	var allTr=$('#jobs').find("tr");
+	var tr=$("tr[name='"+jobName+"']");
+	var nextJobInput=tr.find("input[name='nextJobName']");
+	var updateNextJobInput=tr.find("input[name='update_nextJobName']");
+	var nextJobA=tr.find("a[name='nextJobName']");
+	var nextJob=nextJobInput.val();
+	updateNextJobInput.val(nextJob);
+	updateNextJobInput.css("display","inline");
+	nextJobA.css("display","none");
+	updateNextJobInput.focus();
+	liveInput(allTr,updateNextJobInput,"cronTrigger");
+	liveInput(allTr,updateNextJobInput,"nextJobName");
 }
 
 function updateCronTrigger(jobName){
-	var ctInput=$("tr[name='"+jobName+"']").find("input[name='cronTrigger']");
-	var ctA=$("tr[name='"+jobName+"']").find("a[name='cronTrigger']");
-	var newCronTrigger=ctInput.val();
-	var oldCronTrigger=ctA.html();
+	var allTr=$('#jobs').find("tr");
+	var tr=$("tr[name='"+jobName+"']");
+	var ctInput=tr.find("input[name='cronTrigger']");
+	var updateCtInput=tr.find("input[name='update_cronTrigger']");
+	var ctA=tr.find("a[name='cronTrigger']");
+	var newCronTrigger=updateCtInput.val();
+	var oldCronTrigger=ctInput.val();
 	if(newCronTrigger!=oldCronTrigger){
-		var version=$("tr[name='"+jobName+"']").find("input[name='version']").val();
+		var version=tr.find("input[name='version']").val();
 		if (window.confirm("你确定要保存job["+jobName+"]的调度时间["+newCronTrigger+"]")) {
 			var url = "/crawler/job/updateCronTrigger";
 			$.post(url, {
@@ -386,13 +434,53 @@ function updateCronTrigger(jobName){
 			}, function(responseMsg) {
 				if (responseMsg.isOk == 1) {
 					ctInput.val(newCronTrigger);
+					updateCtInput.html(newCronTrigger);
 					ctA.html(newCronTrigger);
-					var allCtInput=$("tr").find("input[name='cronTrigger']");
-					var allCtA=$("tr").find("a[name='cronTrigger']");
-					allCtInput.css("display","none");
-					allCtA.css("display","inline");
+					liveInput(allTr,null,"cronTrigger");
+					liveInput(allTr,null,"nextJobName");
+					
+					var newVersion=responseMsg.data;
+					updateVersion(newVersion,tr);
 				}
-				updateJobVersion(jobName,responseMsg);
+				alert(responseMsg.msg);
+			});
+		}	
+	}
+}
+
+function updateNextJobName(jobName){
+	var allTr=$('#jobs').find("tr");
+	var tr=$("tr[name='"+jobName+"']");
+	var nextJobNameInput=tr.find("input[name='nextJobName']");
+	var updateNextJobNameInput=tr.find("input[name='update_nextJobName']");
+	var nextJobNameA=tr.find("a[name='nextJobName']");
+	var newValue=updateNextJobNameInput.val();
+	var oldValue=nextJobNameInput.val();
+	if(newValue==jobName){
+		alert("job["+jobName+"]下个执行任务不等于本身");
+		return;
+	}
+	if(oldValue!=newValue){
+		var version=tr.find("input[name='version']").val();
+		if (window.confirm("你确定要保存job["+jobName+"]的下个执行任务为["+newValue+"]")) {
+			var url = "/crawler/job/updateNextJobName";
+			$.post(url, {
+				version:version,
+				name : jobName,
+				nextJobName : newValue
+			}, function(responseMsg) {
+				if (responseMsg.isOk == 1) {
+					nextJobNameInput.val(newValue);
+					updateNextJobNameInput.val(newValue);
+					if(""==newValue){
+						newValue="#";
+					}
+					nextJobNameA.html(newValue);
+					liveInput(allTr,null,"cronTrigger");
+					liveInput(allTr,null,"nextJobName");
+					var newVersion=responseMsg.data;
+					updateVersion(newVersion,tr);
+				}
 				alert(responseMsg.msg);
 			});
 		}	
@@ -444,43 +532,98 @@ function updateIsScheduled(jobName) {
 }
 
 
-function updateJobVersion(jobName,responseMsg){
-	if (responseMsg.isOk == 1) {
-		var jobTr = $("tr[name='" + jobName + "']");
-		var newVersion=responseMsg.data;
-		jobTr.find("input[name='version']").val(newVersion);
+
+function showHistoryJobSnapshot(jobName) {
+	var url = "/crawler/job/getHistoryJobSnapshot/" + jobName;
+	var jobSnapshotDiv = $("#jobSnapshot_div");
+	var table=jobSnapshotDiv.find("table");
+	table.find("tr[class='jobSnapshot']").remove();
+	$.get(url, function(result) {
+		var jobSnapshots=result.data;
+		jobSnapshotDiv.find("span[id='jobName']").html("任务[<span style='color:#FF0000'>"+jobName+"</span>]运行历史记录");
+		for (var i = 0; i < jobSnapshots.length; i++) {
+			var jobSnapshot=jobSnapshots[i];
+			var tr = $("<tr class='jobSnapshot' name='"+jobSnapshot.id+"' ></tr>");
+			$("<input name='version' style='display:none' type='text' value='"+jobSnapshot.version+"' />").appendTo(tr);
+			var startTime = new Date(jobSnapshot.startTime);
+			var endTime = new Date(jobSnapshot.endTime);
+			$("<td>" + startTime.Format("yyyy/MM/dd hh:mm:ss") + "</td>").appendTo(tr);
+			$("<td>" + endTime.Format("yyyy/MM/dd hh:mm:ss") + "</td>").appendTo(tr);
+			var statusTd=$("<td></td>");
+			var status=jobSnapshot.status;
+			$("<input name='status'  flag='"+jobSnapshot.id+"' style='display:none' type='text' value='"+status+"' />").appendTo(statusTd);
+			$("<input name='update_status'  flag='"+jobSnapshot.id+"' style='display:none' type='text' value='"+status+"' />").appendTo(statusTd);
+			$("<a name='status' href=\"javascript:editJobSnapshot('"+jobSnapshot.id+"')\" style='color:#FF0000;font-size: 14px; font-weight: bold;'>" + getState(status) + "</a>").appendTo(statusTd);
+			statusTd.appendTo(tr);
+			
+			$("<td>" + jobSnapshot.avgProcessTime + "</td>").appendTo(tr);
+			$("<td>" + jobSnapshot.maxProcessTime + "</td>").appendTo(tr);
+			$("<td>" + jobSnapshot.minProcessTime + "</td>").appendTo(tr);
+			$("<td>" + jobSnapshot.totalProcessCount + "</td>").appendTo(tr);
+			$("<td>" + jobSnapshot.errCount + "</td>").appendTo(tr);
+			$("<td>查看异常</td>").appendTo(tr);
+			tr.appendTo(table);
+		}
+		table.find("input[name='update_status']").bind('keydown',function(event){  
+			  if(event.keyCode == "13"){ 
+				  var jobSnapshotId=$(this).attr("flag");
+				  updateJobSnapshotStatus(jobSnapshotId);  
+			  }  
+		}); 
+		showLayer(jobSnapshotDiv);
+	});
+}
+
+function editJobSnapshot(jobSnapshotId){
+	var allTr=$("tr[class=jobSnapshot]");
+	var statusInput=$("tr[name='"+jobSnapshotId+"']").find("input[name='status']");
+	var updateStatusInput=$("tr[name='"+jobSnapshotId+"']").find("input[name='update_status']");
+	var statusA=$("tr[name='"+jobSnapshotId+"']").find("a[name='status']");
+	var status=statusInput.val();
+	updateStatusInput.val(status);
+	updateStatusInput.css("display","inline");
+	statusA.css("display","none");
+	updateStatusInput.focus();
+	liveInput(allTr,updateStatusInput,"status");
+	
+}
+
+function updateJobSnapshotStatus(jobSnapshotId){
+	var allTr=$("tr[class=jobSnapshot]");
+	var tr=$("tr[name='"+jobSnapshotId+"']");
+	var statusInput=tr.find("input[name='status']");
+	var updateStatusInput=tr.find("input[name='update_status']");
+	var statusA=tr.find("a[name='status']");
+	var newValue=updateStatusInput.val();
+	if(newValue<1||newValue>6){
+		alert("input status is invalid");
+		return;
+	}
+	var oldValue=statusInput.val();
+	if(oldValue!=newValue){
+		var version=tr.find("input[name='version']").val();
+		if (window.confirm("你确定要保存jobSnapshot["+jobSnapshotId+"]的状态为["+newValue+"]")) {
+			var url = "/crawler/job/updateJobSnapshotStatus";
+			$.post(url, {
+				version:version,
+				id : jobSnapshotId,
+				status : newValue
+			}, function(responseMsg) {
+				if (responseMsg.isOk == 1) {
+					statusInput.val(newValue);
+					updateStatusInput.val(newValue);
+					statusA.html(getState(newValue));
+					liveInput(allTr,null,"status");
+					var newVersion=responseMsg.data;
+					updateVersion(newVersion,tr);
+				}
+				alert(responseMsg.msg);
+			});
+		}	
 	}
 }
 
 
-
-function showHistoryJobSnapshot(jobName) {
-	var url = "/crawler/job/getHistoryJobSnapshot/" + jobName;
-	var job_running_records_div = $("#job_running_records_div");
-	var job_running_records_table=job_running_records_div.find("table");
-	job_running_records_table.find("[name='job_running_record_data']").remove();
-	$.get(url, function(result) {
-		var jobActivityInfos=result.data;
-		job_running_records_div.find("[id='job_running_records_div_name']").html("任务[<span style='color:#FF0000'>"+jobName+"</span>]运行历史记录");
-		for (var i = 0; i < jobActivityInfos.length; i++) {
-			var info=jobActivityInfos[i];
-			var tr = $("<tr name='job_running_record_data'></tr>");
-			var startTime = new Date(info.startTime);
-			var endTime = new Date(info.endTime);
-			$("<td>" + startTime.Format("yyyy/MM/dd hh:mm:ss") + "</td>").appendTo(tr);
-			$("<td>" + endTime.Format("yyyy/MM/dd hh:mm:ss") + "</td>").appendTo(tr);
-			$("<td><span style='color:#FF0000;font-size: 14px; font-weight: bold;'>" + getState(info.state) + "</span></td>").appendTo(tr);
-			$("<td>" + info.avgProcessTime + "</td>").appendTo(tr);
-			$("<td>" + info.maxProcessTime + "</td>").appendTo(tr);
-			$("<td>" + info.minProcessTime + "</td>").appendTo(tr);
-			$("<td>" + info.totalProcessCount + "</td>").appendTo(tr);
-			$("<td>" + info.errCount + "</td>").appendTo(tr);
-			$("<td>查看异常</td>").appendTo(tr);
-			tr.appendTo(job_running_records_table);
-		}
-		showLayer(job_running_records_div);
-	});
-}
 
 
 

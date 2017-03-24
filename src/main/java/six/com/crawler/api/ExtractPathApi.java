@@ -4,12 +4,12 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import six.com.crawler.service.ExtracterService;
+import six.com.crawler.service.ExtractPathService;
 import six.com.crawler.work.extract.ExtractPath;
 import six.com.crawler.work.extract.TestExtractPath;
 
@@ -19,26 +19,27 @@ import six.com.crawler.work.extract.TestExtractPath;
  * @date 创建时间：2017年2月28日 下午4:35:23
  */
 @Controller
-public class ExtracterApi extends BaseApi {
+public class ExtractPathApi extends BaseApi {
 
 	@Autowired
-	private ExtracterService extracterService;
+	private ExtractPathService extracterService;
 
-	public ExtracterService getExtracterService() {
+	public ExtractPathService getExtracterService() {
 		return extracterService;
 	}
 
-	public void setExtracterService(ExtracterService extracterService) {
+	public void setExtracterService(ExtractPathService extracterService) {
 		this.extracterService = extracterService;
 	}
 
 
-	@RequestMapping(value = "/crawler/extracter/getExtractPaths/{siteCode}", method = RequestMethod.GET)
+	@RequestMapping(value = "/crawler/extracter/queryExtractPaths", method = RequestMethod.POST)
 	@ResponseBody
-	public ResponseMsg<List<ExtractPath>> getExtractPaths(@PathVariable("siteCode") String siteCode) {
+	public ResponseMsg<List<ExtractPath>> queryExtractPaths(
+			@RequestParam("siteCode") String siteCode,
+			@RequestParam("pathName") String pathName) {
 		ResponseMsg<List<ExtractPath>> msg = createResponseMsg();
-		List<ExtractPath> result = extracterService.query(siteCode);
-		msg.setData(result);
+		extracterService.fuzzyQuery(msg,siteCode,pathName);
 		return msg;
 	}
 	

@@ -12,7 +12,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 
 import six.com.crawler.interceptor.BaseInterceptor;
 import six.com.crawler.interceptor.MasterScheduledApiInterceptor;
-import six.com.crawler.interceptor.WorkerScheduledApiInterceptor;
 import six.com.crawler.node.NodeManager;
 
 /**
@@ -21,19 +20,19 @@ import six.com.crawler.node.NodeManager;
  * 
  *       整个系统分层
  *       <p>
- * 		对外api层
+ *       对外api层
  *       </p>
  *       <p>
- * 		服务层
+ *       服务层
  *       </p>
  *       <p>
- * 		任务调度层
+ *       任务调度层
  *       </p>
  *       <p>
- * 		节点基础层
+ *       节点基础层
  *       </p>
  *       <p>
- * 		数据存储层
+ *       数据存储层
  *       </p>
  */
 @ComponentScan
@@ -75,9 +74,7 @@ public class StartMain extends WebMvcConfigurerAdapter {
 	 */
 	public void addInterceptors(InterceptorRegistry registry) {
 		registry.addInterceptor(new BaseInterceptor(clusterManager)).addPathPatterns("/**");
-		registry.addInterceptor(new MasterScheduledApiInterceptor(clusterManager))
-				.addPathPatterns("/crawler/master/**");
-		registry.addInterceptor(new WorkerScheduledApiInterceptor(clusterManager))
-				.addPathPatterns("/crawler/worker/**");
+		registry.addInterceptor(new MasterScheduledApiInterceptor(clusterManager)).addPathPatterns("/**");
+
 	}
 }

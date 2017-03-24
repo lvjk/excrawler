@@ -1,52 +1,143 @@
 $(function() {
+	
+	$("#edit_div_bt").click(function() {
+		showEditDiv("","");
+	});
+	
 	$("#testExtractPath_bt").click(function() {
 		testExtractPath();
 	});
 	$("#addExtractPath_bt").click(function() {
 		addExtractPath();
 	});
+	$("#search_siteCode").bind('keydown',function(event){  
+		  if(event.keyCode == "13"){ 
+			  searchExtractPath();
+		  }  
+	});  
 	$("#search_bt").click(function() {
+		var display=$("#extractPath_list_div").css("display");
 		var siteCode=$("#search_siteCode").val();
-		if(null==siteCode||siteCode==""){
-			alert("请输入搜索站点code");
+		if("none"==display){
+			$("#extractPath_list_div").css("display","block");
+			$("#extractPath_edit_div").css("display","none");
 		}else{
-			showExtractPathTable(siteCode);
+			if(null==siteCode||siteCode==""){
+				alert("请输入搜索站点code");
+				return;
+			}
 		}
+		searchExtractPath();
 	});
 });
 
-function showExtractPathTable(siteCode){
-	var url = "/crawler/extracter/getExtractPaths/"+siteCode;
-	$.get(url, function(result) {
-		var extractPaths=result.data;
-		if(null!=extractPaths&&extractPaths.length>0){
-			var extractPath_div = $("#extractPath_div");
-			var extractPath_div_table=extractPath_div.find("table");
-			extractPath_div_table.find("[name='extractPath']").remove();
-			extractPath_div.find("[id='siteCode']").html("站点[<span style='color:#FF0000'>"+siteCode+"</span>]抽取路径");
-			for(var i=0;i<extractPaths.length;i++){
-				var extractPath = extractPaths[i];
-				var tr = $("<tr name='extractPath' title='"+extractPath.describe+"'></tr>");
-				$("<td><span style='font-size:10px;'>" + extractPath.name + "</span></td>").appendTo(tr);
-				$("<td><span style='font-size:6px;'>" + extractPath.ranking + "</span></td>").appendTo(tr);
-				$("<td><span style='font-size:6px;'>" + extractPath.path + "</span></td>").appendTo(tr);
-				$("<td><span style='font-size:6px;'>" + extractPath.filterPath + "</span></td>").appendTo(tr);
-				$("<td><span style='font-size:6px;'>" + extractPath.extractAttName + "</span></td>").appendTo(tr);
-				$("<td><span style='font-size:6px;'>" + extractPath.substringStart + "</span></td>").appendTo(tr);
-				$("<td><span style='font-size:6px;'>" + extractPath.substringEnd + "</span></td>").appendTo(tr);
-				$("<td><span style='font-size:6px;'>" + extractPath.compareAttName + "</span></td>").appendTo(tr);
-				$("<td><span style='font-size:6px;'>" + extractPath.containKeyWord + "</span></td>").appendTo(tr);
-				$("<td><span style='font-size:6px;'>" + extractPath.replaceWord + "</span></td>").appendTo(tr);
-				$("<td><span style='font-size:6px;'>" + extractPath.replaceValue + "</span></td>").appendTo(tr);
-				$("<td><span style='font-size:6px;'>" + extractPath.appendHead + "</span></td>").appendTo(tr);
-				$("<td><span style='font-size:6px;'>" + extractPath.appendEnd + "</span></td>").appendTo(tr);
-				$("<td><span style='font-size:6px;'>" + extractPath.extractEmptyCount + "</span></td>").appendTo(tr);
-				tr.appendTo(extractPath_div_table);
+function showEditDiv(ranking,pathName){
+	if(""!=ranking&&""!=pathName){
+		var trName=pathName+ranking;
+		var tableDiv=$("#extractPath_list_div");
+		var editDiv=$("#extractPath_edit_div");
+		var pathTr=tableDiv.find("tr[name='"+trName+"']");
+		
+		var name=pathTr.find("input[name='name']").val();
+		editDiv.find("input[id='name']").val(name);
+		
+		var siteCode=pathTr.find("input[name='siteCode']").val();
+		editDiv.find("input[id='siteCode']").val(siteCode);
+		
+		var ranking=pathTr.find("input[name='ranking']").val();
+		editDiv.find("input[id='ranking']").val(ranking);
+		
+		var path=pathTr.find("div[name='path']").html();
+		editDiv.find("input[id='path']").val(path);
+		
+		var filterPath=pathTr.find("div[name='filterPath']").html();
+		editDiv.find("input[id='filterPath']").val(filterPath);
+
+		var extractAttName=pathTr.find("input[name='extractAttName']").val();
+		editDiv.find("input[id='extractAttName']").val(extractAttName);
+		
+		var substringStart=pathTr.find("input[name='substringStart']").val();
+		editDiv.find("input[id='substringStart']").val(substringStart);
+		
+		var substringEnd=pathTr.find("input[name='substringEnd']").val();
+		editDiv.find("input[id='substringEnd']").val(substringEnd);
+		
+		var compareAttName=pathTr.find("input[name='compareAttName']").val();
+		editDiv.find("input[id='compareAttName']").val(compareAttName);
+	
+		var containKeyWord=pathTr.find("input[name='containKeyWord']").val();
+		editDiv.find("input[id='containKeyWord']").val(containKeyWord);
+		
+		var replaceWord=pathTr.find("input[name='replaceWord']").val();
+		editDiv.find("input[id='replaceWord']").val(replaceWord);
+
+		var replaceValue=pathTr.find("input[name='replaceValue']").val();
+		editDiv.find("input[id='replaceValue']").val(replaceValue);
+		
+		var appendHead=pathTr.find("input[name='appendHead']").val();
+		editDiv.find("input[id='appendHead']").val(appendHead);
+		
+		var appendEnd=pathTr.find("input[name='appendEnd']").val();
+		editDiv.find("input[id='appendEnd']").val(appendEnd);
+		
+		var extractEmptyCount=pathTr.find("input[name='extractEmptyCount']").val();
+		editDiv.find("input[id='extractEmptyCount']").val(extractEmptyCount);
+	}
+	$("#extractPath_list_div").css("display","none");
+	$("#extractPath_edit_div").css("display","block");
+}
+
+function searchExtractPath(){
+	var siteCode=$("#search_siteCode").val();
+	var pathName=$("#search_pathName").val();
+	var url="/crawler/extracter/queryExtractPaths";
+	$.post(url, {
+		siteCode:siteCode,
+		pathName : pathName
+	}, function(responseMsg) {
+		if (responseMsg.isOk == 1) {
+			var extractPaths=responseMsg.data;
+			if(null!=extractPaths&&extractPaths.length>0){
+				var extractPath_div = $("#extractPath_list_div");
+				var extractPath_div_table=extractPath_div.find("table");
+				extractPath_div_table.find("tr[class='extractPaths']").remove();
+				extractPath_div.find("[id='siteCode']").html("站点[<span style='color:#FF0000'>"+siteCode+"</span>]抽取路径");
+				for(var i=0;i<extractPaths.length;i++){
+					var extractPath = extractPaths[i];
+					var trName=extractPath.name+extractPath.ranking;
+					var tr = $("<tr class='extractPaths' name='"+trName+"' title='"+doNullString(extractPath.describe)+"'></tr>");
+					$("<input name='name' style='display:none' type='text' value='"+doNullString(extractPath.name)+"' />").appendTo(tr);
+					$("<input name='siteCode' style='display:none' type='text' value='"+doNullString(extractPath.siteCode)+"' />").appendTo(tr);
+					$("<input name='ranking' style='display:none' type='text' value='"+doNullString(extractPath.ranking)+"' />").appendTo(tr);
+					$("<div name='path' style='display:none'>"+doNullString(extractPath.path)+"</div>").appendTo(tr);
+					$("<div name='filterPath' style='display:none'>"+doNullString(extractPath.filterPath)+"</div>").appendTo(tr);
+					$("<input name='extractAttName' style='display:none' type='text' value='"+doNullString(extractPath.extractAttName)+"' />").appendTo(tr);
+					$("<input name='substringStart' style='display:none' type='text' value='"+doNullString(extractPath.substringStart)+"' />").appendTo(tr);
+					$("<input name='substringEnd' style='display:none' type='text' value='"+doNullString(extractPath.substringEnd)+"' />").appendTo(tr);
+					$("<input name='compareAttName' style='display:none' type='text' value='"+doNullString(extractPath.compareAttName)+"' />").appendTo(tr);
+					$("<input name='containKeyWord' style='display:none' type='text' value='"+doNullString(extractPath.containKeyWord)+"' />").appendTo(tr);
+					$("<input name='replaceWord' style='display:none' type='text' value='"+doNullString(extractPath.replaceWord)+"' />").appendTo(tr);
+					$("<input name='replaceValue' style='display:none' type='text' value='"+doNullString(extractPath.replaceValue)+"' />").appendTo(tr);
+					$("<input name='appendHead' style='display:none' type='text' value='"+doNullString(extractPath.appendHead)+"' />").appendTo(tr);
+					$("<input name='appendEnd' style='display:none' type='text' value='"+doNullString(extractPath.appendEnd)+"' />").appendTo(tr);
+					$("<input name='extractEmptyCount' style='display:none' type='text' value='"+doNullString(extractPath.extractEmptyCount)+"' />").appendTo(tr);
+					$("<td>" + extractPath.name + "</td>").appendTo(tr);
+					$("<td>" + extractPath.ranking + "</td>").appendTo(tr);
+					$("<td>"+doNullString(extractPath.path)+"</td>").appendTo(tr);
+					$("<td>" + "" + "</td>").appendTo(tr);
+					$("<td>" + "" + "</td>").appendTo(tr);
+					$("<td>" + "" + "</td>").appendTo(tr);
+					$("<td><a href=\"javascript:showEditDiv('"+extractPath.ranking+"','"+ extractPath.name + "')\">编辑</a>&nbsp;</td>").appendTo(tr);
+					tr.appendTo(extractPath_div_table);
+				}
+			}else{
+				alert("查询异常")
 			}
-		}else{
-			alert("没有查到此站点的抽取路径")
 		}
 	});
+}
+function del(siteCode,pathName){
+	
 }
 
 function validExtractPath(){

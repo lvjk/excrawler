@@ -44,11 +44,11 @@ public class WorkerSchedulerManager extends WorkerAbstractSchedulerManager {
 	private int workerRunningMaxSize;
 
 	private ExecutorService executor;
-	
+
 	protected void doInit() {
 		workerRunningMaxSize = getNodeManager().getCurrentNode().getRunningJobMaxSize();
 		executor = Executors.newFixedThreadPool(workerRunningMaxSize, new JobWorkerThreadFactory());
-		
+
 	}
 
 	/**
@@ -80,10 +80,10 @@ public class WorkerSchedulerManager extends WorkerAbstractSchedulerManager {
 	 */
 	public synchronized void execute(String jobName) {
 		String key = "workerSchedulerManager_doExecute_" + jobName;
-		Job job=getJobDao().query(jobName);
-		if(null!=job){
+		Job job = getJobDao().query(jobName);
+		if (null != job) {
 			log.info("worker node[" + getNodeManager().getCurrentNode().getName() + "] execute job[" + job.getName()
-			+ "]");
+					+ "]");
 			getRedisManager().lock(key);
 			try {
 				log.info("buiild job[" + job.getName() + "] worker");
@@ -152,7 +152,6 @@ public class WorkerSchedulerManager extends WorkerAbstractSchedulerManager {
 		}
 	}
 
-
 	public int getRunningWorkerCount() {
 		return runningWroker.get();
 	}
@@ -168,20 +167,18 @@ public class WorkerSchedulerManager extends WorkerAbstractSchedulerManager {
 		executor.shutdown();
 	}
 
-	private void startWorker(String jobName, String workName, Worker worker) {
+	private void startWorker(String jobName, String workerName, Worker worker) {
 		WorkerSnapshot workerSnapshot = worker.getWorkerSnapshot();
-		String workerSnapshotsKey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(jobName);
+		localJobWorkersMap.computeIfAbsent(worker.getJob().getName(), mapKey -> new ConcurrentHashMap<String, Worker>())
+				.put(worker.getName(), worker);
+		updateWorkerSnapshot(workerSnapshot);
+		getNodeManager().getCurrentNode().setRunningJobSize(runningWroker.incrementAndGet());
 		try {
-			getRedisManager().lock(workerSnapshotsKey);
-			localJobWorkersMap
-					.computeIfAbsent(worker.getJob().getName(), mapKey -> new ConcurrentHashMap<String, Worker>())
-					.put(worker.getName(), worker);
-			updateWorkerSnapshot(workerSnapshot);
-			getNodeManager().getCurrentNode().setRunningJobSize(runningWroker.incrementAndGet());
-			getNodeManager().execute(getNodeManager().getMasterNode(), ScheduledJobCommand.startWorker,jobName);
-		} finally {
-			getRedisManager().unlock(workerSnapshotsKey);
+			getNodeManager().execute(getNodeManager().getMasterNode(), ScheduledJobCommand.startWorker, jobName);
+		} catch (Exception e) {
+			log.error("notice master node job[" + jobName + "]'s worker[" + workerName + "] is started err", e);
 		}
+		
 	}
 
 	/**
@@ -191,29 +188,28 @@ public class WorkerSchedulerManager extends WorkerAbstractSchedulerManager {
 	 * @param jobName
 	 */
 	public void endWorer(String jobName, String workerName) {
-		String workerSnapshotsKey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(jobName);
-		try {
-			getRedisManager().lock(workerSnapshotsKey);
-			getNodeManager().getCurrentNode().setRunningJobSize(runningWroker.decrementAndGet());
-			Map<String, Worker> jobWorkerMap = localJobWorkersMap.get(jobName);
-			if (null != jobWorkerMap) {
-				jobWorkerMap.remove(workerName);
-				if (jobWorkerMap.size() == 0) {
-					localJobWorkersMap.remove(jobName);
-				}
+		Map<String, Worker> jobWorkerMap = localJobWorkersMap.get(jobName);
+		if (null != jobWorkerMap) {
+			Worker worker = jobWorkerMap.remove(workerName);
+			if (null != worker) {
+				worker.destroy();
 			}
-			getNodeManager().execute(getNodeManager().getMasterNode(), ScheduledJobCommand.endWorker,jobName);
-		} finally {
-			getRedisManager().unlock(workerSnapshotsKey);
+			if (jobWorkerMap.size() == 0) {
+				localJobWorkersMap.remove(jobName);
+			}
+		}
+		getNodeManager().getCurrentNode().setRunningJobSize(runningWroker.decrementAndGet());
+		try {
+			getNodeManager().execute(getNodeManager().getMasterNode(), ScheduledJobCommand.endWorker, jobName);
+		} catch (Exception e) {
+			log.error("notice master node job[" + jobName + "]'s worker[" + workerName + "] is end err", e);
 		}
 	}
-
 
 	public Map<String, Worker> getWorkers(String jobName) {
 		Map<String, Worker> jobsWorkerMap = localJobWorkersMap.get(jobName);
 		return jobsWorkerMap;
 	}
-
 
 	public List<Worker> getLocalWorkers() {
 		List<Worker> result = new ArrayList<>();

@@ -16,6 +16,17 @@ import six.com.crawler.utils.JavaSerializeUtils;
  * @author 作者
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年3月23日 上午8:50:07
+ * 
+ * 消息编码 
+ * 	<p>1.判断消息是否大于最小长度</p>
+ * 	<p>2.读取消息类型</p>
+ * 	<p>3.检查是否是心跳包消息 如果是心跳包，那么这里结束</p>
+ *  <p>4.读取数据长度</p>
+ *  <p>5.检查数据长度</p>
+ *  <p>6.根据数据长度读取数据</p>
+ *  <p>7.序列数据</p>
+ *  <p>结束</p>
+ * 
  */
 public class RpcDecoder extends ByteToMessageDecoder implements RpcProtocol {
 
@@ -27,10 +38,10 @@ public class RpcDecoder extends ByteToMessageDecoder implements RpcProtocol {
 			buffer.markReaderIndex();
 			byte msgType = buffer.readByte();
 			if (msgType == RpcProtocol.HEARTBEAT) {
-				log.info("received heartbeat from " + getRemoteAddress(ctx.channel()));
+				log.info("received heartbeat from " + getRemoteAddress(ctx));
 			} else if (msgType != RpcProtocol.REQUEST && msgType != RpcProtocol.RESPONSE) {
 				buffer.resetReaderIndex();
-				log.error("received illegal msg type[" + msgType + "] from" + getRemoteAddress(ctx.channel()));
+				log.error("received illegal msg type[" + msgType + "] from" + getRemoteAddress(ctx));
 				throw Signals.ILLEGAL_MSG_ERR;
 			} else {
 				int dataLength = buffer.readInt();
@@ -42,24 +53,23 @@ public class RpcDecoder extends ByteToMessageDecoder implements RpcProtocol {
 				if (RpcProtocol.MAX_BODY_SIZE > 0 && dataLength > RpcProtocol.MAX_BODY_SIZE) {
 					throw Signals.BODY_TOO_BIG_ERR;
 				}
-
 				byte[] data = new byte[dataLength];
 				buffer.readBytes(data);
-				switch (msgType) {
-				case RpcProtocol.HEARTBEAT: {
-					break;
-				}
-				case RpcProtocol.REQUEST: {
-					RpcRequest rpcRequest = JavaSerializeUtils.unSerialize(data, RpcRequest.class);
-					out.add(rpcRequest);
-					break;
-				}
-				case RpcProtocol.RESPONSE: {
-					RpcResponse rpcResponse = JavaSerializeUtils.unSerialize(data, RpcResponse.class);
-					out.add(rpcResponse);
-					break;
-				}
-				default:
+				if(RpcProtocol.REQUEST==msgType){
+					try{
+						RpcRequest rpcRequest = JavaSerializeUtils.unSerialize(data, RpcRequest.class);
+						out.add(rpcRequest);
+					}catch (Exception e) {
+						log.error("did not unSerialize rpcRequest from "+getRemoteAddress(ctx),e);
+					}
+				}else if(RpcProtocol.RESPONSE==msgType){
+					try{
+						RpcResponse rpcResponse = JavaSerializeUtils.unSerialize(data, RpcResponse.class);
+						out.add(rpcResponse);
+					}catch (Exception e) {
+						log.error("did not unSerialize rpcResponse from "+getRemoteAddress(ctx),e);
+					}
+				}else{
 					throw Signals.ILLEGAL_MSG_ERR;
 				}
 			}
@@ -67,9 +77,9 @@ public class RpcDecoder extends ByteToMessageDecoder implements RpcProtocol {
 
 	}
 
-	public static String getRemoteAddress(io.netty.channel.Channel channel) {
+	public static String getRemoteAddress(ChannelHandlerContext ctx) {
 		String address = "";
-		SocketAddress remote = channel.remoteAddress();
+		SocketAddress remote = ctx.channel().remoteAddress();
 		if (remote != null) {
 			address = remote.toString();
 		}

@@ -246,10 +246,10 @@ public class JobServiceImpl implements JobService {
 		JobSnapshot jobSnapshot = scheduleManager.getJobSnapshot(jobName);
 		if (null != jobSnapshot) {
 			// 判断任务是否运行过
-			if (jobSnapshot.getEnumState() == JobSnapshotState.EXECUTING
-					|| jobSnapshot.getEnumState() == JobSnapshotState.SUSPEND
-					|| jobSnapshot.getEnumState() == JobSnapshotState.STOP
-					|| jobSnapshot.getEnumState() == JobSnapshotState.FINISHED) {
+			if (jobSnapshot.getEnumStatus() == JobSnapshotState.EXECUTING
+					|| jobSnapshot.getEnumStatus() == JobSnapshotState.SUSPEND
+					|| jobSnapshot.getEnumStatus() == JobSnapshotState.STOP
+					|| jobSnapshot.getEnumStatus() == JobSnapshotState.FINISHED) {
 				List<WorkerSnapshot> workerSnapshots = getWorkSnapshotsFromRegisterCenter(jobName);
 				// totalWorkerSnapshot(jobSnapshot, workerSnapshots);
 				jobSnapshot.setWorkerSnapshots(workerSnapshots);
@@ -394,6 +394,60 @@ public class JobServiceImpl implements JobService {
 			}
 		} else {
 			msg = "job's name must not be blank";
+		}
+		log.info(msg);
+		responseMsg.setMsg(msg);
+	}
+
+	public void updateNextJobName(ResponseMsg<Integer> responseMsg, int version, String name, String nextJobName) {
+		String msg = null;
+		responseMsg.setIsOk(0);
+		if (!StringUtils.isBlank(name)) {
+			if (!StringUtils.equals(name, nextJobName)) {
+				int newVersion = version + 1;
+				try {
+					int result = jobDao.updateNextJobName(version, newVersion, name, nextJobName);
+					if (1 == result) {
+						msg = "update job[" + name + "]'s nextJobName[" + nextJobName + "] succeed";
+						responseMsg.setData(newVersion);
+						responseMsg.setIsOk(1);
+					} else {
+						msg = "update job[" + name + "]'s nextJobName[" + nextJobName + "] failed";
+					}
+				} catch (Exception e) {
+					msg = "update job[" + name + "]'s nextJobName[" + nextJobName + "] system exception";
+					log.error(msg, e);
+				}
+			} else {
+				msg = "the job's nextJob must not be own";
+			}
+		} else {
+			msg = "the job's name must not be blank";
+		}
+		log.info(msg);
+		responseMsg.setMsg(msg);
+	}
+
+	public void updateJobSnapshotStatus(ResponseMsg<Integer> responseMsg, int version, String id, int status) {
+		String msg = null;
+		responseMsg.setIsOk(0);
+		if (!StringUtils.isBlank(id)) {
+			int newVersion = version + 1;
+			try {
+				int result = jobSnapshotDao.updateStatus(version, newVersion, id, status);
+				if (1 == result) {
+					msg = "update jobSnapshot's[" + id + "]'s status[" + status + "] succeed";
+					responseMsg.setData(newVersion);
+					responseMsg.setIsOk(1);
+				} else {
+					msg = "update jobSnapshot's[" + id + "]'s status[" + status + "] failed";
+				}
+			} catch (Exception e) {
+				msg = "update jobSnapshot's[" + id + "]'s status[" + status + "] system exception";
+				log.error(msg, e);
+			}
+		} else {
+			msg = "the jobSnapshot's id must not be blank";
 		}
 		log.info(msg);
 		responseMsg.setMsg(msg);

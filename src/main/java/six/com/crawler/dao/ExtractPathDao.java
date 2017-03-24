@@ -28,7 +28,10 @@ public interface ExtractPathDao extends BaseDao{
 	public List<ExtractPath> queryBySite(@Param("siteCode")String siteCode);
 	
 	@SelectProvider(type = ExtractPathDaoProvider.class, method = "query")
-	public List<ExtractPath> query(@Param("pathName")String pathName,@Param("siteCode")String siteCode);
+	public List<ExtractPath> query(@Param("name")String pathName,@Param("siteCode")String siteCode);
+	
+	@SelectProvider(type = ExtractPathDaoProvider.class, method = "fuzzyQuery")
+	public List<ExtractPath> fuzzyQuery(@Param("siteCode")String siteCode,@Param("name")String pathName);
 
 	@InsertProvider(type = ExtractPathDaoProvider.class, method = "batchSave")
 	public int batchSave(@Param(BATCH_SAVE_PARAM)List<ExtractPath> paserResults);

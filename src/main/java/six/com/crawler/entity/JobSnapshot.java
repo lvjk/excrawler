@@ -12,14 +12,14 @@ import six.com.crawler.common.DateFormats;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年2月16日 上午9:32:02
  */
-public class JobSnapshot implements Serializable {
+public class JobSnapshot extends BaseVo implements Serializable {
 
 	private static final long serialVersionUID = -5076089473208316846L;
 	private String id;// id
 	private String name;// 任务名
 	private String nextJobName;// 下一个执行任务
 	private String designatedNodeName;// 指定节点
-	private JobSnapshotState state=JobSnapshotState.READY;// 任务状态
+	private JobSnapshotState status=JobSnapshotState.READY;// 任务状态
 	private String tableName;//数据表名
 	private String queueName;// 任务队列名
 	private String startTime;// 开始时间
@@ -78,16 +78,16 @@ public class JobSnapshot implements Serializable {
 	}
 
 	
-	public int getState() {
-		return state.value();
+	public int getStatus() {
+		return status.value();
 	}
 
-	public JobSnapshotState getEnumState() {
-		return state;
+	public JobSnapshotState getEnumStatus() {
+		return status;
 	}
 	
-	public void setState(int state) {
-		this.state = JobSnapshotState.valueOf(state);
+	public void setStatus(int status) {
+		this.status = JobSnapshotState.valueOf(status);
 	}
 
 	public String getTableName() {

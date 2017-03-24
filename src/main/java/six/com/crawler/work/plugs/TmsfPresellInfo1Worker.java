@@ -119,22 +119,26 @@ public class TmsfPresellInfo1Worker extends AbstractCrawlWorker {
 		Elements buildingidElements = doingPage.getDoc().select(buildingidCss);
 		
 		String presellId = resultContext.getOutResults().get(0).get(Constants.DEFAULT_RESULT_ID);
-		for (Element buildingidElement : buildingidElements) {
-			String buildingid = buildingidElement.attr("href");
-			buildingid = StringUtils.substringBetween(buildingid, "javascript:doBuilding('", "')");
-			String houseInfoUrl = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), formAction);
-			Map<String, Object> paramMap = new HashMap<String, Object>();
-			paramMap.put("sid", sid);
-			paramMap.put("propertyid", propertyid);
-			paramMap.put("tid", tid);
-			paramMap.put("presellid", presellid);
-			paramMap.put("buildingid", buildingid);
-			Page houseInfoPage = new Page(getSite().getCode(), 1, houseInfoUrl, houseInfoUrl);
-			houseInfoPage.setReferer(doingPage.getFinalUrl());
-			houseInfoPage.setMethod(HttpMethod.POST);
-			houseInfoPage.setParameters(paramMap);
-			houseInfoPage.getMetaMap().put("presellId", Arrays.asList(presellId));
-			houseInfoQueue.push(houseInfoPage);
+		if(StringUtils.isBlank(presellId)){
+			throw new RuntimeException("system id is blank");
+		}else{
+			for (Element buildingidElement : buildingidElements) {
+				String buildingid = buildingidElement.attr("href");
+				buildingid = StringUtils.substringBetween(buildingid, "javascript:doBuilding('", "')");
+				String houseInfoUrl = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), formAction);
+				Map<String, Object> paramMap = new HashMap<String, Object>();
+				paramMap.put("sid", sid);
+				paramMap.put("propertyid", propertyid);
+				paramMap.put("tid", tid);
+				paramMap.put("presellid", presellid);
+				paramMap.put("buildingid", buildingid);
+				Page houseInfoPage = new Page(getSite().getCode(), 1, houseInfoUrl, houseInfoUrl);
+				houseInfoPage.setReferer(doingPage.getFinalUrl());
+				houseInfoPage.setMethod(HttpMethod.POST);
+				houseInfoPage.setParameters(paramMap);
+				houseInfoPage.getMetaMap().put("presellId", Arrays.asList(presellId));
+				houseInfoQueue.push(houseInfoPage);
+			}
 		}
 	}
 

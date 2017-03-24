@@ -15,7 +15,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
-import six.com.crawler.node.NodeCommand;
 import six.com.crawler.rpc.handler.ServerAcceptorIdleStateTrigger;
 import six.com.crawler.rpc.handler.ServerHandler;
 import six.com.crawler.rpc.protocol.RpcDecoder;
@@ -30,7 +29,7 @@ public class NettyRpcServer implements RpcServer {
 
 	final static Logger log = LoggerFactory.getLogger(NettyRpcServer.class);
 
-	private Map<String, NodeCommand> registerMap = new ConcurrentHashMap<String, NodeCommand>();
+	private Map<String, RpcService> registerMap = new ConcurrentHashMap<String, RpcService>();
 
 	private ServerAcceptorIdleStateTrigger idleStateTrigger = new ServerAcceptorIdleStateTrigger();
 
@@ -73,17 +72,17 @@ public class NettyRpcServer implements RpcServer {
 	}
 
 	@Override
-	public void register(String commandName, NodeCommand nodeCommand) {
-		registerMap.put(commandName, nodeCommand);
+	public void register(String rpcServiceName, RpcService rpcService) {
+		registerMap.put(rpcServiceName, rpcService);
 	}
 
-	public NodeCommand get(String commandName) {
-		return registerMap.get(commandName);
+	public RpcService get(String rpcServiceName) {
+		return registerMap.get(rpcServiceName);
 	}
 
 	@Override
-	public void remove(String commandName) {
-		registerMap.remove(commandName);
+	public void remove(String rpcServiceName) {
+		registerMap.remove(rpcServiceName);
 	}
 
 	class Runner implements Runnable {

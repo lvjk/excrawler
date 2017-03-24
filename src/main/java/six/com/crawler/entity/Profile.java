@@ -20,7 +20,7 @@ import org.w3c.dom.Node;
 public class Profile {
 
 	public static String getValueStr(Node node) {
-		String text = null;
+		String text = "";
 		if (null != node) {
 			text = node.getNodeValue();
 		}

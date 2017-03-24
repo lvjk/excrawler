@@ -56,7 +56,7 @@ var masterScheduled = {
 			});
 		}
 	},
-
+	
 	/**
 	 * 暂停后只显示 继续和停止
 	 * 

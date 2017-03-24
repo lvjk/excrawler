@@ -55,11 +55,12 @@ public class JobProfile extends Profile {
 				Element jobElement = doc.createElement("job");
 				Job job = jobProfile.getJob();
 				jobElement.setAttribute("name", getValue(job.getName()));
-				jobElement.setAttribute("designatedNodeName", getValue(job.getDesignatedNodeName()));
+				jobElement.setAttribute("nextJobName", getValue(job.getNextJobName()));
 				jobElement.setAttribute("level", getValue(String.valueOf(job.getLevel())));
-				jobElement.setAttribute("workFrequency", getValue(String.valueOf(job.getWorkFrequency())));
-				jobElement.setAttribute("isScheduled", getValue(String.valueOf(job.getIsScheduled())));
+				jobElement.setAttribute("designatedNodeName", getValue(job.getDesignatedNodeName()));
 				jobElement.setAttribute("needNodes", getValue(String.valueOf(job.getNeedNodes())));
+				jobElement.setAttribute("isScheduled", getValue(String.valueOf(job.getIsScheduled())));
+				jobElement.setAttribute("workFrequency", getValue(String.valueOf(job.getWorkFrequency())));
 				jobElement.setAttribute("user", getValue(job.getUser()));
 				
 				if (StringUtils.isNoneBlank(job.getQueueName())) {
@@ -145,11 +146,12 @@ public class JobProfile extends Profile {
 				for (int i = 0; i < jobNodeList.getLength(); i++) {
 					Node jobNode = jobNodeList.item(i);
 					job.setName(getValueStr(jobNode.getAttributes().getNamedItem("name")));
-					job.setDesignatedNodeName(getValueStr(jobNode.getAttributes().getNamedItem("designatedNodeName")));
+					job.setNextJobName(getValueStr(jobNode.getAttributes().getNamedItem("nextJobName")));
 					job.setLevel(getValueInt(jobNode.getAttributes().getNamedItem("level")));
-					job.setWorkFrequency(getValueInt(jobNode.getAttributes().getNamedItem("workFrequency")));
-					job.setIsScheduled(getValueInt(jobNode.getAttributes().getNamedItem("isScheduled")));
+					job.setDesignatedNodeName(getValueStr(jobNode.getAttributes().getNamedItem("designatedNodeName")));
 					job.setNeedNodes(getValueInt(jobNode.getAttributes().getNamedItem("needNodes")));
+					job.setIsScheduled(getValueInt(jobNode.getAttributes().getNamedItem("isScheduled")));
+					job.setWorkFrequency(getValueInt(jobNode.getAttributes().getNamedItem("workFrequency")));
 					job.setUser(getValueStr(jobNode.getAttributes().getNamedItem("user")));
 					NodeList jobChildNodes = jobNode.getChildNodes();
 					for (int j = 0; j < jobChildNodes.getLength(); j++) {

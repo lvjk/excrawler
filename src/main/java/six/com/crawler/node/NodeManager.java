@@ -24,6 +24,7 @@ import six.com.crawler.email.QQEmailClient;
 import six.com.crawler.entity.Node;
 import six.com.crawler.entity.NodeType;
 import six.com.crawler.rpc.NettyRpcServer;
+import six.com.crawler.rpc.RpcService;
 import six.com.crawler.rpc.protocol.RpcRequest;
 import six.com.crawler.rpc.protocol.RpcResponse;
 import six.com.crawler.rpc.NettyRpcCilent;
@@ -88,12 +89,7 @@ public class NodeManager implements InitializingBean {
 		int trafficPort = getCurrentNode().getTrafficPort();
 		nettyRpcServer = new NettyRpcServer(localHost, trafficPort);
 		nettyRpcCilent = new NettyRpcCilent();
-		register("getCurrentNode", new NodeCommand() {
-			@Override
-			public Object execute(Object param) {
-				return getCurrentNode();
-			}
-		});
+		register("getCurrentNode",ob->getCurrentNode());
 	}
 
 	protected void initZKClient() {
@@ -259,9 +255,9 @@ public class NodeManager implements InitializingBean {
 		return rpcResponse.getResult();
 	}
 
-	public void register(String commandName, NodeCommand nodeCommand) {
-		nettyRpcServer.register(commandName, nodeCommand);
-		log.info("register nodeCommand:" + commandName);
+	public void register(String rpcServiceName, RpcService rpcService) {
+		nettyRpcServer.register(rpcServiceName, rpcService);
+		log.info("register nodeCommand:" + rpcServiceName);
 	}
 
 	public void remove(String commandName) {

@@ -17,7 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import six.com.crawler.dao.SiteDao;
 import six.com.crawler.entity.Site;
 import six.com.crawler.entity.SiteProfile;
-import six.com.crawler.service.ExtracterService;
+import six.com.crawler.service.ExtractPathService;
 import six.com.crawler.service.SiteService;
 import six.com.crawler.work.extract.ExtractPath;
 
@@ -35,7 +35,7 @@ public class SiteServiceImpl implements SiteService {
 	private SiteDao siteDao;
 
 	@Autowired
-	private ExtracterService extracterService;
+	private ExtractPathService extracterService;
 
 	public List<Site> querySites(int pageIndex, int pageSize) {
 		List<Site> sites = siteDao.querySites(pageIndex, pageSize);
@@ -122,11 +122,11 @@ public class SiteServiceImpl implements SiteService {
 		this.siteDao = siteDao;
 	}
 
-	public ExtracterService getExtracterService() {
+	public ExtractPathService getExtracterService() {
 		return extracterService;
 	}
 
-	public void setExtracterService(ExtracterService extracterService) {
+	public void setExtracterService(ExtractPathService extracterService) {
 		this.extracterService = extracterService;
 	}
 

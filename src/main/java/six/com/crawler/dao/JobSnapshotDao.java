@@ -18,17 +18,49 @@ public interface JobSnapshotDao extends BaseDao{
 
 	String TABLE_NAME="ex_crawler_platform_job_snapshot";
 	
+	/**
+	 * 通过任务名称查询 任务的运行记录 集合
+	 * @param jobName
+	 * @return 任务的运行记录 集合
+	 */
 	@SelectProvider(type = JobSnapshotDaoProvider.class, method = "query")
 	public List<JobSnapshot> query(String jobName);
 	
+	/**
+	 * 通过任务名称查询 任务的最后一条运行记录
+	 * @param jobName
+	 * @return 最后一条运行记录
+	 */
 	@SelectProvider(type = JobSnapshotDaoProvider.class, method = "queryLast")
 	public JobSnapshot queryLast(@Param("jobName")String jobName);
 	
+	/**
+	 * 保存任务运行记录
+	 * @param jobSnapshot
+	 * @return 受影响数据的条数
+	 */
 	@InsertProvider(type = JobSnapshotDaoProvider.class, method = "save")
 	public int save(JobSnapshot jobSnapshot);
 	
-	
+	/**
+	 * 更新任务运行记录
+	 * @param jobSnapshot
+	 * @return 受影响数据的条数
+	 */
 	@InsertProvider(type = JobSnapshotDaoProvider.class, method = "update")
 	public int update(JobSnapshot jobSnapshot);
+	
+	
+	/**
+	 * 更新任务运行记录的状态
+	 * @param id 
+	 * @param status
+	 * @return 受影响数据的条数
+	 */
+	@InsertProvider(type = JobSnapshotDaoProvider.class, method = "updateStatus")
+	public int updateStatus(@Param("version")int version,
+							@Param("newVersion")int newVersion,
+							@Param("id")String id,
+							@Param("status")int status);
 		
 }

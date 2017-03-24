@@ -1,28 +1,31 @@
 package six.com.crawler.rpc;
 
-import six.com.crawler.node.NodeCommand;
-
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
- * @date 创建时间：2017年3月20日 上午10:03:05 集群命令 Server
+ * @date 创建时间：2017年3月20日 上午10:03:05 
+ *    rpc Server
  */
 public interface RpcServer {
 
 	/**
-	 * 注册节点命令
-	 * 
-	 * @param nodeCommand
+	 * 注册rpc service
+	 * @param rpcServiceName
+	 * @param rpcService
 	 */
-	public void register(String commandName, NodeCommand nodeCommand);
+	public void register(String rpcServiceName, RpcService rpcService);
 	
 	
-	public NodeCommand get(String commandName);
+	/**
+	 * 通过rpcServiceName 获取 RpcService
+	 * @param rpcServiceName
+	 * @return
+	 */
+	public RpcService get(String rpcServiceName);
 
 	/**
-	 * 移除节点命令
-	 * 
-	 * @param nodeCommand
+	 * 通过rpcServiceName 移除指定 RpcService
+	 * @param rpcServiceName
 	 */
-	public void remove(String commandName);
+	public void remove(String rpcServiceName);
 }

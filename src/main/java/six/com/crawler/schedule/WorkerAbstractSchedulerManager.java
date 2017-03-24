@@ -3,8 +3,6 @@ package six.com.crawler.schedule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import six.com.crawler.node.NodeCommand;
-
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
@@ -16,45 +14,30 @@ public abstract class WorkerAbstractSchedulerManager extends AbstractSchedulerMa
 
 	protected final void init() {
 		doInit();
-		getNodeManager().register(ScheduledJobCommand.execute, new NodeCommand() {
-			@Override
-			public Object execute(Object param) {
-				String jobName = (String) param;
-				WorkerAbstractSchedulerManager.this.execute(jobName);
-				return null;
-			}
+		getNodeManager().register(ScheduledJobCommand.execute, param-> {
+			String jobName = (String) param;
+			WorkerAbstractSchedulerManager.this.execute(jobName);
+			return null;
 		});
-		getNodeManager().register(ScheduledJobCommand.suspend, new NodeCommand() {
-			@Override
-			public Object execute(Object param) {
-				String jobName = (String) param;
-				WorkerAbstractSchedulerManager.this.suspend(jobName);
-				return null;
-			}
+		getNodeManager().register(ScheduledJobCommand.suspend,param-> {
+			String jobName = (String) param;
+			WorkerAbstractSchedulerManager.this.suspend(jobName);
+			return null;
 		});
-		getNodeManager().register(ScheduledJobCommand.goOn, new NodeCommand() {
-			@Override
-			public Object execute(Object param) {
-				String jobName = (String) param;
-				WorkerAbstractSchedulerManager.this.goOn(jobName);
-				return null;
-			}
+		getNodeManager().register(ScheduledJobCommand.goOn,param-> {
+			String jobName = (String) param;
+			WorkerAbstractSchedulerManager.this.goOn(jobName);
+			return null;
 		});
-		getNodeManager().register(ScheduledJobCommand.stop, new NodeCommand() {
-			@Override
-			public Object execute(Object param) {
-				String jobName = (String) param;
-				WorkerAbstractSchedulerManager.this.stop(jobName);
-				return null;
-			}
+		getNodeManager().register(ScheduledJobCommand.stop,param->{
+			String jobName = (String) param;
+			WorkerAbstractSchedulerManager.this.stop(jobName);
+			return null;
 		});
 
-		getNodeManager().register(ScheduledJobCommand.stopAll, new NodeCommand() {
-			@Override
-			public Object execute(Object param) {
-				WorkerAbstractSchedulerManager.this.stopAll();
-				return null;
-			}
+		getNodeManager().register(ScheduledJobCommand.stopAll,parma->{
+			WorkerAbstractSchedulerManager.this.stopAll();
+			return null;
 		});
 	}
 

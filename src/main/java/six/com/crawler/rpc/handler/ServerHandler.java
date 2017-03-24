@@ -6,8 +6,8 @@ import org.slf4j.LoggerFactory;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import six.com.crawler.node.NodeCommand;
 import six.com.crawler.rpc.RpcServer;
+import six.com.crawler.rpc.RpcService;
 import six.com.crawler.rpc.Signal;
 import six.com.crawler.rpc.Signals;
 import six.com.crawler.rpc.protocol.RpcMsg;
@@ -46,13 +46,13 @@ public class ServerHandler extends SimpleChannelInboundHandler<RpcMsg> {
 	}
 
 	private RpcResponse processRequest(ChannelHandlerContext ctx, RpcRequest rpcRequest) {
-		NodeCommand nodeCommand = rpcServer.get(rpcRequest.getCommand());
+		RpcService rpcService = rpcServer.get(rpcRequest.getCommand());
 		RpcResponse rpcResponse = new RpcResponse();
 		rpcResponse.setId(rpcRequest.getId());
-		if (null != nodeCommand) {
+		if (null != rpcService) {
 			log.info("server received coommand[" + rpcRequest.getCommand() + "] from " + rpcRequest.getOriginHost());
 			try {
-				Object result = nodeCommand.execute(rpcRequest.getParam());
+				Object result = rpcService.execute(rpcRequest.getParam());
 				rpcResponse.setSucceed(true);
 				rpcResponse.setResult(result);
 			} catch (Exception e) {

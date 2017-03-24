@@ -151,4 +151,13 @@ public class JobDaoProvider extends BaseProvider {
 		sql.WHERE("name = #{name} and version = #{version}");
 		return sql.toString();
 	}
+	
+	public String updateNextJobName(Map<String, Object> queryParams) {
+		SQL sql=new SQL();
+		sql.UPDATE(JobDao.TABLE_NAME);
+		sql.SET("`version` = #{newVersion}");
+		sql.SET("nextJobName = #{nextJobName}");
+		sql.WHERE("name = #{name} and version = #{version}");
+		return sql.toString();
+	}
 }

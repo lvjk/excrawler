@@ -124,10 +124,12 @@ public interface JobService extends DownloadAndUploadService {
 	 */
 	public List<ExtractItem> queryExtractItems(String jobName);
 	
-	
 	public void updateIsScheduled(ResponseMsg<Integer> responseMsg,int version, String name, int isScheduled);
 	
-	
 	public void updateCronTrigger(ResponseMsg<Integer> responseMsg,int version,String name,String cronTrigger);
-
+	
+	public void updateNextJobName(ResponseMsg<Integer> responseMsg,int version,String name,String nextJobName);
+	
+	public void updateJobSnapshotStatus(ResponseMsg<Integer> responseMsg,int version, String id, int status);
+	
 }

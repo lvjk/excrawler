@@ -31,7 +31,7 @@ public class ExtractPathDaoProvider extends BaseProvider{
 			+ "replaceWord,"
 			+ "replaceValue,"
 			+ "extractEmptyCount,"
-			+ "`describe`";
+			+ "`describe` ";
 	
 	public String queryBySite(String siteCode) {
 		SQL sql = new SQL();
@@ -42,15 +42,24 @@ public class ExtractPathDaoProvider extends BaseProvider{
 		return sql.toString();
 	}
 	
-	
 	public String query(Map<String,Object> param) {
 		SQL sql = new SQL();
 		sql.SELECT(columns);
 		sql.FROM(ExtractPathDao.TABLE_NAME);
-		sql.WHERE("`name`=#{pathName}");
+		sql.WHERE("`name`=#{name}");
 		sql.AND().WHERE("siteCode=#{siteCode}");
 		sql.ORDER_BY("ranking asc");
 		return sql.toString();
+	}
+	
+	public String fuzzyQuery(Map<String,Object> params) {
+		String sql="		select "
+				+columns
+				+ "       from "+ExtractPathDao.TABLE_NAME
+				+ "      where `siteCode` like concat(#{siteCode},'%')"
+				+ "      or `name` like concat(#{name},'%')"
+				+ "      order by ranking asc ";
+		return sql;
 	}
 	
 	

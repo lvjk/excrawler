@@ -98,8 +98,8 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	 */
 	public boolean isRunning(String jobName) {
 		JobSnapshot jobSnapshot = getJobSnapshot(jobName);
-		return null != jobSnapshot && (jobSnapshot.getEnumState() == JobSnapshotState.EXECUTING
-				|| jobSnapshot.getEnumState() == JobSnapshotState.SUSPEND);
+		return null != jobSnapshot && (jobSnapshot.getEnumStatus() == JobSnapshotState.EXECUTING
+				|| jobSnapshot.getEnumStatus() == JobSnapshotState.SUSPEND);
 	}
 
 
