@@ -48,7 +48,7 @@ public class BJJSPreSalePorjectListWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void insideInit() {
-		projectInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "bjjs_project_info");
+		projectInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "bjjs_gov_project_info");
 		Page firstPage = buildPage(pageIndex, refererUrl);// 初始化第一页
 		getWorkQueue().clear();
 		getWorkQueue().push(firstPage);
