@@ -1,6 +1,5 @@
 package six.com.crawler.rpc;
 
-import six.com.crawler.node.NodeCommand;
 import six.com.crawler.rpc.NettyRpcServer;
 
 /**
@@ -12,12 +11,7 @@ public class HttpNodeCommandServerTest {
 
 	public static void main(String[] a) throws InterruptedException {
 		NettyRpcServer server = new NettyRpcServer("192.168.12.80", 8180);
-		server.register("test", new NodeCommand() {
-			@Override
-			public Object execute(Object param) {
-				return "处理结果:" + System.currentTimeMillis();
-			}
-		});
+		server.register("test", param -> "处理结果:" + param.toString() + "-" + System.currentTimeMillis());
 		synchronized (server) {
 			server.wait();
 		}

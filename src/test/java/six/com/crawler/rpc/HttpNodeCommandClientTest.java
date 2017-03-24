@@ -1,7 +1,6 @@
 package six.com.crawler.rpc;
 
 import six.com.crawler.rpc.NettyRpcCilent;
-import six.com.crawler.rpc.protocol.RpcProtocol;
 import six.com.crawler.rpc.protocol.RpcRequest;
 import six.com.crawler.rpc.protocol.RpcResponse;
 import six.com.crawler.utils.ThreadUtils;
@@ -14,26 +13,32 @@ import six.com.crawler.utils.ThreadUtils;
 public class HttpNodeCommandClientTest {
 	public static void main(String[] a) throws InterruptedException {
 		NettyRpcCilent client = new NettyRpcCilent();
-		for (int i = 0; i < 2; i++) {
+		int requestCount=10000;
+		long allTime=0;
+		for (int i = 0; i <requestCount; i++) {
 			String id = "192.168.12.80@192.168.12.80:" + 8180 + "/test/" + System.currentTimeMillis();
 			RpcRequest rpcRequest = new RpcRequest();
 			rpcRequest.setId(id);
-			rpcRequest.setType(RpcProtocol.REQUEST);
 			rpcRequest.setOriginHost("192.168.12.80");
 			rpcRequest.setCallHost("192.168.12.80");
 			rpcRequest.setCallPort(8180);
 			rpcRequest.setCommand("test");
 			rpcRequest.setParam("test");
+			
 			try {
+				long startTime=System.currentTimeMillis();
 				RpcResponse rpcResponse = client.execute(rpcRequest);
+				long endTime=System.currentTimeMillis();
+				long totalTime=endTime-startTime;
+				allTime+=totalTime;
 				if (null != rpcResponse) {
-					System.out.println(rpcResponse.getResult());
+					System.out.println("result:"+rpcResponse.getResult()+"|消耗时间:"+totalTime);
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
-		ThreadUtils.sleep(1000000000);
+		System.out.println("总消耗时间:"+allTime);
 		client.destroy();
 	}
 }

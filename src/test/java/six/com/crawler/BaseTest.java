@@ -12,7 +12,7 @@ import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import six.com.crawler.schedule.MasterSchedulerManager;
-import six.com.crawler.service.ExtracterService;
+import six.com.crawler.service.ExtractPathService;
 import six.com.crawler.service.HttpPorxyService;
 import six.com.crawler.service.JobService;
 import six.com.crawler.service.SiteService;
@@ -48,7 +48,7 @@ public  class BaseTest extends AbstractJUnit4SpringContextTests {
 	public SiteService siteService;
 
 	@Autowired
-	public ExtracterService paserPathService;
+	public ExtractPathService paserPathService;
 
 	@Autowired
 	public HttpPorxyService httpPorxyService;

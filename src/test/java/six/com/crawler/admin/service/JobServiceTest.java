@@ -98,7 +98,7 @@ public class JobServiceTest extends BaseTest {
 		JobSnapshot jobSnapshot = new JobSnapshot();
 		jobSnapshot.setId(jobName + "_" + System.currentTimeMillis());
 		jobSnapshot.setName(jobName);
-		jobSnapshot.setState(JobSnapshotState.READY.value());
+		jobSnapshot.setStatus(JobSnapshotState.READY.value());
 		jobSnapshot.setStartTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
 		jobSnapshot.setEndTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
 		jobSnapshot.setTotalProcessCount(50);
