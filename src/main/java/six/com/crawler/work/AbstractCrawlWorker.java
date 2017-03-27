@@ -197,8 +197,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 				onComplete(doingPage, resultContext);
 				LOG.info("finished processor page:" + doingPage.getOriginalUrl());
 			} catch (Exception e) {
-				LOG.error("process page err:" +doingPage.getOriginalUrl());
-				throw e;
+				throw new RuntimeException("process page err:" +doingPage.getOriginalUrl(),e);
 			}
 		} else {
 			// 没有处理数据时 设置 state == WorkerLifecycleState.FINISHED

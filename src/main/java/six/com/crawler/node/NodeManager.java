@@ -89,7 +89,7 @@ public class NodeManager implements InitializingBean {
 		int trafficPort = getCurrentNode().getTrafficPort();
 		nettyRpcServer = new NettyRpcServer(localHost, trafficPort);
 		nettyRpcCilent = new NettyRpcCilent();
-		register("getCurrentNode",ob->getCurrentNode());
+		register("getCurrentNode", ob -> getCurrentNode());
 	}
 
 	protected void initZKClient() {
@@ -165,6 +165,10 @@ public class NodeManager implements InitializingBean {
 		log.info("the node[" + nodeName + "] type:" + nodeType);
 	}
 
+	/**
+	 * 获取主节点
+	 * @return
+	 */
 	public Node getMasterNode() {
 		Node masterNode = null;
 		if (getCurrentNode().getType() != NodeType.SINGLE) {
@@ -184,6 +188,10 @@ public class NodeManager implements InitializingBean {
 		return masterNode;
 	}
 
+	/**
+	 * 获取所有工作节点
+	 * @return
+	 */
 	public List<Node> getWorkerNodes() {
 		List<Node> allNodes = new ArrayList<>();
 		if (getCurrentNode().getType() != NodeType.SINGLE) {
@@ -204,6 +212,11 @@ public class NodeManager implements InitializingBean {
 		return allNodes;
 	}
 
+	/**
+	 * 通过节点名获取节点
+	 * @param nodeName
+	 * @return
+	 */
 	public Node getWorkerNode(String nodeName) {
 		Node workerNode = null;
 		if (getCurrentNode().getType() != NodeType.SINGLE) {
@@ -219,6 +232,11 @@ public class NodeManager implements InitializingBean {
 		return workerNode;
 	}
 
+	/**
+	 * 获取空闲可用节点
+	 * @param needFresNodes
+	 * @return
+	 */
 	public List<Node> getFreeWorkerNodes(int needFresNodes) {
 		List<Node> freeNodes = new ArrayList<>(needFresNodes);
 		List<Node> allWorkerNodes = getWorkerNodes();
@@ -226,7 +244,7 @@ public class NodeManager implements InitializingBean {
 			if (workerNode.getType() != NodeType.MASTER) {
 				Node newestNode = null;
 				if (!getCurrentNode().equals(workerNode)) {
-					newestNode = (Node) execute(workerNode, "getCurrentNode", null);
+					newestNode = getNewestNode(workerNode);
 				} else {
 					newestNode = getCurrentNode();
 				}
@@ -241,9 +259,25 @@ public class NodeManager implements InitializingBean {
 		return freeNodes;
 	}
 
+	/**
+	 * 获取目标节点最新信息
+	 * @param targetNode
+	 * @return
+	 */
+	public Node getNewestNode(Node targetNode) {
+		Node newestNode = (Node) execute(targetNode, "getCurrentNode", null);
+		return newestNode;
+	}
+
+	/**
+	 * 调用节点服务
+	 * @param node
+	 * @param commandName
+	 * @param param
+	 * @return
+	 */
 	public Object execute(Node node, String commandName, Object param) {
-		String id = getCurrentNode().getHost() + "@" + node.getHost() + ":" + node.getTrafficPort() + "/" + commandName
-				+ "/" + System.currentTimeMillis();
+		String id =getRequestId(node, commandName);
 		RpcRequest rpcRequest = new RpcRequest();
 		rpcRequest.setId(id);
 		rpcRequest.setCommand(commandName);
@@ -254,12 +288,33 @@ public class NodeManager implements InitializingBean {
 		RpcResponse rpcResponse = nettyRpcCilent.execute(rpcRequest);
 		return rpcResponse.getResult();
 	}
+	
+	/**
+	 * 生成请求Id
+	 * @param node
+	 * @param commandName
+	 * @return
+	 */
+	private String getRequestId(Node node, String commandName){
+		String id = getCurrentNode().getHost() + "@" + node.getHost() + ":" + node.getTrafficPort() + "/" + commandName
+				+ "/" + System.currentTimeMillis();
+		return id;
+	}
 
+	/**
+	 * 注册节点服务
+	 * @param rpcServiceName
+	 * @param rpcService
+	 */
 	public void register(String rpcServiceName, RpcService rpcService) {
 		nettyRpcServer.register(rpcServiceName, rpcService);
 		log.info("register nodeCommand:" + rpcServiceName);
 	}
 
+	/**
+	 * 移除节点服务
+	 * @param commandName
+	 */
 	public void remove(String commandName) {
 		nettyRpcServer.remove(commandName);
 		log.info("remove nodeCommand:" + commandName);

@@ -26,28 +26,28 @@ public class NodeManagerServiceImpl implements NodeManagerService {
 	@Autowired
 	private NodeManager clusterManager;
 
-	public Node getCurrentNode(){
+	public Node getCurrentNode() {
 		return clusterManager.getCurrentNode();
 	}
-	
+
 	@Override
 	public List<Node> getClusterInfo() {
-		List<Node> allNodes=new ArrayList<>();
-		Node masterNode=clusterManager.getMasterNode();
-		if(null!=masterNode){
+		List<Node> allNodes = new ArrayList<>();
+		Node masterNode = clusterManager.getMasterNode();
+		if (null != masterNode) {
 			allNodes.add(masterNode);
 		}
 		List<Node> workerNodes = clusterManager.getWorkerNodes();
-		if(null!=workerNodes){
-			for(Node workerNode:workerNodes){
-				if(!allNodes.contains(workerNode)){
-					allNodes.add(workerNode);
+		if (null != workerNodes) {
+			for (Node workerNode : workerNodes) {
+				if (!allNodes.contains(workerNode)) {
+					Node newestNode = clusterManager.getNewestNode(workerNode);
+					allNodes.add(newestNode);
 				}
 			}
 		}
 		return allNodes;
 	}
-
 
 	public NodeManager getClusterManager() {
 		return clusterManager;

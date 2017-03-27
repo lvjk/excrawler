@@ -181,8 +181,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 	public void execute(String jobName) {
 		Job job = getJobDao().query(jobName);
 		if (null != job) {
-			String id = job.getName() + "_"
-					+ DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_2);
+			String id =DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_2);
 			JobSnapshot jobSnapshot = new JobSnapshot();
 			jobSnapshot.setId(id);
 			jobSnapshot.setName(job.getName());

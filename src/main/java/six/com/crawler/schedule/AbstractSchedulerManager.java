@@ -37,7 +37,7 @@ import six.com.crawler.work.WorkerLifecycleState;
  */
 public abstract class AbstractSchedulerManager implements SchedulerManager, InitializingBean {
 
-	private final static String WORKER_NAME_PREFIX = "job_worker";
+	private final static String WORKER_NAME_PREFIX = "worker";
 	
 	@Autowired
 	private SpiderConfigure configure;
@@ -233,8 +233,8 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		Long sernum = getRedisManager().incr(key);
 		int serialNumber = sernum.intValue();
 		StringBuilder sbd = new StringBuilder();
-		sbd.append(WORKER_NAME_PREFIX).append("_");
 		sbd.append(job.getName()).append("_");
+		sbd.append(WORKER_NAME_PREFIX).append("_");
 		sbd.append(serialNumber);
 		return sbd.toString();
 	}

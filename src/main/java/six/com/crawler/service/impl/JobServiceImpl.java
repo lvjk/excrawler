@@ -109,7 +109,9 @@ public class JobServiceImpl implements JobService {
 				Job job = null;
 				for (JobSnapshot jobSnapshot : jobSnapshots) {
 					job = jobDao.query(jobSnapshot.getName());
-					jobs.add(job);
+					if(null!=job){
+						jobs.add(job);
+					}
 				}
 			}
 			// 如果查询的运行job小于分页数量那么 再查询数据库补充 pageSize

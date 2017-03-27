@@ -105,7 +105,7 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected boolean insideOnError(Exception t, Page doingPage) {
-		if (t instanceof DifferentPages) {
+		if (null!=t.getCause()&&t.getCause() instanceof DifferentPages) {
 			projectInfo1Queue.push(doingPage);
 			getWorkQueue().finish(doingPage);
 			return true;
