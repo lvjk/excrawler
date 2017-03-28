@@ -2,9 +2,6 @@ package six.com.crawler.work.extract;
 
 import java.io.Serializable;
 
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-
 /**
  * @author sixliu E-mail:359852326@qq.com
  * @version 创建时间：2016年5月16日 下午9:14:46 类说明 页面数据类型
@@ -13,26 +10,31 @@ import javax.xml.bind.annotation.XmlElement;
 public class ExtractItem implements Serializable {
 
 	private static final long serialVersionUID = 5530674966621099301L;
-	
+
 	private String jobName;// job名字
-	
-	private int serialNub;//抽取顺序
-	
+
+	private int serialNub;// 抽取顺序
+
 	private String pathName;// 名字
-	
-	private int primary;//是否是主键 0:不是 1是
-	
+
+	private int primary;// 是否是主键 0:不是 1是
+
 	private ExtractItemType type;// 类型
-	
+
+	/**
+	 * 0：不输出
+	 * 1:输出至保存 
+	 * 2:输出到生成新page meta中 
+	 * 3:url类型生成新page并输出到对了中
+	 */
 	private int outputType;
-	
+
 	private String outputKey;// 结果 key
-	
-	private int mustHaveResult;// 是否必须有值 1 ：必须有值   
-	
+
+	private int mustHaveResult;// 是否必须有值 1 ：必须有值
+
 	private String describe;// 描述
-	
-	@XmlAttribute
+
 	public String getJobName() {
 		return jobName;
 	}
@@ -40,8 +42,7 @@ public class ExtractItem implements Serializable {
 	public void setJobName(String jobName) {
 		this.jobName = jobName;
 	}
-	
-	@XmlAttribute
+
 	public int getSerialNub() {
 		return serialNub;
 	}
@@ -49,8 +50,7 @@ public class ExtractItem implements Serializable {
 	public void setSerialNub(int serialNub) {
 		this.serialNub = serialNub;
 	}
-	
-	@XmlAttribute
+
 	public String getPathName() {
 		return pathName;
 	}
@@ -59,7 +59,6 @@ public class ExtractItem implements Serializable {
 		this.pathName = pathName;
 	}
 
-	@XmlAttribute
 	public int getPrimary() {
 		return primary;
 	}
@@ -67,8 +66,7 @@ public class ExtractItem implements Serializable {
 	public void setPrimary(int primary) {
 		this.primary = primary;
 	}
-	
-	@XmlAttribute
+
 	public int getType() {
 		return type.value();
 	}
@@ -77,7 +75,6 @@ public class ExtractItem implements Serializable {
 		this.type = ExtractItemType.valueOf(type);
 	}
 
-	@XmlAttribute
 	public int getOutputType() {
 		return outputType;
 	}
@@ -85,9 +82,7 @@ public class ExtractItem implements Serializable {
 	public void setOutputType(int outputType) {
 		this.outputType = outputType;
 	}
-	
 
-	@XmlAttribute
 	public String getOutputKey() {
 		return outputKey;
 	}
@@ -100,12 +95,10 @@ public class ExtractItem implements Serializable {
 		return mustHaveResult;
 	}
 
-	@XmlAttribute
 	public void setMustHaveResult(int mustHaveResult) {
-		this.mustHaveResult =mustHaveResult;
+		this.mustHaveResult = mustHaveResult;
 	}
 
-	@XmlElement(name = "describe")
 	public String getDescribe() {
 		return describe;
 	}

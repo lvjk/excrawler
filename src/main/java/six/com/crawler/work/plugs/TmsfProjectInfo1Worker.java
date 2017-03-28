@@ -11,8 +11,9 @@ import six.com.crawler.entity.Page;
 import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.Constants;
+
 import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.extract.Extracter;
 
 /** 
 * @author  作者 
@@ -101,7 +102,7 @@ public class TmsfProjectInfo1Worker extends AbstractCrawlWorker{
 	@Override
 	protected void onComplete(Page doingPage, ResultContext resultContext) {
 		List<String> sellControlUrls = resultContext.getExtractResult("sellControlUrl_1");
-		String projectId = resultContext.getOutResults().get(0).get(Constants.DEFAULT_RESULT_ID);
+		String projectId = resultContext.getOutResults().get(0).get(Extracter.DEFAULT_RESULT_ID);
 		if(StringUtils.isBlank(projectId)){
 			throw new RuntimeException("system id is blank");
 		}else{

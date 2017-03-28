@@ -55,17 +55,17 @@ public class SiteProfile extends Profile {
 				Element siteElement = doc.createElement("site");
 				Site site = siteProfile.getSite();
 				siteElement.setAttribute("code", getValue(site.getCode()));
-				if (StringUtils.isNoneBlank(site.getMainUrl())) {
+				if (StringUtils.isNotBlank(site.getMainUrl())) {
 					Element mainUrlElement = doc.createElement("mainUrl");
 					mainUrlElement.setTextContent(site.getMainUrl());
 					siteElement.appendChild(mainUrlElement);
 				}
-
-				if (StringUtils.isNoneBlank(site.getDescribe())) {
+				if (StringUtils.isNotBlank(site.getDescribe())) {
 					Element describeElement = doc.createElement("describe");
 					describeElement.setTextContent(site.getDescribe());
 					siteElement.appendChild(describeElement);
 				}
+				
 				root.appendChild(siteElement);
 				if (null != siteProfile.getExtractPaths()) {
 					for (ExtractPath extractPath : siteProfile.getExtractPaths()) {
@@ -79,41 +79,54 @@ public class SiteProfile extends Profile {
 						extractPathElement.setAttribute("appendEnd", getValue(extractPath.getAppendEnd()));
 						extractPathElement.setAttribute("compareAttName", getValue(extractPath.getCompareAttName()));
 						extractPathElement.setAttribute("containKeyWord", getValue(extractPath.getContainKeyWord()));
-						if (StringUtils.isNoneBlank(extractPath.getPath())) {
+						if (StringUtils.isNotBlank(extractPath.getPath())) {
 							Element pathElement = doc.createElement("path");
 							pathElement.setTextContent(extractPath.getPath());
 							extractPathElement.appendChild(pathElement);
 						}
-						if (StringUtils.isNoneBlank(extractPath.getFilterPath())) {
+						
+						
+						if (StringUtils.isNotBlank(extractPath.getFilterPath())) {
 							Element filterPathElement = doc.createElement("filterPath");
 							filterPathElement.setTextContent(extractPath.getFilterPath());
 							extractPathElement.appendChild(filterPathElement);
 						}
-						if (StringUtils.isNoneBlank(extractPath.getSubstringStart())) {
+						
+						if (StringUtils.isNotBlank(extractPath.getSubstringStart())) {
 							Element substringStartElement = doc.createElement("substringStart");
 							substringStartElement.setTextContent(extractPath.getSubstringStart());
 							extractPathElement.appendChild(substringStartElement);
 						}
-						if (StringUtils.isNoneBlank(extractPath.getSubstringEnd())) {
+						
+						
+						if (StringUtils.isNotBlank(extractPath.getSubstringEnd())) {
 							Element substringEndElement = doc.createElement("substringEnd");
 							substringEndElement.setTextContent(extractPath.getSubstringEnd());
 							extractPathElement.appendChild(substringEndElement);
 						}
-						if (StringUtils.isNoneBlank(extractPath.getReplaceWord())) {
+						
+						
+						if (StringUtils.isNotBlank(extractPath.getReplaceWord())) {
 							Element replaceWordElement = doc.createElement("replaceWord");
 							replaceWordElement.setTextContent(extractPath.getReplaceWord());
 							extractPathElement.appendChild(replaceWordElement);
 						}
-						if (StringUtils.isNoneBlank(extractPath.getReplaceValue())) {
+						
+						
+						if (StringUtils.isNotBlank(extractPath.getReplaceValue())) {
 							Element replaceValueElement = doc.createElement("replaceValue");
 							replaceValueElement.setTextContent(extractPath.getReplaceValue());
 							extractPathElement.appendChild(replaceValueElement);
 						}
-						if (StringUtils.isNoneBlank(extractPath.getDescribe())) {
-							Element describeElement = doc.createElement("describe");
-							describeElement.setTextContent(extractPath.getDescribe());
-							extractPathElement.appendChild(describeElement);
+						
+						
+						if (StringUtils.isNotBlank(extractPath.getDescribe())) {
+							Element pathDescribeElement = doc.createElement("describe");
+							pathDescribeElement.setTextContent(extractPath.getDescribe());
+							extractPathElement.appendChild(pathDescribeElement);
 						}
+						
+						
 						root.appendChild(extractPathElement);
 					}
 				}

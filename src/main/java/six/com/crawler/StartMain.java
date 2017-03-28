@@ -18,7 +18,7 @@ import six.com.crawler.node.NodeManager;
  * @author six
  * @date 2016年5月30日 下午2:47:46 程序启动入口类
  * 
- *       整个系统分层
+ *       整个系统分层:
  *       <p>
  *       对外api层
  *       </p>

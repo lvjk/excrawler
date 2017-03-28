@@ -8,7 +8,7 @@ import org.openqa.selenium.WebElement;
 import six.com.crawler.entity.HttpProxy;
 import six.com.crawler.entity.Page;
 import six.com.crawler.http.HttpResult;
-import six.com.crawler.work.exception.DownerException;
+import six.com.crawler.work.downer.exception.DownerException;
 
 /**
  * @author 作者

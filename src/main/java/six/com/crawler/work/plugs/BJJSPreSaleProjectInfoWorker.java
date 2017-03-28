@@ -13,8 +13,8 @@ import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.Constants;
 import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.extract.Extracter;
 
 /**
  * 
@@ -61,7 +61,7 @@ public class BJJSPreSaleProjectInfoWorker  extends AbstractCrawlWorker{
 		Elements els=doc.select(rowcountCss);
 		if(null!=els){
 			int rowcount=Integer.parseInt(StringUtils.substringBetween(els.text(), "共有", "个楼栋信息").trim());
-			String pid = resultContext.getOutResults().get(0).get(Constants.DEFAULT_RESULT_ID);
+			String pid = resultContext.getOutResults().get(0).get(Extracter.DEFAULT_RESULT_ID);
 			String url=unitUrlTemplate+"&id="+projectId+"&rowcount="+rowcount;
 			Page unitUrlPage=new Page(getSite().getCode(),1,url,url);
 			unitUrlPage.setReferer(doingPage.getFinalUrl());

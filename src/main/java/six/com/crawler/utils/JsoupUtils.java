@@ -32,6 +32,14 @@ public class JsoupUtils {
 		charSet.add('\t');
 	}
 
+	public static Elements select(Document doc, String cssQuery) {
+		Elements result = null;
+		if (null != doc) {
+			result = doc.select(cssQuery);
+		}
+		return result;
+	}
+
 	/**
 	 * 抽取
 	 * 
@@ -43,7 +51,7 @@ public class JsoupUtils {
 	 */
 	public static List<String> extract(Document doc, ExtractPath path) {
 		List<String> resultList = new ArrayList<String>();
-		boolean isAdd=false;
+		boolean isAdd = false;
 		Elements htmlElements = doc.getAllElements();
 		Elements findElements = htmlElements.select(path.getPath());
 		String result = null;
@@ -130,6 +138,7 @@ public class JsoupUtils {
 	 * @param table
 	 * @return
 	 */
+	@Deprecated
 	public static List<TableResult> paserTable(Document table) {
 		Elements trElements = table.getElementsByTag("tr");
 		Element trElement = null;
@@ -170,6 +179,7 @@ public class JsoupUtils {
 	 *            table>tbody>tr
 	 * @return
 	 */
+	@Deprecated
 	public static Map<String, List<String>> paserTable(Element table, String headCssSelect, String dataCssSelect) {
 		Elements headElements = table.select(headCssSelect);
 		Elements dataElements = table.select(dataCssSelect);
@@ -226,6 +236,94 @@ public class JsoupUtils {
 		return result;
 	}
 
+	/**
+	 * 表格单条数据抽取,例如
+	 * <p>名称:小明    性别:男 </p>
+	 * <p>年龄:20       爱好:体育 </p>
+	 * @param table
+	 * @return
+	 */
+	public static Map<String, String> paserTableForOne(Element table) {
+		ObjectCheckUtils.checkNotNull(table, "table");
+		Map<String, String> resultMap = new HashMap<>();
+		Elements trElements = table.getElementsByTag("tr");
+		Element trElement = null;
+		for (int i = 0; i < trElements.size(); i++) {
+			trElement = trElements.get(i);
+			Elements tdElements = trElement.getElementsByTag("td");
+			Element tdElement = null;
+			if (tdElements.size()>1) {
+				for (int j = 0; j < tdElements.size();) {
+					tdElement = tdElements.get(j);
+					String key = paserElement(PathFilter.EmptyFilterElement, "text", tdElement);
+					key = StringUtils.trim(key);
+					if (StringUtils.isNotBlank(key)) {
+						String value = "";
+						int tempIndex = j + 1;
+						if (tempIndex < tdElements.size()) {
+							tdElement = tdElements.get(tempIndex);
+							value = paserElement(PathFilter.EmptyFilterElement, "text", tdElement);
+						}
+						resultMap.put(key, value);
+					}
+					j += 2;
+				}
+			
+			} 
+		}
+		return resultMap;
+	}
+
+	/**
+	 * 表格多条数据数据抽取,例如:
+	 * <p>
+	 * 名称 年龄 性别(headCssSelect:列名)
+	 * </p>
+	 * <p>
+	 * 小明1 18 男
+	 * </p>
+	 * <p>
+	 * 小明2 19 男
+	 * </p>
+	 * <p>
+	 * 小明3 20 男
+	 * </p>
+	 * 
+	 * @param table
+	 * @param headCssSelect
+	 *            列名
+	 * @param dataCssSelect
+	 *            表格数据td
+	 * @return
+	 */
+	public static Map<String, List<String>> paserTableForMany(Element table, String headCssSelect,
+			String dataCssSelect) {
+		ObjectCheckUtils.checkNotNull(table, "table");
+		ObjectCheckUtils.checkStrBlank(headCssSelect, "headCssSelect");
+		ObjectCheckUtils.checkStrBlank(dataCssSelect, "dataCssSelect");
+		Elements headElements = table.select(headCssSelect);
+		if (null == headElements || headElements.isEmpty()) {
+			throw new RuntimeException("did not find table's head:" + headCssSelect);
+		}
+		String[] fields = new String[headElements.size()];
+		for (int i = 0; i < headElements.size(); i++) {
+			Element fieldElement = headElements.get(i);
+			fields[i] = StringUtils.remove(fieldElement.text(), " ");
+		}
+		Elements dataElements = table.select(dataCssSelect);
+		Map<String, List<String>> resultMap = new HashMap<>();
+		for (int i = 0; i < dataElements.size(); i++) {
+			Element dataTrElement = dataElements.get(i);
+			Elements tdElements = dataTrElement.getElementsByTag("td");
+			for (int j = 0; j < tdElements.size(); j++) {
+				Element tdElement = tdElements.get(j);
+				String result = tdElement.text();
+				resultMap.computeIfAbsent(fields[j], mapKey -> new ArrayList<>()).add(result);
+			}
+		}
+		return resultMap;
+	}
+
 	public static String paserElement(PathFilter filterPath, String reslutAttName, Element element) {
 		String result = "";
 		if (filterPath.isFilter(element)) {
@@ -258,7 +356,6 @@ public class JsoupUtils {
 				return;
 			}
 		}
-
 		if ("#text".equals(node.nodeName())) {
 			String text = node.outerHtml();
 			if (validText(text)) {

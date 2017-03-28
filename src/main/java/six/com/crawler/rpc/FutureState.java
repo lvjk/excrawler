@@ -2,11 +2,17 @@ package six.com.crawler.rpc;
 
 
 public enum FutureState {
-	/** the task is doing **/
+	/**
+	 * 正在处理
+	 */
 	DOING(0),
-	/** the task is done **/
+	/**
+	 * 已经完成
+	 */
 	DONE(1),
-	/** ths task is cancelled **/
+	/**
+	 * 被取消
+	 */
 	CANCELLED(2);
 
 	public final int value;

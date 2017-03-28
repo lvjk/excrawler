@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 import okhttp3.Request;
 import six.com.crawler.entity.HttpProxy;
 import six.com.crawler.entity.Page;
@@ -18,8 +19,8 @@ import six.com.crawler.http.HttpConstant;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.http.HttpResult;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.exception.DownerException;
-import six.com.crawler.work.exception.ExecuteRequestDownHtmlProcessorException;
+import six.com.crawler.work.downer.exception.DownerException;
+import six.com.crawler.work.downer.exception.ManyRedirectDownException;
 
 /**
  * @author six
@@ -30,7 +31,6 @@ public class OkHttpDowner extends AbstractDowner {
 	protected final static Logger LOG = LoggerFactory.getLogger(OkHttpDowner.class);
 
 	private HttpClient httpClient;
-
 	public OkHttpDowner(AbstractCrawlWorker worker) {
 		super(worker);
 		httpClient = worker.getManager().getHttpClient();
@@ -64,7 +64,7 @@ public class OkHttpDowner extends AbstractDowner {
 				result = httpClient.executeRequest(request);
 			} catch (AbstractHttpException e) {
 				// request execute 异常处理
-				throw new ExecuteRequestDownHtmlProcessorException("execute request[" + request.url() + "] err", e);
+				throw new ManyRedirectDownException("execute request[" + request.url() + "] err", e);
 			}
 			if (StringUtils.isNotBlank(result.getRedirectedUrl())) {
 				requestUrl = result.getRedirectedUrl();
@@ -74,7 +74,7 @@ public class OkHttpDowner extends AbstractDowner {
 				parameters = null;
 				redirectTime++;
 				if (redirectTime > HttpConstant.REDIRECT_TIMES) {
-					throw new ExecuteRequestDownHtmlProcessorException(
+					throw new ManyRedirectDownException(
 							"execute request[" + request.url() + "] redirectTime is too many");
 				}
 			}
@@ -86,7 +86,7 @@ public class OkHttpDowner extends AbstractDowner {
 		HttpResult result = executeDown(page);
 		return result.getData();
 	}
-
+	
 	@Override
 	protected void insideColose() {
 		String domain = UrlUtils.getDomain(getHtmlCommonWorker().getSite().getMainUrl());

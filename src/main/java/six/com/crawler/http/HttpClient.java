@@ -60,6 +60,7 @@ import six.com.crawler.utils.AutoCharsetDetectorUtils.ContentType;
 import six.com.crawler.work.downer.CookiesStore;
 import six.com.crawler.work.downer.MX509TrustManager;
 import six.com.crawler.work.downer.PostContentType;
+import six.com.crawler.work.downer.exception.UnknownHttpStatusDownException;
 
 /**
  * @author 作者
@@ -211,7 +212,7 @@ public class HttpClient implements InitializingBean {
 				result.setRedirectedUrl(redirectUrl);
 				result.setReferer(url);
 			} else if (httpCode != 200) {
-				throw new RuntimeException("httpCode[" + httpCode + "]:" + url);
+				throw new UnknownHttpStatusDownException("httpCode[" + httpCode + "]:" + url);
 			}
 		} catch (IOException e) {
 			// request execute 异常处理

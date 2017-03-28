@@ -303,17 +303,23 @@ public class JobServiceImpl implements JobService {
 				byte[] buffer = multipartFile.getBytes();
 				String jobProfileXml = new String(buffer);
 				JobProfile profile = JobProfile.buildJobProfile(jobProfileXml);
-				Job job = profile.getJob();
-				// 删除job参数数据
-				jobParamDao.delJobParams(job.getName());
-				// 删除job抽取项
-				extractItemDao.del(job.getName());
-				// 删除job
-				jobDao.del(job.getName());
-				jobDao.save(job);
-				jobParamDao.batchSave(job.getParamList());
-				extractItemDao.batchSave(profile.getExtractItems());
-				msg = "uploadJobProfile[" + multipartFile.getName() + "] succeed";
+				if(null!=profile&&null!=profile.getJob()){
+					Job job = profile.getJob();
+					// 删除job参数数据
+					jobParamDao.delJobParams(job.getName());
+					// 删除job抽取项
+					extractItemDao.del(job.getName());
+					// 删除job
+					jobDao.del(job.getName());
+					jobDao.save(job);
+					if(null!=job.getParamList()){
+						jobParamDao.batchSave(job.getParamList());
+					}
+					if(null!=profile.getExtractItems()){
+						extractItemDao.batchSave(profile.getExtractItems());
+					}
+					msg = "uploadJobProfile[" + multipartFile.getName() + "] succeed";
+				}
 			} catch (Exception e) {
 				msg = "uploadJobProfile[" + multipartFile.getName() + "] err";
 				log.error(msg, e);

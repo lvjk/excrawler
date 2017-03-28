@@ -15,15 +15,15 @@ public class Site implements Serializable {
 	/**
 	 * 站点代码
 	 */
-	private String code;
+	private String code="";
 	/**
 	 * 站点主页
 	 */
-	private String mainUrl;
+	private String mainUrl="";
 	/**
 	 * 站点描述
 	 */
-	private String describe;
+	private String describe="";
 
 	@XmlAttribute
 	public String getCode() {

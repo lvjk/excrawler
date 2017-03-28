@@ -14,27 +14,27 @@ public class Job extends PageQueryEntity implements Serializable {
 
 	private static final long serialVersionUID = 781122651512874550L;
 
-	private String name;// job 名字
+	private String name="";// job 名字
 	
-	private String nextJobName;// 下一个执行任务
+	private String nextJobName="";// 下一个执行任务
 
 	private int level;// 任务级别
 	
-	private String designatedNodeName;//指定节点运行
+	private String designatedNodeName="";//指定节点运行
 	
 	private int needNodes;//工作需要的节点数
 	
 	private int isScheduled;//是否开启定时
 	
-	private String cronTrigger;//cronTrigger 定时
+	private String cronTrigger="";//cronTrigger 定时
 	
 	private long workFrequency = 1000;// 每次处理时间的阈值 默认1000毫秒
 
-	private String workerClass;// worker class
+	private String workerClass="";// worker class
 
-	private String queueName;
+	private String queueName="";
 
-	private String describe;// 任务描述
+	private String describe="";// 任务描述
 
 	private String user = "admin";// 任务 所属用户
 	
@@ -164,11 +164,62 @@ public class Job extends PageQueryEntity implements Serializable {
 				JobParam jobParam = paramList.get(i);
 				if (paramKey.equals(jobParam.getName())) {
 					param = jobParam.getValue();
+					param=StringUtils.trim(param);
 					break;
 				}
 			}
 		}
-		return StringUtils.trim(param);
+		return param;
+	}
+	
+	public String getParam(String paramKey,String defaultParam) {
+		if (StringUtils.isBlank(paramKey)) {
+			throw new NullPointerException("paramKey mustn't be blank");
+		}
+		String param = defaultParam;
+		if (null != paramList) {
+			for (int i = 0; i < paramList.size(); i++) {
+				JobParam jobParam = paramList.get(i);
+				if (paramKey.equals(jobParam.getName())) {
+					param = jobParam.getValue();
+					param=StringUtils.trim(param);
+					break;
+				}
+			}
+		}
+		return param;
+	}
+	
+	public int getParamInt(String paramKey) {
+		if (StringUtils.isBlank(paramKey)) {
+			throw new NullPointerException("paramKey mustn't be blank");
+		}
+		int param =0;
+		String paramStr = getParam(paramKey);
+		if(StringUtils.isBlank(paramStr)){
+			throw new RuntimeException("get paramInt["+paramKey+"] is blank");
+		}else{
+			try{
+				param=Integer.valueOf(paramStr);
+			}catch (Exception e) {
+				throw new RuntimeException("invalid paramInt["+paramKey+"]",e);
+			}
+		}
+		return param;
+	}
+	
+	public int getParamInt(String paramKey,int defaultParam) {
+		if (StringUtils.isBlank(paramKey)) {
+			throw new NullPointerException("paramKey mustn't be blank");
+		}
+		int param =defaultParam;
+		String paramStr = getParam(paramKey);
+		try{
+			param=Integer.valueOf(paramStr);
+		}catch (Exception e) {
+			
+		}
+		return param;
 	}
 
 	public List<String> getParams(String paramKey) {

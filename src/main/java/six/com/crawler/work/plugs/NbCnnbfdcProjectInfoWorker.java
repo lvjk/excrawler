@@ -13,8 +13,8 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.JsoupUtils;
 import six.com.crawler.utils.JsoupUtils.TableResult;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.Constants;
 import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.extract.Extracter;
 
 public class NbCnnbfdcProjectInfoWorker extends AbstractCrawlWorker {
 
@@ -69,7 +69,7 @@ public class NbCnnbfdcProjectInfoWorker extends AbstractCrawlWorker {
 	@Override
 	protected void onComplete(Page doingPage, ResultContext resultContext) {
 		String tabaleCss = "td[valign=top]:eq(0)>table[bgcolor=#DDDDDD]:eq(3)";
-		String projectId = resultContext.getOutResults().get(0).get(Constants.DEFAULT_RESULT_ID);
+		String projectId = resultContext.getOutResults().get(0).get(Extracter.DEFAULT_RESULT_ID);
 		Map<String, String> fieldMap = new HashMap<String, String>();
 		fieldMap.put("楼栋名称", "unitName");
 		fieldMap.put("纳入网上可售住宅套数", "forSellHouseCount");

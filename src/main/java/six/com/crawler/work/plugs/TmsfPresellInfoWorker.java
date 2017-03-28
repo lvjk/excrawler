@@ -12,8 +12,8 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.utils.JsonUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.Constants;
 import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.extract.Extracter;
 
 /**
  * @author 作者
@@ -81,7 +81,7 @@ public class TmsfPresellInfoWorker extends AbstractCrawlWorker {
 		String sid = resultContext.getExtractResult("sid").get(0);
 		String propertyid = resultContext.getExtractResult("propertyid").get(0);
 		String presellid = resultContext.getExtractResult("presellid").get(0);
-		String systemPresellId = resultContext.getOutResults().get(0).get(Constants.DEFAULT_RESULT_ID);
+		String systemPresellId = resultContext.getOutResults().get(0).get(Extracter.DEFAULT_RESULT_ID);
 		String houseUrl = StringUtils.replace(houseUrlTemplate, sidTemplate, sid);
 		houseUrl = StringUtils.replace(houseUrl, propertyidTemplate, propertyid);
 		houseUrl = StringUtils.replace(houseUrl, presellIdTemplate, presellid);

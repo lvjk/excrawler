@@ -1,18 +1,12 @@
 package six.com.crawler.work;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.DateFormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import six.com.crawler.common.DateFormats;
 import six.com.crawler.constants.JobConTextConstants;
 import six.com.crawler.entity.HttpProxyType;
 import six.com.crawler.entity.JobSnapshot;
@@ -20,16 +14,18 @@ import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.entity.Site;
 import six.com.crawler.http.HttpProxyPool;
-import six.com.crawler.utils.MD5Utils;
 import six.com.crawler.utils.ThreadUtils;
 import six.com.crawler.work.downer.Downer;
 import six.com.crawler.work.downer.DownerManager;
 import six.com.crawler.work.downer.DownerType;
-import six.com.crawler.work.exception.DownerException;
+import six.com.crawler.work.downer.exception.DownerException;
 import six.com.crawler.work.extract.ExtractItem;
 import six.com.crawler.work.extract.Extracter;
-import six.com.crawler.work.extract.CssSelectExtracter;
-import six.com.crawler.work.store.StoreAbstarct;
+import six.com.crawler.work.extract.ExtracterFactory;
+import six.com.crawler.work.extract.ExtracterType;
+import six.com.crawler.work.store.Store;
+import six.com.crawler.work.store.StoreFactory;
+import six.com.crawler.work.store.StoreType;
 
 /**
  * @author six
@@ -41,7 +37,9 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 
 	final static Logger LOG = LoggerFactory.getLogger(AbstractCrawlWorker.class);
 	// 上次处理数据时间
-	protected int findElementTimeout = 1000;
+	protected int findElementTimeout = Constants.FIND_ELEMENT_TIMEOUT;
+	// 默认HTTP PROXY最小休息时间 5 秒
+	private int httpProxyMinResttime = Constants.DEFAULT_MIN_HTTPPROXY_RESTTIME;
 
 	private Site site; // 站点
 
@@ -53,11 +51,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 
 	protected WorkQueue workQueue; // 队列
 	// 存儲处理程序
-	private StoreAbstarct store;
-	// 处理的结果key
-	List<String> outResultKey;
-	// 主要的结果key
-	private List<String> primaryKeys;;
+	private Store store;
 
 	private HttpProxyPool httpProxyPool;
 
@@ -69,85 +63,56 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 			throw new NullPointerException("please set siteCode");
 		}
 		site = getManager().getSiteDao().query(siteCode);
-		// 2.初始化工作对了
+		// 2.初始化工作队列
 		String queueName = getJob().getQueueName();
 		if (StringUtils.isBlank(queueName)) {
 			throw new NullPointerException("please set queue's name");
 		}
 		workQueue = new RedisWorkQueue(getManager().getRedisManager(), queueName);
 		// 4.初始化下载器
-		String downerType = getJob().getParam(JobConTextConstants.DOWNER_TYPE);
-		downer = DownerManager.getInstance().buildDowner(DownerType.valueOf(Integer.valueOf(downerType)), this);
-		String httpProxyTypeStr = getJob().getParam(JobConTextConstants.HTTP_PROXY_TYPE);
-		if (StringUtils.isBlank(httpProxyTypeStr)) {
-			httpProxyTypeStr = "0";
-		}
-		HttpProxyType httpProxyType = HttpProxyType.valueOf(Integer.valueOf(httpProxyTypeStr));
+		int downerTypeInt = getJob().getParamInt(JobConTextConstants.DOWNER_TYPE, 1);
+		DownerType downerType = DownerType.valueOf(downerTypeInt);
+		downer = DownerManager.getInstance().buildDowner(downerType, this);
 
-		String httpProxyRestTimeStr = getJob().getParam(JobConTextConstants.HTTP_PROXY_REST_TIME);
-		httpProxyRestTimeStr = httpProxyRestTimeStr == null ? "0" : httpProxyRestTimeStr;
-		int httpProxyRestTime = 0;
-		try {
-			httpProxyRestTime = Integer.valueOf(httpProxyRestTimeStr);
-		} catch (Exception e) {
-			LOG.error("job[" + getJob().getName() + "] param[" + httpProxyRestTime + "] is invalid:"
-					+ httpProxyRestTimeStr, e);
-		}
-		httpProxyPool =new HttpProxyPool(getManager().getRedisManager(), siteCode, httpProxyType, httpProxyRestTime);
+		int httpProxyTypeInt = getJob().getParamInt(JobConTextConstants.HTTP_PROXY_TYPE, 0);
+		HttpProxyType httpProxyType = HttpProxyType.valueOf(httpProxyTypeInt);
+
+		// 5.初始化http 代理
+		int httpProxyRestTime = getJob().getParamInt(JobConTextConstants.HTTP_PROXY_REST_TIME, httpProxyMinResttime);
+		httpProxyPool = new HttpProxyPool(getManager().getRedisManager(), siteCode, httpProxyType, httpProxyRestTime);
 		downer.setHttpProxy(httpProxyPool.getHttpProxy());
-		// 5.初始化内容抽取
+		// 6.初始化内容抽取
 		List<ExtractItem> extractItems = getManager().getExtractItemDao().query(getJob().getName());
+		extracter = ExtracterFactory.newExtracter(this, extractItems, ExtracterType
+				.valueOf(getJob().getParamInt(JobConTextConstants.EXTRACTER_TYPE, 0)));
+		// 7.初始化数据存储
+		List<String> outResultKey = new ArrayList<>();
 		if (null != extractItems && !extractItems.isEmpty()) {
-			primaryKeys = new ArrayList<>();
-			outResultKey = new ArrayList<>();
+			int primaryKeyCount = 0;
 			for (ExtractItem extractItem : extractItems) {
 				if (extractItem.getOutputType() == 1) {
 					outResultKey.add(extractItem.getOutputKey());
 				}
-				if (extractItem.getPrimary() == 1 && !primaryKeys.contains(extractItem.getOutputKey())) {
-					primaryKeys.add(extractItem.getOutputKey());
+				if (extractItem.getPrimary() == 1) {
+					primaryKeyCount++;
 				}
 			}
-			if (!outResultKey.isEmpty() && primaryKeys.isEmpty()) {
+			if (!outResultKey.isEmpty() && 0 == primaryKeyCount) {
 				throw new RuntimeException("there is a primary's key at least");
 			}
-			outResultKey.add(0, Constants.DEFAULT_RESULT_ID);
-			outResultKey.add(Constants.DEFAULT_RESULT_COLLECTION_DATE);
-			outResultKey.add(Constants.DEFAULT_RESULT_ORIGIN_URL);
-			extracter = new CssSelectExtracter(this, extractItems);
+			outResultKey.add(0, Extracter.DEFAULT_RESULT_ID);
+			outResultKey.add(Extracter.DEFAULT_RESULT_COLLECTION_DATE);
+			outResultKey.add(Extracter.DEFAULT_RESULT_ORIGIN_URL);
 		}
+		int storeTypeInt = 0;
+		// 兼容之前设置的store class模式
 		String resultStoreClass = getJob().getParam(JobConTextConstants.RESULT_STORE_CLASS);
-		if (StringUtils.isNotBlank(resultStoreClass) && !"null".equalsIgnoreCase(resultStoreClass)) {
-			Class<?> storeClz = null;
-			try {
-				storeClz = Class.forName(resultStoreClass);
-			} catch (ClassNotFoundException e) {
-				LOG.error("ClassNotFoundException  err:" + resultStoreClass, e);
-			}
-			Constructor<?> storeConstructor = null;
-			if (null != storeClz) {
-				try {
-					storeConstructor = storeClz.getConstructor(AbstractWorker.class, List.class);
-				} catch (NoSuchMethodException e) {
-					LOG.error("NoSuchMethodException getConstructor err:" + storeClz, e);
-				} catch (SecurityException e) {
-					LOG.error("SecurityException err" + storeClz, e);
-				}
-			}
-			if (null != storeConstructor) {
-				try {
-					this.store = (StoreAbstarct) storeConstructor.newInstance(this, outResultKey);
-				} catch (InstantiationException e) {
-					LOG.error("InstantiationException  err:" + resultStoreClass, e);
-				} catch (IllegalAccessException e) {
-					LOG.error("IllegalAccessException  err:" + storeClz.getName(), e);
-				} catch (IllegalArgumentException e) {
-					LOG.error("IllegalArgumentException  err:" + storeClz.getName(), e);
-				} catch (InvocationTargetException e) {
-					LOG.error("InvocationTargetException  err:" + storeClz.getName(), e);
-				}
-			}
+		if (StringUtils.equals("six.com.crawler.work.store.DataBaseStore", resultStoreClass)) {
+			storeTypeInt = 1;
+		} else {
+			storeTypeInt = getJob().getParamInt(JobConTextConstants.RESULT_STORE_TYPE, 0);
 		}
+		this.store = StoreFactory.newStore(this, outResultKey, StoreType.valueOf(storeTypeInt));
 		insideInit();
 	}
 
@@ -170,25 +135,16 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 				startTime = System.currentTimeMillis();
 				// 3. 抽取前操作
 				beforeExtract(doingPage);
-				ResultContext resultContext = null;
 				// 4.抽取结果
-				if (null != extracter) {
-					resultContext = extracter.extract(doingPage);
-				} else {
-					resultContext = new ResultContext();
-				}
+				ResultContext resultContext = extracter.extract(doingPage);
 				// 5.抽取后操作
 				afterExtract(doingPage, resultContext);
-				// 6.组装数据和设置默认字段
-				assembleExtractResult(resultContext);
 				endTime = System.currentTimeMillis();
 				LOG.debug("extracter extract time:" + (endTime - startTime));
 				startTime = System.currentTimeMillis();
-				if (null != store) {
-					// 7.存储数据
-					int storeCount = store.store(resultContext);
-					getWorkerSnapshot().setTotalResultCount(getWorkerSnapshot().getTotalResultCount() + storeCount);
-				}
+				// 7.存储数据
+				int storeCount = store.store(resultContext);
+				getWorkerSnapshot().setTotalResultCount(getWorkerSnapshot().getTotalResultCount() + storeCount);
 				endTime = System.currentTimeMillis();
 				LOG.debug("store time:" + (endTime - startTime));
 				// 8.记录操作数据
@@ -197,54 +153,11 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 				onComplete(doingPage, resultContext);
 				LOG.info("finished processor page:" + doingPage.getOriginalUrl());
 			} catch (Exception e) {
-				throw new RuntimeException("process page err:" +doingPage.getOriginalUrl(),e);
+				throw new RuntimeException("process page err:" + doingPage.getOriginalUrl(), e);
 			}
 		} else {
 			// 没有处理数据时 设置 state == WorkerLifecycleState.FINISHED
 			compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.FINISHED);
-		}
-	}
-
-	/**
-	 * 对抽取出来的结果进行组装
-	 * 
-	 * @param resultContext
-	 * @return
-	 */
-	private void assembleExtractResult(ResultContext resultContext) {
-		if (null != primaryKeys && !primaryKeys.isEmpty()) {
-			String primaryKey = primaryKeys.get(0);
-			List<String> mainResultList = resultContext.getExtractResult(primaryKey);
-			if (null != mainResultList) {
-				int size = mainResultList.size();
-				String nowTime = DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1);
-				for (int i = 0; i < size; i++) {
-					Map<String, String> dataMap = new HashMap<>();
-					List<String> primaryKeysValue = new ArrayList<>();
-					for (String resultKey : outResultKey) {
-						if (!Constants.DEFAULT_RESULT_KEY_SET.contains(resultKey)) {
-							List<String> tempResultList = resultContext.getExtractResult(resultKey);
-							String result = "";
-							if (i < tempResultList.size()) {
-								result = tempResultList.get(i);
-							} else {
-								if (primaryKeys.contains((resultKey))) {
-									throw new RuntimeException("main key[" + resultKey + "] don't have result");
-								}
-							}
-							if (primaryKeys.contains(resultKey)) {
-								primaryKeysValue.add(result);
-							}
-							dataMap.put(resultKey, result);
-						}
-					}
-					String id = getResultID(primaryKeysValue);
-					dataMap.put(Constants.DEFAULT_RESULT_ID, id);
-					dataMap.put(Constants.DEFAULT_RESULT_COLLECTION_DATE, nowTime);
-					dataMap.put(Constants.DEFAULT_RESULT_ORIGIN_URL, doingPage.getFinalUrl());
-					resultContext.addoutResult(dataMap);
-				}
-			}
 		}
 	}
 
@@ -326,16 +239,6 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		}
 	}
 
-	public static String getResultID(List<String> keyValues) {
-		StringBuilder newValue = new StringBuilder();
-		for (String value : keyValues) {
-			newValue.append(value);
-		}
-		String id = MD5Utils.MD5(newValue.toString());
-		return id;
-	}
-	
-
 	public WorkQueue getWorkQueue() {
 		return workQueue;
 	}
@@ -348,7 +251,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		return extracter;
 	}
 
-	public StoreAbstarct getStore() {
+	public Store getStore() {
 		return this.store;
 	}
 

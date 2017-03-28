@@ -11,9 +11,7 @@ public class HttpIoException extends AbstractHttpException{
 	 * 
 	 */
 	private static final long serialVersionUID = 2507844940537119834L;
-	public HttpIoException() {
-		super();
-	}
+
 
 	public HttpIoException(String message) {
 		super(message);

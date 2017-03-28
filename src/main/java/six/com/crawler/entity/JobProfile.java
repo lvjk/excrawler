@@ -63,28 +63,35 @@ public class JobProfile extends Profile {
 				jobElement.setAttribute("workFrequency", getValue(String.valueOf(job.getWorkFrequency())));
 				jobElement.setAttribute("user", getValue(job.getUser()));
 				
-				if (StringUtils.isNoneBlank(job.getQueueName())) {
+				if (StringUtils.isNotBlank(job.getQueueName())) {
 					Element queueNameElement = doc.createElement("queueName");
 					queueNameElement.setTextContent(job.getQueueName());
 					jobElement.appendChild(queueNameElement);
 				}
+				
 
-				if (StringUtils.isNoneBlank(job.getCronTrigger())) {
+				if (StringUtils.isNotBlank(job.getCronTrigger())) {
 					Element cronTriggerElement = doc.createElement("cronTrigger");
 					cronTriggerElement.setTextContent(job.getCronTrigger());
 					jobElement.appendChild(cronTriggerElement);
 				}
+				
+				
 
-				if (StringUtils.isNoneBlank(job.getWorkerClass())) {
+				if (StringUtils.isNotBlank(job.getWorkerClass())) {
 					Element workerClassElement = doc.createElement("workerClass");
 					workerClassElement.setTextContent(job.getWorkerClass());
 					jobElement.appendChild(workerClassElement);
 				}
-				if (StringUtils.isNoneBlank(job.getDescribe())) {
+				
+				
+				if (StringUtils.isNotBlank(job.getDescribe())) {
 					Element jobDescribeElement = doc.createElement("describe");
 					jobDescribeElement.setTextContent(job.getDescribe());
 					jobElement.appendChild(jobDescribeElement);
 				}
+				
+				
 				if (null != job.getParamList()) {
 					for (JobParam jobParam : job.getParamList()) {
 						Element jobParamElement = doc.createElement("param");
@@ -108,10 +115,11 @@ public class JobProfile extends Profile {
 						extractItemElement.setAttribute("outputKey", getValue(extractItem.getOutputKey()));
 						extractItemElement.setAttribute("mustHaveResult",
 								getValue(String.valueOf(extractItem.getMustHaveResult())));
-						if (StringUtils.isNoneBlank(extractItem.getDescribe())) {
+						if (StringUtils.isNotBlank(extractItem.getDescribe())) {
 							Element describeElement = doc.createElement("describe");
 							describeElement.setTextContent(extractItem.getDescribe());
 							extractItemElement.appendChild(describeElement);
+							
 						}
 						root.appendChild(extractItemElement);
 					}

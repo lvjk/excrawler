@@ -6,7 +6,7 @@ import java.io.Serializable;
 * @author  作者 
 * @E-mail: 359852326@qq.com 
 * @date 创建时间：2017年3月24日 上午10:07:02 
-* 基本数据定义
+* 基本数据定义, 所有需要存储的数据都需要继承此类 ，有id 和version 2个字段
 */
 public abstract class BaseVo implements Serializable{
 

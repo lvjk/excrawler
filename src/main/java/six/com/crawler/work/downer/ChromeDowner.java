@@ -22,7 +22,8 @@ import six.com.crawler.entity.Page;
 import six.com.crawler.http.HttpResult;
 import six.com.crawler.utils.WebDriverUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.exception.DownerException;
+import six.com.crawler.work.Constants;
+import six.com.crawler.work.downer.exception.DownerException;
 
 /**
  * @author six
@@ -125,7 +126,7 @@ public class ChromeDowner extends AbstractDowner {
 			long start = System.currentTimeMillis();
 			while (null == waitElement) {
 				waitElement = WebDriverUtils.findElement(browser, waitJsLoadElementXpath,
-						worker.getFindElementTimeout());
+						Constants.FIND_ELEMENT_TIMEOUT);
 				if (null != waitElement) {
 					break;
 				}

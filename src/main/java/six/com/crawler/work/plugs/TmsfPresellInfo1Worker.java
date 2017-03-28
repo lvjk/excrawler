@@ -18,8 +18,8 @@ import six.com.crawler.utils.JsoupUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.utils.JsoupUtils.TableResult;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.Constants;
 import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.extract.Extracter;
 
 /**
  * @author 作者
@@ -118,7 +118,7 @@ public class TmsfPresellInfo1Worker extends AbstractCrawlWorker {
 		String buildingidCss = "div[id=yf_one]>dl:eq(1)>dd>a";
 		Elements buildingidElements = doingPage.getDoc().select(buildingidCss);
 		
-		String presellId = resultContext.getOutResults().get(0).get(Constants.DEFAULT_RESULT_ID);
+		String presellId = resultContext.getOutResults().get(0).get(Extracter.DEFAULT_RESULT_ID);
 		if(StringUtils.isBlank(presellId)){
 			throw new RuntimeException("system id is blank");
 		}else{

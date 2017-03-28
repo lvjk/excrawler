@@ -13,8 +13,8 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.JsonUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.Constants;
 import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.extract.Extracter;
 
 /**
  * @author 作者
@@ -84,7 +84,7 @@ public class Cq315housePresell2Worker extends AbstractCrawlWorker {
 		List<String> blockStrs = resultContext.getExtractResult("loudong");
 		String separatorChars = ",";
 		for (int i = 0; i < buildIdStrs.size(); i++) {
-			String presellId = resultContext.getOutResults().get(i).get(Constants.DEFAULT_RESULT_ID);
+			String presellId = resultContext.getOutResults().get(i).get(Extracter.DEFAULT_RESULT_ID);
 			String buildidStr = buildIdStrs.get(i);
 			String blockStr = blockStrs.get(i);
 			String[] buildids = StringUtils.split(buildidStr, separatorChars);

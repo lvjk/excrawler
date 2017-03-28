@@ -16,8 +16,8 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.JsonUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.Constants;
 import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.extract.Extracter;
 
 /**
  * @author 作者
@@ -159,7 +159,7 @@ public class Cq315houseHouseStateWorker extends AbstractCrawlWorker {
 	public void onComplete(Page doingPage, ResultContext resultContext) {
 		List<String> houseIds = resultContext.getExtractResult("houseId");
 		for (int i = 0; i < houseIds.size(); i++) {
-			String systemHouseId = resultContext.getOutResults().get(i).get(Constants.DEFAULT_RESULT_ID);
+			String systemHouseId = resultContext.getOutResults().get(i).get(Extracter.DEFAULT_RESULT_ID);
 			String houseId = houseIds.get(i);
 			String houseInfoUrl = "../YanZhengCode/YanZhengPage.aspx?fid=" + houseId;
 			houseInfoUrl = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), houseInfoUrl);

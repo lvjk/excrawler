@@ -17,10 +17,16 @@ public interface JobConTextConstants {
 	//代理休息时间
 	String HTTP_PROXY_REST_TIME = "httpProxyRestTime";
 	
+	//抽取类型
+	String EXTRACTER_TYPE="extracterType";
+	
 	String BATCH_SIZE = "batchSize";
 
 	// 结果存储key
 	String RESULT_STORE_CLASS = "resultStoreClass";
+	
+	// 结果store 类型
+	String RESULT_STORE_TYPE = "storeType";
 	
 	String IS_SNAPSHOT_TABLE="isSnapshotTable";
 	

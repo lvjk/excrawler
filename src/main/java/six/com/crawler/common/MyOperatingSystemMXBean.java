@@ -2,6 +2,7 @@ package six.com.crawler.common;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
+import java.math.BigDecimal;
 
 /**
  * @author six
@@ -51,7 +52,10 @@ public class MyOperatingSystemMXBean {
 	 * @return
 	 */
 	public static float freeMemoryPRP(){
-		return Runtime.getRuntime().freeMemory()/Runtime.getRuntime().totalMemory();
+		BigDecimal freeMemory=new BigDecimal(Runtime.getRuntime().freeMemory());
+		BigDecimal totalMemory=new BigDecimal(Runtime.getRuntime().totalMemory());
+		BigDecimal freeMemoryPRP=freeMemory.divide(totalMemory, 2,BigDecimal.ROUND_UP);
+		return freeMemoryPRP.floatValue();
 	}
 	
 }

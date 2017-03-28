@@ -16,10 +16,12 @@ import six.com.crawler.work.extract.ExtractPath;
  */
 public class ExtractPathDaoProvider extends BaseProvider{
 	
-	private String columns="`name`,"
+	private String queryColumns="`name`,"
 			+ "siteCode,"
 			+ "ranking,"
 			+ "`path`,"
+			+ "`tableHeadPath`,"
+			+ "`tableDataPath`,"
 			+ "filterPath,"
 			+ "extractAttName,"
 			+ "substringStart,"
@@ -31,11 +33,31 @@ public class ExtractPathDaoProvider extends BaseProvider{
 			+ "replaceWord,"
 			+ "replaceValue,"
 			+ "extractEmptyCount,"
-			+ "`describe` ";
+			+ "`describe`,"
+			+ "`version` ";
+	
+	private String insertColumns="`name`,"
+			+ "siteCode,"
+			+ "ranking,"
+			+ "`path`,"
+			+ "`tableHeadPath`,"
+			+ "`tableDataPath`,"
+			+ "filterPath,"
+			+ "extractAttName,"
+			+ "substringStart,"
+			+ "substringEnd,"	
+			+ "appendHead,"
+			+ "appendEnd,"			
+			+ "compareAttName,"
+			+ "containKeyWord,"
+			+ "replaceWord,"
+			+ "replaceValue,"
+			+ "extractEmptyCount,"
+			+ "`describe`";
 	
 	public String queryBySite(String siteCode) {
 		SQL sql = new SQL();
-		sql.SELECT(columns);
+		sql.SELECT(queryColumns);
 		sql.FROM(ExtractPathDao.TABLE_NAME);
 		sql.WHERE("siteCode=#{siteCode}");
 		sql.ORDER_BY("ranking asc");
@@ -44,7 +66,7 @@ public class ExtractPathDaoProvider extends BaseProvider{
 	
 	public String query(Map<String,Object> param) {
 		SQL sql = new SQL();
-		sql.SELECT(columns);
+		sql.SELECT(queryColumns);
 		sql.FROM(ExtractPathDao.TABLE_NAME);
 		sql.WHERE("`name`=#{name}");
 		sql.AND().WHERE("siteCode=#{siteCode}");
@@ -54,7 +76,7 @@ public class ExtractPathDaoProvider extends BaseProvider{
 	
 	public String fuzzyQuery(Map<String,Object> params) {
 		String sql="		select "
-				+columns
+				+queryColumns
 				+ "       from "+ExtractPathDao.TABLE_NAME
 				+ "      where `siteCode` like concat(#{siteCode},'%')"
 				+ "      or `name` like concat(#{name},'%')"
@@ -84,7 +106,7 @@ public class ExtractPathDaoProvider extends BaseProvider{
 				+ "#{list["+INDEX_FLAG+"].extractEmptyCount})";
 		StringBuilder sbd = new StringBuilder();  
 		sbd.append("insert into ").append(ExtractPathDao.TABLE_NAME);  
-		sbd.append("(").append(columns).append(") ");  
+		sbd.append("(").append(insertColumns).append(") ");  
 		sbd.append("values");  
 		sbd.append(setBatchSaveSql(values,extractPaths));
 		return sbd.toString();

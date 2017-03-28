@@ -1,5 +1,7 @@
 package six.com.crawler.utils;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * @author six
  * @date 2016年6月24日 上午10:47:06
@@ -49,6 +51,13 @@ public class ObjectCheckUtils {
 		checkNotNull(array, name);
 		checkPositive(array.length, name + ".length");
 		return array;
+	}
+	
+	public static String checkStrBlank(String str, String name) {
+		if(StringUtils.isBlank(str)){
+			throw new IllegalArgumentException(name + " must be not blank");
+		}
+		return str;
 	}
 
 	public static <T> T[] checkNonEmpty(T[] array) {

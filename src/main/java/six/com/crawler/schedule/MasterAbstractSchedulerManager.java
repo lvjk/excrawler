@@ -1,8 +1,10 @@
 package six.com.crawler.schedule;
 
-import java.rmi.Remote;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import six.com.crawler.entity.Job;
+import six.com.crawler.entity.NodeType;
 
 
 /**
@@ -10,9 +12,12 @@ import six.com.crawler.entity.Job;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年3月13日 上午11:45:58
  */
-public abstract class MasterAbstractSchedulerManager extends AbstractSchedulerManager implements Remote {
+public abstract class MasterAbstractSchedulerManager extends AbstractSchedulerManager{
 
+	final static Logger log = LoggerFactory.getLogger(MasterAbstractSchedulerManager.class);
+	
 	protected final void init() {
+		
 		doInit();
 
 		getNodeManager().register(ScheduledJobCommand.startWorker, param -> {
@@ -27,6 +32,23 @@ public abstract class MasterAbstractSchedulerManager extends AbstractSchedulerMa
 			return null;
 
 		});
+		/**
+		 * 如果当前节点是master那么需要修复 
+		 */
+		if (NodeType.MASTER == getNodeManager().getCurrentNode().getType() 
+				|| NodeType.MASTER_WORKER == getNodeManager().getCurrentNode().getType()) {
+			try {
+				stopAll();
+			} catch (Exception e) {
+				log.error("master node stop all err", e);
+			}
+			try {
+				repair();
+			} catch (Exception e) {
+				log.error("master node repair err", e);
+			}
+		}
+	
 	}
 
 	protected abstract void doInit();

@@ -30,9 +30,9 @@ public class TmsfProjectListWorker extends AbstractCrawlWorker {
 
 	final static Logger LOG = LoggerFactory.getLogger(TmsfProjectListWorker.class);
 
-	String siteidFlag = "<<siteid>>";
+	String sidFlag = "<<sid>>";
 	String propertyidFlag = "<<propertyid>>";
-	String projectUrilTemplate = "/newhouse/property_" + siteidFlag + "_" + propertyidFlag + "_info.htm";
+	String projectUrilTemplate = "/newhouse/property_" + sidFlag + "_" + propertyidFlag + "_info.htm";
 	String projectDivCss = "div[class=build_txt line26]";
 	RedisWorkQueue projectInfoQueue;
 	String pageCountCss = "div[class=pagenuber_info]>font:eq(1)";
@@ -122,7 +122,11 @@ public class TmsfProjectListWorker extends AbstractCrawlWorker {
 			String onclick = projecrDivElement.attr("onclick");
 			onclick = StringUtils.substringBetween(onclick, "toPropertyInfo(", ")");
 			String[] params = StringUtils.split(onclick, ",");
-			String projectUrl = StringUtils.replace(projectUrilTemplate, siteidFlag, params[0]);
+			
+			metaMap.put("sid", Arrays.asList(params[0]));
+			metaMap.put("propertyId", Arrays.asList(params[1]));
+			
+			String projectUrl = StringUtils.replace(projectUrilTemplate, sidFlag, params[0]);
 			projectUrl = StringUtils.replace(projectUrl, propertyidFlag, params[1]);
 			projectUrl = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), projectUrl);
 			Page projectPage = new Page(doingPage.getSiteCode(), 1, projectUrl, projectUrl);

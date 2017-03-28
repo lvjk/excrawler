@@ -99,11 +99,16 @@ public class SiteServiceImpl implements SiteService {
 				byte[] buffer = siteProfile.getBytes();
 				String siteProfileXml = new String(buffer);
 				SiteProfile profile = SiteProfile.buildSiteProfile(siteProfileXml);
-				del(profile.getSite().getCode());
-				save(profile.getSite());
-				extracterService.delExtractPathBySiteCide(profile.getSite().getCode());
-				extracterService.saveExtractPath(profile.getExtractPaths());
-				msg = "uploadJobProfile[" + siteProfile.getName() + "] succeed";
+				if (null != profile && null != profile.getSite()) {
+					del(profile.getSite().getCode());
+					save(profile.getSite());
+					extracterService.delExtractPathBySiteCide(profile.getSite().getCode());
+					if (null != profile.getExtractPaths()) {
+						extracterService.saveExtractPath(profile.getExtractPaths());
+					}
+
+					msg = "uploadJobProfile[" + siteProfile.getName() + "] succeed";
+				}
 			} catch (Exception e) {
 				msg = "uploadJobProfile[" + siteProfile.getName() + "] err";
 				LOG.error(msg, e);

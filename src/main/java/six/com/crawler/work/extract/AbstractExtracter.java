@@ -8,24 +8,54 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateFormatUtils;
 
+import six.com.crawler.common.DateFormats;
 import six.com.crawler.entity.Page;
-import six.com.crawler.utils.JsoupUtils;
+import six.com.crawler.entity.ResultContext;
+import six.com.crawler.utils.MD5Utils;
+import six.com.crawler.utils.ObjectCheckUtils;
 import six.com.crawler.utils.TelPhoneUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
+import six.com.crawler.work.downer.exception.PrimaryExtractException;
+import six.com.crawler.work.extract.exception.ExtractEmptyResultException;
+import six.com.crawler.work.extract.exception.ExtractUnknownException;
+import six.com.crawler.work.extract.exception.NotFindExtractPathException;
 
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年2月23日 下午9:19:54
+ * 
+ *       抽取器抽象类：
+ * 
+ *       <p>
+ *       1.普通的css query 抽取
+ *       </p>
+ *       <p>
+ *       2.普通的正则 抽取
+ *       </p>
+ *       <p>
+ *       3.html 单条数据表格抽取
+ *       </p>
+ *       <p>
+ *       4.html 多条数据表格抽取
+ *       </p>
+ *       <p>
+ *       5.json 数据抽取
+ *       </p>
+ * 
  */
 public abstract class AbstractExtracter implements Extracter {
 
 	private AbstractCrawlWorker worker;
 	private List<ExtractItem> extractItems;
-	Map<String, List<ExtractPath>> extractPathMap = new HashMap<>();
+	private Map<String, List<ExtractPath>> extractPathMap = new HashMap<>();
 	private static Set<Character> charSet = new HashSet<>();
+	private volatile int primaryResultSize = -1;
+	private static final String EMPTY_VALUE = "";
+
 	static {
 		charSet.add(' ');
 		charSet.add('\n');
@@ -33,58 +63,125 @@ public abstract class AbstractExtracter implements Extracter {
 	}
 
 	public AbstractExtracter(AbstractCrawlWorker worker, List<ExtractItem> extractItems) {
+		ObjectCheckUtils.checkNotNull(worker, "worker");
+		ObjectCheckUtils.checkNotNull(extractItems, "extractItems");
 		this.worker = worker;
 		this.extractItems = extractItems;
 	}
 
-	protected List<String> extract(Page page, ExtractItem extractItem) {
-		List<String> extractResult = null;
-		if (extractItem.getType() == ExtractItemType.META.value()) {
-			extractResult = page.getMeta(extractItem.getOutputKey());
-			if (null == extractResult) {
-				extractResult = new ArrayList<>();
-			}
-		} else {
-			extractResult = new ArrayList<>();
-			ExtractPath optimalPath = null;
-			int ranking = 0;
-			List<ExtractPath> pathList = extractPathMap.get(extractItem.getPathName());
-			if (null == pathList) {
-				pathList = worker.getManager().getExtractPathDao().query(extractItem.getPathName(),
-						worker.getSite().getCode());
-				extractPathMap.put(extractItem.getPathName(), pathList);
-			}
-			if (ranking >= pathList.size()) {
-				throw new RuntimeException("don't find path:" + extractItem.getPathName());
-			}
-			optimalPath = pathList.get(ranking);
-			// 如果 optimalPath 为null 那么库里根本不存在path 所以不需要继续往下处理
-			if (null != optimalPath) {
-				ExtractPath nowPath = optimalPath;
-				try {
-					// 抽取结果 result不可能为null 如果result没有结果 那么 result
-					// 会用Collections.emptyList();
-					List<String> tempExtractList = JsoupUtils.extract(page.getDoc(), nowPath);
-					for (String extractItemStr : tempExtractList) {
-						String tempExtract = paserString(extractItem, page, extractItemStr);
-						extractResult.add(tempExtract);
-					}
-				} catch (Exception t) {
-					throw new ExtractUnknownException(
-							"PaserProcessorExtractUnknownException:" + extractItem.getPathName(), t);
-				}
+	protected abstract List<String> doExtract(Page doingPage, ExtractItem extractItem, ExtractPath path);
 
+	public final ResultContext extract(Page doingPage) {
+		ResultContext resultContext = new ResultContext();
+		primaryResultSize = -1;
+		for (ExtractItem doPaserItem : extractItems) {
+			List<String> doResults = null;
+			if (doPaserItem.getType() == ExtractItemType.META.value()) {// 判断是否是元数据类型
+				doResults = doingPage.getMeta(doPaserItem.getOutputKey());
 			} else {
-				throw new ExtractUnknownException("don't find paser path:" + extractItem.getPathName());
+				List<ExtractPath> pathList = extractPathMap.computeIfAbsent(doPaserItem.getPathName(), mapKey -> {// 获取所有path
+					return getAbstractWorker().getManager().getExtractPathDao().query(doPaserItem.getPathName(),
+							getAbstractWorker().getSite().getCode());
+				});
+				if (null == pathList || pathList.isEmpty()) {// 如果没有获取到path 抛异常
+					throw new NotFindExtractPathException("don't find path:" + doPaserItem.getPathName());
+				}
+				int ranking = 0;// 默认使用排名第一的path 抽取
+				List<String> tempDoResults = null;
+				try {
+					while (true) {
+						ExtractPath path = pathList.get(ranking++);
+						tempDoResults = doExtract(doingPage, doPaserItem, path);
+						if (null != tempDoResults && tempDoResults.size() > 0) {// 如果抽取到了结果那么对结果进行处理
+							doResults = new ArrayList<>(tempDoResults.size());
+							for (String doResult : tempDoResults) {
+								String tempExtract = paserString(doPaserItem, doingPage, doResult);
+								doResults.add(tempExtract);
+							}
+							break;
+						} else if (ranking >= pathList.size()) {// 如果迭代的ranking>=pathList.size()那么跳出循环
+							break;
+						}
+					}
+				} catch (Exception e) {// 捕获 未知异常
+					throw new ExtractUnknownException("extractItem[" + doPaserItem.getOutputKey() + "] err", e);
+				}
 			}
+			if ((null == doResults || doResults.isEmpty())// 主键必须有值,如果抽取结果为空，判断是否必须有值，如果是那么抛出异常
+					&&(1 == doPaserItem.getPrimary()||1==doPaserItem.getMustHaveResult())) {
+				throw new ExtractEmptyResultException(
+						"extract resultKey [" + doPaserItem.getOutputKey() + "] value is empty");
+			}
+			if (1 == doPaserItem.getPrimary()) {// 记录主键结果数量
+				if (-1 == primaryResultSize) {// primaryResultSize第一次直接赋值
+					primaryResultSize = doResults.size();
+				} else {
+					if (primaryResultSize != doResults.size()) {// 对比与上一次的primaryResultSize ，如果不相等那么抛出异常
+						throw new PrimaryExtractException("extract primaryKey[" + doPaserItem.getOutputKey()
+								+ "]'s result size[" + doResults.size() + "] did not match last primaryResultSize["
+								+ primaryResultSize + "]");
+					}
+				}
+			} else {
+				if (null == doResults || doResults.isEmpty()) {// 如果非主键结果为空，那么默认给它赋值跟主键数量一样的 空值
+					doResults = null == doResults ? new ArrayList<>(primaryResultSize) : doResults;
+					for (int i = 0; i < primaryResultSize; i++) {
+						doResults.add(EMPTY_VALUE);
+					}
+				}
+			}
+			resultContext.addExtractResult(doPaserItem.getOutputKey(), doResults);
 		}
-		// 查看这个path是否是一定要有结果
-		// 如果==must 没有结果的话 那么将会抛抽取 结果空 异常
-		if (extractResult.isEmpty() && extractItem.getMustHaveResult() == 1) {
-			throw new ExtractEmptyResultException(
-					"extract resultKey [" + extractItem.getOutputKey() + "] value is empty");
+		//组装结果，并加上系统默认字段
+		assembleExtractResult(resultContext, doingPage, primaryResultSize);
+		return resultContext;
+	}
+
+	/**
+	 * 对抽取出来的结果进行组装，并加上系统默认字段
+	 * @param resultContext
+	 * @return
+	 */
+	private void assembleExtractResult(ResultContext resultContext, Page doingPage, int primaryResultSize) {
+		if(primaryResultSize>0){
+			String nowTime = DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1);
+			List<String> idList=new ArrayList<>(primaryResultSize);
+			List<String> collectionDateList=new ArrayList<>(primaryResultSize);
+			List<String> originUrlList=new ArrayList<>(primaryResultSize);
+			for (int i = 0; i < primaryResultSize; i++) {
+				Map<String, String> dataMap = new HashMap<>();
+				List<String> primaryKeysValue = new ArrayList<>();
+				for (ExtractItem extractItem : extractItems) {
+					List<String> tempResultList = resultContext.getExtractResult(extractItem.getOutputKey());
+					String result = tempResultList.get(i);
+					dataMap.put(extractItem.getOutputKey(), result);
+					if (1 == extractItem.getPrimary()) {
+						primaryKeysValue.add(result);
+					}
+				}
+				String id = getResultID(primaryKeysValue);
+				dataMap.put(Extracter.DEFAULT_RESULT_ID, id);
+				dataMap.put(Extracter.DEFAULT_RESULT_COLLECTION_DATE, nowTime);
+				dataMap.put(Extracter.DEFAULT_RESULT_ORIGIN_URL, doingPage.getFinalUrl());
+				
+				idList.add(id);
+				collectionDateList.add(nowTime);
+				originUrlList.add(doingPage.getFinalUrl());
+				resultContext.addoutResult(dataMap);
+			}
+			resultContext.addExtractResult(Extracter.DEFAULT_RESULT_ID, idList);
+			resultContext.addExtractResult(Extracter.DEFAULT_RESULT_COLLECTION_DATE, collectionDateList);
+			resultContext.addExtractResult(Extracter.DEFAULT_RESULT_ORIGIN_URL, originUrlList);
 		}
-		return extractResult;
+	}
+
+	private static String getResultID(List<String> keyValues) {
+		StringBuilder newValue = new StringBuilder();
+		for (String value : keyValues) {
+			newValue.append(value);
+		}
+		String id = MD5Utils.MD5(newValue.toString());
+		return id;
 	}
 
 	/**

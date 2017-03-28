@@ -15,8 +15,8 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.exception.BaseException;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.Constants;
 import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.extract.Extracter;
 
 /**
  * @author 作者
@@ -118,15 +118,17 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 		List<String> presellUrls = resultContext.getExtractResult("presellUrl");
 		if (null != presellUrls && presellUrls.size() > 0) {
 			String presaleUrl = presellUrls.get(0);
-			String sid = resultContext.getExtractResult("sid").get(0);
-			String projectId = resultContext.getOutResults().get(0).get(Constants.DEFAULT_RESULT_ID);
-			Page presellPage = new Page(doingPage.getSiteCode(), 1, presaleUrl, presaleUrl);
-			presellPage.setReferer(doingPage.getFinalUrl());
-			presellPage.setMethod(HttpMethod.GET);
-			presellPage.setType(PageType.DATA.value());
-			presellPage.getMetaMap().put("sid", Arrays.asList(sid));
-			presellPage.getMetaMap().put("projectId", Arrays.asList(projectId));
-			presellUrlQueue.push(presellPage);
+			if(StringUtils.isNotBlank(presaleUrl)){
+				String sid = resultContext.getExtractResult("sid").get(0);
+				String projectId = resultContext.getOutResults().get(0).get(Extracter.DEFAULT_RESULT_ID);
+				Page presellPage = new Page(doingPage.getSiteCode(), 1, presaleUrl, presaleUrl);
+				presellPage.setReferer(doingPage.getFinalUrl());
+				presellPage.setMethod(HttpMethod.GET);
+				presellPage.setType(PageType.DATA.value());
+				presellPage.getMetaMap().put("sid", Arrays.asList(sid));
+				presellPage.getMetaMap().put("projectId", Arrays.asList(projectId));
+				presellUrlQueue.push(presellPage);
+			}
 		}
 	}
 

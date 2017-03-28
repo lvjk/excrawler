@@ -35,6 +35,7 @@ public class WorkerNodeRegisterEvent extends NodeRegisterEvent {
 				return true;
 			} else {
 				log.error("please first start the masterNode");
+				return false;
 			}
 		} catch (Exception e) {
 			log.error("", e);

@@ -34,6 +34,9 @@ public class MasterAndWorkerNodeRegisterEvent extends NodeRegisterEvent {
 				zKClient.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL)
 						.forPath(ZooKeeperPathUtils.getWorkerNodePath(getCurrentNode().getName()), data);
 				return true;
+			}else{
+				log.info("there is a master node:"+masterNode.toString());
+				return false;
 			}
 		} catch (Exception e) {
 			log.error("", e);

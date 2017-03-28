@@ -8,12 +8,13 @@ import org.slf4j.LoggerFactory;
 
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.work.AbstractWorker;
+import six.com.crawler.work.store.exception.StoreException;
 
 /**
  * @author six
  * @date 2016年8月26日 上午9:24:48
  */
-public abstract class StoreAbstarct {
+public abstract class StoreAbstarct implements Store{
 
 	final static Logger LOG = LoggerFactory.getLogger(StoreAbstarct.class);
 	private AbstractWorker worker;

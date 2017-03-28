@@ -13,10 +13,6 @@ public class AbstractHttpException extends BaseException{
 	private static final long serialVersionUID = -200418828733119023L;
 
 	
-	public AbstractHttpException() {
-		super();
-	}
-	
 	public AbstractHttpException(String message) {
 		super(message, null);
 	}

@@ -18,6 +18,7 @@ import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.utils.DbHelper;
 import six.com.crawler.utils.JobTableUtils;
 import six.com.crawler.work.AbstractWorker;
+import six.com.crawler.work.store.exception.StoreException;
 
 /**
  * @author 作者

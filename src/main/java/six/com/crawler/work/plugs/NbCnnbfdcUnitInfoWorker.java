@@ -8,8 +8,8 @@ import java.util.Map;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.Constants;
 import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.extract.Extracter;
 
 public class NbCnnbfdcUnitInfoWorker extends AbstractCrawlWorker{
 	
@@ -41,7 +41,7 @@ public class NbCnnbfdcUnitInfoWorker extends AbstractCrawlWorker{
 		List<String> unitUrls = resultContext.getExtractResult("unitUrl");
 		List<String> unitName = resultContext.getExtractResult("unitName");
 		for(int i=0;i<unitName.size();i++){
-			String unitId = resultContext.getOutResults().get(i).get(Constants.DEFAULT_RESULT_ID);
+			String unitId = resultContext.getOutResults().get(i).get(Extracter.DEFAULT_RESULT_ID);
 			String roomInfoPageUrl =unitUrls.get(i);
 			Page roomStatePage = new Page(doingPage.getSiteCode(), 1, roomInfoPageUrl, roomInfoPageUrl);
 			roomStatePage.setReferer(doingPage.getFinalUrl());

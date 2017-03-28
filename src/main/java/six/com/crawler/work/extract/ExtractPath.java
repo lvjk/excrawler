@@ -2,11 +2,13 @@ package six.com.crawler.work.extract;
 
 import java.io.Serializable;
 
+import six.com.crawler.entity.BaseVo;
+
 /**
  * @author sixliu E-mail:359852326@qq.com
  * @version 创建时间：2016年5月17日 下午7:48:04 类说明
  */ 
-public class ExtractPath implements Serializable{
+public class ExtractPath extends BaseVo implements Serializable{
 
 	/**
 	 * 
@@ -19,10 +21,30 @@ public class ExtractPath implements Serializable{
 
 	private int ranking;
 
-	private String path;// 要获取的值的属性名字
+	/**
+	 * 1.普通抽取对应抽取元素的路径
+	 * 2.表格抽取对应抽取表格的路径
+	 * 3.json抽取对应json的路径
+	 * 4.正则抽取对应正则的表达式路径
+	 */
+	private String path;
+	
+	/**
+	 * 表格多条数据类型 列名path
+	 */
+	private String tableHeadPath;
+	
+	/**
+	 * 表格多条数据类型 数据path
+	 */
+	private String tableDataPath;
 
 	private String filterPath;// 需要过滤的路径path
 
+	/**
+	 * 1.普通抽取对应抽取元素值的属性名称
+	 * 2.表格抽取对应抽取表格值的字段
+	 */
 	private String extractAttName;// 要获取的值的属性名字
 
 	private String substringStart; //截止字符开始字符，不设值 默认从头开始
@@ -44,7 +66,7 @@ public class ExtractPath implements Serializable{
 	private int extractEmptyCount;// 抽取结果为空的计数
 
 	private String describe;// 描述
-
+	
 
 	public String getName() {
 		return name;
@@ -70,12 +92,40 @@ public class ExtractPath implements Serializable{
 		this.ranking = ranking;
 	}
 
+	/**
+	 * 1.普通抽取对应抽取元素的路径
+	 * 2.表格抽取对应抽取表格的路径
+	 * 3.json抽取对应json的路径
+	 * 4.正则抽取对应正则的表达式路径
+	 */
 	public String getPath() {
 		return path;
 	}
 
 	public void setPath(String path) {
 		this.path = path;
+	}
+	
+	/**
+	 * 表格多条数据类型 列名path
+	 */
+	public String getTableHeadPath() {
+		return tableHeadPath;
+	}
+
+	public void setTableHeadPath(String tableHeadPath) {
+		this.tableHeadPath = tableHeadPath;
+	}
+	
+	/**
+	 * 表格多条数据类型 数据path
+	 */
+	public String getTableDataPath() {
+		return tableDataPath;
+	}
+
+	public void setTableDataPath(String tableDataPath) {
+		this.tableDataPath = tableDataPath;
 	}
 
 	public String getFilterPath() {
@@ -86,6 +136,10 @@ public class ExtractPath implements Serializable{
 		this.filterPath = filterPath;
 	}
 
+	/**
+	 * 1.普通抽取对应抽取元素值的属性名称
+	 * 2.表格抽取对应抽取表格值的字段
+	 */
 	public String getExtractAttName() {
 		return extractAttName;
 	}

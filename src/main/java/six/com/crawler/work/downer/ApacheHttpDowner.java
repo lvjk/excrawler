@@ -18,8 +18,8 @@ import six.com.crawler.http.HttpResult;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.utils.AutoCharsetDetectorUtils.ContentType;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.exception.DownerException;
-import six.com.crawler.work.exception.ExecuteRequestDownHtmlProcessorException;
+import six.com.crawler.work.downer.exception.DownerException;
+import six.com.crawler.work.downer.exception.ManyRedirectDownException;
 
 /**
  * @author 作者
@@ -65,7 +65,7 @@ public class ApacheHttpDowner extends AbstractDowner {
 				result = httpClient.executeHttpUriRequest(httpUriRequest);
 			} catch (AbstractHttpException e) {
 				// request execute 异常处理
-				throw new ExecuteRequestDownHtmlProcessorException(
+				throw new ManyRedirectDownException(
 						"execute request[" + httpUriRequest.getURI() + "] err", e);
 			}
 			if (StringUtils.isNotBlank(result.getRedirectedUrl())) {
@@ -77,7 +77,7 @@ public class ApacheHttpDowner extends AbstractDowner {
 				redirectTime++;
 				if (redirectTime > HttpConstant.REDIRECT_TIMES) {
 					// 抛重定向次数过多异常
-					throw new ExecuteRequestDownHtmlProcessorException(
+					throw new ManyRedirectDownException(
 							"execute request[" + httpUriRequest.getURI() + "] redirectTime is too many");
 				}
 			}

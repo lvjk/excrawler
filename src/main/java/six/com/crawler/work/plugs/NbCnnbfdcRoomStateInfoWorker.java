@@ -12,8 +12,8 @@ import org.jsoup.select.Elements;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.Constants;
 import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.extract.Extracter;
 
 /**
  * 抓取宁波住宅与房地产网(楼层单元状态的信息)
@@ -109,7 +109,7 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker{
 		List<String> roomNos = resultContext.getExtractResult("roomNo");
 		if(roomNos!=null){
 			for(int i=0;i<roomNos.size();i++){
-				String roomStateId = resultContext.getOutResults().get(i).get(Constants.DEFAULT_RESULT_ID);
+				String roomStateId = resultContext.getOutResults().get(i).get(Extracter.DEFAULT_RESULT_ID);
 				String id = roomStateElements.get(i).attr("id");
 				id = id.replace("room", "");
 				String pageUrl = "http://newhouse.cnnbfdc.com/openRoomData.aspx?roomId=" + id;

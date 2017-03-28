@@ -1,7 +1,5 @@
 package six.com.crawler.work;
 
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * @author 作者
@@ -9,6 +7,11 @@ import java.util.Set;
  * @date 创建时间：2016年9月28日 下午10:49:22
  */
 public class Constants {
+
+	// 上次处理数据时间
+	public static final int FIND_ELEMENT_TIMEOUT= 1000;
+	// 默认HTTP PROXY最小休息时间 5 秒
+	public static final int DEFAULT_MIN_HTTPPROXY_RESTTIME = 5000;
 
 	public static final int WOKER_PROCESS_PAGE_MAX_RETRY_COUNT = 3;
 	/**
@@ -27,20 +30,4 @@ public class Constants {
 	public static final String REDIS_PROCESSOR_OPERATION_HAS_NEXT_PAGE_KEY = "spider_redis_processor_operation_has_next_page_";
 
 	public static final String ITEM_SEPARATE = "<_item_>";
-
-	// 系统默认 采集数据id
-	public static final String DEFAULT_RESULT_ID= "id";
-	// 系统默认 采集日期 字段
-	public static final String DEFAULT_RESULT_COLLECTION_DATE = "collectionDate";
-	// 系统默认 数据源url 字段
-	public static final String DEFAULT_RESULT_ORIGIN_URL = "originUrl";
-	
-	public static final Set<String> DEFAULT_RESULT_KEY_SET;
-	
-	static{
-		DEFAULT_RESULT_KEY_SET=new HashSet<>();
-		DEFAULT_RESULT_KEY_SET.add(DEFAULT_RESULT_ID);
-		DEFAULT_RESULT_KEY_SET.add(DEFAULT_RESULT_COLLECTION_DATE);
-		DEFAULT_RESULT_KEY_SET.add(DEFAULT_RESULT_ORIGIN_URL);
-	}
 }

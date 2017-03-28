@@ -17,9 +17,9 @@ import six.com.crawler.http.HttpMethod;
 import six.com.crawler.utils.JsonUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.Constants;
 import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.WorkerLifecycleState;
+import six.com.crawler.work.extract.Extracter;
 
 /**
  * @author 作者
@@ -114,7 +114,7 @@ public class Cq315housePresell1Worker extends AbstractCrawlWorker {
 		List<String> projectIds = doingPage.getMetaMap().get("projectId");
 		for (int i = 0; i < projectIds.size(); i++) {
 			String projectId = projectIds.get(i);
-			String pre1Id = resultContext.getOutResults().get(i).get(Constants.DEFAULT_RESULT_ID);
+			String pre1Id = resultContext.getOutResults().get(i).get(Extracter.DEFAULT_RESULT_ID);
 			String preReferer = "ProjectDetailPre.htm?projectId=" + projectId;
 			preReferer = UrlUtils.paserUrl(doingPage.getBaseUrl(), referer, preReferer);
 			String presell2Url = "../webservice/GetMyData112.ashx?type=1&projectId=" + projectId;
