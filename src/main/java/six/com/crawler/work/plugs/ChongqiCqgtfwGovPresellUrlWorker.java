@@ -11,8 +11,8 @@ import org.slf4j.LoggerFactory;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.WorkerLifecycleState;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * @author 作者
@@ -22,7 +22,7 @@ import six.com.crawler.work.WorkerLifecycleState;
 public class ChongqiCqgtfwGovPresellUrlWorker extends AbstractCrawlWorker {
 
 	final static Logger LOG = LoggerFactory.getLogger(ChongqiCqgtfwGovPresellUrlWorker.class);
-	RedisWorkQueue presellInfoQueue;
+	RedisWorkSpace<Page> presellInfoQueue;
 	String pageIndexTemplate = "<<pageIndex>>";
 	String firstUrl = "http://www.cqgtfw.gov.cn/spjggs/fw/spfysxk/index.htm";
 	String urlTemplate = "http://www.cqgtfw.gov.cn/spjggs/fw/spfysxk/index_" + pageIndexTemplate + ".htm";
@@ -30,7 +30,7 @@ public class ChongqiCqgtfwGovPresellUrlWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void insideInit() {
-		presellInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "chongqi_cqgtfw_gov_presell_info");
+		presellInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(),"chongqi_cqgtfw_gov_presell_info",Page.class);
 		Page firstPage = new Page(getSite().getCode(), 1, firstUrl, firstUrl);
 		getDowner().down(firstPage);
 		Element pageInfoElement = firstPage.getDoc().select(pageInfoCss).first();
@@ -50,7 +50,7 @@ public class ChongqiCqgtfwGovPresellUrlWorker extends AbstractCrawlWorker {
 			getAndSetState(WorkerLifecycleState.STOPED);
 			throw new RuntimeException("don't find pageCount");
 		}
-		getWorkQueue().clear();
+		getWorkQueue().clearDoing();
 		getWorkQueue().push(firstPage);
 		String referer=firstPage.getFinalUrl();
 		for(int pageIndex=1;pageIndex<pageCount;pageIndex++){

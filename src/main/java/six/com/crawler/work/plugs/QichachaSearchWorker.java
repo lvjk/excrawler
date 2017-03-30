@@ -18,8 +18,8 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.ThreadUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.Constants;
+import six.com.crawler.work.space.RedisWorkSpace;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
 
 /**
  * @author 作者
@@ -29,7 +29,7 @@ import six.com.crawler.work.RedisWorkQueue;
 public class QichachaSearchWorker extends AbstractCrawlWorker {
 
 	protected final static Logger LOG = LoggerFactory.getLogger(QichachaSearchWorker.class);
-	RedisWorkQueue qichachaQueue;
+	RedisWorkSpace<Page> qichachaQueue;
 	private RedisManager redisManager;
 	private String showProvinceBt;
 	private String clearProvinceBt;
@@ -65,7 +65,7 @@ public class QichachaSearchWorker extends AbstractCrawlWorker {
 		String searchPageUrl = "http://www.qichacha.com/search?key=%E5%9C%B0%E4%BA%A7&index=0";
 		Page searchPage = new Page(getSite().getCode(), 1,searchPageUrl, searchPageUrl);
 		getWorkQueue().push(searchPage);
-		qichachaQueue = new RedisWorkQueue(getManager().getRedisManager(), "qichacha");
+		qichachaQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "qichacha",Page.class);
 	}
 
 	@Override
@@ -188,7 +188,7 @@ public class QichachaSearchWorker extends AbstractCrawlWorker {
 				newPage.setReferer(doingPage.getFinalUrl());
 				newPage.setType(PageType.DATA.value());
 				newPage.getMetaMap().put("city", list);
-				if (!qichachaQueue.duplicateKey(newPage.getPageKey())) {
+				if (!qichachaQueue.isDone(newPage.getPageKey())) {
 					qichachaQueue.push(newPage);
 				}
 			}

@@ -12,8 +12,8 @@ import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.WebDriverUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.WorkerLifecycleState;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * @author 作者
@@ -25,14 +25,14 @@ public class SzplGovProjectWorker extends AbstractCrawlWorker {
 	final static Logger LOG = LoggerFactory.getLogger(SzplGovProjectWorker.class);
 
 	String nextXpath = "//div[@id='AspNetPager1']/div[@class='mypaper']/a";
-	RedisWorkQueue preSaleQueue;
-	RedisWorkQueue projectQueue;
+	RedisWorkSpace<Page> preSaleQueue;
+	RedisWorkSpace<Page> projectQueue;
 
 
 	@Override
 	protected void insideInit() {
-		preSaleQueue = new RedisWorkQueue(getManager().getRedisManager(), "szpl_gov_pre_sale");
-		projectQueue = new RedisWorkQueue(getManager().getRedisManager(), "szpl_gov_project_detail");
+		preSaleQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "szpl_gov_pre_sale",Page.class);
+		projectQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "szpl_gov_project_detail",Page.class);
 	}
 
 	@Override
@@ -54,7 +54,7 @@ public class SzplGovProjectWorker extends AbstractCrawlWorker {
 				page = new Page(doingPage.getSiteCode(), 1, url, url);
 				page.setType(PageType.DATA.value());
 				page.setReferer(doingPage.getFinalUrl());
-				if (!preSaleQueue.duplicateKey(page.getPageKey())) {
+				if (!preSaleQueue.isDone(page.getPageKey())) {
 					preSaleQueue.push(page);
 				}
 			}

@@ -11,11 +11,11 @@ import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 public class NbCnnbfdcProjectListWorker extends AbstractCrawlWorker {
 
-	RedisWorkQueue projectInfoQueue;
+	RedisWorkSpace<Page> projectInfoQueue;
 	String pageIndexTemplate = "<<pageIndex>>";
 	String pageCountCss = "div[class=PagerCss]>a:contains(>|)";
 	int pageIndex = 1;
@@ -26,7 +26,7 @@ public class NbCnnbfdcProjectListWorker extends AbstractCrawlWorker {
 	@Override
 	protected void insideInit() {
 		String firstUrl = StringUtils.replace(projectListUrlTemplate, pageIndexTemplate, String.valueOf(pageIndex));
-		projectInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "nb_cnnbfdc_project_info");
+		projectInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "nb_cnnbfdc_project_info",Page.class);
 		Page firstPage = new Page(getSite().getCode(), 1, firstUrl, firstUrl);
 		firstPage.setMethod(HttpMethod.GET);
 		getDowner().down(firstPage);
@@ -44,7 +44,7 @@ public class NbCnnbfdcProjectListWorker extends AbstractCrawlWorker {
 
 		}
 
-		getWorkQueue().clear();
+		getWorkQueue().clearDoing();
 		getWorkQueue().push(firstPage);
 	}
 
@@ -80,7 +80,6 @@ public class NbCnnbfdcProjectListWorker extends AbstractCrawlWorker {
 		pageIndex++;
 		if (pageIndex <= pageCount) {
 			String firstUrl = StringUtils.replace(projectListUrlTemplate, pageIndexTemplate, String.valueOf(pageIndex));
-			projectInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "nb_cnnbfdc_project_info");
 			Page nextgPage = new Page(getSite().getCode(), 1, firstUrl, firstUrl);
 			nextgPage.setReferer(doingPage.getFinalUrl());
 			nextgPage.setMethod(HttpMethod.GET);

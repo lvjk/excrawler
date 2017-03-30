@@ -13,19 +13,19 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.JsoupUtils;
 import six.com.crawler.utils.JsoupUtils.TableResult;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.extract.Extracter;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 public class NbCnnbfdcProjectInfoWorker extends AbstractCrawlWorker {
 
 	
-	RedisWorkQueue unitInfoQueue;
+	RedisWorkSpace<Page> unitInfoQueue;
 	private Map<String, String> fieldMap = new HashMap<String, String>();
 	String tabaleCss = "td[valign=top]:eq(0)>table[bgcolor=#DDDDDD]:eq(1)";
 
 	@Override
 	protected void insideInit() {
-		unitInfoQueue=new RedisWorkQueue(getManager().getRedisManager(), "nb_cnnbfdc_unit_info");
+		unitInfoQueue=new RedisWorkSpace<Page>(getManager().getRedisManager(), "nb_cnnbfdc_unit_info",Page.class);
 		fieldMap.put("项目名称：", "projectName");
 		fieldMap.put("项目地址：", "address");
 		fieldMap.put("开发公司：", "developer");

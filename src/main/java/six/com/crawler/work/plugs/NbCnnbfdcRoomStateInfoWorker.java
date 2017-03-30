@@ -12,8 +12,8 @@ import org.jsoup.select.Elements;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.extract.Extracter;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * 抓取宁波住宅与房地产网(楼层单元状态的信息)
@@ -23,14 +23,14 @@ import six.com.crawler.work.extract.Extracter;
  */
 public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker{
 	
-	RedisWorkQueue roomInfoQueue;
+	RedisWorkSpace<Page> roomInfoQueue;
 	String iframeCss = "td>iframe[id=mapbarframe]";
 	
 	private Map<String,String> roomStates = new HashMap<String,String>();
 
 	@Override
 	protected void insideInit() {
-		roomInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "nb_cnnbfdc_room_info");
+		roomInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "nb_cnnbfdc_room_info",Page.class);
 	}
 
 	@Override
@@ -116,7 +116,7 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker{
 				Page roomPage = new Page(doingPage.getSiteCode(), 1, pageUrl, pageUrl);
 				roomPage.getMetaMap().computeIfAbsent("roomStateId",mapKey->new ArrayList<>()).add(roomStateId);
 				roomPage.setReferer(doingPage.getFinalUrl());
-				if(!roomInfoQueue.duplicateKey(roomPage.getPageKey())){
+				if(!roomInfoQueue.isDone(roomPage.getPageKey())){
 					roomInfoQueue.push(roomPage);
 				}
 			}

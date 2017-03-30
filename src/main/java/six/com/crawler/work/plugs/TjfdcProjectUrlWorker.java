@@ -13,8 +13,8 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.utils.WebDriverUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.WorkerLifecycleState;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * @author 作者
@@ -24,13 +24,14 @@ import six.com.crawler.work.WorkerLifecycleState;
 public class TjfdcProjectUrlWorker extends AbstractCrawlWorker {
 
 	protected final static Logger LOG = LoggerFactory.getLogger(TjfdcProjectUrlWorker.class);
-	private RedisWorkQueue tjfdcProjecInfoQueue;
+	private RedisWorkSpace<Page> tjfdcProjecInfoQueue;
 	private String projectUrlXpath = "//div[@id='divContent']/ul/li/div/div/h3/a";
 	private String nextPageXpath = "//a[@id='SplitPageModule1_lbnNextPage']";
 
 	@Override
 	protected void insideInit() {
-		tjfdcProjecInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "tjfdc_projec_info");
+		tjfdcProjecInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tjfdc_projec_info",
+				Page.class);
 	}
 
 	protected void beforeDown(Page doingPage) {
@@ -74,7 +75,7 @@ public class TjfdcProjectUrlWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	protected void onComplete(Page doingPage,ResultContext resultContext) {
+	protected void onComplete(Page doingPage, ResultContext resultContext) {
 
 	}
 

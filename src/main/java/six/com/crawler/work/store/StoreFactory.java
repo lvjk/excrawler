@@ -29,6 +29,8 @@ public class StoreFactory {
 			store = new HttpStore(worker, resultKeys);
 		} else if (StoreType.FILE == storeType) {
 			store = new FileStore(worker, resultKeys);
+		}  else if (StoreType.REDIS == storeType) {
+			store = new RedisStore(worker, resultKeys);
 		} else {
 			store = new ConsoleStore(worker, resultKeys);
 		}

@@ -11,7 +11,7 @@ import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * @author 作者
@@ -20,7 +20,7 @@ import six.com.crawler.work.RedisWorkQueue;
  */
 public class TmsfHouseUrlWorker extends AbstractCrawlWorker {
 
-	RedisWorkQueue houseInfoQueue;
+	RedisWorkSpace<Page> houseInfoQueue;
 	private String propertyidTemplate = "<<propertyid>>";
 	private String sidTemplate = "<<sid>>";
 	private String presellIdTemplate = "<<presellid>>";
@@ -29,16 +29,10 @@ public class TmsfHouseUrlWorker extends AbstractCrawlWorker {
 	private String allpriceTemplate = "<<allprice>>";
 	private String housestateTemplate = "<<housestate>>";
 	private String housetypeTemplate = "<<housetype>>";
-	String houseInfoUrlTemplate = "http://www.tmsf.com/newhouse/" 
-			+"property_" + sidTemplate 
-			+"_" + propertyidTemplate+ "_control.htm?" 
-			+"presellid=" + presellIdTemplate
-			+"&buildingid="+buildingidTemplate
-			+"&area="+areaTemplate
-			+"&allprice="+allpriceTemplate
-			+"&housestate="+housestateTemplate
-			+"&housetype="+housetypeTemplate
-			+"&isopen=";
+	String houseInfoUrlTemplate = "http://www.tmsf.com/newhouse/" + "property_" + sidTemplate + "_" + propertyidTemplate
+			+ "_control.htm?" + "presellid=" + presellIdTemplate + "&buildingid=" + buildingidTemplate + "&area="
+			+ areaTemplate + "&allprice=" + allpriceTemplate + "&housestate=" + housestateTemplate + "&housetype="
+			+ housetypeTemplate + "&isopen=";
 	private String propertyidCss = "input[id=propertyid]";
 	private String sidCss = "input[id=sid]";
 	private String areaCss = "input[id=area]";
@@ -48,7 +42,7 @@ public class TmsfHouseUrlWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void insideInit() {
-		houseInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "tmsf_house_info");
+		houseInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tmsf_house_info", Page.class);
 	}
 
 	protected void beforeDown(Page doingPage) {
@@ -104,7 +98,7 @@ public class TmsfHouseUrlWorker extends AbstractCrawlWorker {
 			houseInfoUrl = StringUtils.replace(houseInfoUrl, allpriceTemplate, allprice);
 			houseInfoUrl = StringUtils.replace(houseInfoUrl, housestateTemplate, housestate);
 			houseInfoUrl = StringUtils.replace(houseInfoUrl, housetypeTemplate, housetype);
-			
+
 			Page houseInfoPage = new Page(doingPage.getSiteCode(), 1, houseInfoUrl, houseInfoUrl);
 			houseInfoPage.setReferer(doingPage.getFinalUrl());
 			houseInfoPage.setMethod(HttpMethod.GET);

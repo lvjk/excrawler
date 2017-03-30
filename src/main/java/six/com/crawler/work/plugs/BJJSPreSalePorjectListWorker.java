@@ -2,7 +2,6 @@ package six.com.crawler.work.plugs;
 
 import java.util.List;
 
-
 import org.apache.commons.lang3.StringUtils;
 
 import org.jsoup.nodes.Element;
@@ -13,8 +12,8 @@ import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.WorkerLifecycleState;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * 
@@ -25,10 +24,9 @@ public class BJJSPreSalePorjectListWorker extends AbstractCrawlWorker {
 
 	final static Logger log = LoggerFactory.getLogger(BJJSPreSalePorjectListWorker.class);
 
-
 	private static final String PROJECT_LIST_URL = "http://www.bjjs.gov.cn/eportal/ui?pageId=307670";
 	private String pageCountCss = "a[class=pagingNormal]:contains(尾页)";
-	RedisWorkQueue projectInfoQueue;
+	RedisWorkSpace<Page> projectInfoQueue;
 
 	// 第一页从1开始
 	int pageIndex = 1;
@@ -48,9 +46,9 @@ public class BJJSPreSalePorjectListWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void insideInit() {
-		projectInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "bjjs_gov_project_info");
+		projectInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(),"bjjs_gov_project_info", Page.class);
 		Page firstPage = buildPage(pageIndex, refererUrl);// 初始化第一页
-		getWorkQueue().clear();
+		getWorkQueue().clearDoing();
 		getWorkQueue().push(firstPage);
 	}
 

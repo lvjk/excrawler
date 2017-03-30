@@ -20,7 +20,7 @@ import six.com.crawler.utils.ThreadUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.utils.WebDriverUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * @author 作者
@@ -30,7 +30,7 @@ import six.com.crawler.work.RedisWorkQueue;
 public class SzplGovSuiteStateWorker extends AbstractCrawlWorker {
 
 	final static Logger LOG = LoggerFactory.getLogger(SzplGovSuiteStateWorker.class);
-	RedisWorkQueue suiteInfoQueue;
+	RedisWorkSpace<Page> suiteInfoQueue;
 	String suiteCodeXpath = "//div[@id='updatepanel1']/table[3]/tbody/tr[@class='a1']/td/div[contains(text(),'房号')]";
 	String suiteInfoXpath = "//div[@id='updatepanel1']/table[3]/tbody/tr[@class='a1']/td/div/a";
 	String suiteStateXpath = "//div[@id='updatepanel1']/table[3]/tbody/tr[@class='a1']/td/div/a/img";
@@ -45,7 +45,7 @@ public class SzplGovSuiteStateWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void insideInit() {
-		suiteInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "szpl_gov_suite_info_detail");
+		suiteInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "szpl_gov_suite_info_detail",Page.class);
 		saleStateBtXpathList = new ArrayList<>();
 		saleStateBtXpathList.add(preSaleBtXpath);
 		saleStateBtXpathList.add(nowSaleBtXpath);
@@ -132,7 +132,7 @@ public class SzplGovSuiteStateWorker extends AbstractCrawlWorker {
 						suiteInfoPage.getMetaMap().put("floorName", Arrays.asList(楼名));
 						suiteInfoPage.getMetaMap().put("constructionPlanPermit", Arrays.asList(建设工程规划许可证));
 						suiteInfoPage.getMetaMap().put("constructionPermit", Arrays.asList(建筑工程施工许可证));
-						if (!suiteInfoQueue.duplicateKey(suiteInfoPage.getPageKey())) {
+						if (!suiteInfoQueue.isDone(suiteInfoPage.getPageKey())) {
 							suiteInfoQueue.push(suiteInfoPage);
 						}
 					}

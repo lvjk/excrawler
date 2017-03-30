@@ -13,8 +13,8 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.JsonUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.extract.Extracter;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * @author 作者
@@ -23,12 +23,12 @@ import six.com.crawler.work.extract.Extracter;
  */
 public class Cq315housePresell2Worker extends AbstractCrawlWorker {
 
-	RedisWorkQueue suiteStateQueue;
+	RedisWorkSpace<Page> suiteStateQueue;
 	Map<String, String> fieldMap;
 
 	@Override
 	public void insideInit() {
-		suiteStateQueue = new RedisWorkQueue(getManager().getRedisManager(), "cq315house_house_state");
+		suiteStateQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(),"cq315house_house_state", Page.class);
 		fieldMap = new HashMap<>();
 		fieldMap.put("presellId_1", "presellId_1");//
 		fieldMap.put("PARENTPROJNAME", "projectName");//

@@ -7,7 +7,7 @@ package six.com.crawler.work.store;
  */
 public enum StoreType {
 
-	CONSOLE(0), DB(1), HTTP(2), FILE(3);
+	CONSOLE(0), DB(1), HTTP(2), FILE(3),REDIS(4);
 
 	final int value;
 
@@ -28,7 +28,9 @@ public enum StoreType {
 			return HTTP;
 		} else if (3 == type) {
 			return FILE;
-		} else {
+		} else if (4 == type) {
+			return REDIS;
+		}  else {
 			return CONSOLE;
 		}
 

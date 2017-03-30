@@ -18,7 +18,7 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * @author 作者
@@ -27,7 +27,7 @@ import six.com.crawler.work.RedisWorkQueue;
  */
 public class TjfdcPresaleInfoWorker extends AbstractCrawlWorker {
 
-	private RedisWorkQueue tjfdcBuildingInfoQueue;
+	private RedisWorkSpace<Page> tjfdcBuildingInfoQueue;
 	String nextPageXpath = "a[id=LouDongList1_SplitPageIconModule1_lbnNextPage]";
 	String loudongNameXpath = "div[id=divLouDongList]>div>table>tbody>tr>td:eq(0)>span";
 	String loudongNoXpath = "div[id=divLouDongList]>div>table>tbody>tr>td:eq(1)>a";
@@ -49,7 +49,7 @@ public class TjfdcPresaleInfoWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void insideInit() {
-		tjfdcBuildingInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "tjfdc_building_info");
+		tjfdcBuildingInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tjfdc_building_info",Page.class);
 	}
 
 	protected void beforeDown(Page doingPage) {

@@ -6,7 +6,7 @@ import six.com.crawler.entity.Page;
 import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * @author 作者
@@ -15,12 +15,12 @@ import six.com.crawler.work.RedisWorkQueue;
  */
 public class XiAnFang99ProjectUrlWorker extends AbstractCrawlWorker {
 
-	RedisWorkQueue projectInfoQueue;
-
+	RedisWorkSpace<Page> projectInfoQueue;
 
 	@Override
 	protected void insideInit() {
-		projectInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "xianfang99_project_info_2");
+		projectInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "xianfang99_project_info_2",
+				Page.class);
 	}
 
 	@Override
@@ -41,7 +41,7 @@ public class XiAnFang99ProjectUrlWorker extends AbstractCrawlWorker {
 			Page newPage = new Page(doingPage.getSiteCode(), 1, url, url);
 			newPage.setReferer(doingPage.getFinalUrl());
 			newPage.setType(PageType.DATA.value());
-			if (!projectInfoQueue.duplicateKey(newPage.getPageKey())) {
+			if (!projectInfoQueue.isDone(newPage.getPageKey())) {
 				projectInfoQueue.push(newPage);
 			}
 		}
@@ -49,7 +49,7 @@ public class XiAnFang99ProjectUrlWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	public void onComplete(Page p,ResultContext resultContext) {
+	public void onComplete(Page p, ResultContext resultContext) {
 	}
 
 	@Override

@@ -16,7 +16,7 @@ import six.com.crawler.utils.JsoupUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.utils.JsoupUtils.TableResult;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * @author 作者
@@ -25,12 +25,13 @@ import six.com.crawler.work.RedisWorkQueue;
  */
 public class TjfdcProjectInfoWorker extends AbstractCrawlWorker {
 
-	private RedisWorkQueue tjfdcPresaleInfoQueue;
+	private RedisWorkSpace<Page> tjfdcPresaleInfoQueue;
 	private Map<String, String> fieldMap;
 
 	@Override
 	protected void insideInit() {
-		tjfdcPresaleInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "tjfdc_presale_info");
+		tjfdcPresaleInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tjfdc_presale_info",
+				Page.class);
 		fieldMap = new HashMap<String, String>();
 		fieldMap.put("楼盘名称", "projectName");
 		fieldMap.put("区域", "district");
@@ -103,7 +104,7 @@ public class TjfdcProjectInfoWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	protected void onComplete(Page doingPage,ResultContext resultContext) {
+	protected void onComplete(Page doingPage, ResultContext resultContext) {
 
 	}
 

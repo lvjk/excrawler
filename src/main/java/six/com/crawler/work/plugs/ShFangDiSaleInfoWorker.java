@@ -14,7 +14,7 @@ import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.JsoupUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * @author 作者
@@ -23,13 +23,13 @@ import six.com.crawler.work.RedisWorkQueue;
  */
 public class ShFangDiSaleInfoWorker extends AbstractCrawlWorker {
 
-	RedisWorkQueue buildingInfoQueue;
+	RedisWorkSpace<Page> buildingInfoQueue;
 	Map<String, String> fieldMap = new HashMap<String, String>();
 
 
 	@Override
 	protected void insideInit() {
-		buildingInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "sh_fangdi_building_info");
+		buildingInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "sh_fangdi_building_info",Page.class);
 
 		fieldMap.put("楼栋名称", "louDongName");
 		fieldMap.put("最高报价/最低报价", "refPrice");

@@ -16,8 +16,8 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.JsonUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.extract.Extracter;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * @author 作者
@@ -26,11 +26,11 @@ import six.com.crawler.work.extract.Extracter;
  */
 public class Cq315houseHouseStateWorker extends AbstractCrawlWorker {
 
-	RedisWorkQueue houseInfoQueue;
+	RedisWorkSpace<Page> houseInfoQueue;
 
 	@Override
 	protected void insideInit() {
-		houseInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "cq315house_house_info");
+		houseInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(),"cq315house_house_info", Page.class);
 	}
 
 	protected void beforeDown(Page page) {
@@ -167,7 +167,7 @@ public class Cq315houseHouseStateWorker extends AbstractCrawlWorker {
 			houseInfoPage.setReferer(doingPage.getFinalUrl());
 			houseInfoPage.setType(PageType.DATA.value());
 			houseInfoPage.getMetaMap().put("houseId", Arrays.asList(systemHouseId));
-			if (!houseInfoQueue.duplicateKey(houseInfoPage.getPageKey())) {
+			if (!getWorkQueue().isDone(houseInfoPage.getPageKey())) {
 				houseInfoQueue.push(houseInfoPage);
 			}
 		}

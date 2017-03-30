@@ -9,7 +9,7 @@ import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * @author 作者
@@ -18,7 +18,7 @@ import six.com.crawler.work.RedisWorkQueue;
  */
 public class TmsfPresellUrlWorker extends AbstractCrawlWorker {
 
-	RedisWorkQueue presellInfoQueue;
+	RedisWorkSpace<Page> presellInfoQueue;
 	private String sidTemplate = "<<sid>>";
 	private String presellIdTemplate = "<<presellId>>";
 	private String propertyidTemplate = "<<propertyid>>";
@@ -29,10 +29,9 @@ public class TmsfPresellUrlWorker extends AbstractCrawlWorker {
 	private String presellIdCss = "div[id=presell_dd]>div>a";
 	private String sidCss = "input[id=sid]";
 
-
 	@Override
 	protected void insideInit() {
-		presellInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "tmsf_presell_info");
+		presellInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tmsf_presell_info", Page.class);
 	}
 
 	@Override

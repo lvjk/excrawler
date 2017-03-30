@@ -11,11 +11,11 @@ import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 public class NbCnnbfdcPresellListWorker extends AbstractCrawlWorker {
 	
-	RedisWorkQueue presellInfoQueue;
+	RedisWorkSpace<Page> presellInfoQueue;
 	
 	String pageIndexTemplate = "<<pageIndex>>";
 	
@@ -30,7 +30,7 @@ public class NbCnnbfdcPresellListWorker extends AbstractCrawlWorker {
 	@Override
 	protected void insideInit() {
 		String firstUrl = StringUtils.replace(projectListUrlTemplate, pageIndexTemplate, String.valueOf(pageIndex));
-		presellInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "nb_cnnbfdc_presell_info");
+		presellInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "nb_cnnbfdc_presell_info",Page.class);
 		Page firstPage = new Page(getSite().getCode(), 1, firstUrl, firstUrl);
 		firstPage.setMethod(HttpMethod.GET);
 		getDowner().down(firstPage);
@@ -47,7 +47,7 @@ public class NbCnnbfdcPresellListWorker extends AbstractCrawlWorker {
 			}
 
 		}
-		getWorkQueue().clear();
+		getWorkQueue().clearDoing();
 		getWorkQueue().push(firstPage);
 	}
 
@@ -90,7 +90,7 @@ public class NbCnnbfdcPresellListWorker extends AbstractCrawlWorker {
 		pageIndex++;
 		if (pageIndex <= pageCount) {
 			String firstUrl = StringUtils.replace(projectListUrlTemplate, pageIndexTemplate, String.valueOf(pageIndex));
-			presellInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "nb_cnnbfdc_presell_info");
+			presellInfoQueue = new RedisWorkSpace<>(getManager().getRedisManager(), "nb_cnnbfdc_presell_info",Page.class);
 			Page nextgPage = new Page(getSite().getCode(), 1, firstUrl, firstUrl);
 			nextgPage.setReferer(doingPage.getFinalUrl());
 			nextgPage.setMethod(HttpMethod.GET);

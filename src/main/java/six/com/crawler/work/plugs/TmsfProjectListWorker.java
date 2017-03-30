@@ -19,7 +19,7 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * @author 作者
@@ -34,7 +34,7 @@ public class TmsfProjectListWorker extends AbstractCrawlWorker {
 	String propertyidFlag = "<<propertyid>>";
 	String projectUrilTemplate = "/newhouse/property_" + sidFlag + "_" + propertyidFlag + "_info.htm";
 	String projectDivCss = "div[class=build_txt line26]";
-	RedisWorkQueue projectInfoQueue;
+	RedisWorkSpace<Page> projectInfoQueue;
 	String pageCountCss = "div[class=pagenuber_info]>font:eq(1)";
 	String pageIndexTemplate = "<<pageIndex>>";
 	String urlTemplate = "http://www.tmsf.com/newhouse/" + "property_searchall.htm?" + "searchkeyword=&" + "keyword=&"
@@ -57,9 +57,9 @@ public class TmsfProjectListWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void insideInit() {
-		projectInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "tmsf_project_info");
+		projectInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tmsf_project_info",Page.class);
 		Page firstPage = buildPage(pageIndex, refererUrl);// 初始化第一页
-		getWorkQueue().clear();
+		getWorkQueue().clearDoing();
 		getWorkQueue().push(firstPage);
 	}
 

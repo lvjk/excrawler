@@ -62,13 +62,6 @@ public interface JobService extends DownloadAndUploadService {
 	public List<Job> query(Map<String, Object> parameters);
 
 	/**
-	 * 导出 JobSnapshot 报告
-	 * 
-	 * @param jobName
-	 */
-	public void reportJobSnapshot(JobSnapshot jobSnapshot);
-
-	/**
 	 * 通过任务名字查询最后一次 JobSnapshot
 	 * 
 	 * @param jobNameListStr
@@ -86,7 +79,7 @@ public interface JobService extends DownloadAndUploadService {
 	 */
 	public List<JobSnapshot> queryJobSnapshotsFromHistory(String jobName);
 
-	public List<JobSnapshot> getJobSnapshotFromRegisterCenter(List<Map<String, String>> list);
+	public List<JobSnapshot> getJobSnapshots(List<JobSnapshot> list);
 
 	public void saveJobSnapshot(JobSnapshot jobSnapshot);
 

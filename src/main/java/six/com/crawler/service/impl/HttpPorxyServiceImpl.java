@@ -9,10 +9,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import six.com.crawler.service.HttpPorxyService;
 import six.com.crawler.dao.HttpProxyDao;
 import six.com.crawler.entity.HttpProxy;
 import six.com.crawler.http.HttpClient;
+import six.com.crawler.service.HttpPorxyService;
 
 
 /**

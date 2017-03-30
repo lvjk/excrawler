@@ -12,7 +12,7 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * @author 作者
@@ -21,11 +21,11 @@ import six.com.crawler.work.RedisWorkQueue;
  */
 public class TmsfPresellUrl1Worker extends AbstractCrawlWorker {
 
-	RedisWorkQueue presellInfoQueue;
+	RedisWorkSpace<Page> presellInfoQueue;
 
 	@Override
 	protected void insideInit() {
-		presellInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "tmsf_presell_info_1");
+		presellInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tmsf_presell_info_1", Page.class);
 	}
 
 	@Override

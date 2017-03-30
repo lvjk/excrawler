@@ -15,8 +15,8 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.exception.BaseException;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.extract.Extracter;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * @author 作者
@@ -30,8 +30,8 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 	int longitudeMin = 73;
 	int latitudeMax = 53;
 	int latitudeMix = 4;
-	RedisWorkQueue projectInfo1Queue;
-	RedisWorkQueue presellUrlQueue;
+	RedisWorkSpace<Page> projectInfo1Queue;
+	RedisWorkSpace<Page> presellUrlQueue;
 	String longitude_latitude_div_css = "div[id=boxid1]>div[class=border3 positionr]";
 	String mapDivCss = "div[id=boxid1]>div>div";
 	String projectNameCss = "div[class=lpxqtop]>div>div>span[class=buidname colordg]";
@@ -39,8 +39,8 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void insideInit() {
-		presellUrlQueue = new RedisWorkQueue(getManager().getRedisManager(), "tmsf_presell_url");
-		projectInfo1Queue = new RedisWorkQueue(getManager().getRedisManager(), "tmsf_project_info_1");
+		presellUrlQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tmsf_presell_url", Page.class);
+		projectInfo1Queue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tmsf_project_info_1", Page.class);
 	}
 
 	@Override
@@ -105,9 +105,8 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected boolean insideOnError(Exception t, Page doingPage) {
-		if (null!=t.getCause()&&t.getCause() instanceof DifferentPages) {
+		if (null != t.getCause() && t.getCause() instanceof DifferentPages) {
 			projectInfo1Queue.push(doingPage);
-			getWorkQueue().finish(doingPage);
 			return true;
 		}
 		return false;
@@ -118,7 +117,7 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 		List<String> presellUrls = resultContext.getExtractResult("presellUrl");
 		if (null != presellUrls && presellUrls.size() > 0) {
 			String presaleUrl = presellUrls.get(0);
-			if(StringUtils.isNotBlank(presaleUrl)){
+			if (StringUtils.isNotBlank(presaleUrl)) {
 				String sid = resultContext.getExtractResult("sid").get(0);
 				String projectId = resultContext.getOutResults().get(0).get(Extracter.DEFAULT_RESULT_ID);
 				Page presellPage = new Page(doingPage.getSiteCode(), 1, presaleUrl, presaleUrl);

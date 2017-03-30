@@ -17,7 +17,7 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * @author 作者
@@ -26,13 +26,13 @@ import six.com.crawler.work.RedisWorkQueue;
  */
 public class TjfdcHouseStateWorker extends AbstractCrawlWorker {
 
-	RedisWorkQueue tjfdcHouseInfoQueue;
+	RedisWorkSpace<Page> tjfdcHouseInfoQueue;
 	String houseCss = "table[id=LouDongInfo1_dgData]>tbody>tr>td:gt(0)";
 	Map<String, String> stateMap;
 
 	@Override
 	protected void insideInit() {
-		tjfdcHouseInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "tjfdc_house_info");
+		tjfdcHouseInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tjfdc_house_info",Page.class);
 		stateMap = new HashMap<>();
 		stateMap.put("background-color:#ff5e59", "已售");
 		stateMap.put("background-color:#aade9c", "未售");
@@ -80,7 +80,7 @@ public class TjfdcHouseStateWorker extends AbstractCrawlWorker {
 					houseInfoPage.setMethod(HttpMethod.GET);
 					houseInfoPage.setReferer(doingPage.getFinalUrl());
 					houseInfoPage.setType(PageType.DATA.value());
-					if (!tjfdcHouseInfoQueue.duplicateKey(houseInfoPage.getPageKey())) {
+					if (!tjfdcHouseInfoQueue.isDone(houseInfoPage.getPageKey())) {
 						houseInfoPage.getMetaMap().putAll(doingPage.getMetaMap());
 						tjfdcHouseInfoQueue.push(houseInfoPage);
 					}

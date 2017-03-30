@@ -15,12 +15,13 @@ import six.com.crawler.utils.JsonUtils;
 import six.com.crawler.utils.MD5Utils;
 import six.com.crawler.work.downer.DownerType;
 import six.com.crawler.work.downer.PostContentType;
+import six.com.crawler.work.space.WorkSpaceData;
 
 /**
  * @author sixliu E-mail:359852326@qq.com
  * @version 创建时间：2016年5月16日 下午8:13:12 类说明
  */
-public class Page implements Serializable {
+public class Page implements WorkSpaceData,Serializable {
 
 	/**
 	 * 
@@ -342,6 +343,11 @@ public class Page implements Serializable {
 			metaMap = new HashMap<>();
 		}
 		return metaMap;
+	}
+
+	@Override
+	public String getKey() {
+		return getPageKey();
 	}
 
 }

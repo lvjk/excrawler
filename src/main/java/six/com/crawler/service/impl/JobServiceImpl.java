@@ -19,7 +19,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import six.com.crawler.api.ResponseMsg;
@@ -27,19 +26,18 @@ import six.com.crawler.dao.ExtractItemDao;
 import six.com.crawler.dao.JobDao;
 import six.com.crawler.dao.JobParamDao;
 import six.com.crawler.dao.JobSnapshotDao;
-import six.com.crawler.dao.RedisManager;
 import six.com.crawler.dao.WorkerErrMsgDao;
 import six.com.crawler.dao.WorkerSnapshotDao;
 import six.com.crawler.entity.Job;
 import six.com.crawler.entity.JobParam;
 import six.com.crawler.entity.JobProfile;
 import six.com.crawler.entity.JobSnapshot;
-import six.com.crawler.entity.JobSnapshotState;
 import six.com.crawler.entity.PageQuery;
+import six.com.crawler.entity.WorkSpaceInfo;
 import six.com.crawler.entity.WorkerSnapshot;
 import six.com.crawler.schedule.MasterAbstractSchedulerManager;
 import six.com.crawler.service.JobService;
-import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.service.WorkSpaceService;
 import six.com.crawler.work.extract.ExtractItem;
 
 /**
@@ -71,12 +69,10 @@ public class JobServiceImpl implements JobService {
 	private MasterAbstractSchedulerManager scheduleManager;
 
 	@Autowired
-	private RedisManager redisManager;
-
-	@Autowired
 	private ExtractItemDao extractItemDao;
 
-	static final String JOB_SERVICE_OPERATION_PRE = "JobService.operation.";
+	@Autowired
+	private WorkSpaceService workSpaceService;
 
 	public List<Job> queryIsScheduled() {
 		Map<String, Object> parameters = new HashMap<>();
@@ -109,7 +105,7 @@ public class JobServiceImpl implements JobService {
 				Job job = null;
 				for (JobSnapshot jobSnapshot : jobSnapshots) {
 					job = jobDao.query(jobSnapshot.getName());
-					if(null!=job){
+					if (null != job) {
 						jobs.add(job);
 					}
 				}
@@ -178,23 +174,6 @@ public class JobServiceImpl implements JobService {
 		return result;
 	}
 
-	@Transactional
-	public void reportJobSnapshot(JobSnapshot jobSnapshot) {
-		if (null != jobSnapshot) {
-			jobSnapshotDao.update(jobSnapshot);
-			List<WorkerSnapshot> workerSnapshots = jobSnapshot.getWorkerSnapshots();
-			if (null != workerSnapshots) {
-				workerSnapshotDao.batchSave(workerSnapshots);
-				for (WorkerSnapshot workerSnapshot : workerSnapshots) {
-					if (null != workerSnapshot.getWorkerErrMsgs() && workerSnapshot.getWorkerErrMsgs().size() > 0) {
-						workerErrMsgDao.batchSave(workerSnapshot.getWorkerErrMsgs());
-					}
-
-				}
-			}
-		}
-	}
-
 	public JobSnapshot queryLastJobSnapshotFromHistory(String excludeJobSnapshotId, String jobName) {
 		JobSnapshot lastJobSnapshot = jobSnapshotDao.queryLast(jobName);
 		return lastJobSnapshot;
@@ -206,58 +185,26 @@ public class JobServiceImpl implements JobService {
 		return result;
 	}
 
-	public List<JobSnapshot> getJobSnapshotFromRegisterCenter(List<Map<String, String>> list) {
-		List<JobSnapshot> result = null;
+	public List<JobSnapshot> getJobSnapshots(List<JobSnapshot> list) {
+		List<JobSnapshot> result = new ArrayList<JobSnapshot>();
 		if (null != list) {
-			result = new ArrayList<JobSnapshot>();
-			String jobName = null;
-			String queueName = null;
-			for (Map<String, String> map : list) {
-				jobName = map.get("name");
-				queueName = map.get("queueName");
-				JobSnapshot jobSnapshot = null;
-				jobSnapshot = scheduleManager.getJobSnapshot(jobName);
-				if (null == jobSnapshot) {
-					jobSnapshot = new JobSnapshot(jobName);
-				} else {
-					List<WorkerSnapshot> workerSnapshots = scheduleManager.getWorkerSnapshots(jobName);
+			JobSnapshot findJobSnapshot = null;
+			for (JobSnapshot jobSnapshot : list) {
+				findJobSnapshot = scheduleManager.getJobSnapshot(jobSnapshot.getName());
+				if (null != findJobSnapshot) {
+					jobSnapshot=findJobSnapshot;
+					List<WorkerSnapshot> workerSnapshots = scheduleManager.getWorkerSnapshots(jobSnapshot.getName());
 					scheduleManager.totalWorkerSnapshot(jobSnapshot, workerSnapshots);
 				}
-				String tempProxyKey = RedisWorkQueue.PRE_PROXY_QUEUE_KEY + queueName;
-				int proxySize = redisManager.llen(tempProxyKey);
-
-				String tempRealKey = RedisWorkQueue.PRE_QUEUE_KEY + queueName;
-				int realSize = redisManager.hllen(tempRealKey);
-
-				String tempErrKey = RedisWorkQueue.PRE_ERR_QUEUE_KEY + queueName;
-				int errSize = redisManager.llen(tempErrKey);
-
-				jobSnapshot.setQueueName(queueName);
-				jobSnapshot.setProxyQueueCount(proxySize);
-				jobSnapshot.setRealQueueCount(realSize);
-				jobSnapshot.setErrQueueCount(errSize);
+				WorkSpaceInfo workSpaceInfo = workSpaceService.getWorkSpaceInfo(jobSnapshot.getWorkSpaceName());
+				jobSnapshot.setWorkSpaceDoingSize(workSpaceInfo.getDoingSize());
+				jobSnapshot.setWorkSpaceErrSize(workSpaceInfo.getErrSize());
 				result.add(jobSnapshot);
 			}
 		} else {
 			result = Collections.emptyList();
 		}
 		return result;
-	}
-
-	public JobSnapshot getJobSnapshotFromRegisterCenter1(String jobName) {
-		JobSnapshot jobSnapshot = scheduleManager.getJobSnapshot(jobName);
-		if (null != jobSnapshot) {
-			// 判断任务是否运行过
-			if (jobSnapshot.getEnumStatus() == JobSnapshotState.EXECUTING
-					|| jobSnapshot.getEnumStatus() == JobSnapshotState.SUSPEND
-					|| jobSnapshot.getEnumStatus() == JobSnapshotState.STOP
-					|| jobSnapshot.getEnumStatus() == JobSnapshotState.FINISHED) {
-				List<WorkerSnapshot> workerSnapshots = getWorkSnapshotsFromRegisterCenter(jobName);
-				// totalWorkerSnapshot(jobSnapshot, workerSnapshots);
-				jobSnapshot.setWorkerSnapshots(workerSnapshots);
-			}
-		}
-		return jobSnapshot;
 	}
 
 	public void saveJobSnapshot(JobSnapshot jobSnapshot) {
@@ -303,7 +250,7 @@ public class JobServiceImpl implements JobService {
 				byte[] buffer = multipartFile.getBytes();
 				String jobProfileXml = new String(buffer);
 				JobProfile profile = JobProfile.buildJobProfile(jobProfileXml);
-				if(null!=profile&&null!=profile.getJob()){
+				if (null != profile && null != profile.getJob()) {
 					Job job = profile.getJob();
 					// 删除job参数数据
 					jobParamDao.delJobParams(job.getName());
@@ -312,10 +259,10 @@ public class JobServiceImpl implements JobService {
 					// 删除job
 					jobDao.del(job.getName());
 					jobDao.save(job);
-					if(null!=job.getParamList()){
+					if (null != job.getParamList()) {
 						jobParamDao.batchSave(job.getParamList());
 					}
-					if(null!=profile.getExtractItems()){
+					if (null != profile.getExtractItems()) {
 						extractItemDao.batchSave(profile.getExtractItems());
 					}
 					msg = "uploadJobProfile[" + multipartFile.getName() + "] succeed";
@@ -506,14 +453,6 @@ public class JobServiceImpl implements JobService {
 		this.scheduleManager = scheduleManager;
 	}
 
-	public RedisManager getRedisManager() {
-		return redisManager;
-	}
-
-	public void setRedisManager(RedisManager redisManager) {
-		this.redisManager = redisManager;
-	}
-
 	public JobParamDao getJobParamDao() {
 		return jobParamDao;
 	}
@@ -557,5 +496,13 @@ public class JobServiceImpl implements JobService {
 	@Override
 	public void updateWorkSnapshotToRegisterCenter(WorkerSnapshot workerSnapshot, boolean isSaveErrMsg) {
 
+	}
+
+	public WorkSpaceService getWorkSpaceService() {
+		return workSpaceService;
+	}
+
+	public void setWorkSpaceService(WorkSpaceService workSpaceService) {
+		this.workSpaceService = workSpaceService;
 	}
 }

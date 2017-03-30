@@ -21,13 +21,12 @@ public class JobSnapshot extends BaseVo implements Serializable {
 	private String designatedNodeName;// 指定节点
 	private JobSnapshotState status=JobSnapshotState.READY;// 任务状态
 	private String tableName;//数据表名
-	private String queueName;// 任务队列名
+	private String workSpaceName;// 任务工作空间名
 	private String startTime;// 开始时间
 	private String endTime;
 	private int isScheduled;//
-	private int proxyQueueCount;// 代理任务队列数量
-	private int realQueueCount;// 真实任务队列数量
-	private int errQueueCount;// 错误任务队列数量
+	private int workSpaceDoingSize;//任务队列数量
+	private int workSpaceErrSize;// 错误任务队列数量
 	private int totalProcessCount;// 统计处理多少个数据
 	private int totalResultCount;// 统计获取多少个数据
 	private int totalProcessTime;// 统计获取处理时间
@@ -98,12 +97,12 @@ public class JobSnapshot extends BaseVo implements Serializable {
 		this.tableName = tableName;
 	}
 
-	public String getQueueName() {
-		return queueName;
+	public String getWorkSpaceName() {
+		return workSpaceName;
 	}
 
-	public void setQueueName(String queueName) {
-		this.queueName = queueName;
+	public void setWorkSpaceName(String workSpaceName) {
+		this.workSpaceName = workSpaceName;
 	}
 
 	public String getStartTime() {
@@ -130,28 +129,20 @@ public class JobSnapshot extends BaseVo implements Serializable {
 		this.isScheduled = isScheduled;
 	}
 
-	public int getProxyQueueCount() {
-		return proxyQueueCount;
+	public int getWorkSpaceDoingSize() {
+		return workSpaceDoingSize;
 	}
 
-	public void setProxyQueueCount(int proxyQueueCount) {
-		this.proxyQueueCount = proxyQueueCount;
+	public void setWorkSpaceDoingSize(int workSpaceDoingSize) {
+		this.workSpaceDoingSize = workSpaceDoingSize;
 	}
 
-	public int getRealQueueCount() {
-		return realQueueCount;
+	public int getWorkSpaceErrSize() {
+		return workSpaceErrSize;
 	}
 
-	public void setRealQueueCount(int realQueueCount) {
-		this.realQueueCount = realQueueCount;
-	}
-
-	public int getErrQueueCount() {
-		return errQueueCount;
-	}
-
-	public void setErrQueueCount(int errQueueCount) {
-		this.errQueueCount = errQueueCount;
+	public void setWorkSpaceErrSize(int workSpaceErrSize) {
+		this.workSpaceErrSize = workSpaceErrSize;
 	}
 	
 	public int getTotalProcessCount() {

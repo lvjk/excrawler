@@ -12,8 +12,8 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.utils.JsonUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.extract.Extracter;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * @author 作者
@@ -23,7 +23,7 @@ import six.com.crawler.work.extract.Extracter;
 public class TmsfPresellInfoWorker extends AbstractCrawlWorker {
 
 	Map<String, String> jsonKeyMap;
-	RedisWorkQueue houseUrlQueue;
+	RedisWorkSpace<Page> houseUrlQueue;
 	String sidTemplate = "<<sid>>";
 	String propertyidTemplate = "<<propertyid>>";
 	String presellIdTemplate = "<<presellId>>";
@@ -33,7 +33,7 @@ public class TmsfPresellInfoWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void insideInit() {
-		houseUrlQueue = new RedisWorkQueue(getManager().getRedisManager(), "tmsf_house_url");
+		houseUrlQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tmsf_house_url",Page.class);
 		jsonKeyMap = new HashMap<>();
 		jsonKeyMap.put("propertyid", "property.propertyid");
 		jsonKeyMap.put("presellid", "presell.presellid");

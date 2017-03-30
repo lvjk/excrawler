@@ -8,19 +8,19 @@ import java.util.Map;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.extract.Extracter;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 public class NbCnnbfdcUnitInfoWorker extends AbstractCrawlWorker{
 	
 	
 	Map<String,String> roomStates = new HashMap<String,String>();
 	
-	RedisWorkQueue roomStateInfoQueue;
+	RedisWorkSpace<Page> roomStateInfoQueue;
 	
 	@Override
 	protected void insideInit() {
-		roomStateInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "nb_cnnbfdc_room_state_info");
+		roomStateInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "nb_cnnbfdc_room_state_info",Page.class);
 	}
 
 	@Override

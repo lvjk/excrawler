@@ -31,6 +31,7 @@ import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import six.com.crawler.common.DateFormats;
 import six.com.crawler.constants.JobConTextConstants;
@@ -182,6 +183,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 			jobSnapshot.setId(id);
 			jobSnapshot.setName(job.getName());
 			jobSnapshot.setNextJobName(job.getNextJobName());
+			jobSnapshot.setWorkSpaceName(job.getQueueName());
 			jobSnapshot.setDesignatedNodeName(job.getDesignatedNodeName());
 			jobSnapshot.setStatus(JobSnapshotState.WAITING_EXECUTED.value());
 			registerJobSnapshot(jobSnapshot);
@@ -463,6 +465,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 		}
 	}
 
+	@Transactional
 	private void reportJobSnapshot(JobSnapshot jobSnapshot) {
 		if (null != jobSnapshot) {
 			getJobSnapshotDao().update(jobSnapshot);

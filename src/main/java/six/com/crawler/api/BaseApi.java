@@ -14,8 +14,8 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
-import six.com.crawler.service.NodeManagerService;
 import six.com.crawler.service.DownloadAndUploadService;
+import six.com.crawler.service.NodeManagerService;
 
 /**
  * @author 作者

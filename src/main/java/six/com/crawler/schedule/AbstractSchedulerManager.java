@@ -29,6 +29,7 @@ import six.com.crawler.http.HttpClient;
 import six.com.crawler.node.NodeManager;
 import six.com.crawler.ocr.ImageDistinguish;
 import six.com.crawler.work.WorkerLifecycleState;
+import six.com.crawler.work.space.WorkSpaceManager;
 
 /**
  * @author 作者
@@ -83,6 +84,10 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 
 	@Autowired
 	private QQEmailClient emailClient;
+	
+	@Autowired
+	private WorkSpaceManager WorkSpaceManager;
+
 
 	protected abstract void init();
 
@@ -367,6 +372,13 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		this.emailClient = emailClient;
 	}
 	
+	public WorkSpaceManager getWorkSpaceManager() {
+		return WorkSpaceManager;
+	}
+
+	public void setWorkSpaceManager(WorkSpaceManager workSpaceManager) {
+		WorkSpaceManager = workSpaceManager;
+	}
 
 
 }

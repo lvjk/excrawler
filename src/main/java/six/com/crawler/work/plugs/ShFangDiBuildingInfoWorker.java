@@ -14,7 +14,7 @@ import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * @author 作者
@@ -23,12 +23,12 @@ import six.com.crawler.work.RedisWorkQueue;
  */
 public class ShFangDiBuildingInfoWorker extends AbstractCrawlWorker {
 
-	RedisWorkQueue houseInfoQueue;
+	RedisWorkSpace<Page> houseInfoQueue;
 
 
 	@Override
 	protected void insideInit() {
-		houseInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "sh_fangdi_house_info");
+		houseInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "sh_fangdi_house_info",Page.class);
 
 	}
 
@@ -187,7 +187,7 @@ public class ShFangDiBuildingInfoWorker extends AbstractCrawlWorker {
 				houseInfoPage.getMetaMap().put("presalePermit", tempPresalePremitList);
 				houseInfoPage.getMetaMap().put("louDongName", tempLouDongNameList);
 				houseInfoPage.setReferer(doingPage.getFinalUrl());
-				if (!houseInfoQueue.duplicateKey(houseInfoPage.getPageKey())) {
+				if (!houseInfoQueue.isDone(houseInfoPage.getPageKey())) {
 					houseInfoQueue.push(houseInfoPage);
 				}
 			}

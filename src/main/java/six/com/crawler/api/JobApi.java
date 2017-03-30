@@ -1,5 +1,6 @@
 package six.com.crawler.api;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -72,10 +73,24 @@ public class JobApi extends BaseApi {
 	 */
 	@MessageMapping("/jobSnapshot")
 	@SendTo("/topic/job/jobSnapshot")
-	public ResponseMsg<List<JobSnapshot>> jobSnapshot(List<Map<String, String>> list) {
+	public ResponseMsg<List<JobSnapshot>> getJobSnapshots(List<Map<String, String>> list) {
 		ResponseMsg<List<JobSnapshot>> msg = createResponseMsg();
-		List<JobSnapshot> result = jobService.getJobSnapshotFromRegisterCenter(list);
-		msg.setData(result);
+		if (null != list) {
+			List<JobSnapshot> jobSnapshots = new ArrayList<>(list.size());
+			JobSnapshot jobSnapshot = null;
+			String name = null;
+			String workSpaceName = null;
+			for (Map<String, String> map : list) {
+				name = map.get("name");
+				workSpaceName = map.get("workSpaceName");
+				jobSnapshot = new JobSnapshot();
+				jobSnapshot.setName(name);
+				jobSnapshot.setWorkSpaceName(workSpaceName);
+				jobSnapshots.add(jobSnapshot);
+			}
+			List<JobSnapshot> result = jobService.getJobSnapshots(jobSnapshots);
+			msg.setData(result);
+		}
 		return msg;
 	}
 
@@ -84,51 +99,43 @@ public class JobApi extends BaseApi {
 	public ResponseMsg<List<Job>> getLoclaAllJobs() {
 		return null;
 	}
-	
+
 	@RequestMapping(value = "/crawler/job/updateIsScheduled", method = RequestMethod.POST)
 	@ResponseBody
-	public ResponseMsg<Integer> updateIsScheduled(
-			@RequestParam("version")int version,
-			@RequestParam("name")String name,
-			@RequestParam("isScheduled")int isScheduled) {
+	public ResponseMsg<Integer> updateIsScheduled(@RequestParam("version") int version,
+			@RequestParam("name") String name, @RequestParam("isScheduled") int isScheduled) {
 		ResponseMsg<Integer> responseMsg = createResponseMsg();
-		jobService.updateIsScheduled(responseMsg,version,name, isScheduled);
+		jobService.updateIsScheduled(responseMsg, version, name, isScheduled);
 		return responseMsg;
 	}
-	
+
 	@RequestMapping(value = "/crawler/job/updateCronTrigger", method = RequestMethod.POST)
 	@ResponseBody
-	public ResponseMsg<Integer> updateCronTrigger(
-			@RequestParam("version")int version,
-			@RequestParam("name")String name,
-			@RequestParam("cronTrigger")String cronTrigger) {
+	public ResponseMsg<Integer> updateCronTrigger(@RequestParam("version") int version,
+			@RequestParam("name") String name, @RequestParam("cronTrigger") String cronTrigger) {
 		ResponseMsg<Integer> responseMsg = createResponseMsg();
-		jobService.updateCronTrigger(responseMsg,version,name, cronTrigger);
+		jobService.updateCronTrigger(responseMsg, version, name, cronTrigger);
 		return responseMsg;
 	}
-	
+
 	@RequestMapping(value = "/crawler/job/updateNextJobName", method = RequestMethod.POST)
 	@ResponseBody
-	public ResponseMsg<Integer> updateNextJobName(
-			@RequestParam("version")int version,
-			@RequestParam("name")String name,
-			@RequestParam("nextJobName")String nextJobName) {
+	public ResponseMsg<Integer> updateNextJobName(@RequestParam("version") int version,
+			@RequestParam("name") String name, @RequestParam("nextJobName") String nextJobName) {
 		ResponseMsg<Integer> responseMsg = createResponseMsg();
-		jobService.updateNextJobName(responseMsg,version,name,nextJobName);
+		jobService.updateNextJobName(responseMsg, version, name, nextJobName);
 		return responseMsg;
 	}
-	
+
 	@RequestMapping(value = "/crawler/job/updateJobSnapshotStatus", method = RequestMethod.POST)
 	@ResponseBody
-	public ResponseMsg<Integer> updateJobSnapshotStatus(
-			@RequestParam("version")int version,
-			@RequestParam("id")String id,
-			@RequestParam("status")int status) {
+	public ResponseMsg<Integer> updateJobSnapshotStatus(@RequestParam("version") int version,
+			@RequestParam("id") String id, @RequestParam("status") int status) {
 		ResponseMsg<Integer> responseMsg = createResponseMsg();
 		jobService.updateJobSnapshotStatus(responseMsg, version, id, status);
 		return responseMsg;
 	}
-	
+
 	@RequestMapping(value = "/crawler/job/upload/profile", method = RequestMethod.POST)
 	@ResponseBody
 	public ResponseMsg<String> uploadFile(@RequestParam("file") MultipartFile multipartFile) {

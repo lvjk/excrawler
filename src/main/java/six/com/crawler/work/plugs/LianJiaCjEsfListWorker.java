@@ -7,8 +7,8 @@ import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
-import six.com.crawler.work.WorkQueue;
+import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
 /** 
 * @author  作者 
@@ -18,13 +18,13 @@ import six.com.crawler.work.WorkQueue;
 public class LianJiaCjEsfListWorker extends AbstractCrawlWorker {
 
 
-	WorkQueue nextWorkQueue;
+	WorkSpace<Page> nextWorkQueue;
 	String houseUrlCss = "div[class=list-wrap]>ul>li>div[class=info-panel clear]>h2>a";
 	String nextPageUrlCss = "div[class=page-box house-lst-page-box]>a:contains(下一页)";
 
 	@Override
 	protected void insideInit() {
-		nextWorkQueue = new RedisWorkQueue(getManager().getRedisManager(), "lianjia_cjerf_info");
+		nextWorkQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(),"lianjia_cjerf_info",Page.class);
 	}
 
 	@Override
@@ -41,7 +41,7 @@ public class LianJiaCjEsfListWorker extends AbstractCrawlWorker {
 			Page houseInfoPage = new Page(getSite().getCode(), 1, houseUrl, houseUrl);
 			houseInfoPage.setReferer(doingPage.getFinalUrl());
 			houseInfoPage.getMetaMap().putAll(doingPage.getMetaMap());
-			if(!nextWorkQueue.duplicateKey(houseInfoPage.getPageKey())){
+			if(!nextWorkQueue.isDone(houseInfoPage.getPageKey())){
 				nextWorkQueue.push(houseInfoPage);
 			}
 			

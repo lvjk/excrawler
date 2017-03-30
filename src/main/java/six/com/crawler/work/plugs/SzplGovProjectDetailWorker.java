@@ -19,7 +19,7 @@ import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.utils.WebDriverUtils;
 import six.com.crawler.utils.JsoupUtils.TableResult;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * @author 作者
@@ -29,7 +29,7 @@ import six.com.crawler.work.RedisWorkQueue;
 public class SzplGovProjectDetailWorker extends AbstractCrawlWorker {
 
 	Map<String, String> fieldMap = new HashMap<String, String>();
-	RedisWorkQueue suiteQueue;
+	RedisWorkSpace<Page> suiteQueue;
 
 	private void doSuite(WebDriver driver, Page page) {
 		String 项目名称Xpath = "//table[@id='DataList1']/tbody/tr[@bgcolor='#F5F9FC']/td[1]";
@@ -135,7 +135,7 @@ public class SzplGovProjectDetailWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void insideInit() {
-		suiteQueue = new RedisWorkQueue(getManager().getRedisManager(), "szpl_gov_suite_state");
+		suiteQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "szpl_gov_suite_state",Page.class);
 		fieldMap.put("项目名称", "projectName");
 		fieldMap.put("宗地号", "landId");
 		fieldMap.put("宗地位置", "address");

@@ -17,9 +17,9 @@ import six.com.crawler.http.HttpMethod;
 import six.com.crawler.utils.JsonUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.WorkerLifecycleState;
 import six.com.crawler.work.extract.Extracter;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * @author 作者
@@ -35,7 +35,7 @@ public class Cq315housePresell1Worker extends AbstractCrawlWorker {
 	String jsonTemplateUrl = "http://www.cq315house.com/315web/webservice/GetMyData913.ashx"
 			+ "?projectname=&kfs=&projectaddr=&pagesize=" + pageSizeTemplate + "&pageindex=" + pageIndexTemplate
 			+ "&presalecert=";
-	RedisWorkQueue presell2Queue;
+	RedisWorkSpace<Page> presell2Queue;
 	private int pageIndex = 1;// 83没有数据
 	private int pageSize = 100;
 	Map<String, String> fieldMap;
@@ -51,7 +51,7 @@ public class Cq315housePresell1Worker extends AbstractCrawlWorker {
 	}
 
 	protected void insideInit() {
-		presell2Queue = new RedisWorkQueue(getManager().getRedisManager(), "cq315house_presell_2");
+		presell2Queue = new RedisWorkSpace<Page>(getManager().getRedisManager(),"cq315house_presell_2",Page.class);
 		fieldMap = new HashMap<>();
 		fieldMap.put("PARENTPROJID", "projectId");
 		fieldMap.put("F_PROJECT_NAME", "projectName");
@@ -61,7 +61,7 @@ public class Cq315housePresell1Worker extends AbstractCrawlWorker {
 		fieldMap.put("F_PRESALE_CERT", "presellPermit");
 		fieldMap.put("F_BLOCK", "forSellBuilding");
 		Page firstPage = buildPage(pageIndex, pageSize);// 初始化第一页
-		getWorkQueue().clear();
+		getWorkQueue().clearDoing();
 		getWorkQueue().push(firstPage);
 	}
 

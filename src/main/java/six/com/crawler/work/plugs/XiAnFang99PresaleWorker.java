@@ -18,8 +18,8 @@ import six.com.crawler.utils.ThreadUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.utils.WebDriverUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.WorkerLifecycleState;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * @author 作者
@@ -30,13 +30,13 @@ public class XiAnFang99PresaleWorker extends AbstractCrawlWorker {
 
 	private String openAllPath = "//table/tbody/tr/td/img[@class='cursor']";
 	private String nextPagePath = "//div[@id='pager_presale']/a[contains(text(),'>')]";
-	RedisWorkQueue projectInfoQueue;
-	RedisWorkQueue buildingInfoQueue;
+	RedisWorkSpace<Page> projectInfoQueue;
+	RedisWorkSpace<Page> buildingInfoQueue;
 
 	@Override
 	protected void insideInit() {
-		projectInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "xianfang99_project_info_1");
-		buildingInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "xianfang99_house_info");
+		projectInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "xianfang99_project_info_1",Page.class);
+		buildingInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "xianfang99_house_info",Page.class);
 	}
 
 	@Override
@@ -91,7 +91,7 @@ public class XiAnFang99PresaleWorker extends AbstractCrawlWorker {
 				projectInfoPage.setReferer(doingPage.getFinalUrl());
 				projectInfoPage.setType(PageType.DATA.value());
 
-				if (!projectInfoQueue.duplicateKey(projectInfoPage.getPageKey())) {
+				if (!projectInfoQueue.isDone(projectInfoPage.getPageKey())) {
 					projectInfoQueue.push(projectInfoPage);
 				}
 				Elements tempTable2 = presaleInfo.select(otherProsaleInfoCss);

@@ -18,8 +18,8 @@ import six.com.crawler.utils.JsoupUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.utils.JsoupUtils.TableResult;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.RedisWorkQueue;
 import six.com.crawler.work.extract.Extracter;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * @author 作者
@@ -28,13 +28,13 @@ import six.com.crawler.work.extract.Extracter;
  */
 public class TmsfPresellInfo1Worker extends AbstractCrawlWorker {
 
-	RedisWorkQueue houseInfoQueue;
+	RedisWorkSpace<Page> houseInfoQueue;
 	String tableCss = "dd[id=myCont2]>div>table";
 	Map<String, String> tableKeyMap;
 
 	@Override
 	protected void insideInit() {
-		houseInfoQueue = new RedisWorkQueue(getManager().getRedisManager(), "tmsf_house_info_1");
+		houseInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tmsf_house_info_1",Page.class);
 		tableKeyMap = new HashMap<>();
 		tableKeyMap.put("预售证名称", "presellName");
 		tableKeyMap.put("预售证号", "presellCode");
