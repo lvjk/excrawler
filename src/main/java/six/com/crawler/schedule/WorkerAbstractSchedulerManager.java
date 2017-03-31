@@ -14,23 +14,23 @@ public abstract class WorkerAbstractSchedulerManager extends AbstractSchedulerMa
 
 	protected final void init() {
 		doInit();
-		getNodeManager().register(ScheduledJobCommand.execute, param-> {
-			String jobName = (String) param;
+		getNodeManager().register(ScheduledJobCommand.execute, params-> {
+			String jobName =(String)params.get("jobName");
 			WorkerAbstractSchedulerManager.this.execute(jobName);
 			return null;
 		});
-		getNodeManager().register(ScheduledJobCommand.suspend,param-> {
-			String jobName = (String) param;
+		getNodeManager().register(ScheduledJobCommand.suspend,params-> {
+			String jobName =(String)params.get("jobName");
 			WorkerAbstractSchedulerManager.this.suspend(jobName);
 			return null;
 		});
-		getNodeManager().register(ScheduledJobCommand.goOn,param-> {
-			String jobName = (String) param;
+		getNodeManager().register(ScheduledJobCommand.goOn,params-> {
+			String jobName =(String)params.get("jobName");
 			WorkerAbstractSchedulerManager.this.goOn(jobName);
 			return null;
 		});
-		getNodeManager().register(ScheduledJobCommand.stop,param->{
-			String jobName = (String) param;
+		getNodeManager().register(ScheduledJobCommand.stop,params->{
+			String jobName =(String)params.get("jobName");
 			WorkerAbstractSchedulerManager.this.stop(jobName);
 			return null;
 		});

@@ -1,6 +1,7 @@
 package six.com.crawler.node;
 
 import java.util.List;
+import java.util.Map;
 
 import six.com.crawler.entity.Node;
 import six.com.crawler.rpc.RpcService;
@@ -65,7 +66,7 @@ public interface NodeManager{
 	 * @param param
 	 * @return
 	 */
-	public Object execute(Node node, String commandName, Object param);
+	public Object execute(Node node, String commandName, Map<String,Object>  params);
 
 	/**
 	 * 注册节点服务

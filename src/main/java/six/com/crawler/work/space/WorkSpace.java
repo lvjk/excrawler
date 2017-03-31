@@ -1,5 +1,7 @@
 package six.com.crawler.work.space;
 
+import java.util.List;
+
 /**
  * @author sixliu E-mail:359852326@qq.com
  * @version 创建时间：2016年1月16日 上午7:12:58 当任务执行时，都会拥有自己的工作空间,工作空间处理的数据必须实现
@@ -14,6 +16,9 @@ public interface WorkSpace<T extends WorkSpaceData> {
 	 */
 	public String getName();
 
+	public String batchGetDoingData(List<T> resutList,String cursorStr);
+	
+	public String batchGetErrData(List<T> resutList,String cursorStr);
 	/**
 	 * 将数据 推到工作队列中
 	 * 

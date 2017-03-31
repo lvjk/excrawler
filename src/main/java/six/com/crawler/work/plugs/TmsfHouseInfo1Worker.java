@@ -115,11 +115,15 @@ public class TmsfHouseInfo1Worker extends AbstractCrawlWorker {
 			String internalid = internalidOb.toString();
 			String houseDivCss = StringUtils.replace(houseDivCssTemplate, internalidTemplate, internalid);
 			Element houseDiv = doingPage.getDoc().select(houseDivCss).first();
-			if(null!=houseDiv){
-				String houseFloorKey = houseDiv.attr("floor");
-				String houseFloor = floorMap.get(houseFloorKey);
-				houseMap.put("floor", houseFloor);
+			if (null == houseDiv) {
+				throw new RuntimeException("don't find  house's div");
 			}
+			String houseFloorKey = houseDiv.attr("floor");
+			String houseFloor = floorMap.get(houseFloorKey);
+			if(null==houseFloor){
+				throw new RuntimeException("don't find  house's floor");
+			}
+			houseMap.put("floor", houseFloor);
 			for (String field : jsonKeyMap.keySet()) {
 				String jsonKey = jsonKeyMap.get(field);
 				Object valueOb = houseMap.get(jsonKey);

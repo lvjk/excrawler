@@ -68,7 +68,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		site = getManager().getSiteDao().query(siteCode);
 		
 		
-		String workSpace = getJob().getQueueName();
+		String workSpace = getJob().getWorkSpaceName();
 		if (StringUtils.isBlank(workSpace)) {
 			throw new NullPointerException("please set queue's name");
 		}
@@ -232,7 +232,9 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 				LOG.error("insideOnError err page:" + doingPage.getFinalUrl(), e1);
 			}
 			// 判断内部处理是否可处理,如果不可处理那么这里默认处理
-			if (!insideExceptionResult) {
+			if (insideExceptionResult) {
+				workQueue.ack(doingPage);
+			}else{
 				String msg = null;
 				if (null == insideException
 						&& doingPage.getRetryProcess() < Constants.WOKER_PROCESS_PAGE_MAX_RETRY_COUNT) {
@@ -247,8 +249,6 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 							+ doingPage.getFinalUrl();
 				}
 				LOG.error(msg, e);
-			}else{
-				workQueue.ack(doingPage);
 			}
 		}
 	}

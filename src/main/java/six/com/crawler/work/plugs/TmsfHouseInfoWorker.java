@@ -70,6 +70,15 @@ public class TmsfHouseInfoWorker extends AbstractCrawlWorker {
 	@SuppressWarnings("unchecked")
 	@Override
 	protected void beforeExtract(Page doingPage) {
+		String floorDivCss = "div[class=raphael_box][types=1]";
+		Elements floorDivs = doingPage.getDoc().select(floorDivCss);
+		Map<String, String> floorMap = new HashMap<>();
+		for (Element floorDiv : floorDivs) {
+			String floorKey = floorDiv.attr("floor");
+			String floor = floorDiv.attr("title");
+			floorMap.put(floorKey, floor);
+		}
+		
 		Element sidElement = doingPage.getDoc().select(sidCss).first();
 		String sid = "";
 		if (null != sidElement) {
@@ -97,14 +106,6 @@ public class TmsfHouseInfoWorker extends AbstractCrawlWorker {
 			housetype = housetypeElement.attr("value");
 		}
 
-		String floorDivCss = "div[class=raphael_box][types=1]";
-		Elements floorDivs = doingPage.getDoc().select(floorDivCss);
-		Map<String, String> floorMap = new HashMap<>();
-		for (Element floorDiv : floorDivs) {
-			String floorKey = floorDiv.attr("floor");
-			String floor = floorDiv.attr("title");
-			floorMap.put(floorKey, floor);
-		}
 		String presellId_org = doingPage.getMetaMap().get("presellId_org").get(0);
 		String presellId = doingPage.getMetaMap().get("presellId").get(0);
 		String buildingId = doingPage.getMetaMap().get("buildingId").get(0);
@@ -134,11 +135,16 @@ public class TmsfHouseInfoWorker extends AbstractCrawlWorker {
 			String internalid = internalidOb.toString();
 			String houseDivCss = StringUtils.replace(houseDivCssTemplate, internalidTemplate, internalid);
 			Element houseDiv = doingPage.getDoc().select(houseDivCss).first();
-			if(null!=houseDiv){
-				String houseFloorKey = houseDiv.attr("floor");
-				String houseFloor = floorMap.get(houseFloorKey);
-				houseMap.put("floor", houseFloor);
+			if (null == houseDiv) {
+				throw new RuntimeException("don't find  house's div");
 			}
+			String houseFloorKey = houseDiv.attr("floor");
+			String houseFloor = floorMap.get(houseFloorKey);
+			if(null==houseFloor){
+				throw new RuntimeException("don't find  house's floor");
+			}
+			houseMap.put("floor", houseFloor);
+			
 			for (String field : jsonKeyMap.keySet()) {
 				String jsonKey = jsonKeyMap.get(field);
 				Object valueOb = houseMap.get(jsonKey);

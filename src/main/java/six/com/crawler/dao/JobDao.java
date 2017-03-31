@@ -38,7 +38,7 @@ public interface JobDao extends BaseDao{
 			+ "cronTrigger,"
 			+ "workFrequency,"
 			+ "workerClass,"
-			+ "queueName,"
+			+ "workSpaceName,"
 			+ "`user`,"
 			+ "`describe`,`version` from "+TABLE_NAME+" where name = #{name}")
 	public Job query(String name);

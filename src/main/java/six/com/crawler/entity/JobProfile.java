@@ -63,9 +63,9 @@ public class JobProfile extends Profile {
 				jobElement.setAttribute("workFrequency", getValue(String.valueOf(job.getWorkFrequency())));
 				jobElement.setAttribute("user", getValue(job.getUser()));
 				
-				if (StringUtils.isNotBlank(job.getQueueName())) {
-					Element queueNameElement = doc.createElement("queueName");
-					queueNameElement.setTextContent(job.getQueueName());
+				if (StringUtils.isNotBlank(job.getWorkSpaceName())) {
+					Element queueNameElement = doc.createElement("workSpaceName");
+					queueNameElement.setTextContent(job.getWorkSpaceName());
 					jobElement.appendChild(queueNameElement);
 				}
 				
@@ -165,8 +165,8 @@ public class JobProfile extends Profile {
 					for (int j = 0; j < jobChildNodes.getLength(); j++) {
 						Node jobChildNode = jobChildNodes.item(j);
 						String tagName = jobChildNode.getNodeName();
-						if ("queueName".equals(tagName)) {
-							job.setQueueName(getValue(jobChildNode.getTextContent()));
+						if ("workSpaceName".equals(tagName)) {
+							job.setWorkSpaceName(getValue(jobChildNode.getTextContent()));
 						} else if ("cronTrigger".equals(tagName)) {
 							job.setCronTrigger(getValue(jobChildNode.getTextContent()));
 						} else if ("workerClass".equals(tagName)) {

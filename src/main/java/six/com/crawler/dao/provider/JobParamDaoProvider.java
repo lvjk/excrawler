@@ -3,7 +3,10 @@ package six.com.crawler.dao.provider;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.ibatis.jdbc.SQL;
+
 import six.com.crawler.dao.BaseDao;
+
 import six.com.crawler.dao.JobParamDao;
 import six.com.crawler.entity.JobParam;
 
@@ -27,6 +30,16 @@ public class JobParamDaoProvider extends BaseProvider{
 		sbd.append("values");  
 		sbd.append(setBatchSaveSql(values,extractPaths));
 		return sbd.toString();
+	}
+	
+	public String update(Map<String, Object> map) {
+		SQL sql=new SQL();
+		sql.UPDATE(JobParamDao.TABLE_NAME);
+		sql.SET("`version` = #{newVersion}");
+		sql.SET("`name` = #{name}");
+		sql.SET("`value` = #{value}");
+		sql.WHERE("`id` = #{id} and version = #{version}");
+		return sql.toString();
 	}
 
 }

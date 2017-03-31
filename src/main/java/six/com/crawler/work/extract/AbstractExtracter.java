@@ -146,8 +146,10 @@ public abstract class AbstractExtracter implements Extracter {
 		if(primaryResultSize>0){
 			String nowTime = DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1);
 			List<String> idList=new ArrayList<>(primaryResultSize);
+			List<String> workerNameList=new ArrayList<>(primaryResultSize);
 			List<String> collectionDateList=new ArrayList<>(primaryResultSize);
 			List<String> originUrlList=new ArrayList<>(primaryResultSize);
+			final String workerName=getAbstractWorker().getName();
 			for (int i = 0; i < primaryResultSize; i++) {
 				Map<String, String> dataMap = new HashMap<>();
 				List<String> primaryKeysValue = new ArrayList<>();
@@ -161,15 +163,18 @@ public abstract class AbstractExtracter implements Extracter {
 				}
 				String id = getResultID(primaryKeysValue);
 				dataMap.put(Extracter.DEFAULT_RESULT_ID, id);
+				dataMap.put(Extracter.DEFAULT_WORKERNAME,workerName);
 				dataMap.put(Extracter.DEFAULT_RESULT_COLLECTION_DATE, nowTime);
 				dataMap.put(Extracter.DEFAULT_RESULT_ORIGIN_URL, doingPage.getFinalUrl());
 				
 				idList.add(id);
+				workerNameList.add(workerName);
 				collectionDateList.add(nowTime);
 				originUrlList.add(doingPage.getFinalUrl());
 				resultContext.addoutResult(dataMap);
 			}
 			resultContext.addExtractResult(Extracter.DEFAULT_RESULT_ID, idList);
+			resultContext.addExtractResult(Extracter.DEFAULT_WORKERNAME, workerNameList);
 			resultContext.addExtractResult(Extracter.DEFAULT_RESULT_COLLECTION_DATE, collectionDateList);
 			resultContext.addExtractResult(Extracter.DEFAULT_RESULT_ORIGIN_URL, originUrlList);
 		}

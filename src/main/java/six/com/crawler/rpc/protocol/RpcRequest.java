@@ -1,6 +1,7 @@
 package six.com.crawler.rpc.protocol;
 
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * @author six
@@ -22,7 +23,7 @@ public class RpcRequest extends RpcMsg implements Serializable {
 	// 呼叫命令
 	private String command;
 	// 呼叫参数
-	private Object param;
+	private Map<String,Object> params;
 	
 	public RpcRequest() {
 		super(RpcProtocol.REQUEST);
@@ -60,13 +61,14 @@ public class RpcRequest extends RpcMsg implements Serializable {
 		this.command = command;
 	}
 
-	public Object getParam() {
-		return param;
+	public Map<String,Object> getParams() {
+		return params;
+	}
+	
+	public void setParams(Map<String,Object> params) {
+		this.params=params;
 	}
 
-	public void setParam(Object param) {
-		this.param = param;
-	}
 	
 	public String toString(){
 		return originHost+"@"+callHost+":"+callPort+"/"+command+"/"+getId();

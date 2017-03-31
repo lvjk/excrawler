@@ -20,15 +20,17 @@ public abstract class MasterAbstractSchedulerManager extends AbstractSchedulerMa
 		
 		doInit();
 
-		getNodeManager().register(ScheduledJobCommand.startWorker, param -> {
-			String jobName = (String) param;
-			MasterAbstractSchedulerManager.this.startWorker(jobName);
+		getNodeManager().register(ScheduledJobCommand.startWorker, params -> {
+			String jobName =(String)params.get("jobName");
+			String workerName =(String)params.get("workerName");
+			MasterAbstractSchedulerManager.this.startWorker(jobName,workerName);
 			return null;
 		});
 
-		getNodeManager().register(ScheduledJobCommand.endWorker, param -> {
-			String jobName = (String) param;
-			MasterAbstractSchedulerManager.this.endWorker(jobName);
+		getNodeManager().register(ScheduledJobCommand.endWorker, params -> {
+			String jobName =(String)params.get("jobName");
+			String workerName =(String)params.get("workerName");
+			MasterAbstractSchedulerManager.this.endWorker(jobName,workerName);
 			return null;
 
 		});
@@ -59,7 +61,7 @@ public abstract class MasterAbstractSchedulerManager extends AbstractSchedulerMa
 	 * @param jobName
 	 * @param WorkName
 	 */
-	public abstract void startWorker(String jobName);
+	public abstract void startWorker(String jobName,String workerName);
 
 	/**
 	 * 结束执行job's worker
@@ -67,7 +69,7 @@ public abstract class MasterAbstractSchedulerManager extends AbstractSchedulerMa
 	 * @param jobName
 	 * @param WorkName
 	 */
-	public abstract void endWorker(String jobName);
+	public abstract void endWorker(String jobName,String workerName);
 
 	public abstract void repair();
 

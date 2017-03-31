@@ -15,26 +15,6 @@ import six.com.crawler.entity.Job;
 public class JobDaoProvider extends BaseProvider {
 
 	
-//	public String totalNodeJobInfo(String localNode){
-//		StringBuilder sql = new StringBuilder();
-//		sql.append("select  a.totalJobSize totalJobSize,"
-//				        + " b.totalScheduleJobSize totalScheduleJobSize,"
-//				        + " c.totalNoScheduleJobSize totalNoScheduleJobSize "
-//				        + " from("
-//				        + "				select count(1) totalJobSize,localNode"
-//				        + "             from "+JobDao.TABLE_NAME+" where localNode=#{localNode})a "
-//				        + " left join ("
-//				        + "				select count(1) totalScheduleJobSize,localNode "
-//				        + "				from "+JobDao.TABLE_NAME+" where  localNode=#{localNode} and isScheduled=1 )b "
-//				        + " on a.localNode=b.localNode "
-//				        + " left join("
-//				        + "				select count(1) totalNoScheduleJobSize,localNode "
-//				        + "             from "+JobDao.TABLE_NAME+" where  localNode=#{localNode} and isScheduled=0)c  "
-//				        + " on b.localNode=c.localNode");
-//		return sql.toString();
-//		
-//	}
-	
 	public String query(Map<String, Object> parameters) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("select `name`,"
@@ -46,7 +26,7 @@ public class JobDaoProvider extends BaseProvider {
 				+ "cronTrigger,"
 				+ "workFrequency,"
 				+ "workerClass,"
-				+ "queueName,"
+				+ "workSpaceName,"
 				+ "`user`,"
 				+ "`describe`,"
 				+ "`version`");
@@ -69,7 +49,7 @@ public class JobDaoProvider extends BaseProvider {
 				+ "       cronTrigger,"
 				+ "     workFrequency,"
 				+ "       workerClass,"
-				+ "         queueName,"
+				+ "     workSpaceName,"
 				+ "              user,"
 				+ "         `describe`,"
 				+ "			`version` "
@@ -91,7 +71,7 @@ public class JobDaoProvider extends BaseProvider {
 				+ "cronTrigger,"
 				+ "workFrequency,"
 				+ "workerClass,"
-				+ "queueName,"
+				+ "workSpaceName,"
 				+ "`user`,"
 				+ "`describe`,"
 				+ "`version`");
@@ -111,7 +91,7 @@ public class JobDaoProvider extends BaseProvider {
 				+ "cronTrigger,"
 				+ "workFrequency,"
 				+ "workerClass,"
-				+ "queueName,"
+				+ "workSpaceName,"
 				+ "`user`,"
 				+ "`describe`";
 		
@@ -124,7 +104,7 @@ public class JobDaoProvider extends BaseProvider {
 				+ "#{cronTrigger},"
 				+ "#{workFrequency},"
 				+ "#{workerClass},"
-				+ "#{queueName},"
+				+ "#{workSpaceName},"
 				+ "#{user},"
 				+ "#{describe}";
 		SQL sql = new SQL();

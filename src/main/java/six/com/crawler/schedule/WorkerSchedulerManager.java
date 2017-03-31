@@ -4,6 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -57,16 +58,14 @@ public class WorkerSchedulerManager extends WorkerAbstractSchedulerManager {
 	 * @param crawlerWorker
 	 */
 	private void executeWorker(Worker worker) {
-		String jobName = worker.getJob().getName();
-		String workerName = worker.getJob().getName();
 		try {
 			worker.init();
-			startWorker(jobName, workerName, worker);
+			startWorker(worker);
 			worker.start();
 		} catch (Exception e) {
 			log.error("execute jobWorker {" + worker.getName() + "} err", e);
 		} finally {
-			endWorer(worker.getJob().getName(), worker.getName());
+			endWorer(worker);
 		}
 
 	}
@@ -167,14 +166,19 @@ public class WorkerSchedulerManager extends WorkerAbstractSchedulerManager {
 		executor.shutdown();
 	}
 
-	private void startWorker(String jobName, String workerName, Worker worker) {
+	private void startWorker( Worker worker) {
+		String jobName=worker.getJob().getName();
+		String workerName=worker.getName();
 		WorkerSnapshot workerSnapshot = worker.getWorkerSnapshot();
 		localJobWorkersMap.computeIfAbsent(worker.getJob().getName(), mapKey -> new ConcurrentHashMap<String, Worker>())
 				.put(worker.getName(), worker);
 		updateWorkerSnapshot(workerSnapshot);
 		getNodeManager().getCurrentNode().setRunningJobSize(runningWroker.incrementAndGet());
+		Map<String,Object> params=new HashMap<>();
+		params.put("jobName",jobName);
+		params.put("workerName",workerName);
 		try {
-			getNodeManager().execute(getNodeManager().getMasterNode(), ScheduledJobCommand.startWorker, jobName);
+			getNodeManager().execute(getNodeManager().getMasterNode(), ScheduledJobCommand.startWorker, params);
 		} catch (Exception e) {
 			log.error("notice master node job[" + jobName + "]'s worker[" + workerName + "] is started err", e);
 		}
@@ -187,20 +191,21 @@ public class WorkerSchedulerManager extends WorkerAbstractSchedulerManager {
 	 * @param worker
 	 * @param jobName
 	 */
-	public void endWorer(String jobName, String workerName) {
+	public void endWorer(Worker worker) {
+		String jobName=worker.getJob().getName();
+		String workerName=worker.getName();
+		worker.destroy();
 		Map<String, Worker> jobWorkerMap = localJobWorkersMap.get(jobName);
-		if (null != jobWorkerMap) {
-			Worker worker = jobWorkerMap.remove(workerName);
-			if (null != worker) {
-				worker.destroy();
-			}
-			if (jobWorkerMap.size() == 0) {
-				localJobWorkersMap.remove(jobName);
-			}
+		jobWorkerMap.remove(workerName);
+		if (jobWorkerMap.size() == 0) {
+			localJobWorkersMap.remove(jobName);
 		}
 		getNodeManager().getCurrentNode().setRunningJobSize(runningWroker.decrementAndGet());
+		Map<String,Object> params=new HashMap<>();
+		params.put("jobName",jobName);
+		params.put("workerName",workerName);
 		try {
-			getNodeManager().execute(getNodeManager().getMasterNode(), ScheduledJobCommand.endWorker, jobName);
+			getNodeManager().execute(getNodeManager().getMasterNode(), ScheduledJobCommand.endWorker, params);
 		} catch (Exception e) {
 			log.error("notice master node job[" + jobName + "]'s worker[" + workerName + "] is end err", e);
 		}

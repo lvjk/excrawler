@@ -10,11 +10,18 @@ import six.com.crawler.entity.ResultContext;
  * @author 作者
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年2月23日 下午9:19:23
+ * 抽取器会默认增加 
+ * <p>采集数据id(此id跟业务无关)</p>
+ * <p>采集数据的workerName</p>
+ * <p>采集数据的日期</p>
+ * <p>采集数据的数据源url段</p>
  */
 public interface Extracter {
 
 	// 系统默认 采集数据id
 	public static final String DEFAULT_RESULT_ID = "id";
+	// 系统默认 采集数据的workerName
+	public static final String DEFAULT_WORKERNAME = "workerName";
 	// 系统默认 采集日期 字段
 	public static final String DEFAULT_RESULT_COLLECTION_DATE = "collectionDate";
 	// 系统默认 数据源url 字段

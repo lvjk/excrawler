@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.InsertProvider;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.UpdateProvider;
 
 import six.com.crawler.dao.provider.JobParamDaoProvider;
 import six.com.crawler.entity.JobParam;
@@ -19,11 +20,23 @@ public interface JobParamDao extends BaseDao{
 
 	String TABLE_NAME="ex_crawler_platform_job_param";
 
-	@Select("select jobName,name,value from "+TABLE_NAME+" where jobName = #{jobName}")
+	@Select("select id,jobName,name,value,`version` from "+TABLE_NAME+" where jobName = #{jobName}")
 	public List<JobParam> queryJobParams(String jobName);
 	
 	@InsertProvider(type = JobParamDaoProvider.class, method = "batchSave")
 	public int batchSave(@Param(BATCH_SAVE_PARAM)List<JobParam> jobParams);
+	
+	
+	@UpdateProvider(type = JobParamDaoProvider.class, method = "update")
+	public int update(
+			@Param("version")int version,
+			@Param("newVersion")int newVersion,
+			@Param("id")String id,
+			@Param("name")String name,
+			@Param("value")String value);
+	
+	@Delete("delete from "+TABLE_NAME+" where `id` = #{id}")
+	public int del(@Param("id")String id);
 	
 	@Delete("delete from "+TABLE_NAME+" where jobName = #{jobName}")
 	public int delJobParams(String jobName);

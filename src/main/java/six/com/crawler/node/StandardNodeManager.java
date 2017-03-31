@@ -2,6 +2,7 @@ package six.com.crawler.node;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.PreDestroy;
 
@@ -278,7 +279,7 @@ public class StandardNodeManager implements NodeManager,InitializingBean{
 	 * @param param
 	 * @return
 	 */
-	public Object execute(Node node, String commandName, Object param) {
+	public Object execute(Node node, String commandName,Map<String,Object> params) {
 		String id =getRequestId(node, commandName);
 		RpcRequest rpcRequest = new RpcRequest();
 		rpcRequest.setId(id);
@@ -286,7 +287,7 @@ public class StandardNodeManager implements NodeManager,InitializingBean{
 		rpcRequest.setCallHost(node.getHost());
 		rpcRequest.setCallPort(node.getTrafficPort());
 		rpcRequest.setOriginHost(getCurrentNode().getHost());
-		rpcRequest.setParam(param);
+		rpcRequest.setParams(params);
 		RpcResponse rpcResponse = nettyRpcCilent.execute(rpcRequest);
 		return rpcResponse.getResult();
 	}

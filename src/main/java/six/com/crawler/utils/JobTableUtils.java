@@ -2,15 +2,20 @@ package six.com.crawler.utils;
 
 import org.apache.commons.lang3.StringUtils;
 
-
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年2月20日 下午3:16:05
  */
 public class JobTableUtils {
+	
+	/**
+	 * 由于< 属于特殊字符，所以改用 {}
+	 */
+	@Deprecated
+	public final static String TABLE_NAME_FLAG_OLD = "<<tableName>>";
 
-	public final static String TABLE_NAME_FLAG = "<<tableName>>";
+	public final static String TABLE_NAME_FLAG = "{tableName}";
 
 	public static String buildSelectSql(String selectSqlTemplate, String tableName) {
 		return replaceTableNameFlag(selectSqlTemplate, tableName);
@@ -23,7 +28,7 @@ public class JobTableUtils {
 	public static String buildInsertSql(String insertSqlTemplate, String tableName) {
 		return replaceTableNameFlag(insertSqlTemplate, tableName);
 	}
-	
+
 	public static String buildUpdateSql(String insertSqlTemplate, String tableName) {
 		return replaceTableNameFlag(insertSqlTemplate, tableName);
 	}
@@ -34,8 +39,10 @@ public class JobTableUtils {
 
 	private static String replaceTableNameFlag(String sql, String tableName) {
 		String newSql = null;
-		if(sql!=null){
+		if (StringUtils.contains(sql, TABLE_NAME_FLAG)) {
 			newSql = sql.replaceAll(TABLE_NAME_FLAG, tableName);
+		} else if (StringUtils.contains(sql, TABLE_NAME_FLAG_OLD)) {
+			newSql = sql.replaceAll(TABLE_NAME_FLAG_OLD, tableName);
 		}
 		return newSql;
 	}

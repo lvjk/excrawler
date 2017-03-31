@@ -6,8 +6,13 @@ package six.com.crawler.entity;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年9月9日 下午2:43:39
  */
-public class JobParam {
+public class JobParam extends BaseVo{
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -8041698028299021489L;
+	
 	private String jobName;// jobName
 	private String name;// 参数名字
 	private String value;// 参数值

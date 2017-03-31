@@ -1,6 +1,7 @@
 package six.com.crawler.work.space;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -96,7 +97,7 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 					}
 					break;
 				} else {
-					repair();
+					repairDoingData();
 					isRepair = true;
 					againGet = true;
 				}
@@ -105,15 +106,39 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 		return data;
 	}
 
+	public String batchGetDoingData(List<T> resutList, String cursorStr) {
+		return batchGet(resutList, cursorStr, queueKey);
+	}
+
+	public String batchGetErrData(List<T> resutList, String cursorStr) {
+		return batchGet(resutList, cursorStr, errQueueKey);
+	}
+
+	private String batchGet(List<T> resutList, String cursorStr, String type) {
+		if (StringUtils.isBlank(cursorStr)) {
+			cursorStr = "0";
+		}
+		Map<String, T> map = new HashMap<>();
+		cursorStr = redisManager.hscan(type, cursorStr, map, clz);
+		resutList.addAll(map.values());
+		return cursorStr;
+	}
+
 	public void addErr(T data) {
-		redisManager.lpush(errQueueKey, data);
+		redisManager.hset(errQueueKey, data.getKey(), data);
 	}
 
 	public void againDoErrQueue() {
-		T data = null;
-		while (null != (data = redisManager.lpop(errQueueKey, clz))) {
-			push(data);
-		}
+		Map<String, T> map = new HashMap<>();
+		String cursorStr = "0";
+		do {
+			cursorStr = redisManager.hscan(errQueueKey, cursorStr, map, clz);
+			map.values().stream().forEach(data -> {
+				push(data);
+			});
+			map.clear();
+		} while (!"0".equals(cursorStr));
+		redisManager.del(errQueueKey);
 	}
 
 	@Override
@@ -147,7 +172,7 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 	/**
 	 * 填充代理队列数据 将实践存储的数据填充到代理队列
 	 */
-	public void repair() {
+	private void repairDoingData() {
 		redisManager.lock(queueKey);
 		try {
 			int proxyQueueLlen = redisManager.llen(proxyQueueKey);
@@ -191,7 +216,7 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 
 	@Override
 	public int errSize() {
-		return redisManager.llen(errQueueKey);
+		return redisManager.hllen(errQueueKey);
 	}
 
 	@Override

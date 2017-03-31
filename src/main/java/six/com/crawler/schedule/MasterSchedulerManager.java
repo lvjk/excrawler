@@ -2,14 +2,14 @@ package six.com.crawler.schedule;
 
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Queue;
+
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -18,6 +18,7 @@ import javax.annotation.PreDestroy;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
+import org.eclipse.jetty.util.ConcurrentHashSet;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDataMap;
@@ -48,26 +49,40 @@ import six.com.crawler.work.WorkerLifecycleState;
 /**
  * @author sixliu E-mail:359852326@qq.com
  * @version 创建时间：2016年5月18日 下午10:32:28 类说明
- * 			<p>警告:所有对job的操作 需要执行分布式锁。保证所有此Job 的操作 顺序执行</p>
- *          <p>执行一个爬虫工作流程 :</p>
- *          <p>1.提交爬虫job至待执行队列,并将job快照注册至注册中心 </p>
- *          <p>2.读取待执行任务队列线程读取队列中的job,判断job是否处于运行中，如果运行中重新返回队列，否则做初始化，呼叫执行爬虫任务线程池执行任务 </p>
- *          <p>3.执行爬虫任务线程池执行爬虫任务</p>
- *          <p>4.执行完任务</p>
- *          <p>注意:集群 命令调用还需完善</p>
+ *          <p>
+ *          警告:所有对job的操作 需要执行分布式锁。保证所有此Job 的操作 顺序执行
+ *          </p>
+ *          <p>
+ *          执行一个爬虫工作流程 :
+ *          </p>
+ *          <p>
+ *          1.提交爬虫job至待执行队列,并将job快照注册至注册中心
+ *          </p>
+ *          <p>
+ *          2.读取待执行任务队列线程读取队列中的job,判断job是否处于运行中，如果运行中重新返回队列，否则做初始化，呼叫执行爬虫任务线程池执行任务
+ *          </p>
+ *          <p>
+ *          3.执行爬虫任务线程池执行爬虫任务
+ *          </p>
+ *          <p>
+ *          4.执行完任务
+ *          </p>
+ *          <p>
+ *          注意:集群 命令调用还需完善
+ *          </p>
  */
 @Component
 public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 
 	final static Logger log = LoggerFactory.getLogger(MasterSchedulerManager.class);
-	// 记录wait Job
-	private Queue<Job> pendingExecuteQueue = new ConcurrentLinkedQueue<>();
+
+	private ConcurrentLinkedQueue<Job> pendingExecuteQueue = new ConcurrentLinkedQueue<>();
 
 	private final static Lock waitQueueLock = new ReentrantLock();
 
 	private final static Condition waitQueueCondition = waitQueueLock.newCondition();
 
-	private Map<String, AtomicInteger> jobRunningWorkerSize = new ConcurrentHashMap<>();
+	private Map<String, Set<String>> jobRunningWorkerNames = new ConcurrentHashMap<>();
 
 	private Thread executeWaitQueueThread;
 
@@ -178,16 +193,17 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 	public synchronized void execute(String jobName) {
 		Job job = getJobDao().query(jobName);
 		if (null != job) {
-			String id =DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_2);
+			String id = DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_2);
 			JobSnapshot jobSnapshot = new JobSnapshot();
 			jobSnapshot.setId(id);
 			jobSnapshot.setName(job.getName());
 			jobSnapshot.setNextJobName(job.getNextJobName());
-			jobSnapshot.setWorkSpaceName(job.getQueueName());
+			jobSnapshot.setWorkSpaceName(job.getWorkSpaceName());
 			jobSnapshot.setDesignatedNodeName(job.getDesignatedNodeName());
 			jobSnapshot.setStatus(JobSnapshotState.WAITING_EXECUTED.value());
 			registerJobSnapshot(jobSnapshot);
 			submitWaitQueue(job);
+			log.info("already submit job[" + jobName + "] to queue and it[" + id + "] will to be executed");
 		} else {
 			log.info("ready to execute job[" + jobName + "] is null");
 		}
@@ -204,8 +220,8 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 	private void doExecute(Job job) {
 		// 判断任务是否在运行
 		if (!isRunning(job.getName())) {
-			String lockKey=getOperationJobLock(job.getName());
 			log.info("master node execute job[" + job.getName() + "]");
+			String lockKey = getOperationJobLock(job.getName());
 			List<Node> freeNodes = null;
 			try {
 				getRedisManager().lock(lockKey);
@@ -242,22 +258,27 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 						tempTbaleName = fixedTableName;
 					}
 					// 任务开始时候 开始时间和结束时间默认是一样的
-					jobSnapshot.setStartTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
-					jobSnapshot.setEndTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
+					jobSnapshot.setStartTime(
+							DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
+					jobSnapshot
+							.setEndTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
 					jobSnapshot.setTableName(tempTbaleName);
 					jobSnapshot.setStatus(JobSnapshotState.EXECUTING.value());
 					// 将jobSnapshot更新缓存 这里一定要 saveJobSnapshot
 					updateJobSnapshot(jobSnapshot);
 					getJobSnapshotDao().save(jobSnapshot);
 					int callSucceedCount = 0;
+					Map<String, Object> params = new HashMap<>();
+					params.put("jobName", job.getName());
 					for (Node freeNode : freeNodes) {
 						try {
-							getNodeManager().execute(freeNode, ScheduledJobCommand.execute, job.getName());
+							getNodeManager().execute(freeNode, ScheduledJobCommand.execute, params);
 							callSucceedCount++;
-							log.info("Already request worker node[" + freeNode.getName() + "] to execut the job["
+							log.info("already request worker node[" + freeNode.getName() + "] to execut the job["
 									+ job.getName() + "]");
 						} catch (Exception e) {
-							log.error("get node[" + freeNode.getName() + "]'s workerSchedulerManager err", e);
+							log.error("call worker node[" + freeNode.getName() + "] to execut the job[" + job.getName()
+									+ "] err", e);
 						}
 					}
 					if (callSucceedCount > 0) {
@@ -269,7 +290,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 			} catch (Exception e) {
 				log.error("master node execute job[" + job.getName() + "] err", e);
 				delJobSnapshot(job.getName());
-			}finally {
+			} finally {
 				getRedisManager().unlock(lockKey);
 			}
 		} else {
@@ -280,56 +301,60 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 
 	/**
 	 * call工作节点暂停任务
-	 * 
+	 * 只有当请求工作节点执行暂停成功数==实际执行任务的工作节点数，才会是完全暂停
 	 * @param node
 	 *            工作节点
 	 * @param jobName
 	 *            任务name
 	 */
 	public void suspend(String jobName) {
-		String lockKey=getOperationJobLock(jobName);
-		try{
+		String lockKey = getOperationJobLock(jobName);
+		try {
 			getRedisManager().lock(lockKey);
-			
 			List<Node> nodes = getWorkerNode(jobName);
 			int callSuccessedCount = 0;
+			Map<String, Object> params = new HashMap<>();
+			params.put("jobName", jobName);
 			for (Node node : nodes) {
 				try {
-					getNodeManager().execute(node, ScheduledJobCommand.suspend, jobName);
+					getNodeManager().execute(node, ScheduledJobCommand.suspend, params);
 					callSuccessedCount++;
 					log.info("Already request worker node[" + node.getName() + "] to suspend the job[" + jobName + "]");
 				} catch (Exception e) {
 					log.error("get node[" + node.getName() + "]'s workerSchedulerManager err", e);
 				}
 			}
+			
 			if (callSuccessedCount == nodes.size()) {
 				JobSnapshot jobSnapshot = getJobSnapshot(jobName);
 				jobSnapshot.setStatus(JobSnapshotState.SUSPEND.value());
 				updateJobSnapshot(jobSnapshot);
 			}
-		}finally {
+		} finally {
 			getRedisManager().unlock(lockKey);
 		}
 	}
 
 	/**
 	 * call工作节点继续任务
-	 * 
+	 * 只要当请求工作节点继续执行任务的成功数>0，那么就认为它成功
 	 * @param node
 	 *            工作节点
 	 * @param jobName
 	 *            任务name
 	 */
 	public void goOn(String jobName) {
-		String lockKey=getOperationJobLock(jobName);
-		try{
+		String lockKey = getOperationJobLock(jobName);
+		try {
 			getRedisManager().lock(lockKey);
-			
+
 			List<Node> nodes = getWorkerNode(jobName);
 			int callSuccessedCount = 0;
+			Map<String, Object> params = new HashMap<>();
+			params.put("jobName", jobName);
 			for (Node node : nodes) {
 				try {
-					getNodeManager().execute(node, ScheduledJobCommand.goOn, jobName);
+					getNodeManager().execute(node, ScheduledJobCommand.goOn, params);
 					callSuccessedCount++;
 					log.info("Already request worker node[" + node.getName() + "] to goOn the job[" + jobName + "]");
 				} catch (Exception e) {
@@ -341,41 +366,44 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 				jobSnapshot.setStatus(JobSnapshotState.EXECUTING.value());
 				updateJobSnapshot(jobSnapshot);
 			}
-		}finally {
+		} finally {
 			getRedisManager().unlock(lockKey);
 		}
 	}
 
 	/**
 	 * call工作节点继续任务
-	 * 
+	 * 只有当请求工作节点执行停止成功数==实际执行任务的工作节点数，才会是完全停止
 	 * @param node
 	 *            工作节点
 	 * @param jobName
 	 *            任务name
 	 */
 	public void stop(String jobName) {
-		String lockKey=getOperationJobLock(jobName);
-		try{
+		String lockKey = getOperationJobLock(jobName);
+		try {
 			getRedisManager().lock(lockKey);
-			
+
 			List<Node> nodes = getWorkerNode(jobName);
 			int callSuccessedCount = 0;
+			Map<String, Object> params = new HashMap<>();
+			params.put("jobName", jobName);
 			for (Node node : nodes) {
 				try {
-					getNodeManager().execute(node, ScheduledJobCommand.stop, jobName);
+					getNodeManager().execute(node, ScheduledJobCommand.stop, params);
 					callSuccessedCount++;
 					log.info("Already request worker node[" + node.getName() + "] to stop the job[" + jobName + "]");
 				} catch (Exception e) {
 					log.error("get node[" + node.getName() + "]'s workerSchedulerManager err", e);
 				}
 			}
+		
 			if (callSuccessedCount == nodes.size()) {
 				JobSnapshot jobSnapshot = getJobSnapshot(jobName);
 				jobSnapshot.setStatus(JobSnapshotState.STOP.value());
 				updateJobSnapshot(jobSnapshot);
 			}
-		}finally {
+		} finally {
 			getRedisManager().unlock(lockKey);
 		}
 	}
@@ -386,10 +414,12 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 		for (JobSnapshot jobSnapshot : allJobs) {
 			Job job = getJobDao().query(jobSnapshot.getName());
 			List<Node> nodes = getWorkerNode(job.getName());
+			Map<String, Object> params = new HashMap<>();
+			params.put("jobName", job.getName());
 			for (Node node : nodes) {
 				if (!currentNode.equals(node)) {
 					try {
-						getNodeManager().execute(node, ScheduledJobCommand.stop, job.getName());
+						getNodeManager().execute(node, ScheduledJobCommand.stop, params);
 						log.info("Already request worker node[" + node.getName() + "] to stop the job[" + job.getName()
 								+ "]");
 					} catch (Exception e) {
@@ -412,12 +442,12 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 	}
 
 	@Override
-	public void startWorker(String jobName) {
-		String lockKey=getOperationJobLock(jobName);
-		try{
+	public void startWorker(String jobName, String workerName) {
+		String lockKey = getOperationJobLock(jobName);
+		try {
 			getRedisManager().lock(lockKey);
-			jobRunningWorkerSize.computeIfAbsent(jobName, mapKey -> new AtomicInteger()).incrementAndGet();
-		}finally {
+			jobRunningWorkerNames.computeIfAbsent(jobName, mapKey -> new ConcurrentHashSet<>()).add(workerName);
+		} finally {
 			getRedisManager().unlock(lockKey);
 		}
 	}
@@ -425,12 +455,14 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 	/**
 	 * worker结束时调用此方法计数减1，如果计数==0的话那么导出job运行报告
 	 */
-	public void endWorker(String jobName) {
-		String lockKey=getOperationJobLock(jobName);
-		try{
+	public void endWorker(String jobName, String workerName) {
+		String lockKey = getOperationJobLock(jobName);
+		try {
 			getRedisManager().lock(lockKey);
-			if (0 == jobRunningWorkerSize.get(jobName).decrementAndGet()) {
-				jobRunningWorkerSize.remove(jobName);
+			Set<String> jobWorkerNames = jobRunningWorkerNames.get(jobName);
+			jobWorkerNames.remove(workerName);
+			if (0 == jobWorkerNames.size()) {
+				jobRunningWorkerNames.remove(jobName);
 				List<WorkerSnapshot> workerSnapshots = getWorkerSnapshots(jobName);
 				int finishedCount = 0;
 				for (WorkerSnapshot workerSnapshot : workerSnapshots) {
@@ -460,7 +492,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 					}
 				}
 			}
-		}finally {
+		} finally {
 			getRedisManager().unlock(lockKey);
 		}
 	}
@@ -490,7 +522,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 	 */
 	public void scheduled(Job job) {
 		if (null != job) {
-			synchronized(scheduler){
+			synchronized (scheduler) {
 				JobKey jobKey = new JobKey(job.getName(), schedulerGroup);
 				try {
 					boolean existed = scheduler.checkExists(jobKey);
@@ -538,7 +570,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 	 */
 	public void cancelScheduled(String jobName) {
 		if (StringUtils.isNotBlank(jobName)) {
-			synchronized(scheduler){
+			synchronized (scheduler) {
 				try {
 					JobKey key = new JobKey(jobName, schedulerGroup);
 					scheduler.deleteJob(key);
@@ -557,9 +589,9 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 			getRedisManager().del(key);
 		}
 	}
-	
-	private String getOperationJobLock(String jobName){
-		String lockKey="masterSchedulerManager_operationJob_"+jobName;
+
+	private String getOperationJobLock(String jobName) {
+		String lockKey = "masterSchedulerManager_operationJob_" + jobName;
 		return lockKey;
 	}
 

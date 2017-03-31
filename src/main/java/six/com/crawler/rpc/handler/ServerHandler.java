@@ -52,7 +52,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<RpcMsg> {
 		if (null != rpcService) {
 			log.info("server received coommand[" + rpcRequest.getCommand() + "] from " + rpcRequest.getOriginHost());
 			try {
-				Object result = rpcService.execute(rpcRequest.getParam());
+				Object result = rpcService.execute(rpcRequest.getParams());
 				rpcResponse.setSucceed(true);
 				rpcResponse.setResult(result);
 			} catch (Exception e) {

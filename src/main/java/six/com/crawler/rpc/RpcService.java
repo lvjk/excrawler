@@ -1,5 +1,7 @@
 package six.com.crawler.rpc;
 
+import java.util.Map;
+
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
@@ -8,5 +10,5 @@ package six.com.crawler.rpc;
 @FunctionalInterface
 public interface  RpcService{
 
-	public Object execute(Object param);
+	public Object execute(Map<String,Object> params);
 }

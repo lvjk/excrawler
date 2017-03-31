@@ -32,7 +32,7 @@ public class Job extends PageQueryEntity implements Serializable {
 
 	private String workerClass="";// worker class
 
-	private String queueName="";
+	private String workSpaceName="";//工作空间名称
 
 	private String describe="";// 任务描述
 
@@ -106,12 +106,12 @@ public class Job extends PageQueryEntity implements Serializable {
 		this.user = user;
 	}
 
-	public String getQueueName() {
-		return queueName;
+	public String getWorkSpaceName() {
+		return workSpaceName;
 	}
 
-	public void setQueueName(String queueName) {
-		this.queueName = queueName;
+	public void setWorkSpaceName(String workSpaceName) {
+		this.workSpaceName = workSpaceName;
 	}
 
 	public String getCronTrigger() {
