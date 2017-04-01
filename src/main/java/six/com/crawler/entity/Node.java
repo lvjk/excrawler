@@ -24,7 +24,7 @@ public class Node implements Serializable {
 	private int totalJobSize;// 节点总任务数
 	private int totalScheduleJobSize;// 节点调度总任务数
 	private int totalNoScheduleJobSize;// 节点未调度总任务数
-	private AtomicInteger runningWorkerSize= new AtomicInteger(0);// 节点未调度总任务数
+	private AtomicInteger runningWorkerSize= new AtomicInteger(0);// 节点运行worker总数
 
 	public String getName() {
 		return name;

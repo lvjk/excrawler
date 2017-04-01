@@ -36,7 +36,7 @@ import six.com.crawler.work.store.StoreType;
  */
 public abstract class AbstractCrawlWorker extends AbstractWorker {
 
-	final static Logger LOG = LoggerFactory.getLogger(AbstractCrawlWorker.class);
+	final static Logger log = LoggerFactory.getLogger(AbstractCrawlWorker.class);
 
 	// 上次处理数据时间
 	protected int findElementTimeout = Constants.FIND_ELEMENT_TIMEOUT;
@@ -110,11 +110,10 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		long startTime = System.currentTimeMillis();
 		doingPage = workQueue.pull();
 		long endTime = System.currentTimeMillis();
-		doingPage.setOriginalUrl(doingPage.getOriginalUrl()+"?adadasaf");
-		LOG.debug("workQueue pull time:" + (endTime - startTime));
+		log.debug("workQueue pull time:" + (endTime - startTime));
 		if (null != doingPage) {
 			try {
-				LOG.info("processor page:" + doingPage.getOriginalUrl());
+				log.info("processor page:" + doingPage.getOriginalUrl());
 				// 暴露给实现类的
 				beforeDown(doingPage);
 				// 设置下载器代理
@@ -123,7 +122,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 				// 下载数据
 				downer.down(doingPage);
 				endTime = System.currentTimeMillis();
-				LOG.debug("downer down time:" + (endTime - startTime));
+				log.debug("downer down time:" + (endTime - startTime));
 				startTime = System.currentTimeMillis();
 				// 暴露给实现类的抽取前操作
 				beforeExtract(doingPage);
@@ -132,20 +131,20 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 				// 暴露给实现类的抽取后操作
 				afterExtract(doingPage, resultContext);
 				endTime = System.currentTimeMillis();
-				LOG.debug("extracter extract time:" + (endTime - startTime));
+				log.debug("extracter extract time:" + (endTime - startTime));
 				startTime = System.currentTimeMillis();
 				// 存储数据
 				int storeCount = store.store(resultContext);
 				getWorkerSnapshot().setTotalResultCount(getWorkerSnapshot().getTotalResultCount() + storeCount);
 				endTime = System.currentTimeMillis();
-				LOG.debug("store time:" + (endTime - startTime));
+				log.debug("store time:" + (endTime - startTime));
 				// 暴露给实现类的完成操作
 				onComplete(doingPage, resultContext);
 				// 流程走到这步，可以确认数据已经被完全处理,那么ack 数据，最终删除数据备份
 				workQueue.ack(doingPage);
 				// 添加数据被处理记录
 				workQueue.addDone(doingPage);
-				LOG.info("finished processor page:" + doingPage.getOriginalUrl());
+				log.info("finished processor page:" + doingPage.getOriginalUrl());
 			} catch (Exception e) {
 				throw new RuntimeException("process page err:" + doingPage.getOriginalUrl(), e);
 			}
@@ -204,7 +203,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		if (null != doingPage) {
 			if (e instanceof DownerException) {
 				long restTime = 1000 * 5;
-				LOG.info("perhaps server is too busy,it's time for having a rest(" + restTime + ")");
+				log.info("perhaps server is too busy,it's time for having a rest(" + restTime + ")");
 				ThreadUtils.sleep(restTime);
 			}
 			Exception insideException = null;
@@ -214,7 +213,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 				insideExceptionResult = insideOnError(e, doingPage);
 			} catch (Exception e1) {
 				insideException = e1;
-				LOG.error("insideOnError err page:" + doingPage.getFinalUrl(), e1);
+				log.error("insideOnError err page:" + doingPage.getFinalUrl(), e1);
 			}
 			// 判断内部处理是否可处理,如果不可处理那么这里默认处理
 			if (insideExceptionResult) {
@@ -233,7 +232,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 							+ Constants.WOKER_PROCESS_PAGE_MAX_RETRY_COUNT + " and push to err queue:"
 							+ doingPage.getFinalUrl();
 				}
-				LOG.error(msg, e);
+				log.error(msg, e);
 			}
 		}
 	}
