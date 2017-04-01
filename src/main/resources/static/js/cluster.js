@@ -22,11 +22,11 @@ function nodesTable(tableid,url,method){
 					$("<td>"+node.port+"</td>").appendTo(tr);
 					$("<td>"+node.cpu+"</td>").appendTo(tr);
 					$("<td>"+node.mem+"</td>").appendTo(tr);
-					$("<td>"+node.runningJobMaxSize+"</td>").appendTo(tr);
+					$("<td>"+node.runningWorkerMaxSize+"</td>").appendTo(tr);
 					$("<td>"+node.totalJobSize+"</td>").appendTo(tr);
 					$("<td>"+node.totalScheduleJobSize+"</td>").appendTo(tr);
 					$("<td>"+node.totalNoScheduleJobSize+"</td>").appendTo(tr);
-					$("<td>"+node.runningJobSize+"</td>").appendTo(tr);
+					$("<td>"+node.runningWorkerSize+"</td>").appendTo(tr);
 					tr.appendTo(table);
 				}
 			}
