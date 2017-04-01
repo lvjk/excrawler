@@ -1,11 +1,11 @@
 var map = {};
 map["任务管理"] = "/html/job.html";
+map["工作空间管理"] = "/html/workSpace.html";
 map["集群管理"] = "/html/cluster.html";
 map["站点管理"] = "/html/site.html";
 map["抽取管理"] = "/html/extracter.html";
 map["HTTP代理管理"] = "/html/httpProxy.html";
 map["日志管理"] = "/html/log.html";
-// map["配置管理"] = "/html/configs.html";
 // map["日志管理"] = "/html/logs.html";
 String.prototype.trim = function() {
 	return this.replace(/(^\s*)|(\s*$)/g, "");

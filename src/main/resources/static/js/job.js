@@ -46,15 +46,18 @@ function uploadJobProfile(url,file) {
 
 function searchJob() {
 	var jobName = $('#search_job_name').val();
-	if(null==jobName||""==jobName){
-		jobName="*";
-	}
 	var jobSearch=$('#job_search');
 	var pageIndex=jobSearch.find('#pageIndex').val();
 	var pageSize=jobSearch.find('#pageSize').val();
-	var url="/crawler/job/query/"+pageIndex+"/"+pageSize+"/"+jobName;
-	$.get(url, function(result) {
-		showJobTable(result);
+	var url="/crawler/job/query";
+	$.post(url, {
+		pageIndex:pageIndex,
+		pageSize : pageSize,
+		jobName : jobName
+	}, function(responseMsg) {
+		if (responseMsg.isOk == 1) {
+			showJobTable(responseMsg);
+		}
 	});
 }
 
@@ -91,11 +94,16 @@ function showJobTable(result) {
 		for (var i = 0; i < jobs.length; i++) {
 			job = jobs[i];
 			var tr = $("<tr class='job' name='"+job.name+"' title='"+job.describe+"'></tr>");
-			$("<input name='name' style='display:none' type='text' value='"+job.name+"' />").appendTo(tr);
 			$("<input name='version' style='display:none' type='text' value='"+job.version+"' />").appendTo(tr);
+			$("<input name='name' style='display:none' type='text' value='"+job.name+"' />").appendTo(tr);
+			$("<input name='level' style='display:none' type='text' value='"+job.level+"' />").appendTo(tr);
 			$("<input name='localNode' style='display:none' type='text' value='"+job.localNode+"' />").appendTo(tr);
-			$("<input name='queueName' style='display:none' type='text' value='"+job.queueName+"' />").appendTo(tr);
+			$("<input name='workSpaceName' style='display:none' type='text' value='"+job.workSpaceName+"' />").appendTo(tr);
+			$("<input name='workerClass' style='display:none' type='text' value='"+job.workerClass+"' />").appendTo(tr);
+			$("<input name='designatedNodeName' style='display:none' type='text' value='"+job.designatedNodeName+"' />").appendTo(tr);
+			$("<input name='needNodes' style='display:none' type='text' value='"+job.needNodes+"' />").appendTo(tr);
 			$("<input name='isScheduled' style='display:none' type='text' value='"+job.isScheduled+"' />").appendTo(tr);
+			$("<input name='describe' style='display:none' type='text' value='"+job.describe+"' />").appendTo(tr);
 			$("<td title='"+job.name+"'>"+job.name+"</td>").appendTo(tr);
 			var cronTrigger=job.cronTrigger;
 			var ctTd=$("<td></td");
@@ -126,10 +134,9 @@ function showJobTable(result) {
 			var color=getStateColor(status);
 			$("<td name='state' style='font-weight:bold;color:"+color+"'>"+ status + "</td>").appendTo(tr);
 			$("<td name='startTime'></td>").appendTo(tr);
-			var queueHtml=getQueueHtml(job.queueName,0,0,0);
+			var queueHtml=getWorkSpaceHtml(job.queueName,0,0,0);
 			$("<td id='" + job_queue_count + job.name + "'>"+queueHtml+"</td>").appendTo(tr);
-			$("<td><a href=\"javascript:cleanQueue('"+ job.queueName + "')\">清除</a></td>").appendTo(tr);
-			
+	
 			$("<td id='" + job_exception_count + job.name + "'>0</td>").appendTo(tr);
 			
 			
@@ -139,7 +146,8 @@ function showJobTable(result) {
 			td.appendTo(tr);
 			var otherTd = $("<td></td>");
 			var otherOperation="<a href=\"javascript:showHistoryJobSnapshot('" + job.name+ "')\">记录</a>&nbsp;";
-			otherOperation += "<a href=\"javascript:showJobInfo('" + job.name+ "')\">详细</a>&nbsp;";
+			otherOperation += "<a href=\"javascript:showJobParams('" + job.name+ "')\">配置</a>&nbsp;";
+			otherOperation += "<a href=\"javascript:showExtractItemTable('" + job.name+ "')\">抽取项</a>&nbsp;";
 			otherOperation += "<a href=\"/crawler/job/download/profile/"+ job.name+"\"  >下载</a>";
 			$(otherOperation).appendTo(otherTd);
 			otherTd.appendTo(tr);
@@ -267,25 +275,26 @@ Date.prototype.Format = function(fmt){ // author: meizz
 	return fmt;   
 }
 
-function getQueueHtml(queueName,totalProcessCount,queueCountCount,errQueueCount){
-	var totalProcessCountHtml="<span title='任务处理数量' style='color:#FF0000;font-size: 14px; font-weight: bold;'>"+totalProcessCount+"</span>";
-	var realQueueCountCountHtml="0";
-	if(queueCountCount>0){
-		realQueueCountCountHtml="<a  title='任务队列数量' href=\"javascript:showQueueInfo('" +queueName+ "')\">" 
-				+"<span style='color:#227700;font-size:14px; font-weight: bold;'>"+queueCountCount+"</span>"
+function getWorkSpaceHtml(workSpaceName,totalProcessCount,doingSize,errSize){
+	var totalProcessCountHtml="<span title='任务处理数量' style='color:#FF0000;font-size: 14px; font-weight: bold;'>"
+		+totalProcessCount+"</span>";
+	var doingSizeHtml="0";
+	if(doingSize>0){
+		doingSizeHtml="<a  title='任务队列数量' href=\"javascript:showDoingDataDiv('" +workSpaceName+ "')\">" 
+				+"<span style='color:#227700;font-size:14px; font-weight: bold;'>"+doingSize+"</span>"
 				+"</a>&nbsp;";
 	}else{
-		realQueueCountCountHtml="<span title='任务队列数量' style='color:#227700;font-size: 14px; font-weight: bold;'>"+queueCountCount+"</span>";
+		doingSizeHtml="<span title='任务队列数量' style='color:#227700;font-size: 14px; font-weight: bold;'>"+doingSize+"</span>";
 	}
-	var errQueueCountHtml="0";
-	if(errQueueCount>0){
-		errQueueCountHtml="<a  title='任务错误队列数量' href=\"javascript:showErrQueueInfo('" + queueName+ "')\">" 
-				+"<span style='color:#FF0000;font-size: 14px; font-weight: bold;'>"+errQueueCount+"</span>"
+	var errSizeHtml="0";
+	if(errSize>0){
+		errSizeHtml="<a  title='任务错误队列数量' href=\"javascript:showErrDataDiv('" + workSpaceName+ "')\">" 
+				+"<span style='color:#FF0000;font-size: 14px; font-weight: bold;'>"+errSize+"</span>"
 				+"</a>&nbsp;";
 	}else{
-		errQueueCountHtml="<span title='任务错误队列数量' style='color:#FF0000;font-size: 14px; font-weight: bold;'>"+errQueueCount+"</span>&nbsp;";
+		errSizeHtml="<span title='任务错误队列数量' style='color:#FF0000;font-size: 14px; font-weight: bold;'>"+errSize+"</span>&nbsp;";
 	}
-	var queueShowStr=totalProcessCountHtml+"/&nbsp;("+realQueueCountCountHtml+"&nbsp;|&nbsp;"+errQueueCountHtml+")";
+	var queueShowStr=totalProcessCountHtml+"/&nbsp;("+doingSizeHtml+"&nbsp;|&nbsp;"+errSizeHtml+")";
 	return queueShowStr;
 }
 
@@ -324,8 +333,11 @@ function showJobSnapshots(jobSnapshots) {
 				var opetationHtml=masterScheduled.getOperation(jobSnapshot.name,jobSnapshot.status);
 				$("#" + job_operation + jobName).html(opetationHtml);
 			}
-			var queueShowStr=getQueueHtml(jobSnapshot.queueName,jobSnapshot.totalProcessCount,jobSnapshot.realQueueCount,jobSnapshot.errQueueCount);
-			$("#" + job_queue_count + jobName).html(queueShowStr);
+			var workSpaceShowStr=getWorkSpaceHtml(jobSnapshot.workSpaceName,
+					jobSnapshot.totalProcessCount,
+					jobSnapshot.workSpaceDoingSize,
+					jobSnapshot.workSpaceErrSize);
+			$("#" + job_queue_count + jobName).html(workSpaceShowStr);
 			$("#" + job_exception_count + jobName).html(jobSnapshot.errCount);	
 		}
 	}
@@ -333,16 +345,16 @@ function showJobSnapshots(jobSnapshots) {
 
 function updateJobInfo() {
 	var jobTrs = $('#jobs').find("tr");
-	var jobs = new Array();
-	var job;
+	var JobSnapshots = new Array();
+	var JobSnapshot;
 	for (var i = 0; i < jobTrs.length; i++) {
 		var jobTr=$(jobTrs[i]);
-		job=new Object();
-		job.name=jobTr.find("[name='name']").val();
-		job.queueName=jobTr.find("[name='queueName']").val();
-		jobs[i] =job;
+		JobSnapshot=new Object();
+		JobSnapshot.name=jobTr.find("[name='name']").val();
+		JobSnapshot.workSpaceName=jobTr.find("[name='workSpaceName']").val();
+		JobSnapshots[i] =JobSnapshot;
 	}
-	var josn=JSON.stringify(jobs);
+	var josn=JSON.stringify(JobSnapshots);
 	try {
 		stompClient.send("/crawler/jobSnapshot", {},josn);
 	} catch (e) {
@@ -357,33 +369,152 @@ function updateJobInfo() {
 	window.setTimeout(updateJobInfo, updateJobDelayTime);
 }
 
-function showJobInfo(jobName) {
-	var url = "/crawler/job/queryjobinfo/" + jobName;
+
+function showJobParams(jobName) {
+	var jobTr=$('#job_div').find("table").find("tr[name='"+jobName+"']");
+	var jobParamsDiv = $("#job_params_div");
+
+	jobParamsDiv.find("input[name='name']").val(jobName);
+	
+	var level=jobTr.find("input[name='level']").val();
+	jobParamsDiv.find("input[name='level']").val(level);
+	
+	var workSpaceName=jobTr.find("input[name='workSpaceName']").val();
+	jobParamsDiv.find("input[name='workSpaceName']").val(workSpaceName);
+	
+	var workerClass=jobTr.find("input[name='workerClass']").val();
+	jobParamsDiv.find("input[name='workerClass']").val(workerClass);
+	
+	var designatedNodeName=jobTr.find("input[name='designatedNodeName']").val();
+	jobParamsDiv.find("input[name='designatedNodeName']").val(designatedNodeName);
+	
+	var needNodes=jobTr.find("input[name='needNodes']").val();
+	jobParamsDiv.find("input[name='needNodes']").val(needNodes);
+	
+	var describe=jobTr.find("input[name='describe']").val();
+	jobParamsDiv.find("input[name='describe']").val(describe);
+
+	var url = "/crawler/job/queryJobParams/" + jobName;
 	$.get(url, function(result) {
-		var job_detail_div = $("#job_detail_div");
-		var job=result.data.job;
-		var jobParameter=result.data.jobParameter;
-		var paserItems=result.data.paserItems;
-		var eee=job_detail_div.find("[name='name']");
-		job_detail_div.find("[name='name']").val(job.name);
-		job_detail_div.find("[name='siteCode']").val(job.siteCode);
-		job_detail_div.find("[name='queueName']").val(job.queueName);
-		job_detail_div.find("[name='workerClass']").val(job.workerClass);
-		job_detail_div.find("[name='resultStoreClass']").val(job.resultStoreClass);
-		job_detail_div.find("[name='level']").find("option[value='"+job.level+"']").attr("selected",true);
-		job_detail_div.find("[name='hostNode']").val(job.hostNode);
-		var cronTrigger=job.cronTrigger;
-		if(cronTrigger==null||cronTrigger==""||cronTrigger=="null"){
-			cronTrigger="";
+		var jobParams=result.data;
+		if(null!=jobParams){
+			var jobParamsTable =jobParamsDiv.find("table[id='jobParams']");
+			jobParamsTable.find("tr[class=jobParams]").remove();
+			for (var i = 0; i < jobParams.length; i++) {
+				var jobParam=jobParams[i];
+				var tr = $("<tr class='jobParams' name='"+jobParam.id+"' ></tr>");
+				$("<input name='version' style='display:none' type='text' value='"+jobParam.version+"' />").appendTo(tr);
+				var jobParamNameTd=$("<td></td");
+				$("<input name='name'  flag='"+jobParam.id+"' style='display:none' type='text' value='"+jobParam.name+"' />").appendTo(jobParamNameTd);
+				$("<input name='update_name'  flag='"+jobParam.id+"' size='20'  style='display:none' type='text' value='"+jobParam.name+"' />").appendTo(jobParamNameTd);
+				$("<a     name='name'  style='color:#FF0000;text-decoration:none;' href=\"javascript:editJobParams('input','"+jobParam.id+"','name')\">"+jobParam.name+"</a>").appendTo(jobParamNameTd);
+				jobParamNameTd.appendTo(tr);
+				//contenteditable="true"
+				var jobParamValueTd=$("<td></td");
+				$("<input name='value'  flag='"+jobParam.id+"' style='display:none' type='text' value='"+jobParam.value+"' />").appendTo(jobParamValueTd);
+				var textarea=$("<textarea name='update_value'  flag='"+jobParam.id+"'  cols='145' style='display:none'></textarea>");
+				textarea.html(jobParam.value);
+				textarea.appendTo(jobParamValueTd);
+				$("<a     name='value'  style='color:#FF0000;text-decoration:none;' href=\"javascript:editJobParams('textarea','"+jobParam.id+"','value')\">"+jobParam.value+"</a>").appendTo(jobParamValueTd);
+				jobParamValueTd.appendTo(tr);
+				
+				tr.appendTo(jobParamsTable);
+			}
+			
+			jobParamsTable.find("input[name='update_name']").bind('keydown',function(event){  
+				  if(event.keyCode == "13"){ 
+					  var jobParamId=$(this).attr("flag");
+					  updateJobParam(jobParamId,"name");  
+				  }  
+			});  
+			jobParamsTable.find("input[name='update_value']").bind('keydown',function(event){  
+				  if(event.keyCode == "13"){ 
+					  var jobParamId=$(this).attr("flag");
+					  updateJobParam(jobParamId,"value");  
+				  }  
+			});
 		}
-		job_detail_div.find("[name='triggerTime']").val(cronTrigger);
-		job_detail_div.find("[name='needNodes']").find("option[value='"+job.needNodes+"']").attr("selected",true);
-		job_detail_div.find("[name='threads']").find("option[value='"+job.threads+"']").attr("selected",true);
-		showLayer(job_detail_div);
+		showLayer(jobParamsDiv);
 	});
 }
 
+function editJobParams(tagName,jobParmaId,field){
+	var allTr=$("tr[class=jobParams]");
+	var selectTr=$("tr[name='"+jobParmaId+"']");
+	
+	var fieldInput=selectTr.find(tagName+"[name='"+field+"']");
+	var updateFieldInput=selectTr.find(tagName+"[name='update_"+field+"']");
+	
+	var fieldA=selectTr.find("a[name='"+field+"']");
+	var fieldValue=fieldInput.val();
+	updateFieldInput.css("display","inline");
+	fieldA.css("display","none");
+	updateFieldInput.focus();
+	var inputNames=new Array();
+	var index=0;
+	inputNames[index++]="name";
+	inputNames[index++]="value";
+	leaveAllInput(allTr,updateFieldInput,inputNames,field);
+	leaveAllTextarea(allTr,updateFieldInput,inputNames,field);	
+}
 
+function updateJobParam(jobParamId){
+	var jobParamsDiv = $("#job_params_div");
+	var jobParamsTable =jobParamsDiv.find("table[id='jobParams']");
+	
+	var allTr=jobParamsTable.find("tr");
+	var jobParamsTr=jobParamsTable.find("tr[name='"+jobParamId+"']");
+	
+	var nameInput=jobParamsTr.find("input[name='name']");
+	var nameUpdateInput=jobParamsTr.find("input[name='update_name']");
+	var nameShowA=jobParamsTr.find("a[name='name']");
+	
+	var nameNewValue=nameUpdateInput.val();
+	var nameOldValue=nameInput.val();
+	
+	var valueInput=jobParamsTr.find("input[name='value']");
+	var valueUpdateInput=jobParamsTr.find("input[name='update_value']");
+	var valueShowA=jobParamsTr.find("a[name='value']");
+	
+	var valueNewValue=valueUpdateInput.val();
+	var valueOldValue=valueInput.val();
+	
+	if(nameNewValue!=nameOldValue||valueNewValue!=valueOldValue){
+		var version=jobParamsTr.find("input[name='version']").val();
+		if (window.confirm("你确定要更新jobParams["+jobParamId+"]?")) {
+			var url = "/crawler/job/updateJobParam";
+			$.post(url, {
+				version:version,
+				jobParamId : jobParamId,
+				name : nameNewValue,
+				value : valueNewValue
+			}, function(responseMsg) {
+				if (responseMsg.isOk == 1) {
+					nameInput.val(nameNewValue);
+					nameUpdateInput.val(nameNewValue);
+					nameShowA.html(nameNewValue);
+					
+					valueInput.val(valueNewValue);
+					valueUpdateInput.val(valueNewValue);
+					valueShowA.html(valueNewValue);
+					
+					
+					var index=0;
+					var inputNames=new Array();
+					inputNames[index++]="name";
+					inputNames[index++]="value";
+					
+					leaveAllInput(allTr,null,inputNames,"");
+					leaveAllTextarea(allTr,null,inputNames,"");	
+
+					var newVersion=responseMsg.data;
+					updateVersion(newVersion,jobParamsTr);
+				}
+				alert(responseMsg.msg);
+			});
+		}	
+	}
+}
 
 function editCronTrigger(jobName){
 	var allTr=$('#jobs').find("tr");
@@ -621,6 +752,148 @@ function updateJobSnapshotStatus(jobSnapshotId){
 			});
 		}	
 	}
+}
+
+function searchExtractItem(){
+	var jobName = $('#search_job_name').val();
+	if(null==jobName||""==jobName){
+		jobName="*";
+	}
+	var jobSearch=$('#job_search');
+	var pageIndex=jobSearch.find('#pageIndex').val();
+	var pageSize=jobSearch.find('#pageSize').val();
+	var url="/crawler/extractItem/query/"+jobName;
+	$.get(url, function(result) {
+		showExtractItemTable(result.data);
+	});
+}
+
+function showExtractItemTable(jobName){
+	var url="/crawler/extractItem/query/"+jobName;
+	$.get(url, function(result) {
+		var extractItems=result.data;
+		if(null!=extractItems&&extractItems.length>0){
+			var div=$('#job_extractItem_div');
+			var table = div.find('table');
+			table.find("tr[class=jobExtractItem]").remove();
+			var extractItem;
+			var i = 0;
+			for (var i = 0; i < extractItems.length; i++) {
+				extractItem = extractItems[i];
+				var tr = $("<tr class='jobExtractItem' name='"+extractItem.serialNub+"' title='"+extractItem.describe+"'></tr>");
+				$("<input name='id' style='display:none' type='text' value='"+extractItem.id+"' />").appendTo(tr);
+				$("<input name='version' style='display:none' type='text' value='"+extractItem.version+"' />").appendTo(tr);
+				$("<td>"+extractItem.serialNub+"</td>").appendTo(tr);
+		
+				var pathNameTd=$("<td></td");
+				$("<input name='pathName'  flag='"+extractItem.serialNub+"' style='display:none' type='text' value='"+extractItem.pathName+"' />").appendTo(pathNameTd);
+				$("<input name='update_pathName'  flag='"+extractItem.serialNub+"'  size='20' style='display:none' type='text' value='"+extractItem.pathName+"' />").appendTo(pathNameTd);
+				$("<a     name='pathName'  " +
+						"style='color:#FF0000;text-decoration:none;' " +
+						"href=\"javascript:editExtractItem('"+jobName+"','"+extractItem.serialNub+"','pathName')\">"+extractItem.pathName+"</a>").appendTo(pathNameTd);
+				pathNameTd.appendTo(tr);
+		
+				var primaryTd=$("<td></td");
+				$("<input name='primary'  flag='"+extractItem.serialNub+"' style='display:none' type='text' value='"+extractItem.primary+"' />").appendTo(primaryTd);
+				$("<input name='update_primary'  flag='"+extractItem.serialNub+"'  size='2' style='display:none' type='text' value='"+extractItem.primary+"' />").appendTo(primaryTd);
+				$("<a     name='primary'  " +
+						"style='color:#FF0000;text-decoration:none;' " +
+						"href=\"javascript:editExtractItem('"+jobName+"','"+extractItem.serialNub+"','primary')\">"+extractItem.primary+"</a>").appendTo(primaryTd);
+				primaryTd.appendTo(tr);
+				
+				
+				var typeTd=$("<td></td");
+				$("<input name='type'  flag='"+extractItem.serialNub+"' style='display:none' type='text' value='"+extractItem.type+"' />").appendTo(typeTd);
+				$("<input name='update_type'  flag='"+extractItem.serialNub+"'  size='2' style='display:none' type='text' value='"+extractItem.type+"' />").appendTo(typeTd);
+				$("<a     name='type'  " +
+						"style='color:#FF0000;text-decoration:none;' " +
+						"href=\"javascript:editExtractItem('"+jobName+"','"+extractItem.serialNub+"','type')\">"+extractItem.type+"</a>").appendTo(typeTd);
+				typeTd.appendTo(tr);
+				
+				
+				var outputTypeTd=$("<td></td");
+				$("<input name='outputType'  flag='"+extractItem.serialNub+"' style='display:none' type='text' value='"+extractItem.outputType+"' />").appendTo(outputTypeTd);
+				$("<input name='update_outputType'  flag='"+extractItem.serialNub+"'  size='2' style='display:none' type='text' value='"+extractItem.outputType+"' />").appendTo(outputTypeTd);
+				$("<a     name='outputType'  " +
+						"style='color:#FF0000;text-decoration:none;' " +
+						"href=\"javascript:editExtractItem('"+jobName+"','"+extractItem.serialNub+"','outputType')\">"+extractItem.outputType+"</a>").appendTo(outputTypeTd);
+				outputTypeTd.appendTo(tr);
+				
+				var outputKeyTd=$("<td></td");
+				$("<input name='outputKey'  flag='"+extractItem.serialNub+"' style='display:none' type='text' value='"+extractItem.outputKey+"' />").appendTo(outputKeyTd);
+				$("<input name='update_outputKey'  flag='"+extractItem.serialNub+"'  size='20' style='display:none' type='text' value='"+extractItem.outputKey+"' />").appendTo(outputKeyTd);
+				$("<a     name='outputKey'  " +
+						"style='color:#FF0000;text-decoration:none;' " +
+						"href=\"javascript:editExtractItem('"+jobName+"','"+extractItem.serialNub+"','outputKey')\">"+extractItem.outputKey+"</a>").appendTo(outputKeyTd);
+				outputKeyTd.appendTo(tr);
+				
+				var mustHaveResultTd=$("<td></td");
+				$("<input name='mustHaveResult'  flag='"+extractItem.serialNub+"' style='display:none' type='text' value='"+extractItem.mustHaveResult+"' />").appendTo(mustHaveResultTd);
+				$("<input name='update_mustHaveResult'  flag='"+extractItem.serialNub+"'  size='2' style='display:none' type='text' value='"+extractItem.mustHaveResult+"' />").appendTo(mustHaveResultTd);
+				$("<a     name='mustHaveResult'  " +
+						"style='color:#FF0000;text-decoration:none;' " +
+						"href=\"javascript:editExtractItem('"+jobName+"','"+extractItem.serialNub+"','mustHaveResult')\">"+extractItem.mustHaveResult+"</a>").appendTo(mustHaveResultTd);
+				mustHaveResultTd.appendTo(tr);
+				
+				//contenteditable="true"
+				$("<td><a href=\"javascript:delExtractItem('"+jobName+"','"+extractItem.serialNub+"')\">删除</a>&nbsp;&nbsp;" +
+						"<a href=\"javascript:upExtractItem('"+jobName+"','"+extractItem.serialNub+"')\">up</a>&nbsp;&nbsp;" +
+						"<a href=\"javascript:downExtractItem('"+jobName+"','"+extractItem.serialNub+"')\">down</a></td>").appendTo(tr);
+				tr.appendTo(table);
+			}
+			table.find("input[name='update_cronTrigger']").bind('keydown',function(event){  
+				  if(event.keyCode == "13"){ 
+					  var jobName=$(this).attr("flag");
+					  updateCronTrigger(jobName);  
+				  }  
+			});  
+			table.find("input[name='update_nextJobName']").bind('keydown',function(event){  
+				  if(event.keyCode == "13"){ 
+					  var jobName=$(this).attr("flag");
+					  updateNextJobName(jobName);  
+				  }  
+			}); 
+			showLayer(div);
+		}else{
+			alert("job["+jobName+" has not extractItem]");
+		}
+	});
+}
+
+function delExtractItem(jobName,serNum){
+	
+}
+
+function upExtractItem(jobName,serNum){
+	
+}
+
+function downExtractItem(jobName,serNum){
+	
+}
+
+
+
+function editExtractItem(jobName,serNum,field){
+	var allTr=$("tr[class=jobExtractItem]");
+	var selectTr=$("tr[name='"+serNum+"']");
+	var fieldInput=selectTr.find("input[name='"+field+"']");
+	var updateFieldInput=selectTr.find("input[name='update_"+field+"']");
+	var fieldA=selectTr.find("a[name='"+field+"']");
+	var fieldValue=fieldInput.val();
+	updateFieldInput.val(fieldValue);
+	updateFieldInput.css("display","inline");
+	fieldA.css("display","none");
+	updateFieldInput.focus();
+	var inputNames=new Array();
+	var index=0;
+	inputNames[index++]="pathName";
+	inputNames[index++]="type";
+	inputNames[index++]="primary";
+	inputNames[index++]="outputType";
+	inputNames[index++]="outputKey";
+	inputNames[index++]="mustHaveResult";
+	leaveAllInput(allTr,updateFieldInput,inputNames,field);	
 }
 
 

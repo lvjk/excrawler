@@ -1,113 +1,136 @@
-function loadQueueTable(url, method, params) {
-	if ("get" == method) {
-		$.get(url, function(result) {
-			var errCode = result.errCode;
-			if (null == errCode) {
-				showQueueTable(result.data);
-			}
-		});
-	}
+function loadQueueTable() {
+	var url="/crawler/workSpace/getWorkSpaces";
+	$.get(url, function(result) {
+		showWorkSpaceDiv(result.data);
+	});
 }
 
-function showQueueTable(data) {
-	var table = $('#queues');
-	table.find("tr").remove();
-	var queueInfo;
+function showWorkSpaceDiv(data) {
+	var div=$("#workSpace_div");
+	var table =div.find("table")
+	table.find("tr[name='workSpaceInfo']").remove();
+	var workSpaceInfo;
 	var i = 0;
 	for (var i = 0; i < data.length; i++) {
-		queueInfo = data[i];
-		var tr = $("<tr></tr>");
+		workSpaceInfo = data[i];
+		var tr = $("<tr class='workSpaceInfo' ></tr>");
 		$(
-				"<td name='queueName' id='" + queueInfo.queueName + "' >"
-						+ queueInfo.queueName + "</td>").appendTo(tr);
-		$("<td>" + queueInfo.proxyQueueSize + "</td>").appendTo(tr);
-		$("<td>" + queueInfo.realQueueSize + "</td>").appendTo(tr);
-		$(
-				"<td><a href=\"javascript:repairQueue('"
-						+ queueInfo.queueName
-						+ "')\">repair</a>&nbsp;<a href=\"javascript:cleanQueue('"
-						+ queueInfo.queueName + "')\">clean</a></td>")
+				"<td name='queueName' id='" + workSpaceInfo.workSpaceName + "' >"
+						+ workSpaceInfo.workSpaceName + "</td>").appendTo(tr);
+		$("<td>" + workSpaceInfo.doingSize + "</td>").appendTo(tr);
+		$("<td>" + workSpaceInfo.errSize + "</td>").appendTo(tr);
+		$("<td>" + workSpaceInfo.doneSize + "</td>").appendTo(tr);
+		$("<td><a href=\"javascript:clearDoing('"+ workSpaceInfo.workSpaceName+ "')\">清理doing</a>" +
+				"&nbsp;&nbsp;<a href=\"javascript:clearErr('"+ workSpaceInfo.workSpaceName+ "')\">清理Err</a>" +
+				"&nbsp;&nbsp;<a href=\"javascript:clearDone('"+ workSpaceInfo.workSpaceName + "')\">清理done</a></td>")
 				.appendTo(tr);
 		tr.appendTo(table);
 	}
 }
 
-function showQueueInfo(queueName) {
-	var queueCursor = $("#queueCursor").val();
-	var url = "/crawler/queue/getQueueInfo/" + queueName + "/" + queueCursor;
-	var job_queue_div = $("#job_queue_div");
-	var job_queue_table = job_queue_div.find("table");
+function showDoingDataDiv(workSpaceName) {
+	var workSpaceDiv=$("#job_workSpace_div");
+	var workSpace_table = workSpaceDiv.find("table");
+	var doingDataCursor = workSpaceDiv.find("input[id='doingDataCursor']").val();
+	var doingDataCursorInputs=workSpaceDiv.find("input[id='errDataCursor_"+workSpaceName+"']");
+	var doingDataCursor = "0";
+	if(null!=doingDataCursorInputs&&doingDataCursorInputs.length>0){
+		doingDataCursor=doingDataCursorInputs.val();
+	}
+	var url = "/crawler/workSpace/getDoingData/" + workSpaceName + "/" + doingDataCursor;
 	$.get(url, function(result) {
 		var dataMap = result.data;
-		var queueCursor = dataMap.queueCursor;
-		var queueData = dataMap.list;
-		if (null != queueData && queueData.length > 0) {
-			$("#queueCursor").val(queueCursor);
-			job_queue_table.find("[name='job_queue_data']").remove();
-			job_queue_div.find("[id='job_queue_div_name']").html(
-					"队列[<span style='color:#FF0000'>" + queueName
-							+ "</span>]信息");
-			for (var i = 0; i < queueData.length; i++) {
-				var page = queueData[i];
-				var tr = $("<tr name='job_queue_data'></tr>");
-				$(
-						"<td><span style='color:#FF0000;font-size:6px;'>"
-								+ page.originalUrl + "</span></td>").appendTo(
-						tr);
-
+		var cursor = dataMap.cursor;
+		var data = dataMap.list;
+		if (null != data && data.length > 0) {
+			workSpaceDiv.find("input[id='doingDataCursor']").val(cursor);
+			workSpaceDiv.find("[id='job_workSpace_name']").html("工作空间[<span style='color:#FF0000'>" 
+							+ workSpaceName+ "</span>]信息");
+			workSpace_table.find("[name='data_page']").remove();
+			workSpace_table.find("[name='dataCursor']").remove();
+			for (var i = 0; i < data.length; i++) {
+				var page = data[i];
+				var tr = $("<tr name='data_page'></tr>");
+				$("<td><span style='color:#FF0000;font-size:6px;'>"
+						+ page.originalUrl + "</span></td>").appendTo(tr);
 				var operationTd = $("<td></td>");
 				var operation = "<a  href=\"javascript:delErrQueue('"
 						+ page.pageKey + "')\">删除</a>&nbsp;";
-				operation += "<a href=\"javascript:fillQueue('" + page.pageKey
-						+ "')\">处理</a>&nbsp;";
+				operation += "<a href=\"javascript:fillQueue('" + page.pageKey+ "')\">处理</a>&nbsp;";
 				$(operation).appendTo(operationTd);
 				operationTd.appendTo(tr);
-				tr.appendTo(job_queue_table);
+				tr.appendTo(workSpace_table);
 			}
-			showLayer(job_queue_div);
+			$("<input type='text' name='dataCursor' id='doingDataCursor_"+workSpaceName+"' value='"+cursor+"' style='display:none'/>").appendTo(workSpace_table);
+			showLayer(workSpaceDiv);
 		}
 	});
 }
 
-function showErrQueueInfo(queueName) {
-	var errQueueIndex = $("#errQueueIndex").val();
-	var url = "/crawler/queue/getErrQueueInfo/" + queueName + "/"
-			+ errQueueIndex;
-	var job_queue_div = $("#job_queue_div");
-	var job_queue_table = job_queue_div.find("table");
+function showErrDataDiv(workSpaceName) {
+	var workSpaceDiv=$("#job_workSpace_div");
+	var workSpace_table = workSpaceDiv.find("table");
+	var errDataCursorInputs=workSpaceDiv.find("input[id='errDataCursor_"+workSpaceName+"']");
+	var errDataCursor = "0";
+	if(null!=errDataCursorInputs&&errDataCursorInputs.length>0){
+		errDataCursor=errDataCursorInputs.val();
+	}
+	var url = "/crawler/workSpace/getErrData/" + workSpaceName + "/" + errDataCursor;
 	$.get(url, function(result) {
-		var queueData = result.data;
-		if (null != queueData && queueData.length > 0) {
-			job_queue_table.find("[name='job_queue_data']").remove();
-			job_queue_div.find("[id='job_queue_div_name']").html(
-					"异常队列[<span style='color:#FF0000'>" + queueName
+		var dataMap = result.data;
+		var cursor = dataMap.cursor;
+		var data = dataMap.list;
+		if (null != data && data.length > 0) {
+			workSpaceDiv.find("input[id='errDataCursor']").val(cursor);
+			workSpaceDiv.find("[id='job_workSpace_name']").html(
+					"工作空间[<span style='color:#FF0000'>" + workSpaceName
 							+ "</span>]信息");
-			for (var i = 0; i < queueData.length; i++) {
-				var page = queueData[i];
-				var tr = $("<tr name='job_queue_data'></tr>");
-				$(
-						"<td><span style='color:#FF0000;font-size:6px;'>"
-								+ page.originalUrl + "</span></td>").appendTo(
-						tr);
-
+			workSpace_table.find("[name='data_page']").remove();
+			workSpace_table.find("[name='dataCursor']").remove();
+			for (var i = 0; i < data.length; i++) {
+				var page = data[i];
+				var tr = $("<tr name='data_page'></tr>");
+				$("<td><span style='color:#FF0000;font-size:6px;'>"
+						+ page.originalUrl + "</span></td>").appendTo(tr);
 				var operationTd = $("<td></td>");
 				var operation = "<a  href=\"javascript:delErrQueue('"
 						+ page.pageKey + "')\">删除</a>&nbsp;";
-				operation += "<a href=\"javascript:againDoErrQueue('"+queueName+"')\">全部处理</a>&nbsp;";
+				operation += "<a href=\"javascript:againDoErrQueue('"+workSpaceName+"')\">全部处理</a>&nbsp;";
 				$(operation).appendTo(operationTd);
 				operationTd.appendTo(tr);
-				tr.appendTo(job_queue_table);
+				tr.appendTo(workSpace_table);
 			}
-			showLayer(job_queue_div);
+			$("<input type='text' name='dataCursor' id='errDataCursor_"+workSpaceName+"' value='"+cursor+"' style='display:none'/>").appendTo(workSpace_table);
+			showLayer(workSpaceDiv);
 		}
 	});
 }
 
-function delErrQueue(pageKey) {
-	var url = "/crawler/queue/delErrQueue/" + pageKey;
-	$.get(url, function(result) {
-		alert(result.msg);
-	});
+function clearDoing(workSpaceName) {
+	if (window.confirm("do you clear workSpace["+workSpaceName+"] doing data")) {
+		var url = "/crawler/workSpace/clearDoing/" + workSpaceName;
+		$.get(url, function(result) {
+			alert(result.msg);
+		});
+	}
+}
+
+function clearErr(workSpaceName) {
+	if (window.confirm("do you clear workSpace["+workSpaceName+"] err data")) {
+		var url = "/crawler/workSpace/clearErr/" + workSpaceName;
+		$.get(url, function(result) {
+			alert(result.msg);
+		});
+	}
+}
+
+function clearDone(workSpaceName) {
+	if (window.confirm("do you clear workSpace["+workSpaceName+"] done data")) {
+		var url = "/crawler/workSpace/clearDone/" + workSpaceName;
+		$.get(url, function(result) {
+			alert(result.msg);
+		});
+	}
 }
 
 function doErrQueue(pageKey) {
@@ -116,25 +139,17 @@ function doErrQueue(pageKey) {
 
 function repairQueue(queueName) {
 	if (window.confirm("do you repair queue:" + queueName)) {
-		var url = "/crawler/queue/repairQueue/" + queueName;
+		var url = "/crawler/workSpace/repairQueue/" + queueName;
 		$.get(url, function(result) {
 			alert(result.msg);
 		});
 	}
 }
 
-function cleanQueue(queueName) {
-	if (window.confirm("do you clean queue:" + queueName)) {
-		var url = "/crawler/queue/cleanQueue/" + queueName;
-		$.get(url, function(result) {
-			alert(result.msg);
-		});
-	}
-}
 
 function againDoErrQueue(queueName) {
 	if (window.confirm("do you againDoErrQueue queue:" + queueName)) {
-		var url = "/crawler/queue/againDoErrQueue/" + queueName;
+		var url = "/crawler/workSpace/againDoErrQueue/" + queueName;
 		$.get(url, function(result) {
 			alert(result.msg);
 		});

@@ -2,28 +2,33 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Job Page</title>
+<title>工作空间管理页面</title>
 <script type="text/javascript" src="../js/import.inc.js"></script>
-<script type="text/javascript" src="../js/queue.js"></script>
+<script type="text/javascript" src="../js/workSpace.js"></script>
 </head>
 <body>
 	<div class="tab-pane fade in active" id="tab2">
-		<div style="width: 900px; height: 680px;overflow: auto;">
-
+		<div id='workSpace_div' style="width: 1260px; height: 780px;overflow: auto;">
 			<table class="table table-striped table-hover">
 				<thead>
 					<tr>
 						<th>队列名</th>
-						<th>代理队列size</th>
-						<th>队列size</th>
+						<th>工作队列</th>
+						<th>异常队列</th>
+						<th>完成队列</th>
 						<th>操作</th>
 					</tr>
 				</thead>
-				<tbody id="queues">
+				<tbody>
 				</tbody>
 			</table>
 		</div>
 		<!--<table class="table table-striped table-hover" id="reportTable1"></table>-->
 	</div>
 </body>
+<script type="text/javascript">
+$(function() {
+	loadQueueTable();
+});
+</script>
 </html>
