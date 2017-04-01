@@ -138,6 +138,11 @@ public abstract class AbstractExtracter implements Extracter {
 		return resultContext;
 	}
 
+	
+	
+	
+	
+	
 	/**
 	 * 对抽取出来的结果进行组装，并加上系统默认字段
 	 * @param resultContext

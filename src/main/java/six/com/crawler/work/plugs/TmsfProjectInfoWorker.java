@@ -120,13 +120,17 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 			if (StringUtils.isNotBlank(presaleUrl)) {
 				String sid = resultContext.getExtractResult("sid").get(0);
 				String projectId = resultContext.getOutResults().get(0).get(Extracter.DEFAULT_RESULT_ID);
-				Page presellPage = new Page(doingPage.getSiteCode(), 1, presaleUrl, presaleUrl);
-				presellPage.setReferer(doingPage.getFinalUrl());
-				presellPage.setMethod(HttpMethod.GET);
-				presellPage.setType(PageType.DATA.value());
-				presellPage.getMetaMap().put("sid", Arrays.asList(sid));
-				presellPage.getMetaMap().put("projectId", Arrays.asList(projectId));
-				presellUrlQueue.push(presellPage);
+				if (StringUtils.isNotBlank(projectId)) {
+					Page presellPage = new Page(doingPage.getSiteCode(), 1, presaleUrl, presaleUrl);
+					presellPage.setReferer(doingPage.getFinalUrl());
+					presellPage.setMethod(HttpMethod.GET);
+					presellPage.setType(PageType.DATA.value());
+					presellPage.getMetaMap().put("sid", Arrays.asList(sid));
+					presellPage.getMetaMap().put("projectId", Arrays.asList(projectId));
+					presellUrlQueue.push(presellPage);
+				}else{
+					throw new RuntimeException("did not get projectId");
+				}
 			}
 		}else{
 			log.warn("did not find presellUrl:"+doingPage.getFinalUrl());

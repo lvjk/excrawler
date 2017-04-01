@@ -82,16 +82,20 @@ public class TmsfPresellInfoWorker extends AbstractCrawlWorker {
 		String propertyid = resultContext.getExtractResult("propertyid").get(0);
 		String presellid = resultContext.getExtractResult("presellid").get(0);
 		String systemPresellId = resultContext.getOutResults().get(0).get(Extracter.DEFAULT_RESULT_ID);
-		String houseUrl = StringUtils.replace(houseUrlTemplate, sidTemplate, sid);
-		houseUrl = StringUtils.replace(houseUrl, propertyidTemplate, propertyid);
-		houseUrl = StringUtils.replace(houseUrl, presellIdTemplate, presellid);
-		Page presalePage = new Page(doingPage.getSiteCode(), 1, houseUrl, houseUrl);
-		presalePage.setReferer(doingPage.getFinalUrl());
-		presalePage.setMethod(HttpMethod.GET);
-		presalePage.setType(PageType.DATA.value());
-		presalePage.getMetaMap().put("presellId_org", Arrays.asList(presellid));
-		presalePage.getMetaMap().put("presellId", Arrays.asList(systemPresellId));
-		houseUrlQueue.push(presalePage);
+		if(StringUtils.isBlank(systemPresellId)){
+			throw new RuntimeException("did not get presellid");
+		}else{
+			String houseUrl = StringUtils.replace(houseUrlTemplate, sidTemplate, sid);
+			houseUrl = StringUtils.replace(houseUrl, propertyidTemplate, propertyid);
+			houseUrl = StringUtils.replace(houseUrl, presellIdTemplate, presellid);
+			Page housePage = new Page(doingPage.getSiteCode(), 1, houseUrl, houseUrl);
+			housePage.setReferer(doingPage.getFinalUrl());
+			housePage.setMethod(HttpMethod.GET);
+			housePage.setType(PageType.DATA.value());
+			housePage.getMetaMap().put("presellId_org", Arrays.asList(presellid));
+			housePage.getMetaMap().put("presellId", Arrays.asList(systemPresellId));
+			houseUrlQueue.push(housePage);
+		}
 	}
 
 	@Override

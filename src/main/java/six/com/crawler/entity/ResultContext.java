@@ -15,34 +15,51 @@ public class ResultContext {
 	/**
 	 * 抽取出来的结果
 	 */
-	private Map<String, List<String>> results = new HashMap<String, List<String>>();
+	private Map<String, List<String>> extracterResult;
 	/**
 	 * 输出保存结果
 	 */
-	private List<Map<String, String>> outResults = new ArrayList<>();
+	private List<Map<String, String>> outResults;
 
+	public ResultContext() {
+		extracterResult = new HashMap<String, List<String>>();
+		outResults = new ArrayList<>();
+	}
+
+	/**
+	 * 添加抽取结果
+	 * 
+	 * @param key
+	 * @param result
+	 */
 	public void addExtractResult(String key, List<String> result) {
-		if (null == results) {
-			results = new HashMap<String, List<String>>();
-		}
-		results.put(key, result);
+		extracterResult.put(key, result);
 	}
 
+	/**
+	 * 获取抽取结果
+	 * 
+	 * @param resultKey
+	 * @return
+	 */
 	public List<String> getExtractResult(String resultKey) {
-		return results.get(resultKey);
+		return extracterResult.get(resultKey);
 	}
 
-	public List<String> takeExtractResult(String resultKey) {
-		return results.remove(resultKey);
-	}
-
-	public Map<String, List<String>> getAll(){
-		return results;
-	}
+	/**
+	 * 添加输出结果
+	 * 
+	 * @param dataMap
+	 */
 	public void addoutResult(Map<String, String> dataMap) {
 		outResults.add(dataMap);
 	}
 
+	/**
+	 * 获取输出结果
+	 * 
+	 * @return
+	 */
 	public List<Map<String, String>> getOutResults() {
 		return outResults;
 	}

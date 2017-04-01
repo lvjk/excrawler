@@ -3,6 +3,7 @@ package six.com.crawler.work.plugs;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.nodes.Element;
@@ -85,16 +86,18 @@ public class TmsfProjectInfo1Worker extends AbstractCrawlWorker {
 		fields.add("totalHouses");
 		fields.add("parkingInfo");
 		fields.add("propertyLife");
-		for (String field : fields) {
-			List<String> list = resultContext.getExtractResult(field);
-			if (null != list && list.size() > 0) {
-				String value = list.get(0);
-				if (null != value && value.length() > 45) {
-					list.clear();
-					list.add("");
+		List<Map<String, String>> results=resultContext.getOutResults();
+		if(null!=results){
+			for (Map<String, String> result : results) {
+				for (String field : fields) {
+					String value = result.get(field);
+					if (null != value && value.length() > 45) {
+						result.put(field,"");
+					}
 				}
 			}
 		}
+
 	}
 
 	@Override
