@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
  * @author sixliu E-mail:359852326@qq.com
  * @version 创建时间：2016年5月19日 下午8:35:28 类说明 爬虫job
  */
-public class Job extends PageQueryEntity implements Serializable {
+public class Job extends BaseVo implements Serializable {
 
 	private static final long serialVersionUID = 781122651512874550L;
 

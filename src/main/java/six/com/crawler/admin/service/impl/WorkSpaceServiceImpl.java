@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -16,7 +15,6 @@ import six.com.crawler.admin.api.ResponseMsg;
 import six.com.crawler.admin.service.BaseService;
 import six.com.crawler.admin.service.WorkSpaceService;
 import six.com.crawler.dao.RedisManager;
-import six.com.crawler.entity.DoneInfo;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.WorkSpaceInfo;
 import six.com.crawler.work.space.RedisWorkSpace;
@@ -71,23 +69,28 @@ public class WorkSpaceServiceImpl extends BaseService implements WorkSpaceServic
 		return workSpaceInfo;
 	}
 
-	public Map<String, Object> getWorkSpaceDoingData(String workSpaceName, String cursor) {
+	public ResponseMsg<Map<String, Object>> getWorkSpaceDoingData(String workSpaceName, String cursor) {
+		ResponseMsg<Map<String, Object>> responseMsg = createResponseMsg();
 		Map<String, Object> resultMap = new HashMap<>();
-		String queueKey = RedisWorkSpace.WORK_QUEUE_KEY_PRE + workSpaceName;
 		List<Page> list = new ArrayList<>();
-		cursor = redisManager.hscan(queueKey, cursor, list, Page.class);
+		cursor = workSpaceManager.newWorkSpace(workSpaceName, Page.class).batchGetDoingData(list, cursor);
 		resultMap.put("cursor", cursor);
 		resultMap.put("list", list);
-		return resultMap;
+		responseMsg.setIsOk(1);
+		responseMsg.setData(resultMap);
+		return responseMsg;
 	}
 
-	/**
-	 * 默认查10条数据
-	 */
-	public List<Page> getWorkSpaceErrData(String workSpaceName, String cursor) {
+	public ResponseMsg<Map<String, Object>> getWorkSpaceErrData(String workSpaceName, String cursor) {
+		ResponseMsg<Map<String, Object>> responseMsg = createResponseMsg();
+		Map<String, Object> resultMap = new HashMap<>();
 		List<Page> list = new ArrayList<>();
-		workSpaceManager.newWorkSpace(workSpaceName, Page.class).batchGetErrData(list, cursor);
-		return list;
+		cursor = workSpaceManager.newWorkSpace(workSpaceName, Page.class).batchGetErrData(list, cursor);
+		resultMap.put("cursor", cursor);
+		resultMap.put("list", list);
+		responseMsg.setIsOk(1);
+		responseMsg.setData(resultMap);
+		return responseMsg;
 	}
 
 	public ResponseMsg<String> clearDoing(String workSpaceName) {
@@ -121,25 +124,12 @@ public class WorkSpaceServiceImpl extends BaseService implements WorkSpaceServic
 	}
 
 	@Override
-	public List<DoneInfo> getQueueDones() {
-		Set<String> proxyQueuekeys = redisManager.keys(RedisWorkSpace.WORK_DONE_QUEUE_KEY_PRE + "*");
-		List<DoneInfo> doneInfos = new ArrayList<>();
-		DoneInfo tempDoneInfo = null;
-		for (String tempKey : proxyQueuekeys) {
-			int size = redisManager.hllen(tempKey);
-			String queueName = StringUtils.remove(tempKey, RedisWorkSpace.WORK_DONE_QUEUE_KEY_PRE);
-			tempDoneInfo = new DoneInfo();
-			tempDoneInfo.setQueueName(queueName);
-			tempDoneInfo.setSize(size);
-			doneInfos.add(tempDoneInfo);
-		}
-		return doneInfos;
-	}
-
-	@Override
-	public String againDoErrQueue(String queueName) {
+	public ResponseMsg<String> againDoErrQueue(String queueName) {
+		ResponseMsg<String> responseMsg = createResponseMsg();
 		new RedisWorkSpace<Page>(redisManager, queueName, Page.class).againDoErrQueue();
-		return "again do errQueue[" + queueName + "] succeed";
+		responseMsg.setIsOk(1);
+		responseMsg.setMsg("again do errQueue[" + queueName + "] succeed");
+		return responseMsg;
 	}
 
 	public RedisManager getRedisManager() {

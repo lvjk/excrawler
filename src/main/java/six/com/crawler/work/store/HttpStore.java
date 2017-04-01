@@ -13,8 +13,8 @@ import six.com.crawler.work.store.exception.StoreException;
 */
 public class HttpStore extends StoreAbstarct{
 
-	public HttpStore(AbstractWorker worker, List<String> resultKeys) {
-		super(worker, resultKeys);
+	public HttpStore(AbstractWorker worker) {
+		super(worker);
 	}
 
 	@Override

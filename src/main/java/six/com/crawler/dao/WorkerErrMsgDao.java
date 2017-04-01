@@ -27,6 +27,19 @@ public interface WorkerErrMsgDao extends BaseDao{
 			@Param(QUERY_PARAM_JOBNAME)String jobName,
 			@Param(QUERY_PARAM_WORKERNAME)String workerName);
 	
+	/**
+	 * 支持 name%模糊查询
+	 * @param jobName
+	 * @param pageIndex
+	 * @param pageSize
+	 * @return
+	 */
+	@SelectProvider(type = WorkerErrMsgDaoProvider.class, method = "pageQuery")
+	public List<WorkerErrMsg> pageQuery(@Param("name")String jobName, 
+			@Param("jobSnapshotId")String jobSnapshotId,
+			@Param("start")int pageIndex, 
+			@Param("end")int pageSize);
+	
 	@InsertProvider(type = WorkerErrMsgDaoProvider.class, method = "save")
 	public int save(WorkerErrMsg workerErrMsg);
 	

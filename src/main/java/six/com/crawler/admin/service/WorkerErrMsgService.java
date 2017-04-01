@@ -1,7 +1,7 @@
 package six.com.crawler.admin.service;
 
-import java.util.List;
-
+import six.com.crawler.admin.api.ResponseMsg;
+import six.com.crawler.entity.PageQuery;
 import six.com.crawler.entity.WorkerErrMsg;
 
 /**
@@ -11,5 +11,13 @@ import six.com.crawler.entity.WorkerErrMsg;
  */
 public interface WorkerErrMsgService {
 
-	void batchSave(List<WorkerErrMsg> WorkerErrMsgs);
+	/**
+	 * 分页查询指定任务(jobName)运行批次(jobSnapshotId)的异常信息
+	 * @param jobName       
+	 * @param jobSnapshotId
+	 * @param pageIndex
+	 * @param pageSize
+	 * @return
+	 */
+	public ResponseMsg<PageQuery<WorkerErrMsg>> query(String jobName,String jobSnapshotId,int pageIndex, int pageSize);
 }

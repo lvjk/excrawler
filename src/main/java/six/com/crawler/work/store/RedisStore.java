@@ -21,8 +21,8 @@ public class RedisStore extends StoreAbstarct {
 
 	private AtomicInteger storeCount = new AtomicInteger();
 
-	public RedisStore(AbstractWorker worker, List<String> resultKeys) {
-		super(worker, resultKeys);
+	public RedisStore(AbstractWorker worker) {
+		super(worker);
 		String redisStoreKey = REDIS_SOTRE_KEY_PRE + "_" + worker.getJobSnapshot().getName() + "_"
 				+ worker.getJobSnapshot().getId();
 		redisStoreQueue = new RedisWorkSpace<RedisStoreData>(worker.getManager().getRedisManager(), redisStoreKey,

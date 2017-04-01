@@ -16,9 +16,26 @@ public interface WorkSpace<T extends WorkSpaceData> {
 	 */
 	public String getName();
 
-	public String batchGetDoingData(List<T> resutList,String cursorStr);
-	
-	public String batchGetErrData(List<T> resutList,String cursorStr);
+	/**
+	 * 批量获取处理数据 当传入cursorStr为blank或者"0"的话，默认为新的查询,
+	 * 当返回cursorStr返回为"0"的话那么认为查询到末尾了
+	 * 
+	 * @param resutList
+	 * @param cursorStr
+	 * @return
+	 */
+	public String batchGetDoingData(List<T> resutList, String cursorStr);
+
+	/**
+	 * 批量获取异常数据 当传入cursorStr为blank或者"0"的话，默认为新的查询,
+	 * 当返回cursorStr返回为"0"的话那么认为查询到末尾了
+	 * 
+	 * @param resutList
+	 * @param cursorStr
+	 * @return
+	 */
+	public String batchGetErrData(List<T> resutList, String cursorStr);
+
 	/**
 	 * 将数据 推到工作队列中
 	 * 

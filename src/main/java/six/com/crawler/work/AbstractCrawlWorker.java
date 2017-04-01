@@ -1,6 +1,6 @@
 package six.com.crawler.work;
 
-import java.util.ArrayList;
+
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -42,21 +42,20 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 	protected int findElementTimeout = Constants.FIND_ELEMENT_TIMEOUT;
 	// 默认HTTP PROXY最小休息时间 5 秒
 	private int httpProxyMinResttime = Constants.DEFAULT_MIN_HTTPPROXY_RESTTIME;
-
-	private Site site; // 站点
-
-	private Downer downer;// 下载器
+	// 站点
+	private Site site;
+	// 爬虫任务工作空间
+	protected WorkSpace<Page> workQueue;
+	// 下载器
+	private Downer downer;
+	// http代理池
+	private HttpProxyPool httpProxyPool;
 	// 解析处理程序
 	private Extracter extracter;
-
+	// 爬虫正在处理的page
 	private Page doingPage;
-
-	protected WorkSpace<Page> workQueue; // 队列
-
-	// 存儲处理程序
+	// 数据对外输出存儲处理程序
 	private Store store;
-
-	private HttpProxyPool httpProxyPool;
 
 	@Override
 	protected final void initWorker(JobSnapshot jobSnapshot) {
@@ -66,16 +65,18 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 			throw new NullPointerException("please set siteCode");
 		}
 		site = getManager().getSiteDao().query(siteCode);
-		
-		
+		if (null == site) {
+			throw new NullPointerException("did not get site[" + siteCode + "]");
+		}
+
 		String workSpace = getJob().getWorkSpaceName();
 		if (StringUtils.isBlank(workSpace)) {
-			throw new NullPointerException("please set queue's name");
+			throw new NullPointerException("please set workSpace's name");
 		}
-		//初始化 工作队列
+		// 初始化 工作队列
 		workQueue = getManager().getWorkSpaceManager().newWorkSpace(workSpace, Page.class);
 
-		//初始化下载器
+		// 初始化下载器
 		int downerTypeInt = getJob().getParamInt(JobConTextConstants.DOWNER_TYPE, 1);
 		DownerType downerType = DownerType.valueOf(downerTypeInt);
 		downer = DownerManager.getInstance().buildDowner(downerType, this);
@@ -92,24 +93,6 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		extracter = ExtracterFactory.newExtracter(this, extractItems,
 				ExtracterType.valueOf(getJob().getParamInt(JobConTextConstants.EXTRACTER_TYPE, 0)));
 		// 初始化数据存储
-		List<String> outResultKey = new ArrayList<>();
-		if (null != extractItems && !extractItems.isEmpty()) {
-			int primaryKeyCount = 0;
-			for (ExtractItem extractItem : extractItems) {
-				if (extractItem.getOutputType() == 1) {
-					outResultKey.add(extractItem.getOutputKey());
-				}
-				if (extractItem.getPrimary() == 1) {
-					primaryKeyCount++;
-				}
-			}
-			if (!outResultKey.isEmpty() && 0 == primaryKeyCount) {
-				throw new RuntimeException("there is a primary's key at least");
-			}
-			outResultKey.add(0, Extracter.DEFAULT_RESULT_ID);
-			outResultKey.add(Extracter.DEFAULT_RESULT_COLLECTION_DATE);
-			outResultKey.add(Extracter.DEFAULT_RESULT_ORIGIN_URL);
-		}
 		int storeTypeInt = 0;
 		// 兼容之前设置的store class模式
 		String resultStoreClass = getJob().getParam(JobConTextConstants.RESULT_STORE_CLASS);
@@ -118,7 +101,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		} else {
 			storeTypeInt = getJob().getParamInt(JobConTextConstants.RESULT_STORE_TYPE, 0);
 		}
-		this.store = StoreFactory.newStore(this, outResultKey, StoreType.valueOf(storeTypeInt));
+		this.store = StoreFactory.newStore(this,StoreType.valueOf(storeTypeInt));
 		insideInit();
 	}
 
@@ -127,11 +110,12 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		long startTime = System.currentTimeMillis();
 		doingPage = workQueue.pull();
 		long endTime = System.currentTimeMillis();
+		doingPage.setOriginalUrl(doingPage.getOriginalUrl()+"?adadasaf");
 		LOG.debug("workQueue pull time:" + (endTime - startTime));
 		if (null != doingPage) {
 			try {
 				LOG.info("processor page:" + doingPage.getOriginalUrl());
-				//暴露给实现类的
+				// 暴露给实现类的
 				beforeDown(doingPage);
 				// 设置下载器代理
 				downer.setHttpProxy(httpProxyPool.getHttpProxy());
@@ -150,16 +134,16 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 				endTime = System.currentTimeMillis();
 				LOG.debug("extracter extract time:" + (endTime - startTime));
 				startTime = System.currentTimeMillis();
-				//存储数据
+				// 存储数据
 				int storeCount = store.store(resultContext);
 				getWorkerSnapshot().setTotalResultCount(getWorkerSnapshot().getTotalResultCount() + storeCount);
 				endTime = System.currentTimeMillis();
 				LOG.debug("store time:" + (endTime - startTime));
-				//暴露给实现类的完成操作
+				// 暴露给实现类的完成操作
 				onComplete(doingPage, resultContext);
-				//流程走到这步，可以确认数据已经被完全处理,那么ack 数据，最终删除数据备份
+				// 流程走到这步，可以确认数据已经被完全处理,那么ack 数据，最终删除数据备份
 				workQueue.ack(doingPage);
-				//添加数据被处理记录
+				// 添加数据被处理记录
 				workQueue.addDone(doingPage);
 				LOG.info("finished processor page:" + doingPage.getOriginalUrl());
 			} catch (Exception e) {
@@ -177,21 +161,21 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 	protected abstract void insideInit();
 
 	/**
-	 * 下载前处理
+	 * doingPage下载前 可以进行相关操作
 	 * 
 	 * @param doingPage
 	 */
 	protected abstract void beforeDown(Page doingPage);
 
 	/**
-	 * 抽取数据前
+	 * doingPage抽取前相关操作，可在这里实现验证识别或者判断是否需要登录
 	 * 
 	 * @param doingPage
 	 */
 	protected abstract void beforeExtract(Page doingPage);
 
 	/**
-	 * 抽取数据后
+	 * doingPage抽取数据后进行相关操作
 	 * 
 	 * @param doingPage
 	 * @param resultContext
@@ -207,11 +191,12 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 
 	/**
 	 * 内部异常处理，如果成功处理返回true 否则返回false;
+	 * 
 	 * @param e
 	 * @param doingPage
 	 * @return
 	 */
-	protected boolean insideOnError(Exception e, Page doingPage){
+	protected boolean insideOnError(Exception e, Page doingPage) {
 		return false;
 	}
 
@@ -224,7 +209,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 			}
 			Exception insideException = null;
 			boolean insideExceptionResult = false;
-			//异常先丢给实现类自己处理
+			// 异常先丢给实现类自己处理
 			try {
 				insideExceptionResult = insideOnError(e, doingPage);
 			} catch (Exception e1) {
@@ -234,12 +219,12 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 			// 判断内部处理是否可处理,如果不可处理那么这里默认处理
 			if (insideExceptionResult) {
 				workQueue.ack(doingPage);
-			}else{
+			} else {
 				String msg = null;
 				if (null == insideException
 						&& doingPage.getRetryProcess() < Constants.WOKER_PROCESS_PAGE_MAX_RETRY_COUNT) {
 					doingPage.setRetryProcess(doingPage.getRetryProcess() + 1);
-					workQueue.push( doingPage);
+					workQueue.push(doingPage);
 					msg = "retry processor[" + doingPage.getRetryProcess() + "] page:" + doingPage.getFinalUrl();
 				} else {
 					workQueue.addErr(doingPage);
@@ -252,7 +237,6 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 			}
 		}
 	}
-	
 
 	public WorkSpace<Page> getWorkQueue() {
 		return workQueue;

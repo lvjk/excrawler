@@ -135,13 +135,18 @@ public class TmsfHouseInfoWorker extends AbstractCrawlWorker {
 			String internalid = internalidOb.toString();
 			String houseDivCss = StringUtils.replace(houseDivCssTemplate, internalidTemplate, internalid);
 			Element houseDiv = doingPage.getDoc().select(houseDivCss).first();
+			/**
+			 * 如果没有拿到楼层div那么此条数据 是没有在页面显示的
+			 */
 			if (null == houseDiv) {
-				throw new RuntimeException("don't find  house's div");
+				continue;
+				//throw new RuntimeException("don't find  house's div");
 			}
 			String houseFloorKey = houseDiv.attr("floor");
 			String houseFloor = floorMap.get(houseFloorKey);
 			if(null==houseFloor){
-				throw new RuntimeException("don't find  house's floor");
+				continue;
+				//throw new RuntimeException("don't find  house's floor");
 			}
 			houseMap.put("floor", houseFloor);
 			

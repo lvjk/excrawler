@@ -149,7 +149,7 @@ public class StandardNodeManager implements NodeManager,InitializingBean{
 		String host = getConfigure().getHost();
 		int port = getConfigure().getPort();
 		int trafficPort = getConfigure().getConfig("node.trafficPort", 8180);
-		int runningJobMaxSize = getConfigure().getConfig("worker.running.max.size", 20);
+		int runningWorkerMaxSize = getConfigure().getConfig("worker.running.max.size", 20);
 		String nodeName = getConfigure().getConfig("node.name", null);
 		// 检查节点名字是否设置
 		if (StringUtils.isBlank(nodeName)) {
@@ -164,7 +164,7 @@ public class StandardNodeManager implements NodeManager,InitializingBean{
 		currentNode.setHost(host);
 		currentNode.setPort(port);
 		currentNode.setTrafficPort(trafficPort);
-		currentNode.setRunningJobMaxSize(runningJobMaxSize);
+		currentNode.setRunningWorkerMaxSize(runningWorkerMaxSize);
 		log.info("the node[" + nodeName + "] type:" + nodeType);
 	}
 
@@ -183,7 +183,7 @@ public class StandardNodeManager implements NodeManager,InitializingBean{
 					masterNode = JavaSerializeUtils.unSerialize(data, Node.class);
 				}
 			} catch (Exception e) {
-				log.error("", e);
+				log.error("getMasterNode err", e);
 			}
 		} else {
 			masterNode = getCurrentNode();
@@ -207,7 +207,7 @@ public class StandardNodeManager implements NodeManager,InitializingBean{
 					allNodes.add(workerNode);
 				}
 			} catch (Exception e) {
-				log.error("", e);
+				log.error("getWorkerNodes err", e);
 			}
 		} else {
 			allNodes.add(currentNode);
@@ -227,7 +227,7 @@ public class StandardNodeManager implements NodeManager,InitializingBean{
 				byte[] data = zKClient.getData().forPath(ZooKeeperPathUtils.getWorkerNodePath(nodeName));
 				workerNode = JavaSerializeUtils.unSerialize(data, Node.class);
 			} catch (Exception e) {
-				log.error("", e);
+				log.error("getWorkerNode err:"+nodeName, e);
 			}
 		} else {
 			workerNode = currentNode;
@@ -251,7 +251,7 @@ public class StandardNodeManager implements NodeManager,InitializingBean{
 				} else {
 					newestNode = getCurrentNode();
 				}
-				if (newestNode.getRunningJobSize() < newestNode.getRunningJobMaxSize()) {
+				if (newestNode.getRunningWorkerSize() < newestNode.getRunningWorkerMaxSize()) {
 					freeNodes.add(workerNode);
 					if (freeNodes.size() >= needFresNodes) {
 						break;
@@ -323,6 +323,12 @@ public class StandardNodeManager implements NodeManager,InitializingBean{
 		log.info("remove nodeCommand:" + commandName);
 	}
 
+	public Node getCurrentNode() {
+		currentNode.setCpu(MyOperatingSystemMXBean.getAvailableProcessors());
+		currentNode.setMem(MyOperatingSystemMXBean.freeMemoryPRP());
+		return currentNode;
+	}
+	
 	@PreDestroy
 	public void destroy() {
 		if (null != nettyRpcCilent) {
@@ -343,12 +349,6 @@ public class StandardNodeManager implements NodeManager,InitializingBean{
 
 	public void setConfigure(SpiderConfigure configure) {
 		this.configure = configure;
-	}
-
-	public Node getCurrentNode() {
-		currentNode.setCpu(MyOperatingSystemMXBean.getAvailableProcessors());
-		currentNode.setMem(MyOperatingSystemMXBean.freeMemoryPRP());
-		return currentNode;
 	}
 
 	public RedisManager getRedisManager() {

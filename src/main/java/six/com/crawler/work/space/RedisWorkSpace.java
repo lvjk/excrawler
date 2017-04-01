@@ -105,6 +105,33 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 		}
 		return data;
 	}
+	
+	/**
+	 * 填充代理队列数据 将实践存储的数据填充到代理队列
+	 */
+	private void repairDoingData() {
+		redisManager.lock(queueKey);
+		try {
+			int proxyQueueLlen = redisManager.llen(proxyQueueKey);
+			int queueKeyLlen = redisManager.hllen(queueKey);
+			if (queueKeyLlen != proxyQueueLlen) {
+				redisManager.del(proxyQueueKey);
+				String cursorStr = "0";
+				Map<String, T> map = new HashMap<>();
+				do {
+					cursorStr = redisManager.hscan(queueKey, cursorStr, map, clz);
+					map.keySet().stream().forEach(mapKey -> {
+						redisManager.rpush(proxyQueueKey, mapKey);
+					});
+					map.clear();
+				} while (!"0".equals(cursorStr));
+			}
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			redisManager.unlock(queueKey);
+		}
+	}
 
 	public String batchGetDoingData(List<T> resutList, String cursorStr) {
 		return batchGet(resutList, cursorStr, queueKey);
@@ -166,33 +193,6 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 			throw e;
 		} finally {
 			redisManager.unlock(doneKey);
-		}
-	}
-
-	/**
-	 * 填充代理队列数据 将实践存储的数据填充到代理队列
-	 */
-	private void repairDoingData() {
-		redisManager.lock(queueKey);
-		try {
-			int proxyQueueLlen = redisManager.llen(proxyQueueKey);
-			int queueKeyLlen = redisManager.hllen(queueKey);
-			if (queueKeyLlen != proxyQueueLlen) {
-				redisManager.del(proxyQueueKey);
-				String cursorStr = "0";
-				Map<String, T> map = new HashMap<>();
-				do {
-					cursorStr = redisManager.hscan(queueKey, cursorStr, map, clz);
-					map.keySet().stream().forEach(mapKey -> {
-						redisManager.rpush(proxyQueueKey, mapKey);
-					});
-					map.clear();
-				} while (!"0".equals(cursorStr));
-			}
-		} catch (Exception e) {
-			throw e;
-		} finally {
-			redisManager.unlock(queueKey);
 		}
 	}
 

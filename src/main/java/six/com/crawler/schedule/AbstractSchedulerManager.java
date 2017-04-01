@@ -24,6 +24,7 @@ import six.com.crawler.entity.Job;
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.JobSnapshotState;
 import six.com.crawler.entity.Node;
+import six.com.crawler.entity.WorkerErrMsg;
 import six.com.crawler.entity.WorkerSnapshot;
 import six.com.crawler.http.HttpClient;
 import six.com.crawler.node.NodeManager;
@@ -39,6 +40,10 @@ import six.com.crawler.work.space.WorkSpaceManager;
 public abstract class AbstractSchedulerManager implements SchedulerManager, InitializingBean {
 
 	private final static String WORKER_NAME_PREFIX = "worker";
+	
+	private final static int SAVE_ERR_MSG_MAX = 20;
+	
+	private final static long  WORKER_SNAPSHOT_REPORT_FREQUENCY=1000*60;
 	
 	@Autowired
 	private SpiderConfigure configure;
@@ -89,6 +94,9 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	private WorkSpaceManager WorkSpaceManager;
 
 
+	/**
+	 * 内部初始化
+	 */
 	protected abstract void init();
 
 	public void afterPropertiesSet() {
@@ -96,9 +104,10 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	}
 	
 	/**
-	 * 判断注册中心是否有此job的worker
-	 * 
-	 * @param job
+	 * 判断job是否运行。
+	 * 通过jobName 获取job运行快照JobSnapshot
+	 * 如果存在并且状态是执行或者暂停那么 返回true否则false
+	 * @param jobName
 	 * @return
 	 */
 	public boolean isRunning(String jobName) {
@@ -108,7 +117,11 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 				|| jobSnapshot.getEnumStatus() == JobSnapshotState.SUSPEND);
 	}
 
-
+	/**
+	 * 通过jobname获取 job运行的节点
+	 * @param jobName
+	 * @return
+	 */
 	public List<Node> getWorkerNode(String jobName) {
 		List<Node> nodes = new ArrayList<>();
 		List<WorkerSnapshot> workerSnapshots = getWorkerSnapshots(jobName);
@@ -125,6 +138,11 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		}
 		return nodes;
 	}
+	
+	/**
+	 * 注解Job运行快照 JobSnapshot至缓存
+	 * @param jobSnapshot
+	 */
 	public void registerJobSnapshot(JobSnapshot jobSnapshot) {
 		String jobName = jobSnapshot.getName();
 		String jobSnapshotskey = RedisRegisterKeyUtils.getJobSnapshotsKey();
@@ -145,18 +163,32 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		}
 	}
 
+	/**
+	 * 更新job运行快照
+	 * @param jobSnapshot
+	 */
 	public void updateJobSnapshot(JobSnapshot jobSnapshot) {
 		String jobSnapshotskey = RedisRegisterKeyUtils.getJobSnapshotsKey();
 		getRedisManager().hset(jobSnapshotskey, jobSnapshot.getName(), jobSnapshot);
 	}
 
 
+	/**
+	 * 通过jobname获取 job运行快照
+	 * @param jobName
+	 * @return
+	 */
 	public JobSnapshot getJobSnapshot(String jobName) {
 		String jobSnapshotskeyskey = RedisRegisterKeyUtils.getJobSnapshotsKey();
 		JobSnapshot jobSnapshot = getRedisManager().hget(jobSnapshotskeyskey, jobName, JobSnapshot.class);
 		return jobSnapshot;
 	}
 	
+	/**
+	 * 统计job运行快照下所有worker的运行信息
+	 * @param jobSnapshot
+	 * @param workerSnapshots
+	 */
 	public void totalWorkerSnapshot(JobSnapshot jobSnapshot, List<WorkerSnapshot> workerSnapshots) {
 		if (null != jobSnapshot && null != workerSnapshots && !workerSnapshots.isEmpty()) {
 			int totalProcessCount = 0;
@@ -190,22 +222,39 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	}
 
 
+	/**
+	 * 获取所有运行任务快照
+	 * @return
+	 */
 	public List<JobSnapshot> getJobSnapshots() {
 		String jobSnapshotskeyskey = RedisRegisterKeyUtils.getJobSnapshotsKey();
 		Map<String, JobSnapshot> findMap = getRedisManager().hgetAll(jobSnapshotskeyskey, JobSnapshot.class);
 		return new ArrayList<>(findMap.values());
 	}
 
+	/**
+	 * 通过jobName删除指定的任务运行快照
+	 * @param jobName
+	 */
 	public void delJobSnapshot(String jobName) {
 		String jobSnapshotskey = RedisRegisterKeyUtils.getJobSnapshotsKey();
 		getRedisManager().hdel(jobSnapshotskey, jobName);
 	}
 
+	/**
+	 * 通过任务名称删除运行任务所有worker的快照
+	 * @param jobName
+	 */
 	public void delWorkerSnapshots(String jobName) {
 		String WorkerSnapshotkey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(jobName);
 		getRedisManager().del(WorkerSnapshotkey);
 	}
 
+	/**
+	 * 通过任务名获取运行任务的所有 worker快照信息
+	 * @param jobName
+	 * @return
+	 */
 	public List<WorkerSnapshot> getWorkerSnapshots(String jobName) {
 		String workerSnapshotkey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(jobName);
 		List<WorkerSnapshot> workerSnapshots = new ArrayList<>();
@@ -214,6 +263,42 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		return workerSnapshots;
 	}
 	
+	/**
+	 * <p>更新缓存中WorkSnapshot并且 Report WorkSnapshot
+	 * <p>前提 null != errMsgs&&errMsgs.size() > 0：</p>
+	 * <p>当isSaveErrMsg==true时会将异常消息保存</p>
+	 * <p>或者当errMsgs.size() >= SAVE_ERR_MSG_MAX时会将异常消息保存 ,(从异常消息数量去写入，并免内存中大量消息没有被处理)</p>
+	 * <p>或者当LastReport >= WORKER_SNAPSHOT_REPORT_FREQUENCY时会将异常消息保存</p>
+	 * @param workerSnapshot
+	 * @param isSaveErrMsg
+	 */
+	public void updateWorkSnapshotAndReport(WorkerSnapshot workerSnapshot, boolean isSaveErrMsg) {
+		List<WorkerErrMsg> errMsgs = workerSnapshot.getWorkerErrMsgs();
+		long nowTime=0;
+		if ((null != errMsgs&&errMsgs.size() > 0) && (isSaveErrMsg 
+								||errMsgs.size() >= SAVE_ERR_MSG_MAX
+								||(nowTime=System.currentTimeMillis())-workerSnapshot.getLastReport()>=WORKER_SNAPSHOT_REPORT_FREQUENCY
+								)) {
+			getWorkerErrMsgDao().batchSave(errMsgs);
+			errMsgs.clear();
+			workerSnapshot.setLastReport(nowTime);
+		}
+		updateWorkerSnapshot(workerSnapshot);
+	}
+	
+	/**
+	 * 更新缓存中workerSnapshot
+	 * @param workerSnapshot
+	 */
+	public void updateWorkerSnapshot(WorkerSnapshot workerSnapshot) {
+		String workerSnapshotKey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(workerSnapshot.getJobName());
+		getRedisManager().hset(workerSnapshotKey, workerSnapshot.getName(), workerSnapshot);
+	}
+
+	
+	/**
+	 * 判断任务的所有worker是否全部wait
+	 */
 	public boolean workerIsAllWaited(String jobName) {
 		List<WorkerSnapshot> workerSnapshots = getWorkerSnapshots(jobName);
 		boolean result = true;
@@ -245,11 +330,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		return sbd.toString();
 	}
 	
-	public void updateWorkerSnapshot(WorkerSnapshot workerSnapshot) {
-		String workerSnapshotKey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(workerSnapshot.getJobName());
-		getRedisManager().hset(workerSnapshotKey, workerSnapshot.getName(), workerSnapshot);
-	}
-
+	
 	public NodeManager getNodeManager() {
 		return nodeManager;
 	}

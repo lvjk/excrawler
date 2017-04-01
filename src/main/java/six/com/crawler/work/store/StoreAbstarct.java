@@ -18,12 +18,9 @@ public abstract class StoreAbstarct implements Store{
 
 	final static Logger LOG = LoggerFactory.getLogger(StoreAbstarct.class);
 	private AbstractWorker worker;
-	// 处理的结果key
-	List<String> resultKeys;
-
-	public StoreAbstarct(AbstractWorker worker, List<String> resultKeys) {
+	
+	public StoreAbstarct(AbstractWorker worker) {
 		this.worker = worker;
-		this.resultKeys = resultKeys;
 	}
 
 	/**
@@ -46,7 +43,4 @@ public abstract class StoreAbstarct implements Store{
 		return worker;
 	}
 
-	protected List<String> getResultList() {
-		return resultKeys;
-	}
 }

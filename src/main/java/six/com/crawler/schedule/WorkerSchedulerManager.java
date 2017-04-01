@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.PreDestroy;
 
@@ -36,19 +35,13 @@ public class WorkerSchedulerManager extends WorkerAbstractSchedulerManager {
 
 	final static Logger log = LoggerFactory.getLogger(MasterSchedulerManager.class);
 
-	private final static int SAVE_ERR_MSG_MAX = 20;
-
 	private Map<String, Map<String, Worker>> localJobWorkersMap = new ConcurrentHashMap<String, Map<String, Worker>>();
-
-	private AtomicInteger runningWroker = new AtomicInteger(0);
-
-	private int workerRunningMaxSize;
 
 	private ExecutorService executor;
 
 	protected void doInit() {
-		workerRunningMaxSize = getNodeManager().getCurrentNode().getRunningJobMaxSize();
-		executor = Executors.newFixedThreadPool(workerRunningMaxSize, new JobWorkerThreadFactory());
+		executor = Executors.newFixedThreadPool(getNodeManager().getCurrentNode().getRunningWorkerMaxSize(),
+				new JobWorkerThreadFactory());
 
 	}
 
@@ -63,7 +56,7 @@ public class WorkerSchedulerManager extends WorkerAbstractSchedulerManager {
 			startWorker(worker);
 			worker.start();
 		} catch (Exception e) {
-			log.error("execute jobWorker {" + worker.getName() + "} err", e);
+			log.error("execute worker [" + worker.getName() + "] err", e);
 		} finally {
 			endWorer(worker);
 		}
@@ -151,10 +144,6 @@ public class WorkerSchedulerManager extends WorkerAbstractSchedulerManager {
 		}
 	}
 
-	public int getRunningWorkerCount() {
-		return runningWroker.get();
-	}
-
 	/**
 	 * 容器结束时调用此销毁方法
 	 */
@@ -166,23 +155,23 @@ public class WorkerSchedulerManager extends WorkerAbstractSchedulerManager {
 		executor.shutdown();
 	}
 
-	private void startWorker( Worker worker) {
-		String jobName=worker.getJob().getName();
-		String workerName=worker.getName();
+	private void startWorker(Worker worker) {
+		String jobName = worker.getJob().getName();
+		String workerName = worker.getName();
 		WorkerSnapshot workerSnapshot = worker.getWorkerSnapshot();
 		localJobWorkersMap.computeIfAbsent(worker.getJob().getName(), mapKey -> new ConcurrentHashMap<String, Worker>())
 				.put(worker.getName(), worker);
 		updateWorkerSnapshot(workerSnapshot);
-		getNodeManager().getCurrentNode().setRunningJobSize(runningWroker.incrementAndGet());
-		Map<String,Object> params=new HashMap<>();
-		params.put("jobName",jobName);
-		params.put("workerName",workerName);
+		getNodeManager().getCurrentNode().incrementAndGetRunningWorkerSize();
+		Map<String, Object> params = new HashMap<>();
+		params.put("jobName", jobName);
+		params.put("workerName", workerName);
 		try {
 			getNodeManager().execute(getNodeManager().getMasterNode(), ScheduledJobCommand.startWorker, params);
 		} catch (Exception e) {
 			log.error("notice master node job[" + jobName + "]'s worker[" + workerName + "] is started err", e);
 		}
-		
+
 	}
 
 	/**
@@ -192,18 +181,18 @@ public class WorkerSchedulerManager extends WorkerAbstractSchedulerManager {
 	 * @param jobName
 	 */
 	public void endWorer(Worker worker) {
-		String jobName=worker.getJob().getName();
-		String workerName=worker.getName();
+		String jobName = worker.getJob().getName();
+		String workerName = worker.getName();
 		worker.destroy();
 		Map<String, Worker> jobWorkerMap = localJobWorkersMap.get(jobName);
 		jobWorkerMap.remove(workerName);
 		if (jobWorkerMap.size() == 0) {
 			localJobWorkersMap.remove(jobName);
 		}
-		getNodeManager().getCurrentNode().setRunningJobSize(runningWroker.decrementAndGet());
-		Map<String,Object> params=new HashMap<>();
-		params.put("jobName",jobName);
-		params.put("workerName",workerName);
+		getNodeManager().getCurrentNode().decrementAndGetRunningWorkerSize();
+		Map<String, Object> params = new HashMap<>();
+		params.put("jobName", jobName);
+		params.put("workerName", workerName);
 		try {
 			getNodeManager().execute(getNodeManager().getMasterNode(), ScheduledJobCommand.endWorker, params);
 		} catch (Exception e) {
@@ -286,14 +275,5 @@ public class WorkerSchedulerManager extends WorkerAbstractSchedulerManager {
 			}
 		}
 		return newJobWorker;
-	}
-
-	public void updateWorkSnapshot(WorkerSnapshot workerSnapshot, boolean isSaveErrMsg) {
-		List<WorkerErrMsg> errMsgs = workerSnapshot.getWorkerErrMsgs();
-		if (null != errMsgs && ((isSaveErrMsg && errMsgs.size() > 0) || errMsgs.size() >= SAVE_ERR_MSG_MAX)) {
-			getWorkerErrMsgDao().batchSave(errMsgs);
-			errMsgs.clear();
-		}
-		updateWorkerSnapshot(workerSnapshot);
 	}
 }

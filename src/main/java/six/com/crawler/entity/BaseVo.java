@@ -25,6 +25,16 @@ public abstract class BaseVo implements Serializable{
 	 */
 	private int version;//数据版本
 	
+	private int totalSize;
+
+	public void setTotalSize(int totalSize) {
+		this.totalSize = totalSize;
+	}
+
+	public int getTotalSize() {
+		return totalSize;
+	}
+	
 	public String getId() {
 		return id;
 	}

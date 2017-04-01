@@ -87,12 +87,6 @@ public class JobApi extends BaseApi {
 		return msg;
 	}
 
-	@RequestMapping(value = "/crawler/job/getLoclaAll", method = RequestMethod.GET)
-	@ResponseBody
-	public ResponseMsg<List<Job>> getLoclaAllJobs() {
-		return null;
-	}
-
 	@RequestMapping(value = "/crawler/job/updateIsScheduled", method = RequestMethod.POST)
 	@ResponseBody
 	public ResponseMsg<Integer> updateIsScheduled(@RequestParam("version") int version,

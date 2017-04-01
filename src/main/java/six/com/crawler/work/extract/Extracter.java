@@ -18,13 +18,25 @@ import six.com.crawler.entity.ResultContext;
  */
 public interface Extracter {
 
-	// 系统默认 采集数据id
-	public static final String DEFAULT_RESULT_ID = "id";
-	// 系统默认 采集数据的workerName
-	public static final String DEFAULT_WORKERNAME = "workerName";
-	// 系统默认 采集日期 字段
+	/**
+	 * 系统默认 采集数据id ,目前采用new id
+	 */
+	@Deprecated
+	public static final String DEFAULT_RESULT_ID = "id";	
+	
+	/**
+	 * 系统默认 采集数据id:由worker name +worker计数生成 ，跟业务无关
+	 */
+	public static final String DEFAULT_RESULT_NEW_ID = "ID";
+	
+	/**
+	 * 系统默认 采集日期 字段
+	 */
 	public static final String DEFAULT_RESULT_COLLECTION_DATE = "collectionDate";
-	// 系统默认 数据源url 字段
+	
+	/**
+	 * 系统默认 数据源url 字段
+	 */
 	public static final String DEFAULT_RESULT_ORIGIN_URL = "originUrl";
 
 	public static final Set<String> DEFAULT_RESULT_KEY_SET = new HashSet<String>() {

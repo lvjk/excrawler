@@ -100,7 +100,7 @@ public abstract class AbstractWorker implements Worker {
 		try {
 			while (true) {
 				// 更新job 活动信息
-				manager.updateWorkSnapshot(workerSnapshot, false);
+				manager.updateWorkSnapshotAndReport(workerSnapshot, false);
 				// 当状态为running时才会正常工作
 				if (getState() == WorkerLifecycleState.STARTED) {
 					long processTime = System.currentTimeMillis();
@@ -161,7 +161,7 @@ public abstract class AbstractWorker implements Worker {
 				workerSnapshot.setAvgProcessTime(
 						workerSnapshot.getTotalProcessTime() / workerSnapshot.getTotalProcessCount());
 			}
-			manager.updateWorkSnapshot(workerSnapshot, true);
+			manager.updateWorkSnapshotAndReport(workerSnapshot, true);
 			LOG.info("jobWorker [" + getName() + "] is ended");
 		}
 	}

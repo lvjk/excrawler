@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
@@ -55,6 +56,7 @@ public abstract class AbstractExtracter implements Extracter {
 	private static Set<Character> charSet = new HashSet<>();
 	private volatile int primaryResultSize = -1;
 	private static final String EMPTY_VALUE = "";
+	private AtomicInteger extracterIndex=new AtomicInteger(0);
 
 	static {
 		charSet.add(' ');
@@ -75,9 +77,9 @@ public abstract class AbstractExtracter implements Extracter {
 		ResultContext resultContext = new ResultContext();
 		primaryResultSize = -1;
 		for (ExtractItem doPaserItem : extractItems) {
-			List<String> doResults = null;
+			List<String> tempDoResults = null;
 			if (doPaserItem.getType() == ExtractItemType.META.value()) {// 判断是否是元数据类型
-				doResults = doingPage.getMeta(doPaserItem.getOutputKey());
+				tempDoResults = doingPage.getMeta(doPaserItem.getOutputKey());
 			} else {
 				List<ExtractPath> pathList = extractPathMap.computeIfAbsent(doPaserItem.getPathName(), mapKey -> {// 获取所有path
 					return getAbstractWorker().getManager().getExtractPathDao().query(doPaserItem.getPathName(),
@@ -87,17 +89,11 @@ public abstract class AbstractExtracter implements Extracter {
 					throw new NotFindExtractPathException("don't find path:" + doPaserItem.getPathName());
 				}
 				int ranking = 0;// 默认使用排名第一的path 抽取
-				List<String> tempDoResults = null;
 				try {
 					while (true) {
 						ExtractPath path = pathList.get(ranking++);
 						tempDoResults = doExtract(doingPage, doPaserItem, path);
 						if (null != tempDoResults && tempDoResults.size() > 0) {// 如果抽取到了结果那么对结果进行处理
-							doResults = new ArrayList<>(tempDoResults.size());
-							for (String doResult : tempDoResults) {
-								String tempExtract = paserString(doPaserItem, doingPage, doResult);
-								doResults.add(tempExtract);
-							}
 							break;
 						} else if (ranking >= pathList.size()) {// 如果迭代的ranking>=pathList.size()那么跳出循环
 							break;
@@ -107,28 +103,33 @@ public abstract class AbstractExtracter implements Extracter {
 					throw new ExtractUnknownException("extractItem[" + doPaserItem.getOutputKey() + "] err", e);
 				}
 			}
-			if ((null == doResults || doResults.isEmpty())// 主键必须有值,如果抽取结果为空，判断是否必须有值，如果是那么抛出异常
+			if ((null == tempDoResults || tempDoResults.isEmpty())// 主键必须有值,如果抽取结果为空，判断是否必须有值，如果是那么抛出异常
 					&&(1 == doPaserItem.getPrimary()||1==doPaserItem.getMustHaveResult())) {
 				throw new ExtractEmptyResultException(
 						"extract resultKey [" + doPaserItem.getOutputKey() + "] value is empty");
 			}
 			if (1 == doPaserItem.getPrimary()) {// 记录主键结果数量
 				if (-1 == primaryResultSize) {// primaryResultSize第一次直接赋值
-					primaryResultSize = doResults.size();
+					primaryResultSize = tempDoResults.size();
 				} else {
-					if (primaryResultSize != doResults.size()) {// 对比与上一次的primaryResultSize ，如果不相等那么抛出异常
+					if (primaryResultSize != tempDoResults.size()) {// 对比与上一次的primaryResultSize ，如果不相等那么抛出异常
 						throw new PrimaryExtractException("extract primaryKey[" + doPaserItem.getOutputKey()
-								+ "]'s result size[" + doResults.size() + "] did not match last primaryResultSize["
+								+ "]'s result size[" + tempDoResults.size() + "] did not match last primaryResultSize["
 								+ primaryResultSize + "]");
 					}
 				}
 			} else {
-				if (null == doResults || doResults.isEmpty()) {// 如果非主键结果为空，那么默认给它赋值跟主键数量一样的 空值
-					doResults = null == doResults ? new ArrayList<>(primaryResultSize) : doResults;
+				if (null == tempDoResults || tempDoResults.isEmpty()) {// 如果非主键结果为空，那么默认给它赋值跟主键数量一样的 空值
+					tempDoResults = null == tempDoResults ? new ArrayList<>(primaryResultSize) : tempDoResults;
 					for (int i = 0; i < primaryResultSize; i++) {
-						doResults.add(EMPTY_VALUE);
+						tempDoResults.add(EMPTY_VALUE);
 					}
 				}
+			}
+			List<String> doResults= new ArrayList<>(tempDoResults.size());
+			for (String doResult : tempDoResults) {
+				String tempExtract = paserString(doPaserItem, doingPage, doResult);
+				doResults.add(tempExtract);
 			}
 			resultContext.addExtractResult(doPaserItem.getOutputKey(), doResults);
 		}
@@ -142,14 +143,18 @@ public abstract class AbstractExtracter implements Extracter {
 	 * @param resultContext
 	 * @return
 	 */
+	@SuppressWarnings("deprecation")
 	private void assembleExtractResult(ResultContext resultContext, Page doingPage, int primaryResultSize) {
 		if(primaryResultSize>0){
 			String nowTime = DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1);
+			List<String> newIDList=new ArrayList<>(primaryResultSize);
 			List<String> idList=new ArrayList<>(primaryResultSize);
 			List<String> workerNameList=new ArrayList<>(primaryResultSize);
 			List<String> collectionDateList=new ArrayList<>(primaryResultSize);
 			List<String> originUrlList=new ArrayList<>(primaryResultSize);
 			final String workerName=getAbstractWorker().getName();
+			String newID =null;
+			String id =null;
 			for (int i = 0; i < primaryResultSize; i++) {
 				Map<String, String> dataMap = new HashMap<>();
 				List<String> primaryKeysValue = new ArrayList<>();
@@ -161,20 +166,22 @@ public abstract class AbstractExtracter implements Extracter {
 						primaryKeysValue.add(result);
 					}
 				}
-				String id = getResultID(primaryKeysValue);
+				newID=workerName+"_"+extracterIndex.getAndIncrement();
+				id = getResultID(primaryKeysValue);
+				dataMap.put(Extracter.DEFAULT_RESULT_NEW_ID, newID);
 				dataMap.put(Extracter.DEFAULT_RESULT_ID, id);
-				dataMap.put(Extracter.DEFAULT_WORKERNAME,workerName);
 				dataMap.put(Extracter.DEFAULT_RESULT_COLLECTION_DATE, nowTime);
 				dataMap.put(Extracter.DEFAULT_RESULT_ORIGIN_URL, doingPage.getFinalUrl());
 				
+				newIDList.add(newID);
 				idList.add(id);
 				workerNameList.add(workerName);
 				collectionDateList.add(nowTime);
 				originUrlList.add(doingPage.getFinalUrl());
 				resultContext.addoutResult(dataMap);
 			}
+			resultContext.addExtractResult(Extracter.DEFAULT_RESULT_NEW_ID, newIDList);
 			resultContext.addExtractResult(Extracter.DEFAULT_RESULT_ID, idList);
-			resultContext.addExtractResult(Extracter.DEFAULT_WORKERNAME, workerNameList);
 			resultContext.addExtractResult(Extracter.DEFAULT_RESULT_COLLECTION_DATE, collectionDateList);
 			resultContext.addExtractResult(Extracter.DEFAULT_RESULT_ORIGIN_URL, originUrlList);
 		}

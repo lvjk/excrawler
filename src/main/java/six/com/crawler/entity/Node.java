@@ -1,6 +1,7 @@
 package six.com.crawler.entity;
 
 import java.io.Serializable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author sixliu E-mail:359852326@qq.com
@@ -19,11 +20,11 @@ public class Node implements Serializable {
 	private int port;// 节点服务端口
 	private int cpu;// cpu使用情况
 	private float mem;// 内存使用情况
-	private int runningJobMaxSize;// 节点最大运行任务数
+	private int runningWorkerMaxSize;// 节点最大运行任务数
 	private int totalJobSize;// 节点总任务数
 	private int totalScheduleJobSize;// 节点调度总任务数
 	private int totalNoScheduleJobSize;// 节点未调度总任务数
-	private int runningJobSize;// 节点未调度总任务数
+	private AtomicInteger runningWorkerSize= new AtomicInteger(0);// 节点未调度总任务数
 
 	public String getName() {
 		return name;
@@ -81,12 +82,12 @@ public class Node implements Serializable {
 		this.mem = mem;
 	}
 
-	public int getRunningJobMaxSize() {
-		return runningJobMaxSize;
+	public int getRunningWorkerMaxSize() {
+		return runningWorkerMaxSize;
 	}
 
-	public void setRunningJobMaxSize(int runningJobMaxSize) {
-		this.runningJobMaxSize = runningJobMaxSize;
+	public void setRunningWorkerMaxSize(int runningWorkerMaxSize) {
+		this.runningWorkerMaxSize = runningWorkerMaxSize;
 	}
 
 	public int getTotalJobSize() {
@@ -113,12 +114,32 @@ public class Node implements Serializable {
 		this.totalNoScheduleJobSize = totalNoScheduleJobSize;
 	}
 
-	public int getRunningJobSize() {
-		return runningJobSize;
+	public int getRunningWorkerSize() {
+		return runningWorkerSize.get();
 	}
 
-	public void setRunningJobSize(int runningJobSize) {
-		this.runningJobSize = runningJobSize;
+	/**
+	 * 节点运行任务数设值，并返回操作后的值
+	 * @return
+	 */
+	public void setRunningWorkerSize(int runningWorkerSize) {
+		this.runningWorkerSize.set(runningWorkerSize);
+	}
+	
+	/**
+	 * 节点运行任务数减1，并返回操作后的值
+	 * @return
+	 */
+	public int incrementAndGetRunningWorkerSize() {
+		return this.runningWorkerSize.incrementAndGet();
+	}
+	
+	/**
+	 * 节点运行任务数加1，并返回操作后的值
+	 * @return
+	 */
+	public int decrementAndGetRunningWorkerSize() {
+		return this.runningWorkerSize.decrementAndGet();
 	}
 
 	public String toString() {

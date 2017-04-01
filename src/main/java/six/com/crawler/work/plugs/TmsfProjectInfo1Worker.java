@@ -6,6 +6,8 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.nodes.Element;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.PageType;
@@ -20,6 +22,8 @@ import six.com.crawler.work.space.RedisWorkSpace;
  * @date 创建时间：2017年3月7日 下午12:02:34
  */
 public class TmsfProjectInfo1Worker extends AbstractCrawlWorker {
+
+	final static Logger log = LoggerFactory.getLogger(TmsfProjectInfo1Worker.class);
 
 	int longitudeMax = 135;
 	int longitudeMin = 73;
@@ -112,6 +116,9 @@ public class TmsfProjectInfo1Worker extends AbstractCrawlWorker {
 				sellControlPage.setType(PageType.DATA.value());
 				sellControlPage.getMetaMap().put("projectId", Arrays.asList(projectId));
 				sellControlUrlQueue.push(sellControlPage);
+			} else {
+				log.warn("did not find presellUrl:" + doingPage.getFinalUrl());
+				log.warn(doingPage.getPageSrc());
 			}
 		}
 

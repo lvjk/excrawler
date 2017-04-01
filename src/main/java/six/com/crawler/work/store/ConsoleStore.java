@@ -1,6 +1,5 @@
 package six.com.crawler.work.store;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -14,22 +13,16 @@ import six.com.crawler.work.store.exception.StoreException;
 */
 public class ConsoleStore extends StoreAbstarct{
 
-	public ConsoleStore(AbstractWorker worker, List<String> resultKeys) {
-		super(worker, resultKeys);
+	public ConsoleStore(AbstractWorker worker) {
+		super(worker);
 	}
 
 	@Override
 	protected int insideStore(List<Map<String, String>> results) throws StoreException {
 		int storeCount = 0;
 		if (null != results) {
-			List<Object> parameters = new ArrayList<>();
 			for (Map<String, String> dataMap : results) {
-				parameters.clear();
-				for (String resultKey : getResultList()) {
-					String param = dataMap.get(resultKey);
-					parameters.add(param);
-				}
-				System.out.println(parameters);
+				System.out.println(dataMap);
 				storeCount ++;
 			}
 		}

@@ -25,7 +25,7 @@ import six.com.crawler.work.space.RedisWorkSpace;
  */
 public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 
-	final static Logger LOG = LoggerFactory.getLogger(TmsfProjectInfoWorker.class);
+	final static Logger log = LoggerFactory.getLogger(TmsfProjectInfoWorker.class);
 	int longitudeMax = 135;
 	int longitudeMin = 73;
 	int latitudeMax = 53;
@@ -128,6 +128,9 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 				presellPage.getMetaMap().put("projectId", Arrays.asList(projectId));
 				presellUrlQueue.push(presellPage);
 			}
+		}else{
+			log.warn("did not find presellUrl:"+doingPage.getFinalUrl());
+			log.warn(doingPage.getPageSrc());
 		}
 	}
 

@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.Map;
 
 import six.com.crawler.admin.api.ResponseMsg;
-import six.com.crawler.entity.DoneInfo;
-import six.com.crawler.entity.Page;
 import six.com.crawler.entity.WorkSpaceInfo;
 
 /**
@@ -18,19 +16,53 @@ public interface WorkSpaceService {
 
 	public WorkSpaceInfo getWorkSpaceInfo(String workSpaceName);
 	
+	/**
+	 * 获取所有工作空间
+	 * @return
+	 */
 	public ResponseMsg<List<WorkSpaceInfo>> getWorkSpaces();
 	
-	public Map<String,Object> getWorkSpaceDoingData(String workSpaceName,String cursor);
+	/**
+	 * 获取workSpaceName 工作空间里的处理数据
+	 * @param workSpaceName
+	 * @param cursor
+	 * @return Map 包含list(数据),当前查询游标(cursor)
+	 */
+	public ResponseMsg<Map<String,Object>> getWorkSpaceDoingData(String workSpaceName,String cursor);
 	
-	public List<Page> getWorkSpaceErrData(String workSpaceName, String cursor);
+	/**
+	 * 获取workSpaceName 工作空间里的异常数据
+	 * @param workSpaceName
+	 * @param cursor
+	 * @return Map 包含list(数据),当前查询游标(cursor)
+	 */
+	public ResponseMsg<Map<String,Object>> getWorkSpaceErrData(String workSpaceName, String cursor);
 
-	public List<DoneInfo> getQueueDones();
-
+	/**
+	 * 清空处理数据
+	 * @param workSpaceName
+	 * @return
+	 */
 	public ResponseMsg<String> clearDoing(String workSpaceName);
 	
+	/**
+	 * 清空异常数据
+	 * @param workSpaceName
+	 * @return
+	 */
 	public ResponseMsg<String> clearErr(String workSpaceName);
 	
+	/**
+	 * 清空完成数据
+	 * @param workSpaceName
+	 * @return
+	 */
 	public ResponseMsg<String> clearDone(String workSpaceName);
 
-	public String againDoErrQueue(String workSpaceName);
+	/**
+	 * 再次处理异常数据
+	 * @param workSpaceName
+	 * @return
+	 */
+	public ResponseMsg<String> againDoErrQueue(String workSpaceName);
 }

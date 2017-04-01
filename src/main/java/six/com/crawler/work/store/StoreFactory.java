@@ -1,6 +1,5 @@
 package six.com.crawler.work.store;
 
-import java.util.List;
 
 import six.com.crawler.work.AbstractCrawlWorker;
 
@@ -19,20 +18,20 @@ public class StoreFactory {
 	 * @param extracterType
 	 * @return
 	 */
-	public static Store newStore(AbstractCrawlWorker worker, List<String> resultKeys, StoreType storeType) {
+	public static Store newStore(AbstractCrawlWorker worker,StoreType storeType) {
 		Store store = null;
 		if (StoreType.CONSOLE == storeType) {
-			store = new ConsoleStore(worker, resultKeys);
+			store = new ConsoleStore(worker);
 		} else if (StoreType.DB == storeType) {
-			store = new DataBaseStore(worker, resultKeys);
+			store = new DataBaseStore(worker);
 		} else if (StoreType.HTTP == storeType) {
-			store = new HttpStore(worker, resultKeys);
+			store = new HttpStore(worker);
 		} else if (StoreType.FILE == storeType) {
-			store = new FileStore(worker, resultKeys);
+			store = new FileStore(worker);
 		}  else if (StoreType.REDIS == storeType) {
-			store = new RedisStore(worker, resultKeys);
+			store = new RedisStore(worker);
 		} else {
-			store = new ConsoleStore(worker, resultKeys);
+			store = new ConsoleStore(worker);
 		}
 		return store;
 	}

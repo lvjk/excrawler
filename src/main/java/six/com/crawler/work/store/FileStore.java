@@ -13,8 +13,8 @@ import six.com.crawler.work.store.exception.StoreException;
 */
 public class FileStore extends StoreAbstarct{
 
-	public FileStore(AbstractWorker worker, List<String> resultKeys) {
-		super(worker, resultKeys);
+	public FileStore(AbstractWorker worker) {
+		super(worker);
 	}
 
 	@Override

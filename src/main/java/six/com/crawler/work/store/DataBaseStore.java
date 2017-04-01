@@ -40,9 +40,11 @@ public class DataBaseStore extends StoreAbstarct implements AutoCloseable {
 	private String dbPasswd;
 	int batchSize = 1;
 	private DruidDataSource datasource;
+	// 处理的结果key
+	private String[] fields;
 
-	public DataBaseStore(AbstractWorker worker, List<String> resultKeys) {
-		super(worker, resultKeys);
+	public DataBaseStore(AbstractWorker worker) {
+		super(worker);
 		String everySendSizeStr = worker.getJob().getParam(JobConTextConstants.BATCH_SIZE);
 		if (null != everySendSizeStr) {
 			try {
@@ -66,6 +68,15 @@ public class DataBaseStore extends StoreAbstarct implements AutoCloseable {
 		tableName = jobSnapshot.getTableName();
 		insertSqlTemplate = worker.getJob().getParam(JobConTextConstants.INSERT_SQL_TEMPLATE);
 		insertSql = JobTableUtils.buildInsertSql(insertSqlTemplate, tableName);
+		String fieldsStr = StringUtils.substringBetween(insertSql, "(", ")");
+		fields = StringUtils.split(fieldsStr, ",");
+		String field=null;
+		for (int i = 0; i < fields.length; i++) {
+			field=fields[i];
+			field=StringUtils.trim(field);
+			field=StringUtils.remove(field,"`");
+			fields[i] = StringUtils.trim(field);
+		}
 		createTableSqlTemplate = worker.getJob().getParam(JobConTextConstants.CREATE_TABLE_SQL_TEMPLATE);
 		initTable();
 	}
@@ -108,8 +119,8 @@ public class DataBaseStore extends StoreAbstarct implements AutoCloseable {
 			List<Object> parameters = new ArrayList<>();
 			for (Map<String, String> dataMap : results) {
 				parameters.clear();
-				for (String resultKey : getResultList()) {
-					String param = dataMap.get(resultKey);
+				for (String field : fields) {
+					String param = dataMap.get(field);
 					parameters.add(param);
 				}
 				storeCount += doSql(insertSql, parameters);

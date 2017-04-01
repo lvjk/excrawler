@@ -11,8 +11,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import six.com.crawler.admin.service.WorkSpaceService;
-import six.com.crawler.entity.DoneInfo;
-import six.com.crawler.entity.Page;
 import six.com.crawler.entity.WorkSpaceInfo;
 
 /**
@@ -37,29 +35,14 @@ public class WorkSpaceApi extends BaseApi {
 	@ResponseBody
 	public ResponseMsg<Map<String, Object>> getDoingData(@PathVariable("workSpaceName") String workSpaceName,
 			@PathVariable("cursor") String cursor) {
-		ResponseMsg<Map<String, Object>> msg = createResponseMsg();
-		Map<String, Object> result = workQueueService.getWorkSpaceDoingData(workSpaceName, cursor);
-		msg.setData(result);
-		return msg;
+		return workQueueService.getWorkSpaceDoingData(workSpaceName, cursor);
 	}
 
-	@RequestMapping(value = "/crawler/workSpace/getErrData/{workSpaceName}/{errQueueIndex}", method = RequestMethod.GET)
+	@RequestMapping(value = "/crawler/workSpace/getErrData/{workSpaceName}/{cursor}", method = RequestMethod.GET)
 	@ResponseBody
-	public ResponseMsg<List<Page>> getErrData(@PathVariable("workSpaceName") String workSpaceName,
+	public ResponseMsg<Map<String, Object>> getErrData(@PathVariable("workSpaceName") String workSpaceName,
 			@PathVariable("cursor") String cursor) {
-		ResponseMsg<List<Page>> msg = createResponseMsg();
-		List<Page> result = workQueueService.getWorkSpaceErrData(workSpaceName, cursor);
-		msg.setData(result);
-		return msg;
-	}
-
-	@RequestMapping(value = "/crawler/workSpace/getQueueDones", method = RequestMethod.GET)
-	@ResponseBody
-	public ResponseMsg<List<DoneInfo>> getQueueDones() {
-		ResponseMsg<List<DoneInfo>> msg = createResponseMsg();
-		List<DoneInfo> result = workQueueService.getQueueDones();
-		msg.setData(result);
-		return msg;
+		return workQueueService.getWorkSpaceErrData(workSpaceName, cursor);
 	}
 
 	@RequestMapping(value = "/crawler/workSpace/clearDoing/{workSpaceName}", method = RequestMethod.GET)
@@ -83,10 +66,7 @@ public class WorkSpaceApi extends BaseApi {
 	@RequestMapping(value = "/crawler/workSpace/againDoErrQueue/{queueName}", method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseMsg<String> againDoErrQueue(@PathVariable("queueName") String queueName) {
-		ResponseMsg<String> msg = createResponseMsg();
-		String result = workQueueService.againDoErrQueue(queueName);
-		msg.setMsg(result);
-		return msg;
+		return workQueueService.againDoErrQueue(queueName);
 	}
 
 }

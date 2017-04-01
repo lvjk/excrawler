@@ -3,6 +3,7 @@ package six.com.crawler.dao.provider;
 import java.util.List;
 import java.util.Map;
 
+
 import org.apache.ibatis.jdbc.SQL;
 
 import six.com.crawler.dao.BaseDao;
@@ -16,16 +17,17 @@ import six.com.crawler.entity.WorkerErrMsg;
 */
 public class WorkerErrMsgDaoProvider extends BaseProvider{
 	
+	String queryColumns="id,"
+			+ "jobSnapshotId,"
+			+ "jobName,"
+			+ "workerName,"
+			+ "UNIX_TIMESTAMP(startTime)*1000 startTime,"
+			+ "msg";
 	private String saveColumns="jobSnapshotId,jobName,workerName,startTime,msg";
+	
 	public String query(Map<String, Object> map) {
 		SQL sql=new SQL();
-		String columns="id,"
-				+ "jobSnapshotId,"
-				+ "jobName,"
-				+ "workerName,"
-				+ "UNIX_TIMESTAMP(startTime)*1000 startTime,"
-				+ "msg";
-		sql.SELECT(columns);
+		sql.SELECT(queryColumns);
 		sql.FROM(WorkerErrMsgDao.TABLE_NAME);
 		Object ob=map.get(WorkerErrMsgDao.QUERY_PARAM_JOBSNAPSHOTID);
 		if(null!=ob){
@@ -41,6 +43,19 @@ public class WorkerErrMsgDaoProvider extends BaseProvider{
 		}
 		return sql.toString();
 	}
+	
+	public String pageQuery(Map<String, Object> queryParams) {
+		String sql="select b.totalSize,a.* "
+				+ " from("
+				+ "		select "
+				+queryColumns
+				+ "       from "+WorkerErrMsgDao.TABLE_NAME
+				+ "      where `jobName` =#{jobName} and `jobSnapshotId` =#{jobSnapshotId}"
+				+ "      order by `startTime` desc) a,"
+				+ "   (select FOUND_ROWS() totalSize)b limit #{start},#{end}";
+		return sql;
+	}
+	
 	public String save(WorkerErrMsg workerErrMsg) {
 		String values="#{jobSnapshotId},"
 				+ "#{jobName},"
