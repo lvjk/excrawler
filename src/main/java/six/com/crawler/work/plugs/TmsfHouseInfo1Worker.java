@@ -1,7 +1,6 @@
 package six.com.crawler.work.plugs;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +13,7 @@ import six.com.crawler.entity.Page;
 import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.http.HttpMethod;
+import six.com.crawler.utils.ArrayListUtils;
 import six.com.crawler.utils.JsonUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 
@@ -97,7 +97,7 @@ public class TmsfHouseInfo1Worker extends AbstractCrawlWorker {
 		houseInfoPage.setReferer(doingPage.getFinalUrl());
 		houseInfoPage.setMethod(HttpMethod.GET);
 		houseInfoPage.setType(PageType.JSON.value());
-		houseInfoPage.getMetaMap().put("buildingId", Arrays.asList(buildingId));
+		houseInfoPage.getMetaMap().put("buildingId", ArrayListUtils.asList(buildingId));
 		houseInfoPage.getMetaMap().putAll(doingPage.getMetaMap());
 		getDowner().down(houseInfoPage);
 		String internalidTemplate = "<<internalid>>";

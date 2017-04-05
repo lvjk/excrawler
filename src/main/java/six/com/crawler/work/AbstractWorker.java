@@ -135,6 +135,8 @@ public abstract class AbstractWorker implements Worker {
 					if (processTime < workerSnapshot.getMinProcessTime()) {
 						workerSnapshot.setMinProcessTime((int) processTime);
 					}
+					workerSnapshot.setAvgProcessTime(
+							workerSnapshot.getTotalProcessTime() / workerSnapshot.getTotalProcessCount());
 					// 当state == WorkerLifecycleState.WAITED 时
 				} else if (getState() == WorkerLifecycleState.WAITED) {
 					// 通过job向注册中心检查 运行该job的所以worker是否已经全部等待

@@ -14,12 +14,10 @@ import org.apache.commons.lang3.time.DateFormatUtils;
 import six.com.crawler.common.DateFormats;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
-import six.com.crawler.utils.MD5Utils;
 import six.com.crawler.utils.ObjectCheckUtils;
 import six.com.crawler.utils.TelPhoneUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.downer.exception.PrimaryExtractException;
 import six.com.crawler.work.extract.exception.ExtractEmptyResultException;
 import six.com.crawler.work.extract.exception.ExtractUnknownException;
 import six.com.crawler.work.extract.exception.NotFindExtractPathException;
@@ -56,7 +54,7 @@ public abstract class AbstractExtracter implements Extracter {
 	private static Set<Character> charSet = new HashSet<>();
 	private volatile int primaryResultSize = -1;
 	private static final String EMPTY_VALUE = "";
-	private AtomicInteger extracterIndex=new AtomicInteger(0);
+	private AtomicInteger extracterIndex = new AtomicInteger(0);
 
 	static {
 		charSet.add(' ');
@@ -67,6 +65,24 @@ public abstract class AbstractExtracter implements Extracter {
 	public AbstractExtracter(AbstractCrawlWorker worker, List<ExtractItem> extractItems) {
 		ObjectCheckUtils.checkNotNull(worker, "worker");
 		ObjectCheckUtils.checkNotNull(extractItems, "extractItems");
+		ExtractItem firstExtractItem = null;
+		int primaryCount = 0;
+		int index = -1;
+		for (int i = 0; i < extractItems.size(); i++) {
+			ExtractItem extractItem = extractItems.get(i);
+			if (extractItem.getPrimary() == 1) {
+				primaryCount++;
+				firstExtractItem = extractItem;
+				index = i;
+			}
+		}
+		if (primaryCount > 1) {
+			throw new RuntimeException("there are many primary=1");
+		}
+		if(-1!=index){
+			extractItems.remove(index);
+			extractItems.add(0, firstExtractItem);
+		}
 		this.worker = worker;
 		this.extractItems = extractItems;
 	}
@@ -104,101 +120,91 @@ public abstract class AbstractExtracter implements Extracter {
 				}
 			}
 			if ((null == tempDoResults || tempDoResults.isEmpty())// 主键必须有值,如果抽取结果为空，判断是否必须有值，如果是那么抛出异常
-					&&(1 == doPaserItem.getPrimary()||1==doPaserItem.getMustHaveResult())) {
+					&& (1 == doPaserItem.getPrimary() || 1 == doPaserItem.getMustHaveResult())) {
 				throw new ExtractEmptyResultException(
 						"extract resultKey [" + doPaserItem.getOutputKey() + "] value is empty");
 			}
 			if (1 == doPaserItem.getPrimary()) {// 记录主键结果数量
 				if (-1 == primaryResultSize) {// primaryResultSize第一次直接赋值
 					primaryResultSize = tempDoResults.size();
-				} else {
-					if (primaryResultSize != tempDoResults.size()) {// 对比与上一次的primaryResultSize ，如果不相等那么抛出异常
-						throw new PrimaryExtractException("extract primaryKey[" + doPaserItem.getOutputKey()
-								+ "]'s result size[" + tempDoResults.size() + "] did not match last primaryResultSize["
-								+ primaryResultSize + "]");
-					}
-				}
+				} 
+//				else {
+//					if (primaryResultSize != tempDoResults.size()) {// 对比与上一次的primaryResultSize
+//																	// ，如果不相等那么抛出异常
+//						throw new PrimaryExtractException("extract primaryKey[" + doPaserItem.getOutputKey()
+//								+ "]'s result size[" + tempDoResults.size() + "] did not match last primaryResultSize["
+//								+ primaryResultSize + "]");
+//					}
+//				}
 			} else {
-				if (null == tempDoResults || tempDoResults.isEmpty()) {// 如果非主键结果为空，那么默认给它赋值跟主键数量一样的 空值
+				if (null == tempDoResults || tempDoResults.isEmpty()) {// 如果非主键结果为空，那么默认给它赋值跟主键数量一样的
+																		// 空值
 					tempDoResults = null == tempDoResults ? new ArrayList<>(primaryResultSize) : tempDoResults;
 					for (int i = 0; i < primaryResultSize; i++) {
 						tempDoResults.add(EMPTY_VALUE);
 					}
+				}else if (tempDoResults.size()<primaryResultSize&&doPaserItem.getType() == ExtractItemType.META.value()){
+					int supplementCount=primaryResultSize-tempDoResults.size();
+					String defaultResult=tempDoResults.get(0);
+					for(int i=0;i<supplementCount;i++){
+						tempDoResults.add(defaultResult);
+					}
+				}else if (tempDoResults.size()<primaryResultSize){
+					int supplementCount=primaryResultSize-tempDoResults.size();
+					for(int i=0;i<supplementCount;i++){
+						tempDoResults.add(EMPTY_VALUE);
+					}
 				}
 			}
-			List<String> doResults= new ArrayList<>(tempDoResults.size());
+			List<String> doResults = new ArrayList<>(tempDoResults.size());
 			for (String doResult : tempDoResults) {
 				String tempExtract = paserString(doPaserItem, doingPage, doResult);
 				doResults.add(tempExtract);
 			}
 			resultContext.addExtractResult(doPaserItem.getOutputKey(), doResults);
 		}
-		//组装结果，并加上系统默认字段
+		// 组装结果，并加上系统默认字段
 		assembleExtractResult(resultContext, doingPage, primaryResultSize);
 		return resultContext;
 	}
 
-	
-	
-	
-	
-	
 	/**
 	 * 对抽取出来的结果进行组装，并加上系统默认字段
+	 * 
 	 * @param resultContext
 	 * @return
 	 */
-	@SuppressWarnings("deprecation")
 	private void assembleExtractResult(ResultContext resultContext, Page doingPage, int primaryResultSize) {
-		if(primaryResultSize>0){
+		if (primaryResultSize > 0) {
 			String nowTime = DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1);
-			List<String> newIDList=new ArrayList<>(primaryResultSize);
-			List<String> idList=new ArrayList<>(primaryResultSize);
-			List<String> workerNameList=new ArrayList<>(primaryResultSize);
-			List<String> collectionDateList=new ArrayList<>(primaryResultSize);
-			List<String> originUrlList=new ArrayList<>(primaryResultSize);
-			final String workerName=getAbstractWorker().getName();
-			String newID =null;
-			String id =null;
+			List<String> idList = new ArrayList<>(primaryResultSize);
+			List<String> workerNameList = new ArrayList<>(primaryResultSize);
+			List<String> collectionDateList = new ArrayList<>(primaryResultSize);
+			List<String> originUrlList = new ArrayList<>(primaryResultSize);
+			final String workerName = getAbstractWorker().getName();
+			String id = null;
 			for (int i = 0; i < primaryResultSize; i++) {
 				Map<String, String> dataMap = new HashMap<>();
-				List<String> primaryKeysValue = new ArrayList<>();
 				for (ExtractItem extractItem : extractItems) {
 					List<String> tempResultList = resultContext.getExtractResult(extractItem.getOutputKey());
 					String result = tempResultList.get(i);
 					dataMap.put(extractItem.getOutputKey(), result);
-					if (1 == extractItem.getPrimary()) {
-						primaryKeysValue.add(result);
-					}
 				}
-				newID=workerName+"_"+extracterIndex.getAndIncrement();
-				id = getResultID(primaryKeysValue);
-				dataMap.put(Extracter.DEFAULT_RESULT_NEW_ID, newID);
+				id = workerName + "_" + extracterIndex.getAndIncrement();
 				dataMap.put(Extracter.DEFAULT_RESULT_ID, id);
 				dataMap.put(Extracter.DEFAULT_RESULT_COLLECTION_DATE, nowTime);
 				dataMap.put(Extracter.DEFAULT_RESULT_ORIGIN_URL, doingPage.getFinalUrl());
-				
-				newIDList.add(newID);
+
 				idList.add(id);
 				workerNameList.add(workerName);
 				collectionDateList.add(nowTime);
 				originUrlList.add(doingPage.getFinalUrl());
 				resultContext.addoutResult(dataMap);
 			}
-			resultContext.addExtractResult(Extracter.DEFAULT_RESULT_NEW_ID, newIDList);
 			resultContext.addExtractResult(Extracter.DEFAULT_RESULT_ID, idList);
 			resultContext.addExtractResult(Extracter.DEFAULT_RESULT_COLLECTION_DATE, collectionDateList);
 			resultContext.addExtractResult(Extracter.DEFAULT_RESULT_ORIGIN_URL, originUrlList);
 		}
-	}
-
-	private static String getResultID(List<String> keyValues) {
-		StringBuilder newValue = new StringBuilder();
-		for (String value : keyValues) {
-			newValue.append(value);
-		}
-		String id = MD5Utils.MD5(newValue.toString());
-		return id;
 	}
 
 	/**
@@ -224,7 +230,7 @@ public abstract class AbstractExtracter implements Extracter {
 				String telPhone = "";
 				for (String word : temp) {
 					if (TelPhoneUtils.isTelPhone(word)) {
-						telPhone = word.trim();
+						telPhone = StringUtils.trim(word);
 					}
 				}
 				return telPhone;

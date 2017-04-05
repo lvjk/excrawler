@@ -1,7 +1,5 @@
 package six.com.crawler.work.plugs;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
@@ -66,8 +64,7 @@ public class TmsfPresellInfoWorker extends AbstractCrawlWorker {
 			String[] jsonKeys = StringUtils.split(jsonKey, ".");
 			Map<String, Object> tempJsonMap = (Map<String, Object>) map.get(jsonKeys[0]);
 			Object jsonValue = tempJsonMap.get(jsonKeys[1]);
-			doingPage.getMetaMap().computeIfAbsent(field, mapKey -> new ArrayList<>())
-					.add(null != jsonValue ? jsonValue.toString() : "");
+			doingPage.addMeta(field, null != jsonValue ? jsonValue.toString() : "");
 		}
 	}
 
@@ -79,23 +76,19 @@ public class TmsfPresellInfoWorker extends AbstractCrawlWorker {
 	@Override
 	protected void onComplete(Page doingPage, ResultContext resultContext) {
 		String sid = resultContext.getExtractResult("sid").get(0);
-		String propertyid = resultContext.getExtractResult("propertyid").get(0);
+		String propertyid = resultContext.getExtractResult("propertyId").get(0);
 		String presellid = resultContext.getExtractResult("presellid").get(0);
-		String systemPresellId = resultContext.getOutResults().get(0).get(Extracter.DEFAULT_RESULT_ID);
-		if(StringUtils.isBlank(systemPresellId)){
-			throw new RuntimeException("did not get presellid");
-		}else{
-			String houseUrl = StringUtils.replace(houseUrlTemplate, sidTemplate, sid);
-			houseUrl = StringUtils.replace(houseUrl, propertyidTemplate, propertyid);
-			houseUrl = StringUtils.replace(houseUrl, presellIdTemplate, presellid);
-			Page housePage = new Page(doingPage.getSiteCode(), 1, houseUrl, houseUrl);
-			housePage.setReferer(doingPage.getFinalUrl());
-			housePage.setMethod(HttpMethod.GET);
-			housePage.setType(PageType.DATA.value());
-			housePage.getMetaMap().put("presellId_org", Arrays.asList(presellid));
-			housePage.getMetaMap().put("presellId", Arrays.asList(systemPresellId));
-			houseUrlQueue.push(housePage);
-		}
+		String houseUrl = StringUtils.replace(houseUrlTemplate, sidTemplate, sid);
+		houseUrl = StringUtils.replace(houseUrl, propertyidTemplate, propertyid);
+		houseUrl = StringUtils.replace(houseUrl, presellIdTemplate, presellid);
+		Page housePage = new Page(doingPage.getSiteCode(), 1, houseUrl, houseUrl);
+		housePage.setReferer(doingPage.getFinalUrl());
+		housePage.setMethod(HttpMethod.GET);
+		housePage.setType(PageType.DATA.value());
+		housePage.getMetaMap().putAll(doingPage.getMetaMap());
+		housePage.addMeta("propertyId", propertyid);
+		housePage.addMeta("presellId_org", presellid);
+		houseUrlQueue.push(housePage);
 	}
 
 	@Override

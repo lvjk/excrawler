@@ -40,9 +40,9 @@ public class JobTableUtils {
 	private static String replaceTableNameFlag(String sql, String tableName) {
 		String newSql = null;
 		if (StringUtils.contains(sql, TABLE_NAME_FLAG)) {
-			newSql = sql.replaceAll(TABLE_NAME_FLAG, tableName);
+			newSql =StringUtils.replace(sql, TABLE_NAME_FLAG, tableName);
 		} else if (StringUtils.contains(sql, TABLE_NAME_FLAG_OLD)) {
-			newSql = sql.replaceAll(TABLE_NAME_FLAG_OLD, tableName);
+			newSql = StringUtils.replace(sql, TABLE_NAME_FLAG_OLD, tableName);
 		}
 		return newSql;
 	}

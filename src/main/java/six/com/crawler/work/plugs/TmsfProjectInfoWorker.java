@@ -1,6 +1,5 @@
 package six.com.crawler.work.plugs;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -14,6 +13,7 @@ import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.exception.BaseException;
 import six.com.crawler.http.HttpMethod;
+import six.com.crawler.utils.ArrayListUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.extract.Extracter;
 import six.com.crawler.work.space.RedisWorkSpace;
@@ -93,8 +93,8 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 						latitude = num;
 					}
 				}
-				doingPage.getMetaMap().put("latitude", Arrays.asList(String.valueOf(latitude)));
-				doingPage.getMetaMap().put("longitude", Arrays.asList(String.valueOf(longitude)));
+				doingPage.getMetaMap().put("latitude", ArrayListUtils.asList(String.valueOf(latitude)));
+				doingPage.getMetaMap().put("longitude", ArrayListUtils.asList(String.valueOf(longitude)));
 			}
 		}
 	}
@@ -125,8 +125,9 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 					presellPage.setReferer(doingPage.getFinalUrl());
 					presellPage.setMethod(HttpMethod.GET);
 					presellPage.setType(PageType.DATA.value());
-					presellPage.getMetaMap().put("sid", Arrays.asList(sid));
-					presellPage.getMetaMap().put("projectId", Arrays.asList(projectId));
+					presellPage.getMetaMap().putAll(doingPage.getMetaMap());
+					presellPage.getMetaMap().put("sid", ArrayListUtils.asList(sid));
+					presellPage.getMetaMap().put("projectId", ArrayListUtils.asList(projectId));
 					presellUrlQueue.push(presellPage);
 				}else{
 					throw new RuntimeException("did not get projectId");

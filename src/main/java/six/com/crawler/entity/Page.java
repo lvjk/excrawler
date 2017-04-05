@@ -21,7 +21,7 @@ import six.com.crawler.work.space.WorkSpaceData;
  * @author sixliu E-mail:359852326@qq.com
  * @version 创建时间：2016年5月16日 下午8:13:12 类说明
  */
-public class Page implements WorkSpaceData,Serializable {
+public class Page implements WorkSpaceData, Serializable {
 
 	/**
 	 * 
@@ -65,10 +65,6 @@ public class Page implements WorkSpaceData,Serializable {
 	private transient String pageSrc;// 页面源码
 	// transient 标记字段不会被序列化
 	private transient Document doc;// page Document
-	// transient 标记字段不会被序列化
-	private transient String errMsg;// 页面处理错误信息
-	// transient 标记字段不会被序列化
-	private transient Throwable err;// 页面处理错误异常对象
 
 	private String waitJsLoadElement;// 等待js加载 元素
 	// transient 标记字段不会被序列化
@@ -78,9 +74,9 @@ public class Page implements WorkSpaceData,Serializable {
 
 	private transient List<String> newDataUrl;// 新的数据页面
 
-	private Map<String, List<String>> metaMap;
+	private Map<String, List<String>> metaMap = new HashMap<>();
 
-	private int noNeedDown;// 不需要下载:1  需要下载默认:0
+	private int noNeedDown;// 不需要下载:1 需要下载默认:0
 
 	public PostContentType getPostContentType() {
 		return postContentType;
@@ -184,22 +180,6 @@ public class Page implements WorkSpaceData,Serializable {
 
 	public void setRetryProcess(int retryProcess) {
 		this.retryProcess = retryProcess;
-	}
-
-	public String getErrMsg() {
-		return errMsg;
-	}
-
-	public void setErrMsg(String errMsg) {
-		this.errMsg = errMsg;
-	}
-
-	public Throwable getErr() {
-		return err;
-	}
-
-	public void setErr(Throwable err) {
-		this.err = err;
 	}
 
 	public String getSiteCode() {
@@ -321,7 +301,7 @@ public class Page implements WorkSpaceData,Serializable {
 	public String getPageKey() {
 		if (null == pageKey) {
 			String temp = originalUrl;
-			if (null != parameters) {
+			if (null != parameters && !parameters.isEmpty()) {
 				String parametersJson = JsonUtils.toJson(parameters);
 				temp += parametersJson;
 			}
@@ -330,18 +310,15 @@ public class Page implements WorkSpaceData,Serializable {
 		return pageKey;
 	}
 
-	public List<String> getMeta(String key) {
-		return getMetaMap().get(key);
+	public void addMeta(String key, String meta) {
+		metaMap.computeIfAbsent(key, mapKey -> new ArrayList<>()).add(meta);
 	}
 
-	public void setMetaMap(Map<String, List<String>> metaMap) {
-		this.metaMap = metaMap;
+	public List<String> getMeta(String key) {
+		return metaMap.get(key);
 	}
 
 	public Map<String, List<String>> getMetaMap() {
-		if (null == metaMap) {
-			metaMap = new HashMap<>();
-		}
 		return metaMap;
 	}
 

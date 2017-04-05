@@ -19,16 +19,11 @@ import six.com.crawler.entity.ResultContext;
 public interface Extracter {
 
 	/**
-	 * 系统默认 采集数据id ,目前采用new id
-	 */
-	@Deprecated
-	public static final String DEFAULT_RESULT_ID = "id";	
-	
-	/**
 	 * 系统默认 采集数据id:由worker name +worker计数生成 ，跟业务无关
 	 */
-	public static final String DEFAULT_RESULT_NEW_ID = "ID";
+	public static final String DEFAULT_RESULT_ID = "id";	
 	
+
 	/**
 	 * 系统默认 采集日期 字段
 	 */

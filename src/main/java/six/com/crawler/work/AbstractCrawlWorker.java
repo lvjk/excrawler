@@ -1,6 +1,5 @@
 package six.com.crawler.work;
 
-
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -101,50 +100,38 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		} else {
 			storeTypeInt = getJob().getParamInt(JobConTextConstants.RESULT_STORE_TYPE, 0);
 		}
-		this.store = StoreFactory.newStore(this,StoreType.valueOf(storeTypeInt));
+		this.store = StoreFactory.newStore(this, StoreType.valueOf(storeTypeInt));
 		insideInit();
 	}
 
 	@Override
 	protected void insideWork() throws Exception {
-		long startTime = System.currentTimeMillis();
 		doingPage = workQueue.pull();
-		long endTime = System.currentTimeMillis();
-		log.debug("workQueue pull time:" + (endTime - startTime));
 		if (null != doingPage) {
 			try {
-				log.info("processor page:" + doingPage.getOriginalUrl());
+				log.info("start to process page:" + doingPage.getOriginalUrl());
 				// 暴露给实现类的
 				beforeDown(doingPage);
 				// 设置下载器代理
 				downer.setHttpProxy(httpProxyPool.getHttpProxy());
-				startTime = System.currentTimeMillis();
 				// 下载数据
 				downer.down(doingPage);
-				endTime = System.currentTimeMillis();
-				log.debug("downer down time:" + (endTime - startTime));
-				startTime = System.currentTimeMillis();
 				// 暴露给实现类的抽取前操作
 				beforeExtract(doingPage);
 				// 抽取结果
 				ResultContext resultContext = extracter.extract(doingPage);
 				// 暴露给实现类的抽取后操作
 				afterExtract(doingPage, resultContext);
-				endTime = System.currentTimeMillis();
-				log.debug("extracter extract time:" + (endTime - startTime));
-				startTime = System.currentTimeMillis();
 				// 存储数据
 				int storeCount = store.store(resultContext);
 				getWorkerSnapshot().setTotalResultCount(getWorkerSnapshot().getTotalResultCount() + storeCount);
-				endTime = System.currentTimeMillis();
-				log.debug("store time:" + (endTime - startTime));
 				// 暴露给实现类的完成操作
 				onComplete(doingPage, resultContext);
 				// 流程走到这步，可以确认数据已经被完全处理,那么ack 数据，最终删除数据备份
 				workQueue.ack(doingPage);
 				// 添加数据被处理记录
 				workQueue.addDone(doingPage);
-				log.info("finished processor page:" + doingPage.getOriginalUrl());
+				log.info("finished processing page:" + doingPage.getOriginalUrl());
 			} catch (Exception e) {
 				throw new RuntimeException("process page err:" + doingPage.getOriginalUrl(), e);
 			}

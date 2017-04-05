@@ -1,7 +1,6 @@
 package six.com.crawler.work.plugs;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +13,7 @@ import org.jsoup.select.Elements;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.http.HttpMethod;
+import six.com.crawler.utils.ArrayListUtils;
 import six.com.crawler.utils.JsoupUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.utils.JsoupUtils.TableResult;
@@ -78,10 +78,10 @@ public class TmsfPresellInfo1Worker extends AbstractCrawlWorker {
 							} else {
 								key = "superviseBank";
 							}
-							doingPage.getMetaMap().put(key, Arrays.asList(value));
+							doingPage.getMetaMap().put(key, ArrayListUtils.asList(value));
 						}
 					}else{
-						doingPage.getMetaMap().put(key, Arrays.asList(value));
+						doingPage.getMetaMap().put(key, ArrayListUtils.asList(value));
 					}
 				}
 			}
@@ -105,7 +105,7 @@ public class TmsfPresellInfo1Worker extends AbstractCrawlWorker {
 
 		String propertyidCss = "input[id=propertyid]";
 		Element propertyidElement = doingPage.getDoc().select(propertyidCss).first();
-		String propertyid = propertyidElement.attr("value");
+		String propertyId = propertyidElement.attr("value");
 
 		String tidCss = "input[id=tid]";
 		Element tidElement = doingPage.getDoc().select(tidCss).first();
@@ -128,7 +128,7 @@ public class TmsfPresellInfo1Worker extends AbstractCrawlWorker {
 				String houseInfoUrl = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), formAction);
 				Map<String, Object> paramMap = new HashMap<String, Object>();
 				paramMap.put("sid", sid);
-				paramMap.put("propertyid", propertyid);
+				paramMap.put("propertyid", propertyId);
 				paramMap.put("tid", tid);
 				paramMap.put("presellid", presellid);
 				paramMap.put("buildingid", buildingid);
@@ -136,7 +136,8 @@ public class TmsfPresellInfo1Worker extends AbstractCrawlWorker {
 				houseInfoPage.setReferer(doingPage.getFinalUrl());
 				houseInfoPage.setMethod(HttpMethod.POST);
 				houseInfoPage.setParameters(paramMap);
-				houseInfoPage.getMetaMap().put("presellId", Arrays.asList(presellId));
+				houseInfoPage.addMeta("propertyId", propertyId);
+				houseInfoPage.addMeta("presellId", presellId);
 				houseInfoQueue.push(houseInfoPage);
 			}
 		}

@@ -1,7 +1,5 @@
 package six.com.crawler.work.plugs;
 
-import java.util.Arrays;
-
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -20,7 +18,7 @@ import six.com.crawler.work.space.RedisWorkSpace;
  */
 public class TmsfHouseUrlWorker extends AbstractCrawlWorker {
 
-	RedisWorkSpace<Page> houseInfoQueue;
+	RedisWorkSpace<Page> houseStatusQueue;
 	private String propertyidTemplate = "<<propertyid>>";
 	private String sidTemplate = "<<sid>>";
 	private String presellIdTemplate = "<<presellid>>";
@@ -42,7 +40,7 @@ public class TmsfHouseUrlWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void insideInit() {
-		houseInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tmsf_house_info", Page.class);
+		houseStatusQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tmsf_house_status", Page.class);
 	}
 
 	protected void beforeDown(Page doingPage) {
@@ -103,9 +101,9 @@ public class TmsfHouseUrlWorker extends AbstractCrawlWorker {
 			houseInfoPage.setReferer(doingPage.getFinalUrl());
 			houseInfoPage.setMethod(HttpMethod.GET);
 			houseInfoPage.setType(PageType.DATA.value());
-			houseInfoPage.getMetaMap().put("buildingId", Arrays.asList(buildingId));
+			houseInfoPage.addMeta("buildingId", buildingId);
 			houseInfoPage.getMetaMap().putAll(doingPage.getMetaMap());
-			houseInfoQueue.push(houseInfoPage);
+			houseStatusQueue.push(houseInfoPage);
 		}
 	}
 

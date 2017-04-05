@@ -1,6 +1,6 @@
 package six.com.crawler.work.plugs;
 
-import java.util.Arrays;
+import six.com.crawler.utils.ArrayListUtils;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,7 +90,7 @@ public class TmsfProjectListWorker extends AbstractCrawlWorker {
 			if (null != projectNameElement) {
 				projectName = projectNameElement.text();
 				if (StringUtils.isNotBlank(projectName)) {
-					metaMap.put("projectName", Arrays.asList(projectName));
+					metaMap.put("projectName",ArrayListUtils.asList(projectName));
 				}
 			}
 			Element brandNameElement = projecrDivElement.select(brandNameCss).first();
@@ -101,7 +101,7 @@ public class TmsfProjectListWorker extends AbstractCrawlWorker {
 					brandName = StringUtils.remove(brandName, "推广名");
 					brandName = StringUtils.remove(brandName, ":");
 					brandName = StringUtils.remove(brandName, "：");
-					metaMap.put("brandName", Arrays.asList(brandName));
+					metaMap.put("brandName", ArrayListUtils.asList(brandName));
 				}
 			}
 			Element districtAndAddressElement = projecrDivElement.select(districtAndAddressCss).first();
@@ -112,10 +112,10 @@ public class TmsfProjectListWorker extends AbstractCrawlWorker {
 				district = StringUtils.substringBetween(districtAndAddress, "[", "]");
 				address = StringUtils.substringAfter(districtAndAddress, "]");
 				if (StringUtils.isNotBlank(district)) {
-					metaMap.put("district", Arrays.asList(district));
+					metaMap.put("district", ArrayListUtils.asList(district));
 				}
 				if (StringUtils.isNotBlank(address)) {
-					metaMap.put("address", Arrays.asList(address));
+					metaMap.put("address", ArrayListUtils.asList(address));
 				}
 			}
 
@@ -123,8 +123,8 @@ public class TmsfProjectListWorker extends AbstractCrawlWorker {
 			onclick = StringUtils.substringBetween(onclick, "toPropertyInfo(", ")");
 			String[] params = StringUtils.split(onclick, ",");
 			
-			metaMap.put("sid", Arrays.asList(params[0]));
-			metaMap.put("propertyId", Arrays.asList(params[1]));
+			metaMap.put("sid", ArrayListUtils.asList(params[0]));
+			metaMap.put("propertyId", ArrayListUtils.asList(params[1]));
 			
 			String projectUrl = StringUtils.replace(projectUrilTemplate, sidFlag, params[0]);
 			projectUrl = StringUtils.replace(projectUrl, propertyidFlag, params[1]);

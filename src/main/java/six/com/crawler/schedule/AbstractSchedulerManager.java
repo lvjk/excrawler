@@ -1,6 +1,5 @@
 package six.com.crawler.schedule;
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -40,11 +39,11 @@ import six.com.crawler.work.space.WorkSpaceManager;
 public abstract class AbstractSchedulerManager implements SchedulerManager, InitializingBean {
 
 	private final static String WORKER_NAME_PREFIX = "worker";
-	
+
 	private final static int SAVE_ERR_MSG_MAX = 20;
-	
-	private final static long  WORKER_SNAPSHOT_REPORT_FREQUENCY=1000*60;
-	
+
+	private final static long WORKER_SNAPSHOT_REPORT_FREQUENCY = 1000 * 60;
+
 	@Autowired
 	private SpiderConfigure configure;
 
@@ -53,28 +52,28 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 
 	@Autowired
 	private SiteDao siteDao;
-	
+
 	@Autowired
 	private ExtractPathDao extractPathDao;
 
 	@Autowired
 	private JobDao jobDao;
-	
+
 	@Autowired
 	private JobSnapshotDao jobSnapshotDao;
 
 	@Autowired
 	private JobParamDao jobParamDao;
-	
+
 	@Autowired
 	private ExtractItemDao extractItemDao;
-	
+
 	@Autowired
 	private WorkerSnapshotDao workerSnapshotDao;
-	
+
 	@Autowired
 	private WorkerErrMsgDao workerErrMsgDao;
-	
+
 	@Autowired
 	private RedisManager redisManager;
 
@@ -89,10 +88,9 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 
 	@Autowired
 	private QQEmailClient emailClient;
-	
+
 	@Autowired
 	private WorkSpaceManager WorkSpaceManager;
-
 
 	/**
 	 * 内部初始化
@@ -102,23 +100,22 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	public void afterPropertiesSet() {
 		init();
 	}
-	
+
 	/**
-	 * 判断job是否运行。
-	 * 通过jobName 获取job运行快照JobSnapshot
-	 * 如果存在并且状态是执行或者暂停那么 返回true否则false
+	 * 判断job是否运行。 通过jobName 获取job运行快照JobSnapshot 如果存在并且状态是执行或者暂停那么 返回true否则false
+	 * 
 	 * @param jobName
 	 * @return
 	 */
 	public boolean isRunning(String jobName) {
 		JobSnapshot jobSnapshot = getJobSnapshot(jobName);
-		return null != jobSnapshot && (
-				jobSnapshot.getEnumStatus() == JobSnapshotState.EXECUTING
+		return null != jobSnapshot && (jobSnapshot.getEnumStatus() == JobSnapshotState.EXECUTING
 				|| jobSnapshot.getEnumStatus() == JobSnapshotState.SUSPEND);
 	}
 
 	/**
 	 * 通过jobname获取 job运行的节点
+	 * 
 	 * @param jobName
 	 * @return
 	 */
@@ -138,9 +135,10 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		}
 		return nodes;
 	}
-	
+
 	/**
 	 * 注解Job运行快照 JobSnapshot至缓存
+	 * 
 	 * @param jobSnapshot
 	 */
 	public void registerJobSnapshot(JobSnapshot jobSnapshot) {
@@ -165,6 +163,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 
 	/**
 	 * 更新job运行快照
+	 * 
 	 * @param jobSnapshot
 	 */
 	public void updateJobSnapshot(JobSnapshot jobSnapshot) {
@@ -172,9 +171,9 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		getRedisManager().hset(jobSnapshotskey, jobSnapshot.getName(), jobSnapshot);
 	}
 
-
 	/**
 	 * 通过jobname获取 job运行快照
+	 * 
 	 * @param jobName
 	 * @return
 	 */
@@ -183,9 +182,10 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		JobSnapshot jobSnapshot = getRedisManager().hget(jobSnapshotskeyskey, jobName, JobSnapshot.class);
 		return jobSnapshot;
 	}
-	
+
 	/**
 	 * 统计job运行快照下所有worker的运行信息
+	 * 
 	 * @param jobSnapshot
 	 * @param workerSnapshots
 	 */
@@ -221,9 +221,9 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		}
 	}
 
-
 	/**
 	 * 获取所有运行任务快照
+	 * 
 	 * @return
 	 */
 	public List<JobSnapshot> getJobSnapshots() {
@@ -234,6 +234,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 
 	/**
 	 * 通过jobName删除指定的任务运行快照
+	 * 
 	 * @param jobName
 	 */
 	public void delJobSnapshot(String jobName) {
@@ -243,6 +244,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 
 	/**
 	 * 通过任务名称删除运行任务所有worker的快照
+	 * 
 	 * @param jobName
 	 */
 	public void delWorkerSnapshots(String jobName) {
@@ -252,6 +254,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 
 	/**
 	 * 通过任务名获取运行任务的所有 worker快照信息
+	 * 
 	 * @param jobName
 	 * @return
 	 */
@@ -262,32 +265,43 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		workerSnapshots.addAll(workerInfosMap.values());
 		return workerSnapshots;
 	}
-	
+
 	/**
-	 * <p>更新缓存中WorkSnapshot并且 Report WorkSnapshot
-	 * <p>前提 null != errMsgs&&errMsgs.size() > 0：</p>
-	 * <p>当isSaveErrMsg==true时会将异常消息保存</p>
-	 * <p>或者当errMsgs.size() >= SAVE_ERR_MSG_MAX时会将异常消息保存 ,(从异常消息数量去写入，并免内存中大量消息没有被处理)</p>
-	 * <p>或者当LastReport >= WORKER_SNAPSHOT_REPORT_FREQUENCY时会将异常消息保存</p>
+	 * <p>
+	 * 更新缓存中WorkSnapshot并且 Report WorkSnapshot
+	 * <p>
+	 * 前提 null != errMsgs&&errMsgs.size() > 0：
+	 * </p>
+	 * <p>
+	 * 当isSaveErrMsg==true时会将异常消息保存
+	 * </p>
+	 * <p>
+	 * 或者当errMsgs.size() >= SAVE_ERR_MSG_MAX时会将异常消息保存
+	 * ,(从异常消息数量去写入，并免内存中大量消息没有被处理)
+	 * </p>
+	 * <p>
+	 * 或者当LastReport >= WORKER_SNAPSHOT_REPORT_FREQUENCY时会将异常消息保存
+	 * </p>
+	 * 
 	 * @param workerSnapshot
 	 * @param isSaveErrMsg
 	 */
 	public void updateWorkSnapshotAndReport(WorkerSnapshot workerSnapshot, boolean isSaveErrMsg) {
 		List<WorkerErrMsg> errMsgs = workerSnapshot.getWorkerErrMsgs();
-		long nowTime=0;
-		if ((null != errMsgs&&errMsgs.size() > 0) && (isSaveErrMsg 
-								||errMsgs.size() >= SAVE_ERR_MSG_MAX
-								||(nowTime=System.currentTimeMillis())-workerSnapshot.getLastReport()>=WORKER_SNAPSHOT_REPORT_FREQUENCY
-								)) {
+		long nowTime = 0;
+		if ((null != errMsgs && errMsgs.size() > 0)
+				&& (isSaveErrMsg || errMsgs.size() >= SAVE_ERR_MSG_MAX || (nowTime = System.currentTimeMillis())
+						- workerSnapshot.getLastReport() >= WORKER_SNAPSHOT_REPORT_FREQUENCY)) {
 			getWorkerErrMsgDao().batchSave(errMsgs);
 			errMsgs.clear();
 			workerSnapshot.setLastReport(nowTime);
 		}
 		updateWorkerSnapshot(workerSnapshot);
 	}
-	
+
 	/**
 	 * 更新缓存中workerSnapshot
+	 * 
 	 * @param workerSnapshot
 	 */
 	public void updateWorkerSnapshot(WorkerSnapshot workerSnapshot) {
@@ -295,7 +309,6 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		getRedisManager().hset(workerSnapshotKey, workerSnapshot.getName(), workerSnapshot);
 	}
 
-	
 	/**
 	 * 判断任务的所有worker是否全部wait
 	 */
@@ -311,7 +324,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		}
 		return result;
 	}
-	
+
 	/**
 	 * 通过job 获取一个worker name 名字统一有 前缀 : 节点+job 名字
 	 * +Job类型+WORKER_NAME_PREFIX+当前Job worker的序列号组成
@@ -326,11 +339,11 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		StringBuilder sbd = new StringBuilder();
 		sbd.append(job.getName()).append("_");
 		sbd.append(WORKER_NAME_PREFIX).append("_");
+		sbd.append(getNodeManager().getCurrentNode().getName()).append("_");
 		sbd.append(serialNumber);
 		return sbd.toString();
 	}
-	
-	
+
 	public NodeManager getNodeManager() {
 		return nodeManager;
 	}
@@ -346,7 +359,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	public void setConfigure(SpiderConfigure configure) {
 		this.configure = configure;
 	}
-	
+
 	public SiteDao getSiteDao() {
 		return siteDao;
 	}
@@ -363,7 +376,6 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		this.extractPathDao = extractPathDao;
 	}
 
-
 	public JobDao getJobDao() {
 		return jobDao;
 	}
@@ -371,7 +383,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	public void setJobDao(JobDao jobDao) {
 		this.jobDao = jobDao;
 	}
-	
+
 	public JobSnapshotDao getJobSnapshotDao() {
 		return jobSnapshotDao;
 	}
@@ -379,7 +391,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	public void setJobSnapshotDao(JobSnapshotDao jobSnapshotDao) {
 		this.jobSnapshotDao = jobSnapshotDao;
 	}
-	
+
 	public JobParamDao getJobParamDao() {
 		return jobParamDao;
 	}
@@ -387,7 +399,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	public void setJobParamDao(JobParamDao jobParamDao) {
 		this.jobParamDao = jobParamDao;
 	}
-	
+
 	public ExtractItemDao getExtractItemDao() {
 		return extractItemDao;
 	}
@@ -395,7 +407,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	public void setExtractItemDao(ExtractItemDao extractItemDao) {
 		this.extractItemDao = extractItemDao;
 	}
-	
+
 	public WorkerSnapshotDao getWorkerSnapshotDao() {
 		return workerSnapshotDao;
 	}
@@ -403,7 +415,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	public void setWorkerSnapshotDao(WorkerSnapshotDao workerSnapshotDao) {
 		this.workerSnapshotDao = workerSnapshotDao;
 	}
-	
+
 	public WorkerErrMsgDao getWorkerErrMsgDao() {
 		return workerErrMsgDao;
 	}
@@ -444,7 +456,6 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		this.imageDistinguish = imageDistinguish;
 	}
 
-	
 	public QQEmailClient getEmailClient() {
 		return emailClient;
 	}
@@ -452,7 +463,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	public void setEmailClient(QQEmailClient emailClient) {
 		this.emailClient = emailClient;
 	}
-	
+
 	public WorkSpaceManager getWorkSpaceManager() {
 		return WorkSpaceManager;
 	}
@@ -460,6 +471,5 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	public void setWorkSpaceManager(WorkSpaceManager workSpaceManager) {
 		WorkSpaceManager = workSpaceManager;
 	}
-
 
 }

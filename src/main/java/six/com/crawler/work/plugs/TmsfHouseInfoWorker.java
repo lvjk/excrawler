@@ -70,14 +70,6 @@ public class TmsfHouseInfoWorker extends AbstractCrawlWorker {
 	@SuppressWarnings("unchecked")
 	@Override
 	protected void beforeExtract(Page doingPage) {
-		String floorDivCss = "div[class=raphael_box][types=1]";
-		Elements floorDivs = doingPage.getDoc().select(floorDivCss);
-		Map<String, String> floorMap = new HashMap<>();
-		for (Element floorDiv : floorDivs) {
-			String floorKey = floorDiv.attr("floor");
-			String floor = floorDiv.attr("title");
-			floorMap.put(floorKey, floor);
-		}
 		
 		Element sidElement = doingPage.getDoc().select(sidCss).first();
 		String sid = "";
@@ -107,7 +99,6 @@ public class TmsfHouseInfoWorker extends AbstractCrawlWorker {
 		}
 
 		String presellId_org = doingPage.getMetaMap().get("presellId_org").get(0);
-		String presellId = doingPage.getMetaMap().get("presellId").get(0);
 		String buildingId = doingPage.getMetaMap().get("buildingId").get(0);
 		String houseJsonUrl = StringUtils.replace(houseJsonUrlTemplate, buildingidTemplate, buildingId);
 		houseJsonUrl = StringUtils.replace(houseJsonUrl, presellIdTemplate, presellId_org);
@@ -126,7 +117,16 @@ public class TmsfHouseInfoWorker extends AbstractCrawlWorker {
 		String houseInfoJson = housePage.getPageSrc();
 		Map<String, Object> map = JsonUtils.toObject(houseInfoJson, Map.class);
 		List<Map<String, Object>> houseList = (List<Map<String, Object>>) map.get("list");
-		List<String> presellIds=new ArrayList<>();
+
+		String floorDivCss = "div[class=raphael_box][types=1]";
+		Elements floorDivs = doingPage.getDoc().select(floorDivCss);
+		Map<String, String> floorMap = new HashMap<>();
+		for (Element floorDiv : floorDivs) {
+			String floorKey = floorDiv.attr("floor");
+			String floor = floorDiv.attr("title");
+			floorMap.put(floorKey, floor);
+		}
+
 		for (Map<String, Object> houseMap : houseList) {
 			String internalidOb = houseMap.get("internalid").toString();
 			if (null == internalidOb || StringUtils.isBlank(internalidOb.toString())) {
@@ -156,9 +156,7 @@ public class TmsfHouseInfoWorker extends AbstractCrawlWorker {
 				doingPage.getMetaMap().computeIfAbsent(field, mapKey -> new ArrayList<>())
 				.add(null != valueOb ? valueOb.toString() : "");
 			}
-			presellIds.add(presellId);
-		}                           
-		doingPage.getMetaMap().put("presellId",presellIds);
+		}
 	}
 
 	@Override
