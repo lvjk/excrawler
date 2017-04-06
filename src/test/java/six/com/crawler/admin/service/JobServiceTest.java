@@ -7,10 +7,9 @@ import org.apache.commons.lang3.time.DateFormatUtils;
 import org.junit.Test;
 
 import six.com.crawler.BaseTest;
-import six.com.crawler.api.ResponseMsg;
+import six.com.crawler.admin.api.ResponseMsg;
 import six.com.crawler.common.DateFormats;
 import six.com.crawler.entity.Job;
-import six.com.crawler.entity.JobParam;
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.JobSnapshotState;
 import six.com.crawler.entity.PageQuery;
@@ -28,23 +27,13 @@ public class JobServiceTest extends BaseTest {
 
 	@Test
 	public void test() {
-		ResponseMsg<PageQuery<Job>> responseMsg = new ResponseMsg<>("test");
 		String jobName = "qichacha";
 		int pageIndex = 0;
 		int pageSize = 2;
-		jobService.queryJobs(responseMsg, jobName, pageIndex, pageSize);
+		ResponseMsg<PageQuery<Job>> responseMsg = jobService.queryJobs(jobName, pageIndex, pageSize);
 		System.out.println(responseMsg);
 	}
 
-	public void queryJobParams() {
-		String jobName = "tmsf_project_list";
-		List<JobParam> list = jobService.queryJobParams(jobName);
-		if (null != list) {
-			for (JobParam jobParam : list) {
-				LOG.info("jobName:" + jobName + "[" + jobParam.getName() + ":" + jobParam.getValue() + "]");
-			}
-		}
-	}
 
 	public void saveJobSnapshot() {
 		String jobName = "test_name";
@@ -57,11 +46,11 @@ public class JobServiceTest extends BaseTest {
 
 	public void queryJobSnapshot() {
 		String jobName = "test_name";
-		List<JobSnapshot> result = jobService.queryJobSnapshotsFromHistory(jobName);
-		for (JobSnapshot JobSnapshot : result) {
+		ResponseMsg<List<JobSnapshot>> result = jobService.queryJobSnapshotsFromHistory(jobName);
+		for (JobSnapshot JobSnapshot : result.getData()) {
 			LOG.info(JobSnapshot.toString());
 		}
-		LOG.info("query size:" + result.size());
+		LOG.info("query size:" + result.getData().size());
 	}
 
 	protected WorkerSnapshot buildWorkerSnapshot(String jobSnapshotid, String jobName, String workerName,

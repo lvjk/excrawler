@@ -7,7 +7,7 @@ import org.junit.Test;
 
 import six.com.crawler.BaseTest;
 import six.com.crawler.entity.Page;
-import six.com.crawler.work.RedisWorkQueue;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * @author 作者

@@ -17,7 +17,7 @@ import org.jsoup.nodes.Element;
 public class JsoupTest {
 
 	public static void main(String[] args) throws IOException {
-		String html=FileUtils.readFileToString(new File("C:/Users/38134/Desktop/test.html"));
+		String html=FileUtils.readFileToString(new File("f:/test.html"));
 		Document doc=Jsoup.parse(html);
 		Element element=doc.select("body>script").first();
 		String scripthtml=element.html();

@@ -1,5 +1,8 @@
 package six.com.crawler.rpc;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import six.com.crawler.rpc.NettyRpcCilent;
 import six.com.crawler.rpc.protocol.RpcRequest;
 import six.com.crawler.rpc.protocol.RpcResponse;
@@ -15,6 +18,8 @@ public class HttpNodeCommandClientTest {
 		NettyRpcCilent client = new NettyRpcCilent();
 		int requestCount=10000;
 		long allTime=0;
+		Map<String,Object> params=new HashMap<>();
+		params.put("jobName","test");
 		for (int i = 0; i <requestCount; i++) {
 			String id = "192.168.12.80@192.168.12.80:" + 8180 + "/test/" + System.currentTimeMillis();
 			RpcRequest rpcRequest = new RpcRequest();
@@ -23,7 +28,7 @@ public class HttpNodeCommandClientTest {
 			rpcRequest.setCallHost("192.168.12.80");
 			rpcRequest.setCallPort(8180);
 			rpcRequest.setCommand("test");
-			rpcRequest.setParam("test");
+			rpcRequest.setParams(params);
 			
 			try {
 				long startTime=System.currentTimeMillis();

@@ -15,6 +15,7 @@ import six.com.crawler.entity.HttpProxy;
 import six.com.crawler.entity.Page;
 import six.com.crawler.http.HttpProxyPool;
 import six.com.crawler.utils.JavaSerializeUtils;
+import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
  * @author 作者
@@ -25,6 +26,12 @@ public class RedisManagerTest extends BaseTest {
 
 	@Test
 	public void test() {
+//		EnhanceJedisCluster jedis = newJedis();
+//		String fuzzKey = RedisWorkSpace.WORK_ERR_QUEUE_KEY_PRE+ "*";
+//		Set<String> keys = jedis.keys(fuzzKey);
+//		for (String key : keys) {
+//			jedis.del(key);
+//		}
 //
 //		List<HttpProxy> list = httpPorxyService.getHttpProxys();
 //		EnhanceJedisCluster jedis = newJedis();

@@ -12,10 +12,10 @@ import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import six.com.crawler.schedule.MasterSchedulerManager;
-import six.com.crawler.service.ExtractPathService;
-import six.com.crawler.service.HttpPorxyService;
-import six.com.crawler.service.JobService;
-import six.com.crawler.service.SiteService;
+import six.com.crawler.admin.service.ExtractPathService;
+import six.com.crawler.admin.service.HttpPorxyService;
+import six.com.crawler.admin.service.JobService;
+import six.com.crawler.admin.service.SiteService;
 import six.com.crawler.configure.SpiderConfigure;
 import six.com.crawler.dao.DataTableDao;
 import six.com.crawler.dao.ExtractPathDao;
