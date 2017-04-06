@@ -14,7 +14,6 @@ import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.ArrayListUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.extract.Extracter;
 import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
@@ -108,22 +107,16 @@ public class TmsfProjectInfo1Worker extends AbstractCrawlWorker {
 	@Override
 	protected void onComplete(Page doingPage, ResultContext resultContext) {
 		List<String> sellControlUrls = resultContext.getExtractResult("sellControlUrl_1");
-		String projectId = resultContext.getOutResults().get(0).get(Extracter.DEFAULT_RESULT_ID);
-		if (StringUtils.isBlank(projectId)) {
-			throw new RuntimeException("system id is blank");
+		if (null != sellControlUrls && sellControlUrls.size() > 0) {
+			String sellControlUrl = sellControlUrls.get(0);
+			Page sellControlPage = new Page(doingPage.getSiteCode(), 1, sellControlUrl, sellControlUrl);
+			sellControlPage.setReferer(doingPage.getFinalUrl());
+			sellControlPage.setType(PageType.DATA.value());
+			sellControlPage.getMetaMap().putAll(doingPage.getMetaMap());
+			sellControlUrlQueue.push(sellControlPage);
 		} else {
-			if (null != sellControlUrls && sellControlUrls.size() > 0) {
-				String sellControlUrl = sellControlUrls.get(0);
-				Page sellControlPage = new Page(doingPage.getSiteCode(), 1, sellControlUrl, sellControlUrl);
-				sellControlPage.setReferer(doingPage.getFinalUrl());
-				sellControlPage.setType(PageType.DATA.value());
-				sellControlPage.getMetaMap().putAll(doingPage.getMetaMap());
-				sellControlPage.getMetaMap().put("projectId", ArrayListUtils.asList(projectId));
-				sellControlUrlQueue.push(sellControlPage);
-			} else {
-				log.warn("did not find presellUrl:" + doingPage.getFinalUrl());
-				log.warn(doingPage.getPageSrc());
-			}
+			log.warn("did not find presellUrl:" + doingPage.getFinalUrl());
+			log.warn(doingPage.getPageSrc());
 		}
 
 	}

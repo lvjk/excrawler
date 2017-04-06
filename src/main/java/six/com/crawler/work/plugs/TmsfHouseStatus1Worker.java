@@ -7,45 +7,35 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.nodes.Element;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
+import six.com.crawler.http.HttpMethod;
 import six.com.crawler.utils.ArrayListUtils;
 import six.com.crawler.utils.JsonUtils;
-import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.space.RedisWorkSpace;
 
-/**
- * @author 作者
- * @E-mail: 359852326@qq.com
- * @date 创建时间：2017年4月5日 上午11:58:28
- */
-public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
+/** 
+* @author  作者 
+* @E-mail: 359852326@qq.com 
+* @date 创建时间：2017年4月6日 上午9:17:56 
+*/
+public class TmsfHouseStatus1Worker extends AbstractCrawlWorker {
 
-	final static Logger log = LoggerFactory.getLogger(TmsfHouseStatusWorker.class);
-	RedisWorkSpace<Page> houseInfoQueue;
 	Map<String, String> jsonKeyMap;
+	RedisWorkSpace<Page> houseInfoQueue;
 	private String sidTemplate = "<<sid>>";
-	private String projectIdTemplate = "<<projectId>>";
-	private String houseIdTemplate = "<<houseId>>";
 	private String presellIdTemplate = "<<presellid>>";
 	private String buildingidTemplate = "<<buildingid>>";
-	private String areaTemplate = "<<area>>";
-	private String allpriceTemplate = "<<allprice>>";
-	private String housestateTemplate = "<<housestate>>";
-	private String housetypeTemplate = "<<housetype>>";
-	private String houseJsonUrlTemplate = "http://www.tmsf.com/newhouse/NewPropertyHz_showbox.jspx?" + "buildingid="
-			+ buildingidTemplate + "&presellid=" + presellIdTemplate + "&sid=" + sidTemplate + "&area=" + areaTemplate
-			+ "&allprice=" + allpriceTemplate + "&housestate=" + housestateTemplate + "&housetype=" + housetypeTemplate;
-	private String sidCss = "input[id=sid]";
-	private String areaCss = "input[id=area]";
-	private String allpriceCss = "input[id=allprice]";
-	private String housestateCss = "input[id=housestate]";
-	private String housetypeCss = "input[id=housetype]";
+	private String projectIdTemplate = "<<projectId>>";
+	private String houseIdTemplate = "<<houseId>>";
+	
+	private String houseJsonUrlTemplate = "http://www.tmsf.com/newhouse/NewProperty_showbox.jspx?"
+			+ "buildingid="+buildingidTemplate
+			+ "&presellid="+presellIdTemplate
+			+ "&sid="+sidTemplate;
 	private String houseInfoUrlTemplate = "http://www.tmsf.com/newhouse/property_house_" + sidTemplate + "_"
 			+ projectIdTemplate + "_" + houseIdTemplate + ".htm";
 
@@ -66,6 +56,7 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 		jsonKeyMap.put("address", "located");
 		jsonKeyMap.put("internalArea", "setinsidefloorarea");
 		jsonKeyMap.put("houseStyle", "huxing");
+		jsonKeyMap.put("floor", "floor");
 	}
 
 	protected void beforeDown(Page doingPage) {
@@ -75,60 +66,51 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 	@SuppressWarnings("unchecked")
 	@Override
 	protected void beforeExtract(Page doingPage) {
-
+		
+		String sidCss = "input[id=sid]";
 		Element sidElement = doingPage.getDoc().select(sidCss).first();
 		String sid = "";
 		if (null != sidElement) {
 			sid = sidElement.attr("value");
 		}
-		Element areaElement = doingPage.getDoc().select(areaCss).first();
-		String area = "";
-		if (null != areaElement) {
-			area = areaElement.attr("value");
+		
+		String presellidCss = "input[id=presellid]";
+		Element presellidElement = doingPage.getDoc().select(presellidCss).first();
+		String presellId = "";
+		if (null != presellidElement) {
+			presellId = presellidElement.attr("value");
 		}
-		Element allpriceElement = doingPage.getDoc().select(allpriceCss).first();
-		String allprice = "";
-		if (null != allpriceElement) {
-			allprice = allpriceElement.attr("value");
+		String buildingidCss = "input[id=buildingid]";
+		Element buildingidElement = doingPage.getDoc().select(buildingidCss).first();
+		String buildingId = "";
+		if (null != buildingidElement) {
+			buildingId = buildingidElement.attr("value");
 		}
-		Element housestateElement = doingPage.getDoc().select(housestateCss).first();
-		String housestate = "";
-		if (null != housestateElement) {
-			housestate = housestateElement.attr("value");
-		}
+		
+		String houseInfoUrl = StringUtils.replace(houseJsonUrlTemplate, sidTemplate, sid);
+		houseInfoUrl = StringUtils.replace(houseInfoUrl, presellIdTemplate, presellId);
+		houseInfoUrl = StringUtils.replace(houseInfoUrl, buildingidTemplate, buildingId);
 
-		Element housetypeElement = doingPage.getDoc().select(housetypeCss).first();
-		String housetype = "";
-		if (null != housetypeElement) {
-			housetype = housetypeElement.attr("value");
-		}
-
-		String presellId_org = doingPage.getMetaMap().get("presellId_org").get(0);
-		String buildingId = doingPage.getMetaMap().get("buildingId").get(0);
-		String houseJsonUrl = StringUtils.replace(houseJsonUrlTemplate, buildingidTemplate, buildingId);
-		houseJsonUrl = StringUtils.replace(houseJsonUrl, presellIdTemplate, presellId_org);
-		houseJsonUrl = StringUtils.replace(houseJsonUrl, sidTemplate, sid);
-		houseJsonUrl = StringUtils.replace(houseJsonUrl, areaTemplate, area);
-		houseJsonUrl = StringUtils.replace(houseJsonUrl, allpriceTemplate, allprice);
-		houseJsonUrl = StringUtils.replace(houseJsonUrl, housestateTemplate, housestate);
-		houseJsonUrl = StringUtils.replace(houseJsonUrl, housetypeTemplate, housetype);
-		houseJsonUrl = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), houseJsonUrl);
-		Page housePage = new Page(doingPage.getSiteCode(), 1, houseJsonUrl, houseJsonUrl);
-		housePage.setReferer(doingPage.getFinalUrl());
-		housePage.setType(PageType.JSON.value());
-		getDowner().down(housePage);
-		String houseInfoJson = housePage.getPageSrc();
+		Page houseInfoPage = new Page(doingPage.getSiteCode(), 1, houseInfoUrl, houseInfoUrl);
+		houseInfoPage.setReferer(doingPage.getFinalUrl());
+		houseInfoPage.setMethod(HttpMethod.GET);
+		houseInfoPage.setType(PageType.JSON.value());
+		houseInfoPage.getMetaMap().put("buildingId", ArrayListUtils.asList(buildingId));
+		houseInfoPage.getMetaMap().putAll(doingPage.getMetaMap());
+		getDowner().down(houseInfoPage);
+		
+		String houseInfoJson = houseInfoPage.getPageSrc();
 		Map<String, Object> map = JsonUtils.toObject(houseInfoJson, Map.class);
 		List<Map<String, Object>> houseList = (List<Map<String, Object>>) map.get("list");
-
+		
 		for (Map<String, Object> houseMap : houseList) {
 			for (String field : jsonKeyMap.keySet()) {
 				String jsonKey = jsonKeyMap.get(field);
 				Object valueOb = houseMap.get(jsonKey);
 				doingPage.getMetaMap().computeIfAbsent(field, mapKey -> new ArrayList<>())
-						.add(null != valueOb ? valueOb.toString() : "");
+				.add(null != valueOb ? valueOb.toString() : "");
 			}
-		}
+		}                           
 	}
 
 	@Override
@@ -138,14 +120,14 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void onComplete(Page doingPage, ResultContext resultContext) {
+
 		String sid = doingPage.getMeta("sid").get(0);
 		String propertyId = doingPage.getMeta("propertyId").get(0);
 		String projectName = doingPage.getMeta("projectName").get(0);
 		String presellName = doingPage.getMeta("presellName").get(0);
 		String presellCode = doingPage.getMeta("presellCode").get(0);
 		
-		String presellId_org = doingPage.getMetaMap().get("presellId_org").get(0);
-
+		
 		String buildingName = doingPage.getMetaMap().get("buildingName").get(0);
 		
 		List<String> houseIds = resultContext.getExtractResult("houseId");
@@ -199,8 +181,6 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 				houseInfoPage.getMetaMap().put("projectName", ArrayListUtils.asList(projectName));
 				houseInfoPage.getMetaMap().put("presellName", ArrayListUtils.asList(presellName));
 				houseInfoPage.getMetaMap().put("presellCode", ArrayListUtils.asList(presellCode));
-				houseInfoPage.getMetaMap().put("presellId_org", ArrayListUtils.asList(presellId_org));
-
 				houseInfoPage.getMetaMap().put("buildingName", ArrayListUtils.asList(buildingName));
 				houseInfoPage.getMetaMap().put("houseNo", ArrayListUtils.asList(houseNo));
 				houseInfoPage.getMetaMap().put("houseId", ArrayListUtils.asList(houseId));
@@ -227,5 +207,6 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 	public boolean insideOnError(Exception t, Page doingPage) {
 		return false;
 	}
+
 
 }

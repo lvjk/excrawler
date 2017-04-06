@@ -71,12 +71,11 @@ public class AutoCharsetDetectorUtils {
 	}
 
 	/**
-	 * 替换特殊字符
-	 * 
+	 * 特殊字符转义
 	 * @param str
 	 * @return
 	 */
-	public  String replacePeculiarCharacter(String str) {
+	public  String escape(String str) {
 		if (StringUtils.isNoneBlank(str)) {
 			for (String key : peculiarCharacterMap.keySet()) {
 				String value = peculiarCharacterMap.get(key);

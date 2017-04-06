@@ -115,7 +115,7 @@ public class JsoupUtils {
 			result = StringUtils.trim(result);
 		}
 		// 替换特殊字符
-		result = AutoCharsetDetectorUtils.instance().replacePeculiarCharacter(result);
+		result = AutoCharsetDetectorUtils.instance().escape(result);
 		return result;
 	}
 

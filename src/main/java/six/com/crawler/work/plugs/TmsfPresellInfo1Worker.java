@@ -18,7 +18,6 @@ import six.com.crawler.utils.JsoupUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.utils.JsoupUtils.TableResult;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.extract.Extracter;
 import six.com.crawler.work.space.RedisWorkSpace;
 
 /**
@@ -28,13 +27,13 @@ import six.com.crawler.work.space.RedisWorkSpace;
  */
 public class TmsfPresellInfo1Worker extends AbstractCrawlWorker {
 
-	RedisWorkSpace<Page> houseInfoQueue;
+	RedisWorkSpace<Page> houseStatusQueue;
 	String tableCss = "dd[id=myCont2]>div>table";
 	Map<String, String> tableKeyMap;
 
 	@Override
 	protected void insideInit() {
-		houseInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tmsf_house_info_1",Page.class);
+		houseStatusQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tmsf_house_status_1",Page.class);
 		tableKeyMap = new HashMap<>();
 		tableKeyMap.put("预售证名称", "presellName");
 		tableKeyMap.put("预售证号", "presellCode");
@@ -118,28 +117,22 @@ public class TmsfPresellInfo1Worker extends AbstractCrawlWorker {
 		String buildingidCss = "div[id=yf_one]>dl:eq(1)>dd>a";
 		Elements buildingidElements = doingPage.getDoc().select(buildingidCss);
 		
-		String presellId = resultContext.getOutResults().get(0).get(Extracter.DEFAULT_RESULT_ID);
-		if(StringUtils.isBlank(presellId)){
-			throw new RuntimeException("system id is blank");
-		}else{
-			for (Element buildingidElement : buildingidElements) {
-				String buildingid = buildingidElement.attr("href");
-				buildingid = StringUtils.substringBetween(buildingid, "javascript:doBuilding('", "')");
-				String houseInfoUrl = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), formAction);
-				Map<String, Object> paramMap = new HashMap<String, Object>();
-				paramMap.put("sid", sid);
-				paramMap.put("propertyid", propertyId);
-				paramMap.put("tid", tid);
-				paramMap.put("presellid", presellid);
-				paramMap.put("buildingid", buildingid);
-				Page houseInfoPage = new Page(getSite().getCode(), 1, houseInfoUrl, houseInfoUrl);
-				houseInfoPage.setReferer(doingPage.getFinalUrl());
-				houseInfoPage.setMethod(HttpMethod.POST);
-				houseInfoPage.setParameters(paramMap);
-				houseInfoPage.addMeta("propertyId", propertyId);
-				houseInfoPage.addMeta("presellId", presellId);
-				houseInfoQueue.push(houseInfoPage);
-			}
+		for (Element buildingidElement : buildingidElements) {
+			String buildingid = buildingidElement.attr("href");
+			buildingid = StringUtils.substringBetween(buildingid, "javascript:doBuilding('", "')");
+			String houseInfoUrl = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), formAction);
+			Map<String, Object> paramMap = new HashMap<String, Object>();
+			paramMap.put("sid", sid);
+			paramMap.put("propertyid", propertyId);
+			paramMap.put("tid", tid);
+			paramMap.put("presellid", presellid);
+			paramMap.put("buildingid", buildingid);
+			Page houseInfoPage = new Page(getSite().getCode(), 1, houseInfoUrl, houseInfoUrl);
+			houseInfoPage.setReferer(doingPage.getFinalUrl());
+			houseInfoPage.setMethod(HttpMethod.POST);
+			houseInfoPage.setParameters(paramMap);
+			houseInfoPage.getMetaMap().putAll(doingPage.getMetaMap());
+			houseStatusQueue.push(houseInfoPage);
 		}
 	}
 

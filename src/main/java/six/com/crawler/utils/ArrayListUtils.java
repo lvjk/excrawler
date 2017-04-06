@@ -11,7 +11,6 @@ import java.util.List;
 public class ArrayListUtils {
 
 	@SafeVarargs
-    @SuppressWarnings("varargs")
 	public static <T> List<T> asList(T... a) {
 		if (null == a) {
 			throw new NullPointerException();

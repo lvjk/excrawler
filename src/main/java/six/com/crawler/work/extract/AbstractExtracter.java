@@ -14,6 +14,7 @@ import org.apache.commons.lang3.time.DateFormatUtils;
 import six.com.crawler.common.DateFormats;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
+import six.com.crawler.utils.AutoCharsetDetectorUtils;
 import six.com.crawler.utils.ObjectCheckUtils;
 import six.com.crawler.utils.TelPhoneUtils;
 import six.com.crawler.utils.UrlUtils;
@@ -55,6 +56,8 @@ public abstract class AbstractExtracter implements Extracter {
 	private volatile int primaryResultSize = -1;
 	private static final String EMPTY_VALUE = "";
 	private AtomicInteger extracterIndex = new AtomicInteger(0);
+	private String workerName;
+	private String jobSnapshotId;
 
 	static {
 		charSet.add(' ');
@@ -79,12 +82,14 @@ public abstract class AbstractExtracter implements Extracter {
 		if (primaryCount > 1) {
 			throw new RuntimeException("there are many primary=1");
 		}
-		if(-1!=index){
+		if (-1 != index) {
 			extractItems.remove(index);
 			extractItems.add(0, firstExtractItem);
 		}
 		this.worker = worker;
 		this.extractItems = extractItems;
+		this.workerName = getAbstractWorker().getName();
+		this.jobSnapshotId = getAbstractWorker().getJobSnapshot().getId();
 	}
 
 	protected abstract List<String> doExtract(Page doingPage, ExtractItem extractItem, ExtractPath path);
@@ -127,15 +132,18 @@ public abstract class AbstractExtracter implements Extracter {
 			if (1 == doPaserItem.getPrimary()) {// 记录主键结果数量
 				if (-1 == primaryResultSize) {// primaryResultSize第一次直接赋值
 					primaryResultSize = tempDoResults.size();
-				} 
-//				else {
-//					if (primaryResultSize != tempDoResults.size()) {// 对比与上一次的primaryResultSize
-//																	// ，如果不相等那么抛出异常
-//						throw new PrimaryExtractException("extract primaryKey[" + doPaserItem.getOutputKey()
-//								+ "]'s result size[" + tempDoResults.size() + "] did not match last primaryResultSize["
-//								+ primaryResultSize + "]");
-//					}
-//				}
+				}
+				// else {
+				// if (primaryResultSize != tempDoResults.size()) {//
+				// 对比与上一次的primaryResultSize
+				// // ，如果不相等那么抛出异常
+				// throw new PrimaryExtractException("extract primaryKey[" +
+				// doPaserItem.getOutputKey()
+				// + "]'s result size[" + tempDoResults.size() + "] did not
+				// match last primaryResultSize["
+				// + primaryResultSize + "]");
+				// }
+				// }
 			} else {
 				if (null == tempDoResults || tempDoResults.isEmpty()) {// 如果非主键结果为空，那么默认给它赋值跟主键数量一样的
 																		// 空值
@@ -143,15 +151,16 @@ public abstract class AbstractExtracter implements Extracter {
 					for (int i = 0; i < primaryResultSize; i++) {
 						tempDoResults.add(EMPTY_VALUE);
 					}
-				}else if (tempDoResults.size()<primaryResultSize&&doPaserItem.getType() == ExtractItemType.META.value()){
-					int supplementCount=primaryResultSize-tempDoResults.size();
-					String defaultResult=tempDoResults.get(0);
-					for(int i=0;i<supplementCount;i++){
+				} else if (tempDoResults.size() < primaryResultSize
+						&& doPaserItem.getType() == ExtractItemType.META.value()) {
+					int supplementCount = primaryResultSize - tempDoResults.size();
+					String defaultResult = tempDoResults.get(0);
+					for (int i = 0; i < supplementCount; i++) {
 						tempDoResults.add(defaultResult);
 					}
-				}else if (tempDoResults.size()<primaryResultSize){
-					int supplementCount=primaryResultSize-tempDoResults.size();
-					for(int i=0;i<supplementCount;i++){
+				} else if (tempDoResults.size() < primaryResultSize) {
+					int supplementCount = primaryResultSize - tempDoResults.size();
+					for (int i = 0; i < supplementCount; i++) {
 						tempDoResults.add(EMPTY_VALUE);
 					}
 				}
@@ -181,7 +190,6 @@ public abstract class AbstractExtracter implements Extracter {
 			List<String> workerNameList = new ArrayList<>(primaryResultSize);
 			List<String> collectionDateList = new ArrayList<>(primaryResultSize);
 			List<String> originUrlList = new ArrayList<>(primaryResultSize);
-			final String workerName = getAbstractWorker().getName();
 			String id = null;
 			for (int i = 0; i < primaryResultSize; i++) {
 				Map<String, String> dataMap = new HashMap<>();
@@ -190,7 +198,7 @@ public abstract class AbstractExtracter implements Extracter {
 					String result = tempResultList.get(i);
 					dataMap.put(extractItem.getOutputKey(), result);
 				}
-				id = workerName + "_" + extracterIndex.getAndIncrement();
+				id = getId();
 				dataMap.put(Extracter.DEFAULT_RESULT_ID, id);
 				dataMap.put(Extracter.DEFAULT_RESULT_COLLECTION_DATE, nowTime);
 				dataMap.put(Extracter.DEFAULT_RESULT_ORIGIN_URL, doingPage.getFinalUrl());
@@ -207,6 +215,11 @@ public abstract class AbstractExtracter implements Extracter {
 		}
 	}
 
+	private String getId() {
+		String id = workerName + "_" + jobSnapshotId + "_" + extracterIndex.getAndIncrement();
+		return id;
+	}
+
 	/**
 	 * 对抽取出来的结果进行加工解析
 	 * 
@@ -216,15 +229,17 @@ public abstract class AbstractExtracter implements Extracter {
 	 *            抽取出来的结果
 	 */
 	protected String paserString(ExtractItem paserResult, Page page, String preText) {
+		String newStr=preText;
 		if (StringUtils.isNoneBlank(preText)) {
 			if (ExtractItemType.STRING.value() == paserResult.getType()) {
-				return StringUtils.trim(preText);
+				newStr=StringUtils.trim(preText);
+				newStr=AutoCharsetDetectorUtils.instance().escape(newStr);
 			} else if (ExtractItemType.URL.value() == paserResult.getType()) {
 				String newUrl = null;
 				if (!"#no".equals(preText)) {
 					newUrl = UrlUtils.paserUrl(page.getBaseUrl(), page.getFinalUrl(), StringUtils.trim(preText));
 				}
-				return newUrl;
+				newStr=newUrl;
 			} else if (ExtractItemType.PHONE.value() == paserResult.getType()) {
 				String[] temp = preText.split(" ");
 				String telPhone = "";
@@ -233,12 +248,13 @@ public abstract class AbstractExtracter implements Extracter {
 						telPhone = StringUtils.trim(word);
 					}
 				}
-				return telPhone;
+				newStr=telPhone;
 			} else {
-				return StringUtils.trim(preText);
+				newStr=StringUtils.trim(preText);
+				newStr=AutoCharsetDetectorUtils.instance().escape(newStr);
 			}
 		}
-		return preText;
+		return newStr;
 	}
 
 	public AbstractCrawlWorker getAbstractWorker() {
