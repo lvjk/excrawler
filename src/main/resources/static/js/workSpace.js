@@ -54,9 +54,8 @@ function showDoingDataDiv(workSpaceName) {
 				$("<td><span style='color:#FF0000;font-size:6px;'>"
 						+ page.originalUrl + "</span></td>").appendTo(tr);
 				var operationTd = $("<td></td>");
-				var operation = "<a  href=\"javascript:delErrQueue('"
-						+ page.pageKey + "')\">删除</a>&nbsp;";
-				operation += "<a href=\"javascript:fillQueue('" + page.pageKey+ "')\">处理</a>&nbsp;";
+				var operation = "<a  href=\"javascript:clearDoing('"+ workSpaceName+ "')\">全部删除</a>&nbsp;";
+				//operation += "<a href=\"javascript:#\">处理</a>&nbsp;";
 				$(operation).appendTo(operationTd);
 				operationTd.appendTo(tr);
 				tr.appendTo(workSpace_table);
@@ -93,8 +92,7 @@ function showErrDataDiv(workSpaceName) {
 				$("<td><span style='color:#FF0000;font-size:6px;'>"
 						+ page.originalUrl + "</span></td>").appendTo(tr);
 				var operationTd = $("<td></td>");
-				var operation = "<a  href=\"javascript:delErrQueue('"
-						+ page.pageKey + "')\">删除</a>&nbsp;";
+				var operation = "<a  href=\"javascript:delErrQueue('"+workSpaceName+ "')\">全部删除</a>&nbsp;";
 				operation += "<a href=\"javascript:againDoErrQueue('"+workSpaceName+"')\">全部处理</a>&nbsp;";
 				$(operation).appendTo(operationTd);
 				operationTd.appendTo(tr);
