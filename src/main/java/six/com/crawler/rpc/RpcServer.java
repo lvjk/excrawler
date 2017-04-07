@@ -1,7 +1,5 @@
 package six.com.crawler.rpc;
 
-import six.com.crawler.rpc.service.WrapperServerService;
-
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
@@ -23,7 +21,7 @@ public interface RpcServer {
 	 * @param rpcServiceName
 	 * @return
 	 */
-	public WrapperServerService get(String rpcServiceName);
+	public WrapperService get(String rpcServiceName);
 
 	/**
 	 * 通过rpcServiceName 移除指定 RpcService

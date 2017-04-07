@@ -16,6 +16,10 @@ public class RpcInvokeException extends RpcException {
 		super(message);
 	}
 
+	public RpcInvokeException(Throwable cause) {
+        super(cause);
+    }
+	
 	public RpcInvokeException(String message, Throwable cause) {
 		super(message, cause);
 	}

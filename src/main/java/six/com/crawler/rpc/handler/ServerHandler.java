@@ -9,12 +9,12 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import six.com.crawler.rpc.RpcServer;
 import six.com.crawler.rpc.Signal;
 import six.com.crawler.rpc.Signals;
+import six.com.crawler.rpc.WrapperService;
 import six.com.crawler.rpc.protocol.RpcMsg;
 
 import six.com.crawler.rpc.protocol.RpcRequest;
 import six.com.crawler.rpc.protocol.RpcResponse;
 import six.com.crawler.rpc.protocol.RpcResponseStatus;
-import six.com.crawler.rpc.service.WrapperServerService;
 import six.com.crawler.utils.ExceptionUtils;
 
 /**
@@ -47,7 +47,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<RpcMsg> {
 	}
 
 	private RpcResponse processRequest(ChannelHandlerContext ctx, RpcRequest rpcRequest) {
-		WrapperServerService wrapperService = rpcServer.get(rpcRequest.getCommand());
+		WrapperService wrapperService = rpcServer.get(rpcRequest.getCommand());
 		RpcResponse rpcResponse = new RpcResponse();
 		rpcResponse.setId(rpcRequest.getId());
 		String address = ctx.channel().remoteAddress().toString();

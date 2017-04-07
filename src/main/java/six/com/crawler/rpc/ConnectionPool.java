@@ -23,7 +23,7 @@ public class ConnectionPool<T extends NettyConnection> {
 	public T find(String connectionKey) {
 		T findNettyConnection = null;
 		if (StringUtils.isNotBlank(connectionKey)) {
-			findNettyConnection = connectionMap.remove(connectionKey);
+			findNettyConnection = connectionMap.get(connectionKey);
 		}
 		return findNettyConnection;
 	}
@@ -38,12 +38,6 @@ public class ConnectionPool<T extends NettyConnection> {
 		if(null!=nettyConnection){
 			nettyConnection.close();
 			connectionMap.remove(nettyConnection.getConnectionKey());
-		}
-	}
-
-	public void returnConn(T nettyConnection) {
-		if(null!=nettyConnection){
-			connectionMap.put(nettyConnection.getConnectionKey(), nettyConnection);
 		}
 	}
 

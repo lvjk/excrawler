@@ -1,10 +1,12 @@
 package six.com.crawler.rpc;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,11 +19,12 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
+import six.com.crawler.rpc.exception.RpcInvokeException;
 import six.com.crawler.rpc.handler.ServerAcceptorIdleStateTrigger;
 import six.com.crawler.rpc.handler.ServerHandler;
 import six.com.crawler.rpc.protocol.RpcDecoder;
 import six.com.crawler.rpc.protocol.RpcEncoder;
-import six.com.crawler.rpc.service.WrapperServerService;
+import six.com.crawler.utils.ObjectCheckUtils;
 
 /**
  * @author 作者
@@ -32,7 +35,7 @@ public class NettyRpcServer implements RpcServer {
 
 	final static Logger log = LoggerFactory.getLogger(NettyRpcServer.class);
 
-	private Map<String, WrapperServerService> registerMap = new ConcurrentHashMap<String, WrapperServerService>();
+	private Map<String, WrapperService> registerMap = new ConcurrentHashMap<String, WrapperService>();
 
 	private ServerAcceptorIdleStateTrigger idleStateTrigger = new ServerAcceptorIdleStateTrigger();
 
@@ -75,29 +78,36 @@ public class NettyRpcServer implements RpcServer {
 	}
 
 	public void register(Object tagetOb) {
-		if (null != tagetOb) {
-			Class<?> targetClz = tagetOb.getClass();
-			while (null != targetClz && targetClz != Object.class) {
-				Method[] allMethods = targetClz.getMethods();
-				Map<String, Method> map = new HashMap<>();
-				for (Method method : allMethods) {
-					RpcService rpcAnnotation = method.getAnnotation(RpcService.class);
-					if (null != rpcAnnotation) {
-						map.put(((RpcService) rpcAnnotation).name(), method);
+		ObjectCheckUtils.checkNotNull(tagetOb, "tagetOb");
+		Class<?> targetClz = tagetOb.getClass();
+		while (null != targetClz && targetClz != Object.class) {
+			Method[] allMethods = targetClz.getMethods();
+			Map<String, Method> map = new HashMap<>();
+			for (Method method : allMethods) {
+				RpcService rpcAnnotation = method.getAnnotation(RpcService.class);
+				if (null != rpcAnnotation) {
+					String serviceName=((RpcService) rpcAnnotation).name();
+					if(StringUtils.isBlank(serviceName)){
+						serviceName=method.getName();
 					}
+					map.put(serviceName, method);
 				}
-				for (String serviceName : map.keySet()) {
-					registerMap.put(serviceName, new WrapperServerService(tagetOb, map.get(serviceName)));
-					log.info("register rpc service:" + serviceName);
-				}
-				targetClz = targetClz.getSuperclass();
 			}
-		} else {
-			throw new NullPointerException();
+			for (String serviceName : map.keySet()) {
+				registerMap.put(serviceName, paras -> {
+					try {
+						return map.get(serviceName).invoke(tagetOb, paras);
+					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+						throw new RpcInvokeException(e);
+					}
+				});
+				log.info("register rpc service:" + serviceName);
+			}
+			targetClz = targetClz.getSuperclass();
 		}
 	}
 
-	public WrapperServerService get(String rpcServiceName) {
+	public WrapperService get(String rpcServiceName) {
 		return registerMap.get(rpcServiceName);
 	}
 
