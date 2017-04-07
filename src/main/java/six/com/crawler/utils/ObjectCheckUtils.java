@@ -12,6 +12,29 @@ public class ObjectCheckUtils {
 	private ObjectCheckUtils() {
 	}
 
+	/**
+	 * 校验 数字num是否处于 有效区间
+	 * 
+	 * @param num
+	 * @param minNum
+	 * @param maxNum
+	 * @param text
+	 * @return
+	 */
+	public static int checkIntValid(int num, int minNum, int maxNum, String text) {
+		if (num < minNum || num > num) {
+			throw new IllegalArgumentException(text + "[num] is Illegal");
+		}
+		return num;
+	}
+
+	/**
+	 * 检查目标对象是否为null
+	 * 
+	 * @param arg
+	 * @param text
+	 * @return
+	 */
 	public static <T> T checkNotNull(T arg, String text) {
 		if (arg == null) {
 			throw new NullPointerException(text);
@@ -52,9 +75,16 @@ public class ObjectCheckUtils {
 		checkPositive(array.length, name + ".length");
 		return array;
 	}
-	
+
+	/**
+	 * 校验string 是否是blank
+	 * 
+	 * @param str
+	 * @param name
+	 * @return
+	 */
 	public static String checkStrBlank(String str, String name) {
-		if(StringUtils.isBlank(str)){
+		if (StringUtils.isBlank(str)) {
 			throw new IllegalArgumentException(name + " must be not blank");
 		}
 		return str;
@@ -65,7 +95,7 @@ public class ObjectCheckUtils {
 		checkPositive(array.length, "length");
 		return array;
 	}
-	
+
 	public static byte[] checkNonEmpty(byte[] array) {
 		checkNotNull(array);
 		checkPositive(array.length, "length");

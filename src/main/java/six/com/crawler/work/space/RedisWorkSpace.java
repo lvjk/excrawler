@@ -105,7 +105,7 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 		}
 		return data;
 	}
-	
+
 	/**
 	 * 填充代理队列数据 将实践存储的数据填充到代理队列
 	 */
@@ -142,6 +142,7 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 	}
 
 	private String batchGet(List<T> resutList, String cursorStr, String type) {
+		ObjectCheckUtils.checkNotNull(resutList, "resutList");
 		if (StringUtils.isBlank(cursorStr)) {
 			cursorStr = "0";
 		}

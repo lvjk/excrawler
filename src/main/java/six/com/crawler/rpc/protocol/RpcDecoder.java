@@ -38,7 +38,7 @@ public class RpcDecoder extends ByteToMessageDecoder implements RpcProtocol {
 			buffer.markReaderIndex();
 			byte msgType = buffer.readByte();
 			if (msgType == RpcProtocol.HEARTBEAT) {
-				log.info("received heartbeat from " + getRemoteAddress(ctx));
+				log.debug("received heartbeat from " + getRemoteAddress(ctx));
 			} else if (msgType != RpcProtocol.REQUEST && msgType != RpcProtocol.RESPONSE) {
 				buffer.resetReaderIndex();
 				log.error("received illegal msg type[" + msgType + "] from" + getRemoteAddress(ctx));

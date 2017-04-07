@@ -29,6 +29,7 @@ import six.com.crawler.rpc.NettyRpcServer;
 import six.com.crawler.rpc.RpcService;
 
 import six.com.crawler.utils.JavaSerializeUtils;
+import six.com.crawler.utils.ObjectCheckUtils;
 
 /**
  * @author 作者
@@ -270,8 +271,14 @@ public class StandardNodeManager implements NodeManager, InitializingBean {
 	 * @return
 	 */
 	public Node getNewestNode(Node targetNode) {
-		NodeManager findNodeManager=loolup(targetNode, NodeManager.class);
-		Node newestNode =findNodeManager.getCurrentNode();
+		ObjectCheckUtils.checkNotNull(targetNode, "targetNode");
+		Node newestNode = targetNode;
+		try {
+			NodeManager findNodeManager = loolup(targetNode, NodeManager.class);
+			newestNode = findNodeManager.getCurrentNode();
+		} catch (Exception e) {
+			log.error("get newest node:" + targetNode.getName(), e);
+		}
 		return newestNode;
 	}
 
@@ -284,10 +291,8 @@ public class StandardNodeManager implements NodeManager, InitializingBean {
 	 * @return
 	 */
 	public <T> T loolup(Node node, Class<T> clz) {
-		return nettyRpcCilent.lookupService(node.getHost(),
-				node.getTrafficPort(), clz,null);
+		return nettyRpcCilent.lookupService(node.getHost(), node.getTrafficPort(), clz, null);
 	}
-
 
 	/**
 	 * 基于Rpc Service注解注册

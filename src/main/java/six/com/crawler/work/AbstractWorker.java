@@ -197,13 +197,13 @@ public abstract class AbstractWorker implements Worker {
 
 	@Override
 	public final void waited() {
-		// 只有设置状态前 state=WorkerLifecycleState.STARTED 才会调用 insideWait 方法
+		// 只有设置状态前 state=WorkerLifecycleState.STARTED 才会设置 WAITED
 		compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.WAITED);
 	}
 
 	@Override
 	public final void suspend() {
-		// 只有设置状态前 state=WorkerLifecycleState.STARTED
+		// 只有设置状态前 state=WorkerLifecycleState.STARTED 才会设置 SUSPEND
 		if (compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.SUSPEND)) {
 			LOG.info("suspend worker:" + getName());
 		}

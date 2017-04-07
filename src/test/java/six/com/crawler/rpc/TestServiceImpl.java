@@ -10,7 +10,7 @@ public class TestServiceImpl implements TestService {
 	@RpcService(name="say")
 	@Override
 	public String say(String name) {
-		return "你好:" + name + "-" + System.currentTimeMillis();
+		return "你好:" + name;
 	}
 
 }

@@ -39,6 +39,16 @@ import six.com.crawler.utils.ObjectCheckUtils;
  * @date 创建时间：2017年3月20日 上午10:11:07
  * 
  *       基于netty 4.19final 实现的 简易 rpc 调用客户端
+ *       
+ *      <p> 注意:</p>
+ *      <p> 所有rpc服务调用都有可能抛出一下异常:</p>
+ *      <p>  1.链接或者请求超时</p>
+ *      <p>  2.服务拒绝</p>
+ *      <p>  3.未发现服务</p>
+ *      <p>  4.执行异常</p>
+ *       
+ *       <p> 具体参考 six.com.crawler.rpc.exception 包下的异常</p>
+ *       
  * 
  */
 public class NettyRpcCilent implements RpcCilent {
@@ -204,7 +214,7 @@ public class NettyRpcCilent implements RpcCilent {
 							long spendTime = System.currentTimeMillis() - startTime;
 							if (spendTime > connectionTimeout) {
 								newClientToServerConnection.close();
-								throw new RuntimeException(
+								throw new RpcTimeoutException(
 										"connected " + rpcRequest.toString() + " timeout:" + spendTime);
 							}
 						}
