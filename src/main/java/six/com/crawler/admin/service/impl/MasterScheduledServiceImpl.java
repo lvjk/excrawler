@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 
 import six.com.crawler.admin.service.MasterScheduledService;
 import six.com.crawler.entity.WorkerSnapshot;
-import six.com.crawler.schedule.MasterAbstractSchedulerManager;
+import six.com.crawler.schedule.master.MasterAbstractSchedulerManager;
 
 /**
  * @author 作者

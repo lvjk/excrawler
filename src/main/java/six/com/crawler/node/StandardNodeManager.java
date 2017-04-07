@@ -2,7 +2,6 @@ package six.com.crawler.node;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javax.annotation.PreDestroy;
 
@@ -28,18 +27,16 @@ import six.com.crawler.entity.NodeType;
 import six.com.crawler.rpc.NettyRpcCilent;
 import six.com.crawler.rpc.NettyRpcServer;
 import six.com.crawler.rpc.RpcService;
-import six.com.crawler.rpc.protocol.RpcRequest;
-import six.com.crawler.rpc.protocol.RpcResponse;
+
 import six.com.crawler.utils.JavaSerializeUtils;
 
-/** 
-* @author  作者 
-* @E-mail: 359852326@qq.com 
-* @date 创建时间：2017年3月27日 上午9:35:12 
-*/
+/**
+ * @author 作者
+ * @E-mail: 359852326@qq.com
+ * @date 创建时间：2017年3月27日 上午9:35:12
+ */
 @Component
-public class StandardNodeManager implements NodeManager,InitializingBean{
-
+public class StandardNodeManager implements NodeManager, InitializingBean {
 
 	final static Logger log = LoggerFactory.getLogger(StandardNodeManager.class);
 
@@ -92,7 +89,7 @@ public class StandardNodeManager implements NodeManager,InitializingBean{
 		int trafficPort = getCurrentNode().getTrafficPort();
 		nettyRpcServer = new NettyRpcServer(localHost, trafficPort);
 		nettyRpcCilent = new NettyRpcCilent();
-		register("getCurrentNode", ob -> getCurrentNode());
+		register(this);
 	}
 
 	protected void initZKClient() {
@@ -170,6 +167,7 @@ public class StandardNodeManager implements NodeManager,InitializingBean{
 
 	/**
 	 * 获取主节点
+	 * 
 	 * @return
 	 */
 	public Node getMasterNode() {
@@ -193,6 +191,7 @@ public class StandardNodeManager implements NodeManager,InitializingBean{
 
 	/**
 	 * 获取所有工作节点
+	 * 
 	 * @return
 	 */
 	public List<Node> getWorkerNodes() {
@@ -217,6 +216,7 @@ public class StandardNodeManager implements NodeManager,InitializingBean{
 
 	/**
 	 * 通过节点名获取节点
+	 * 
 	 * @param nodeName
 	 * @return
 	 */
@@ -227,7 +227,7 @@ public class StandardNodeManager implements NodeManager,InitializingBean{
 				byte[] data = zKClient.getData().forPath(ZooKeeperPathUtils.getWorkerNodePath(nodeName));
 				workerNode = JavaSerializeUtils.unSerialize(data, Node.class);
 			} catch (Exception e) {
-				log.error("getWorkerNode err:"+nodeName, e);
+				log.error("getWorkerNode err:" + nodeName, e);
 			}
 		} else {
 			workerNode = currentNode;
@@ -237,6 +237,7 @@ public class StandardNodeManager implements NodeManager,InitializingBean{
 
 	/**
 	 * 获取空闲可用节点
+	 * 
 	 * @param needFresNodes
 	 * @return
 	 */
@@ -264,58 +265,42 @@ public class StandardNodeManager implements NodeManager,InitializingBean{
 
 	/**
 	 * 获取目标节点最新信息
+	 * 
 	 * @param targetNode
 	 * @return
 	 */
 	public Node getNewestNode(Node targetNode) {
-		Node newestNode = (Node) execute(targetNode, "getCurrentNode", null);
+		NodeManager findNodeManager=loolup(targetNode, NodeManager.class);
+		Node newestNode =findNodeManager.getCurrentNode();
 		return newestNode;
 	}
 
 	/**
 	 * 调用节点服务
+	 * 
 	 * @param node
 	 * @param commandName
 	 * @param param
 	 * @return
 	 */
-	public Object execute(Node node, String commandName,Map<String,Object> params) {
-		String id =getRequestId(node, commandName);
-		RpcRequest rpcRequest = new RpcRequest();
-		rpcRequest.setId(id);
-		rpcRequest.setCommand(commandName);
-		rpcRequest.setCallHost(node.getHost());
-		rpcRequest.setCallPort(node.getTrafficPort());
-		rpcRequest.setOriginHost(getCurrentNode().getHost());
-		rpcRequest.setParams(params);
-		RpcResponse rpcResponse = nettyRpcCilent.execute(rpcRequest);
-		return rpcResponse.getResult();
-	}
-	
-	/**
-	 * 生成请求Id
-	 * @param node
-	 * @param commandName
-	 * @return
-	 */
-	private String getRequestId(Node node, String commandName){
-		String id = getCurrentNode().getHost() + "@" + node.getHost() + ":" + node.getTrafficPort() + "/" + commandName
-				+ "/" + System.currentTimeMillis();
-		return id;
+	public <T> T loolup(Node node, Class<T> clz) {
+		return nettyRpcCilent.lookupService(node.getHost(),
+				node.getTrafficPort(), clz,null);
 	}
 
+
 	/**
-	 * 注册节点服务
-	 * @param rpcServiceName
-	 * @param rpcService
+	 * 基于Rpc Service注解注册
+	 * 
+	 * @param tagetOb
 	 */
-	public void register(String rpcServiceName, RpcService rpcService) {
-		nettyRpcServer.register(rpcServiceName, rpcService);
-		log.info("register nodeCommand:" + rpcServiceName);
+	public void register(Object tagetOb) {
+		nettyRpcServer.register(tagetOb);
 	}
 
 	/**
 	 * 移除节点服务
+	 * 
 	 * @param commandName
 	 */
 	public void remove(String commandName) {
@@ -323,12 +308,13 @@ public class StandardNodeManager implements NodeManager,InitializingBean{
 		log.info("remove nodeCommand:" + commandName);
 	}
 
+	@RpcService(name = "getCurrentNode")
 	public Node getCurrentNode() {
 		currentNode.setCpu(MyOperatingSystemMXBean.getAvailableProcessors());
 		currentNode.setMem(MyOperatingSystemMXBean.freeMemoryPRP());
 		return currentNode;
 	}
-	
+
 	@PreDestroy
 	public void destroy() {
 		if (null != nettyRpcCilent) {

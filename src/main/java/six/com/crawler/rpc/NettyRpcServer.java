@@ -1,5 +1,7 @@
 package six.com.crawler.rpc;
 
+import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -19,6 +21,7 @@ import six.com.crawler.rpc.handler.ServerAcceptorIdleStateTrigger;
 import six.com.crawler.rpc.handler.ServerHandler;
 import six.com.crawler.rpc.protocol.RpcDecoder;
 import six.com.crawler.rpc.protocol.RpcEncoder;
+import six.com.crawler.rpc.service.WrapperServerService;
 
 /**
  * @author 作者
@@ -29,7 +32,7 @@ public class NettyRpcServer implements RpcServer {
 
 	final static Logger log = LoggerFactory.getLogger(NettyRpcServer.class);
 
-	private Map<String, RpcService> registerMap = new ConcurrentHashMap<String, RpcService>();
+	private Map<String, WrapperServerService> registerMap = new ConcurrentHashMap<String, WrapperServerService>();
 
 	private ServerAcceptorIdleStateTrigger idleStateTrigger = new ServerAcceptorIdleStateTrigger();
 
@@ -59,7 +62,7 @@ public class NettyRpcServer implements RpcServer {
 				.childHandler(new ChannelInitializer<SocketChannel>() {
 					@Override
 					public void initChannel(SocketChannel ch) throws Exception {
-						ch.pipeline().addLast(new IdleStateHandler(0, 0,NettyConstant.ALL_IDLE_TIME_SECONDES));
+						ch.pipeline().addLast(new IdleStateHandler(0, 0, NettyConstant.ALL_IDLE_TIME_SECONDES));
 						ch.pipeline().addLast(idleStateTrigger);
 						ch.pipeline().addLast(new RpcEncoder());
 						ch.pipeline().addLast(new RpcDecoder());
@@ -71,12 +74,30 @@ public class NettyRpcServer implements RpcServer {
 		thread.start();
 	}
 
-	@Override
-	public void register(String rpcServiceName, RpcService rpcService) {
-		registerMap.put(rpcServiceName, rpcService);
+	public void register(Object tagetOb) {
+		if (null != tagetOb) {
+			Class<?> targetClz = tagetOb.getClass();
+			while (null != targetClz && targetClz != Object.class) {
+				Method[] allMethods = targetClz.getMethods();
+				Map<String, Method> map = new HashMap<>();
+				for (Method method : allMethods) {
+					RpcService rpcAnnotation = method.getAnnotation(RpcService.class);
+					if (null != rpcAnnotation) {
+						map.put(((RpcService) rpcAnnotation).name(), method);
+					}
+				}
+				for (String serviceName : map.keySet()) {
+					registerMap.put(serviceName, new WrapperServerService(tagetOb, map.get(serviceName)));
+					log.info("register rpc service:" + serviceName);
+				}
+				targetClz = targetClz.getSuperclass();
+			}
+		} else {
+			throw new NullPointerException();
+		}
 	}
 
-	public RpcService get(String rpcServiceName) {
+	public WrapperServerService get(String rpcServiceName) {
 		return registerMap.get(rpcServiceName);
 	}
 

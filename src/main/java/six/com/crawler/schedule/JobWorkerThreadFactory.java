@@ -12,7 +12,7 @@ public class JobWorkerThreadFactory implements ThreadFactory {
 	private final AtomicInteger threadNumber = new AtomicInteger(0);
 	private final String namePrefix;
 
-	JobWorkerThreadFactory() {
+	public JobWorkerThreadFactory() {
 		SecurityManager s = System.getSecurityManager();
 		group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
 		namePrefix = "JobWorker-thread-";

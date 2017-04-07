@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import six.com.crawler.rpc.protocol.RpcRequest;
 import six.com.crawler.rpc.protocol.RpcResponse;
+import six.com.crawler.rpc.protocol.RpcResponseStatus;
 
 /**
  * @author 作者
@@ -25,12 +26,15 @@ public class WrapperFuture {
 
 	private volatile RpcResponse rpcResponse;
 
+	private AsyCallback asyCallback;
+
 	private long createTime = System.currentTimeMillis();
 
 	Object lock = new Object();
 
-	WrapperFuture(RpcRequest rpcRequest) {
+	public WrapperFuture(RpcRequest rpcRequest, AsyCallback asyCallback) {
 		this.rpcRequest = rpcRequest;
+		this.asyCallback = asyCallback;
 	}
 
 	public long getSendTime() {
@@ -49,16 +53,14 @@ public class WrapperFuture {
 		return rpcRequest;
 	}
 
-	public void onSuccess(RpcResponse response, long receiveTime) {
+	public void onComplete(RpcResponse response, long receiveTime) {
 		this.rpcResponse = response;
 		this.receiveTime = receiveTime;
-		done();
-	}
-
-	public void onFailure(RpcResponse response, long receiveTime) {
-		this.rpcResponse = response;
-		this.receiveTime = receiveTime;
-		done();
+		if (null == asyCallback) {
+			done();
+		} else {
+			asyCallback.execute(response.getResult());
+		}
 	}
 
 	private boolean done() {
@@ -101,7 +103,9 @@ public class WrapperFuture {
 				}
 			}
 			if (null == rpcResponse) {
-				throw new RuntimeException("get rpcRequest[" + rpcRequest.toString() + "]'s response timeout");
+				rpcResponse = new RpcResponse();
+				rpcResponse.setId(rpcRequest.getId());
+				rpcResponse.setStatus(RpcResponseStatus.timeout);
 			}
 			return rpcResponse;
 		}

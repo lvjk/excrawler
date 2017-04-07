@@ -107,6 +107,9 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 	@Override
 	protected void insideWork() throws Exception {
 		doingPage = workQueue.pull();
+		long downTime = 0;
+		long extractTime = 0;
+		long storeTime = 0;
 		if (null != doingPage) {
 			try {
 				log.info("start to process page:" + doingPage.getOriginalUrl());
@@ -114,16 +117,25 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 				beforeDown(doingPage);
 				// 设置下载器代理
 				downer.setHttpProxy(httpProxyPool.getHttpProxy());
+
+				long startTime = System.currentTimeMillis();
 				// 下载数据
 				downer.down(doingPage);
 				// 暴露给实现类的抽取前操作
 				beforeExtract(doingPage);
+				downTime = System.currentTimeMillis() - startTime;
+
+				startTime = System.currentTimeMillis();
 				// 抽取结果
 				ResultContext resultContext = extracter.extract(doingPage);
 				// 暴露给实现类的抽取后操作
 				afterExtract(doingPage, resultContext);
+				extractTime = System.currentTimeMillis() - startTime;
+
+				startTime = System.currentTimeMillis();
 				// 存储数据
 				int storeCount = store.store(resultContext);
+				storeTime = System.currentTimeMillis() - startTime;
 				getWorkerSnapshot().setTotalResultCount(getWorkerSnapshot().getTotalResultCount() + storeCount);
 				// 暴露给实现类的完成操作
 				onComplete(doingPage, resultContext);
@@ -131,7 +143,8 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 				workQueue.ack(doingPage);
 				// 添加数据被处理记录
 				workQueue.addDone(doingPage);
-				log.info("finished processing page:" + doingPage.getOriginalUrl());
+				log.info("finished processing,down time[" + downTime + "],extract time[" + extractTime + "],store time["
+						+ storeTime + "]:" + doingPage.getOriginalUrl());
 			} catch (Exception e) {
 				throw new RuntimeException("process page err:" + doingPage.getOriginalUrl(), e);
 			}

@@ -11,7 +11,6 @@ import org.springframework.boot.test.WebIntegrationTest;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import six.com.crawler.schedule.MasterSchedulerManager;
 import six.com.crawler.admin.service.ExtractPathService;
 import six.com.crawler.admin.service.HttpPorxyService;
 import six.com.crawler.admin.service.JobService;
@@ -27,6 +26,7 @@ import six.com.crawler.dao.RedisManager;
 import six.com.crawler.dao.SiteDao;
 import six.com.crawler.http.HttpClient;
 import six.com.crawler.ocr.ImageDistinguish;
+import six.com.crawler.schedule.master.MasterSchedulerManager;
 
 /**
  * @author sixliu E-mail:359852326@qq.com

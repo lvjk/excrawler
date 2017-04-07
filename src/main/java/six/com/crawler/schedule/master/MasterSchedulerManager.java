@@ -1,8 +1,7 @@
-package six.com.crawler.schedule;
+package six.com.crawler.schedule.master;
 
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -43,6 +42,9 @@ import six.com.crawler.entity.JobSnapshotState;
 import six.com.crawler.entity.Node;
 import six.com.crawler.entity.NodeType;
 import six.com.crawler.entity.WorkerSnapshot;
+import six.com.crawler.schedule.RedisRegisterKeyUtils;
+import six.com.crawler.schedule.ScheduledJob;
+import six.com.crawler.schedule.worker.WorkerAbstractSchedulerManager;
 import six.com.crawler.utils.JobTableUtils;
 import six.com.crawler.work.WorkerLifecycleState;
 
@@ -101,7 +103,6 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 		executeWaitQueueThread.start();
 		// 加载 当前节点 需要调度的任务
 		loadScheduledJob();
-
 	}
 
 	private void loopReadWaitingJob() {
@@ -268,11 +269,11 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 					updateJobSnapshot(jobSnapshot);
 					getJobSnapshotDao().save(jobSnapshot);
 					int callSucceedCount = 0;
-					Map<String, Object> params = new HashMap<>();
-					params.put("jobName", job.getName());
+					WorkerAbstractSchedulerManager workerSchedulerManager=null;
 					for (Node freeNode : freeNodes) {
 						try {
-							getNodeManager().execute(freeNode, ScheduledJobCommand.execute, params);
+							workerSchedulerManager=getNodeManager().loolup(freeNode, WorkerAbstractSchedulerManager.class);
+							workerSchedulerManager.execute(job.getName());
 							callSucceedCount++;
 							log.info("already request worker node[" + freeNode.getName() + "] to execut the job["
 									+ job.getName() + "]");
@@ -313,11 +314,11 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 			getRedisManager().lock(lockKey);
 			List<Node> nodes = getWorkerNode(jobName);
 			int callSuccessedCount = 0;
-			Map<String, Object> params = new HashMap<>();
-			params.put("jobName", jobName);
+			WorkerAbstractSchedulerManager workerSchedulerManager=null;
 			for (Node node : nodes) {
 				try {
-					getNodeManager().execute(node, ScheduledJobCommand.suspend, params);
+					workerSchedulerManager=getNodeManager().loolup(node, WorkerAbstractSchedulerManager.class);
+					workerSchedulerManager.suspend(jobName);
 					callSuccessedCount++;
 					log.info("Already request worker node[" + node.getName() + "] to suspend the job[" + jobName + "]");
 				} catch (Exception e) {
@@ -350,11 +351,11 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 
 			List<Node> nodes = getWorkerNode(jobName);
 			int callSuccessedCount = 0;
-			Map<String, Object> params = new HashMap<>();
-			params.put("jobName", jobName);
+			WorkerAbstractSchedulerManager workerSchedulerManager=null;
 			for (Node node : nodes) {
 				try {
-					getNodeManager().execute(node, ScheduledJobCommand.goOn, params);
+					workerSchedulerManager=getNodeManager().loolup(node, WorkerAbstractSchedulerManager.class);
+					workerSchedulerManager.goOn(jobName);
 					callSuccessedCount++;
 					log.info("Already request worker node[" + node.getName() + "] to goOn the job[" + jobName + "]");
 				} catch (Exception e) {
@@ -386,11 +387,11 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 
 			List<Node> nodes = getWorkerNode(jobName);
 			int callSuccessedCount = 0;
-			Map<String, Object> params = new HashMap<>();
-			params.put("jobName", jobName);
+			WorkerAbstractSchedulerManager workerSchedulerManager=null;
 			for (Node node : nodes) {
 				try {
-					getNodeManager().execute(node, ScheduledJobCommand.stop, params);
+					workerSchedulerManager=getNodeManager().loolup(node, WorkerAbstractSchedulerManager.class);
+					workerSchedulerManager.stop(jobName);
 					callSuccessedCount++;
 					log.info("Already request worker node[" + node.getName() + "] to stop the job[" + jobName + "]");
 				} catch (Exception e) {
@@ -414,12 +415,12 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 		for (JobSnapshot jobSnapshot : allJobs) {
 			Job job = getJobDao().query(jobSnapshot.getName());
 			List<Node> nodes = getWorkerNode(job.getName());
-			Map<String, Object> params = new HashMap<>();
-			params.put("jobName", job.getName());
+			WorkerAbstractSchedulerManager workerSchedulerManager=null;
 			for (Node node : nodes) {
 				if (!currentNode.equals(node)) {
 					try {
-						getNodeManager().execute(node, ScheduledJobCommand.stop, params);
+						workerSchedulerManager=getNodeManager().loolup(node, WorkerAbstractSchedulerManager.class);
+						workerSchedulerManager.stop(job.getName());
 						log.info("Already request worker node[" + node.getName() + "] to stop the job[" + job.getName()
 								+ "]");
 					} catch (Exception e) {
@@ -429,10 +430,12 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 			}
 		}
 		List<Node> nodes = getNodeManager().getWorkerNodes();
+		WorkerAbstractSchedulerManager workerSchedulerManager=null;
 		for (Node node : nodes) {
 			if (!currentNode.equals(node)) {
 				try {
-					getNodeManager().execute(node, ScheduledJobCommand.stopAll, null);
+					workerSchedulerManager=getNodeManager().loolup(node, WorkerAbstractSchedulerManager.class);
+					workerSchedulerManager.stopAll();
 					log.info("Already request worker node[" + node.getName() + "] to stop all");
 				} catch (Exception e) {
 					log.error("get node[" + node.getName() + "]'s workerSchedulerManager err", e);
@@ -441,7 +444,6 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 		}
 	}
 
-	@Override
 	public void startWorker(String jobName, String workerName) {
 		String lockKey = getOperationJobLock(jobName);
 		try {

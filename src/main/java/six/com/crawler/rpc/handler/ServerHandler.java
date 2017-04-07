@@ -7,13 +7,14 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import six.com.crawler.rpc.RpcServer;
-import six.com.crawler.rpc.RpcService;
 import six.com.crawler.rpc.Signal;
 import six.com.crawler.rpc.Signals;
 import six.com.crawler.rpc.protocol.RpcMsg;
 
 import six.com.crawler.rpc.protocol.RpcRequest;
 import six.com.crawler.rpc.protocol.RpcResponse;
+import six.com.crawler.rpc.protocol.RpcResponseStatus;
+import six.com.crawler.rpc.service.WrapperServerService;
 import six.com.crawler.utils.ExceptionUtils;
 
 /**
@@ -46,21 +47,26 @@ public class ServerHandler extends SimpleChannelInboundHandler<RpcMsg> {
 	}
 
 	private RpcResponse processRequest(ChannelHandlerContext ctx, RpcRequest rpcRequest) {
-		RpcService rpcService = rpcServer.get(rpcRequest.getCommand());
+		WrapperServerService wrapperService = rpcServer.get(rpcRequest.getCommand());
 		RpcResponse rpcResponse = new RpcResponse();
 		rpcResponse.setId(rpcRequest.getId());
-		if (null != rpcService) {
-			log.info("server received coommand[" + rpcRequest.getCommand() + "] from " + rpcRequest.getOriginHost());
+		String address = ctx.channel().remoteAddress().toString();
+		if (null != wrapperService) {
+			log.info("server received coommand[" + rpcRequest.getCommand() + "] from:" + address);
 			try {
-				Object result = rpcService.execute(rpcRequest.getParams());
-				rpcResponse.setSucceed(true);
+				Object result = wrapperService.invoke(rpcRequest.getParams());
+				rpcResponse.setStatus(RpcResponseStatus.succeed);
 				rpcResponse.setResult(result);
 			} catch (Exception e) {
 				String errMsg = ExceptionUtils.getExceptionMsg(e);
+				rpcResponse.setStatus(RpcResponseStatus.invokeErr);
 				rpcResponse.setMsg(errMsg);
+				log.error("invoke request["+address+"] err",e);
 			}
 		} else {
-			rpcResponse.setMsg("server did not find the rpcRequest:" + rpcRequest.toString());
+			rpcResponse.setStatus(RpcResponseStatus.notFoundService);
+			rpcResponse.setMsg("did not find service by rpcRequest["+address+"]:" + rpcRequest.getCommand());
+			log.error("did not find service by rpcRequest["+address+"]:" + rpcRequest.getCommand());
 		}
 		return rpcResponse;
 	}

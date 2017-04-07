@@ -17,23 +17,12 @@ public class RpcResponse extends RpcMsg implements Serializable{
 	// 响应结果
 	private Object result;
 	
-	private boolean succeed;
+	private int status;
 	
 	private String msg;
-	
-	private Exception exception;
-	
+
 	public RpcResponse() {
 		super(RpcProtocol.RESPONSE);
-	}
-
-
-	public Exception getException() {
-		return exception;
-	}
-
-	public void setException(Exception exception) {
-		this.exception = exception;
 	}
 
 	public Object getResult() {
@@ -43,12 +32,12 @@ public class RpcResponse extends RpcMsg implements Serializable{
 	public void setResult(Object result) {
 		this.result = result;
 	}
-	public boolean isSucceed() {
-		return succeed;
+	public int getStatus() {
+		return status;
 	}
 
-	public void setSucceed(boolean succeed) {
-		this.succeed = succeed;
+	public void setStatus(int status) {
+		this.status = status;
 	}
 
 	public String getMsg() {

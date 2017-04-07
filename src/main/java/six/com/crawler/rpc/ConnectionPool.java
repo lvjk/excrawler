@@ -9,8 +9,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import six.com.crawler.rpc.handler.NettyConnection;
-
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com

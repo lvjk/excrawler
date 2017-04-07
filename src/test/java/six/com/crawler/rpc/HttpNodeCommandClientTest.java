@@ -4,9 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import six.com.crawler.rpc.NettyRpcCilent;
-import six.com.crawler.rpc.protocol.RpcRequest;
-import six.com.crawler.rpc.protocol.RpcResponse;
-import six.com.crawler.utils.ThreadUtils;
 
 /**
  * @author 作者
@@ -16,34 +13,27 @@ import six.com.crawler.utils.ThreadUtils;
 public class HttpNodeCommandClientTest {
 	public static void main(String[] a) throws InterruptedException {
 		NettyRpcCilent client = new NettyRpcCilent();
-		int requestCount=10000;
-		long allTime=0;
-		Map<String,Object> params=new HashMap<>();
-		params.put("jobName","test");
-		for (int i = 0; i <requestCount; i++) {
-			String id = "192.168.12.80@192.168.12.80:" + 8180 + "/test/" + System.currentTimeMillis();
-			RpcRequest rpcRequest = new RpcRequest();
-			rpcRequest.setId(id);
-			rpcRequest.setOriginHost("192.168.12.80");
-			rpcRequest.setCallHost("192.168.12.80");
-			rpcRequest.setCallPort(8180);
-			rpcRequest.setCommand("test");
-			rpcRequest.setParams(params);
-			
+		int requestCount = 10000;
+		long allTime = 0;
+		Map<String, Object> params = new HashMap<>();
+		String targetHost = "192.168.12.80";
+		int targetPort = 8180;
+		params.put("jobName", "test");
+		TestService testService = client.lookupService(targetHost, targetPort, TestService.class,null);
+		String name = "six";
+		for (int i = 0; i < requestCount; i++) {
 			try {
-				long startTime=System.currentTimeMillis();
-				RpcResponse rpcResponse = client.execute(rpcRequest);
-				long endTime=System.currentTimeMillis();
-				long totalTime=endTime-startTime;
-				allTime+=totalTime;
-				if (null != rpcResponse) {
-					System.out.println("result:"+rpcResponse.getResult()+"|消耗时间:"+totalTime);
-				}
+				long startTime = System.currentTimeMillis();
+				String result = testService.say(name + i);
+				long endTime = System.currentTimeMillis();
+				long totalTime = endTime - startTime;
+				allTime += totalTime;
+				System.out.println("result:" + result + "|消耗时间:" + totalTime);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
-		System.out.println("总消耗时间:"+allTime);
+		System.out.println("总消耗时间:" + allTime);
 		client.destroy();
 	}
 }

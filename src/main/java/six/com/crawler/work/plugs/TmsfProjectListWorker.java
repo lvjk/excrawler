@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
@@ -41,10 +39,6 @@ public class TmsfProjectListWorker extends AbstractCrawlWorker {
 			+ "sid=&" + "districtid=&" + "areaid=&" + "dealprice=&" + "propertystate=&" + "propertytype=&"
 			+ "ordertype=&" + "priceorder=&" + "openorder=&" + "view720data=&" + "page=" + pageIndexTemplate + "&"
 			+ "bbs=&" + "avanumorder=&" + "comnumorder=";
-	// 第一页从1开始
-	int pageIndex = 1;
-	int pageCount = -1;
-	String refererUrl;
 
 	private Page buildPage(int pageIndex, String refererUrl) {
 		String pageUrl = StringUtils.replace(urlTemplate, pageIndexTemplate, String.valueOf(pageIndex));
@@ -57,10 +51,29 @@ public class TmsfProjectListWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void insideInit() {
-		projectInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tmsf_project_info",Page.class);
-		Page firstPage = buildPage(pageIndex, refererUrl);// 初始化第一页
+		projectInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tmsf_project_info", Page.class);
+		int pageIndex = 1;
+		Page firstPage = buildPage(pageIndex,null);// 初始化第一页
+		
+		getDowner().down(firstPage);
+		
+		Element pageCountElement = firstPage.getDoc().select(pageCountCss).first();
+		String pageCountElementText = pageCountElement.text();
+		String[] pageCountParams = StringUtils.split(pageCountElementText, "/");
+		String pageCountStr = pageCountParams[1];
+		int pageCount = Integer.valueOf(pageCountStr);
+		
 		getWorkQueue().clearDoing();
+		
 		getWorkQueue().push(firstPage);
+		
+		Page lastPage = firstPage;
+		while (pageIndex <= pageCount) {
+			Page nextPage = buildPage(pageIndex, lastPage.getFinalUrl());// 初始化第一页
+			getWorkQueue().push(nextPage);
+			lastPage = nextPage;
+			pageIndex++;
+		}
 	}
 
 	@Override
@@ -70,16 +83,7 @@ public class TmsfProjectListWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void beforeExtract(Page doingPage) {
-		String html = doingPage.getPageSrc();
-		Document doc = Jsoup.parse(html);
-		if (pageCount == -1) {
-			Element pageCountElement = doc.select(pageCountCss).first();
-			String pageCountElementText = pageCountElement.text();
-			String[] pageCountParams = StringUtils.split(pageCountElementText, "/");
-			String pageCountStr = pageCountParams[1];
-			pageCount = Integer.valueOf(pageCountStr);
-		}
-		Elements projectDivElements = doc.select(projectDivCss);
+		Elements projectDivElements = doingPage.getDoc().select(projectDivCss);
 		String projectNameCss = "div[class='build_word01']>a";
 		String brandNameCss = "div[class='build_word01']>div:contains(推广名)";
 		String districtAndAddressCss = "div:contains(项目位置)>p";
@@ -90,7 +94,7 @@ public class TmsfProjectListWorker extends AbstractCrawlWorker {
 			if (null != projectNameElement) {
 				projectName = projectNameElement.text();
 				if (StringUtils.isNotBlank(projectName)) {
-					metaMap.put("projectName",ArrayListUtils.asList(projectName));
+					metaMap.put("projectName", ArrayListUtils.asList(projectName));
 				}
 			}
 			Element brandNameElement = projecrDivElement.select(brandNameCss).first();
@@ -122,10 +126,10 @@ public class TmsfProjectListWorker extends AbstractCrawlWorker {
 			String onclick = projecrDivElement.attr("onclick");
 			onclick = StringUtils.substringBetween(onclick, "toPropertyInfo(", ")");
 			String[] params = StringUtils.split(onclick, ",");
-			
+
 			metaMap.put("sid", ArrayListUtils.asList(params[0]));
 			metaMap.put("propertyId", ArrayListUtils.asList(params[1]));
-			
+
 			String projectUrl = StringUtils.replace(projectUrilTemplate, sidFlag, params[0]);
 			projectUrl = StringUtils.replace(projectUrl, propertyidFlag, params[1]);
 			projectUrl = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), projectUrl);
@@ -135,12 +139,6 @@ public class TmsfProjectListWorker extends AbstractCrawlWorker {
 			projectPage.getMetaMap().putAll(metaMap);
 			projectInfoQueue.push(projectPage);
 		}
-		pageIndex++;
-		if (pageIndex<=pageCount) {
-			Page page = buildPage(pageIndex, doingPage.getFinalUrl());// 初始化第一页
-			getWorkQueue().push(page);
-		}
-
 	}
 
 	@Override

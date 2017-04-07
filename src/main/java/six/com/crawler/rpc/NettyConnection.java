@@ -1,4 +1,4 @@
-package six.com.crawler.rpc.handler;
+package six.com.crawler.rpc;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +53,7 @@ public abstract class NettyConnection extends SimpleChannelInboundHandler<RpcMsg
 		this.channel = ctx.channel();
 	}
 
-	public ChannelFuture writeAndFlush(RpcMsg t) {
+	protected ChannelFuture writeAndFlush(RpcMsg t) {
 		return channel.writeAndFlush(t);
 	}
 

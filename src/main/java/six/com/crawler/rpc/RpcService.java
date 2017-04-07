@@ -1,14 +1,18 @@
 package six.com.crawler.rpc;
 
-import java.util.Map;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
- * @date 创建时间：2017年3月14日 下午5:33:33
+ * @date 创建时间：2017年4月6日 下午4:51:35
  */
-@FunctionalInterface
-public interface  RpcService{
+@Target({ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface RpcService {
 
-	public Object execute(Map<String,Object> params);
+	public String name();
 }

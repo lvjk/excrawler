@@ -3,7 +3,7 @@ package six.com.crawler.work;
 import six.com.crawler.entity.Job;
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.WorkerSnapshot;
-import six.com.crawler.schedule.WorkerSchedulerManager;
+import six.com.crawler.schedule.worker.WorkerSchedulerManager;
 
 /**
  * @author six

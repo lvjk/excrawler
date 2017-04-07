@@ -11,7 +11,7 @@ public class HttpNodeCommandServerTest {
 
 	public static void main(String[] a) throws InterruptedException {
 		NettyRpcServer server = new NettyRpcServer("192.168.12.80", 8180);
-		server.register("test", param -> "处理结果:" + param.toString() + "-" + System.currentTimeMillis());
+		server.register(new TestServiceImpl());
 		synchronized (server) {
 			server.wait();
 		}

@@ -1,7 +1,7 @@
 package six.com.crawler.rpc;
 
-import six.com.crawler.rpc.handler.ClientToServerConnection;
 import six.com.crawler.rpc.protocol.RpcRequest;
+import six.com.crawler.rpc.protocol.RpcResponse;
 
 /**
  * @author 作者
@@ -11,19 +11,37 @@ import six.com.crawler.rpc.protocol.RpcRequest;
 public interface RpcCilent {
 
 	/**
-	 * 通过 命令名 node 称获取对应的 NodeCommand
-	 * 
-	 * @param nodeCommandName
-	 *            命令名称
-	 * @param node
-	 *            提供命令的节点
+	 * 同步执行请求
+	 * @param RPCRequest
 	 * @return
 	 */
-	public Object execute(RpcRequest RPCRequest);
+	public RpcResponse synExecute(RpcRequest RPCRequest);
+
+	/**
+	 * 异步执行请求，请求完成时 ，执行回调callback
+	 * @param rpcRequest
+	 * @param callback
+	 */
+	public void asyExecute(RpcRequest rpcRequest, AsyCallback callback);
+	/**
+	 * 如果callback等于null那么 为同步调用，当callback 不等于null时 为异步调用
+	 * 
+	 * @param currentHost
+	 * @param currentPort
+	 * @param targetHost
+	 * @param targetPort
+	 * @param clz
+	 * @param callback
+	 * @return
+	 */
+	public <T> T lookupService(String targetHost, int targetPort, Class<?> clz,
+			AsyCallback callback);
+
+	public void putWrapperFuture(String requestId,WrapperFuture wrapperFuture);
 	
-	public WrapperFuture getRequest(String requestId);
-	
+	public WrapperFuture takeWrapperFuture(String requestId);
+
 	public long getCallTimeout();
-	
+
 	public void removeConnection(ClientToServerConnection connection);
 }

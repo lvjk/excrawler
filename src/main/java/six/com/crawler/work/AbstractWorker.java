@@ -1,13 +1,10 @@
 package six.com.crawler.work;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.locks.StampedLock;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +15,7 @@ import six.com.crawler.entity.Job;
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.WorkerErrMsg;
 import six.com.crawler.entity.WorkerSnapshot;
-import six.com.crawler.schedule.WorkerSchedulerManager;
+import six.com.crawler.schedule.worker.WorkerSchedulerManager;
 import six.com.crawler.utils.ExceptionUtils;
 import six.com.crawler.utils.ThreadUtils;
 
@@ -367,19 +364,4 @@ public abstract class AbstractWorker implements Worker {
 
 	protected abstract void insideDestroy();
 
-	protected static void writeByte(byte[] data) {
-		try {
-			FileUtils.writeByteArrayToFile(new File("F:/test.html"), data);
-		} catch (IOException e) {
-
-		}
-	}
-
-	protected static void writeString(String data) {
-		try {
-			FileUtils.write(new File("F:/test.html"), data);
-		} catch (IOException e) {
-
-		}
-	}
 }

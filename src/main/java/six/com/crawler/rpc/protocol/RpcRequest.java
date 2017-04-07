@@ -13,9 +13,6 @@ public class RpcRequest extends RpcMsg implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 1071881684426113946L;
-
-	// 来源host
-	private String originHost;
 	// 呼叫host
 	private String callHost;
 	// 呼叫host端口
@@ -23,20 +20,15 @@ public class RpcRequest extends RpcMsg implements Serializable {
 	// 呼叫命令
 	private String command;
 	// 呼叫参数
-	private Map<String,Object> params;
+	private Object[] params;
 	
+	private Map<String,Object> paramsMap;
+	
+
 	public RpcRequest() {
 		super(RpcProtocol.REQUEST);
 	}
 	
-	public String getOriginHost() {
-		return originHost;
-	}
-
-	public void setOriginHost(String originHost) {
-		this.originHost = originHost;
-	}
-
 	public String getCallHost() {
 		return callHost;
 	}
@@ -61,16 +53,24 @@ public class RpcRequest extends RpcMsg implements Serializable {
 		this.command = command;
 	}
 
-	public Map<String,Object> getParams() {
+	public Object[] getParams() {
 		return params;
 	}
 	
-	public void setParams(Map<String,Object> params) {
+	public void setParams(Object[] params) {
 		this.params=params;
+	}
+	
+	public Map<String, Object> getParamsMap() {
+		return paramsMap;
+	}
+
+	public void setParamsMap(Map<String, Object> paramsMap) {
+		this.paramsMap = paramsMap;
 	}
 
 	
 	public String toString(){
-		return originHost+"@"+callHost+":"+callPort+"/"+command+"/"+getId();
+		return "@"+callHost+":"+callPort+"/"+command+"/"+getId();
 	}
 }

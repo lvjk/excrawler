@@ -36,7 +36,7 @@ import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.PageQuery;
 import six.com.crawler.entity.WorkSpaceInfo;
 import six.com.crawler.entity.WorkerSnapshot;
-import six.com.crawler.schedule.MasterAbstractSchedulerManager;
+import six.com.crawler.schedule.master.MasterAbstractSchedulerManager;
 import six.com.crawler.utils.JobTableUtils;
 import six.com.crawler.work.extract.ExtractItem;
 

@@ -150,6 +150,7 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 		
 		List<String> houseIds = resultContext.getExtractResult("houseId");
 		List<String> houseNos = resultContext.getExtractResult("houseNo");
+		List<String> internalIds = resultContext.getExtractResult("internalId");
 		
 		List<String> unitNames = resultContext.getExtractResult("unitName");
 		List<String> houseUsages = resultContext.getExtractResult("houseUsage");
@@ -166,6 +167,7 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 		if (null != houseIds && houseIds.size() > 0) {
 			String houseId = null;
 			String houseNo = null;
+			String internalId=null;
 			String unitName = null;
 			String houseUsage = null;
 			String buildingArea = null;
@@ -178,7 +180,7 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 			for (int i = 0; i < houseIds.size(); i++) {
 				houseId = houseIds.get(i);
 				houseNo = houseNos.get(i);
-				
+			    internalId=internalIds.get(i);
 				unitName = unitNames.get(i);
 				houseUsage = houseUsages.get(i);
 				buildingArea = buildingAreas.get(i);
@@ -200,10 +202,11 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 				houseInfoPage.getMetaMap().put("presellName", ArrayListUtils.asList(presellName));
 				houseInfoPage.getMetaMap().put("presellCode", ArrayListUtils.asList(presellCode));
 				houseInfoPage.getMetaMap().put("presellId_org", ArrayListUtils.asList(presellId_org));
-
+				
 				houseInfoPage.getMetaMap().put("buildingName", ArrayListUtils.asList(buildingName));
 				houseInfoPage.getMetaMap().put("houseNo", ArrayListUtils.asList(houseNo));
 				houseInfoPage.getMetaMap().put("houseId", ArrayListUtils.asList(houseId));
+				houseInfoPage.getMetaMap().put("internalId", ArrayListUtils.asList(internalId));
 				
 				houseInfoPage.getMetaMap().put("unitName", ArrayListUtils.asList(unitName));
 				houseInfoPage.getMetaMap().put("houseUsage", ArrayListUtils.asList(houseUsage));

@@ -2,13 +2,11 @@ package six.com.crawler.rpc;
 
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
@@ -16,15 +14,18 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
+import net.sf.cglib.proxy.Enhancer;
+import six.com.crawler.rpc.exception.RpcInvokeException;
+import six.com.crawler.rpc.exception.RpcNotFoundServiceException;
+import six.com.crawler.rpc.exception.RpcRejectServiceException;
+import six.com.crawler.rpc.exception.RpcTimeoutException;
 import six.com.crawler.rpc.handler.ClientAcceptorIdleStateTrigger;
-import six.com.crawler.rpc.handler.ClientToServerConnection;
-import six.com.crawler.rpc.handler.NettyConnection;
 import six.com.crawler.rpc.protocol.RpcDecoder;
 import six.com.crawler.rpc.protocol.RpcEncoder;
 import six.com.crawler.rpc.protocol.RpcRequest;
 import six.com.crawler.rpc.protocol.RpcResponse;
+import six.com.crawler.rpc.protocol.RpcResponseStatus;
+import six.com.crawler.rpc.service.WrapperClientService;
 
 /**
  * @author 作者
@@ -58,40 +59,42 @@ public class NettyRpcCilent implements RpcCilent {
 		pool = new ConnectionPool<>();
 	}
 
+	@SuppressWarnings("unchecked")
+	public <T> T lookupService(String targetHost, int targetPort, Class<?> clz, AsyCallback callback) {
+		WrapperClientService wrapperClientService = new WrapperClientService(this, targetHost, targetPort, callback);
+		Enhancer enhancer = new Enhancer();
+		enhancer.setSuperclass(clz);
+		enhancer.setCallback(wrapperClientService);
+		return (T) enhancer.create();
+	}
+
 	@Override
-	public RpcResponse execute(RpcRequest rpcRequest) {
-		// 获取一个可用 netty链接
+	public RpcResponse synExecute(RpcRequest rpcRequest) {
+		WrapperFuture wrapperFuture = doExecute(rpcRequest, null);
+		RpcResponse rpcResponse = wrapperFuture.getResult(callTimeout);
+		if (rpcResponse.getStatus() == RpcResponseStatus.timeout) {
+			throw new RpcTimeoutException("execute rpcRequest[" + rpcRequest.toString() + "] timeout");
+		} else if (rpcResponse.getStatus() == RpcResponseStatus.notFoundService) {
+			throw new RpcNotFoundServiceException(rpcResponse.getMsg());
+		} else if (rpcResponse.getStatus() == RpcResponseStatus.reject) {
+			throw new RpcRejectServiceException(rpcResponse.getMsg());
+		} else if (rpcResponse.getStatus() == RpcResponseStatus.invokeErr) {
+			throw new RpcInvokeException(rpcResponse.getMsg());
+		} else {
+			return rpcResponse;
+		}
+	}
+
+	public void asyExecute(RpcRequest rpcRequest, AsyCallback callback) {
+		doExecute(rpcRequest, callback);
+	}
+
+	private WrapperFuture doExecute(RpcRequest rpcRequest, AsyCallback callback) {
 		ClientToServerConnection clientToServerConnection = findHealthyNettyConnection(rpcRequest);
-		WrapperFuture wrapperFuture = new WrapperFuture(rpcRequest);
-		requestMap.put(rpcRequest.getId(), wrapperFuture);
-		wrapperFuture.setSendTime(System.currentTimeMillis());
-		ChannelFuture channelFuture = clientToServerConnection.writeAndFlush(rpcRequest);
 		try {
-			boolean result = channelFuture.awaitUninterruptibly(callTimeout);
-			if (result) {
-				channelFuture.addListener(new GenericFutureListener<Future<? super Void>>() {
-					@Override
-					public void operationComplete(Future<? super Void> future) throws Exception {
-						if (future.isSuccess() || future.isDone()) {
-							log.info("call rpcRequest successed");
-						} else {
-							log.info("call rpcRequest failed");
-						}
-					}
-				});
-			}
-			RpcResponse rpcResponse = wrapperFuture.getResult(callTimeout);
-			if (null == rpcResponse) {
-				throw new RuntimeException("call rpcRequest's rpcResponse is null");
-			} else if (!StringUtils.equals(rpcResponse.getId(), rpcRequest.getId())) {
-				throw new RuntimeException("the rpcRequest's id don't match rpcResponse's id");
-			} else if (null != rpcResponse.getException()) {
-				throw new RuntimeException(rpcResponse.getException());
-			} else {
-				return rpcResponse;
-			}
+			WrapperFuture wrapperFuture = clientToServerConnection.send(rpcRequest, callback, callTimeout);
+			return wrapperFuture;
 		} finally {
-			requestMap.remove(rpcRequest.getId());
 			pool.returnConn(clientToServerConnection);
 		}
 	}
@@ -145,8 +148,12 @@ public class NettyRpcCilent implements RpcCilent {
 		return callTimeout;
 	}
 
-	public WrapperFuture getRequest(String requestId) {
-		return requestMap.get(requestId);
+	public void putWrapperFuture(String requestId, WrapperFuture wrapperFuture) {
+		requestMap.put(requestId, wrapperFuture);
+	}
+
+	public WrapperFuture takeWrapperFuture(String requestId) {
+		return requestMap.remove(requestId);
 	}
 
 	public void removeConnection(ClientToServerConnection connection) {

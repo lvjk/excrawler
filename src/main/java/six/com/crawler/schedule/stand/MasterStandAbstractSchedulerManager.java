@@ -1,7 +1,9 @@
-package six.com.crawler.schedule;
+package six.com.crawler.schedule.stand;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import six.com.crawler.schedule.AbstractSchedulerManager;
 
 /**
  * @author 作者
