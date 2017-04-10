@@ -28,13 +28,14 @@ public class WrapperFuture {
 
 	private AsyCallback asyCallback;
 
-	private long createTime = System.currentTimeMillis();
+	private final long createTime;
 
-	Object lock = new Object();
+	private Object lock = new Object();
 
 	public WrapperFuture(RpcRequest rpcRequest, AsyCallback asyCallback) {
 		this.rpcRequest = rpcRequest;
 		this.asyCallback = asyCallback;
+		createTime = System.currentTimeMillis();
 	}
 
 	public long getSendTime() {
@@ -80,6 +81,7 @@ public class WrapperFuture {
 	}
 
 	public RpcResponse getResult(long timeout) {
+
 		synchronized (lock) {
 			if (!isDoing()) {
 				return rpcResponse;
@@ -109,6 +111,6 @@ public class WrapperFuture {
 			}
 			return rpcResponse;
 		}
-
+	
 	}
 }

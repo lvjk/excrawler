@@ -31,6 +31,7 @@ import six.com.crawler.rpc.protocol.RpcEncoder;
 import six.com.crawler.rpc.protocol.RpcRequest;
 import six.com.crawler.rpc.protocol.RpcResponse;
 import six.com.crawler.rpc.protocol.RpcResponseStatus;
+import six.com.crawler.rpc.protocol.RpcSerialize;
 import six.com.crawler.utils.ObjectCheckUtils;
 
 /**
@@ -39,19 +40,33 @@ import six.com.crawler.utils.ObjectCheckUtils;
  * @date 创建时间：2017年3月20日 上午10:11:07
  * 
  *       基于netty 4.19final 实现的 简易 rpc 调用客户端
- *       
- *      <p> 注意:</p>
- *      <p> 所有rpc服务调用都有可能抛出一下异常:</p>
- *      <p>  1.链接或者请求超时</p>
- *      <p>  2.服务拒绝</p>
- *      <p>  3.未发现服务</p>
- *      <p>  4.执行异常</p>
- *       
- *       <p> 具体参考 six.com.crawler.rpc.exception 包下的异常</p>
- *       
+ * 
+ *       <p>
+ *       注意:
+ *       </p>
+ *       <p>
+ *       所有rpc服务调用都有可能抛出一下异常:
+ *       </p>
+ *       <p>
+ *       1.链接或者请求超时
+ *       </p>
+ *       <p>
+ *       2.服务拒绝
+ *       </p>
+ *       <p>
+ *       3.未发现服务
+ *       </p>
+ *       <p>
+ *       4.执行异常
+ *       </p>
+ * 
+ *       <p>
+ *       具体参考 six.com.crawler.rpc.exception 包下的异常
+ *       </p>
+ * 
  * 
  */
-public class NettyRpcCilent implements RpcCilent {
+public class NettyRpcCilent extends AbstractRemote implements RpcCilent {
 
 	final static Logger log = LoggerFactory.getLogger(NettyRpcCilent.class);
 
@@ -79,18 +94,19 @@ public class NettyRpcCilent implements RpcCilent {
 
 	private static AtomicInteger requestIndex = new AtomicInteger(0);
 
-	private static Object emptyObject = new Object();
-
 	public NettyRpcCilent() {
-		this(0);
+		this(0, new RpcSerialize() {
+		});
 	}
 
-	public NettyRpcCilent(int workerGroupThreads) {
+	public NettyRpcCilent(int workerGroupThreads, RpcSerialize rpcSerialize) {
+		super(rpcSerialize);
 		workerGroup = new NioEventLoopGroup(workerGroupThreads < 0 ? 0 : workerGroupThreads);
 		requestMap = new ConcurrentHashMap<>();
 		pool = new ConnectionPool<>();
 		serviceWeakHashMap = Collections.synchronizedMap(new java.util.WeakHashMap<>());
 	}
+
 
 	@SuppressWarnings("unchecked")
 	public <T> T lookupService(String targetHost, int targetPort, Class<?> clz, final AsyCallback asyCallback) {
@@ -118,7 +134,7 @@ public class NettyRpcCilent implements RpcCilent {
 						return rpcResponse.getResult();
 					} else {
 						asyExecute(rpcRequest, asyCallback);
-						return emptyObject;
+						return null;
 					}
 				}
 			});
@@ -127,7 +143,7 @@ public class NettyRpcCilent implements RpcCilent {
 		return (T) service;
 	}
 
-	private static String createRequestId(String targetHost, int targetPort, String serviceName) {
+	public String createRequestId(String targetHost, int targetPort, String serviceName) {
 		String requestId = "@" + targetHost + ":" + targetPort + "/" + serviceName + "/" + System.currentTimeMillis()
 				+ "/" + requestIndex.incrementAndGet();
 		return requestId;
@@ -202,8 +218,8 @@ public class NettyRpcCilent implements RpcCilent {
 								ch.pipeline()
 										.addLast(new IdleStateHandler(0, NettyConstant.WRITER_IDLE_TIME_SECONDES, 0));
 								ch.pipeline().addLast(IdleStateTrigger);
-								ch.pipeline().addLast(new RpcEncoder());
-								ch.pipeline().addLast(new RpcDecoder());
+								ch.pipeline().addLast(new RpcEncoder(getRpcSerialize()));
+								ch.pipeline().addLast(new RpcDecoder(getRpcSerialize()));
 								ch.pipeline().addLast(newClientToServerConnection);
 							}
 						});
