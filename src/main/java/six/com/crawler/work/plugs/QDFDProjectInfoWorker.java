@@ -1,5 +1,8 @@
 package six.com.crawler.work.plugs;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -43,7 +46,7 @@ public class QDFDProjectInfoWorker extends AbstractCrawlWorker{
 		
 	@Override
 	protected void insideInit() {
-		projectInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(),"qdfd_unit_url", Page.class);
+		projectInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(),"qdfd_presell_info", Page.class);
 		Page firstPage = buildPage(pageIndex, refererUrl);// 初始化第一页
 		getWorkQueue().clearDoing();
 		getWorkQueue().push(firstPage);
@@ -81,13 +84,16 @@ public class QDFDProjectInfoWorker extends AbstractCrawlWorker{
 		Elements urls=doingPage.getDoc().select("ul[class=list]>table:eq(1)>tbody>tr>td>a");
 		
 		for (Element url:urls) {
-			String proid=StringUtils.substringBetween(url.attr("href"), "javascript:detailProjectInfo('", "')");
+			String href=url.attr("href");
+			String proid=StringUtils.substringBetween(href, "javascript:detailProjectInfo(\"", "\")");
 			Page unitListPage = new Page(getSite().getCode(), 1, BASE_URL, BASE_URL);
 			unitListPage.setReferer(doingPage.getFinalUrl());
 			unitListPage.setMethod(HttpMethod.POST);
-			unitListPage.getParameters().put("projectID", proid);
+			Map<String,Object> params=new HashMap<String,Object>();
+			params.put("projectID", proid);
+			unitListPage.setParameters(params);
 			unitListPage.getMetaMap().putAll(doingPage.getMetaMap());
-			unitListPage.getMetaMap().put("projectID", ArrayListUtils.asList(proid));
+			unitListPage.getMetaMap().put("projectId", ArrayListUtils.asList(proid));
 			unitListPage.getMetaMap().put("projectName", ArrayListUtils.asList(url.ownText()));
 			projectInfoQueue.push(unitListPage);
 		}

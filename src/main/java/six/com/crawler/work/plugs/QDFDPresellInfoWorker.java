@@ -60,7 +60,7 @@ public class QDFDPresellInfoWorker extends AbstractCrawlWorker{
 			page.setMethod(HttpMethod.GET);
 			page.setReferer(doingPage.getFinalUrl());
 			page.getMetaMap().putAll(doingPage.getMetaMap());
-			page.getMetaMap().put("preid", ArrayListUtils.asList(presell_id));
+			page.getMetaMap().put("preId", ArrayListUtils.asList(presell_id));
 			page.getMetaMap().put("preDesc", ArrayListUtils.asList(predesc));
 			projectUnitUrlQueue.push(page);
 		}
