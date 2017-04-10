@@ -124,8 +124,8 @@ public abstract class AbstractExtracter implements Extracter {
 					throw new ExtractUnknownException("extractItem[" + doPaserItem.getOutputKey() + "] err", e);
 				}
 			}
-			if ((null == tempDoResults || tempDoResults.isEmpty())// 主键必须有值,如果抽取结果为空，判断是否必须有值，如果是那么抛出异常
-					&& (1 == doPaserItem.getPrimary() || 1 == doPaserItem.getMustHaveResult())) {
+			if ((null == tempDoResults || tempDoResults.isEmpty())//判断是否必须有值，如果是那么抛出异常
+					&& 1 == doPaserItem.getMustHaveResult()) {
 				throw new ExtractEmptyResultException(
 						"extract resultKey [" + doPaserItem.getOutputKey() + "] value is empty");
 			}
