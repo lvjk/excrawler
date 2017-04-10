@@ -280,7 +280,13 @@ public class WorkerSchedulerManager extends WorkerAbstractSchedulerManager {
 							.concat(AbstractSchedulerManager.class.getName()).concat("|").concat(Site.class.getName()),
 							e);
 				}
+			}else{
+				log.error("did not find worker's constructor:"+workerClass);
+				throw new RuntimeException("did not find worker class:"+workerClass);
 			}
+		}else{
+			log.error("did not find worker class:"+workerClass);
+			throw new RuntimeException("did not find worker class:"+workerClass);
 		}
 		return newJobWorker;
 	}
