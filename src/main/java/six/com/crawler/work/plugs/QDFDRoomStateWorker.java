@@ -26,7 +26,7 @@ public class QDFDRoomStateWorker extends AbstractCrawlWorker{
 	
 	RedisWorkSpace<Page> roomInfoQueue;
 	
-	private static final String BASE_URL="http://www.qdfd.com.cn/qdweb/realweb/fh/FhHouseStatus.jsp";
+	private static final String BASE_URL="http://www.qdfd.com.cn/qdweb/realweb/fh/FhHouseDetail.jsp";
 	
 	@Override
 	protected void insideInit() {

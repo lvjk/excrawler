@@ -21,7 +21,7 @@ public class QDFDPresellInfoWorker extends AbstractCrawlWorker{
 	
 	private String unitInfoUrlCss="ul[class=kpdy_bg]>table:eq(1)>tbody>tr>td>a";
 	
-	private static final String BASE_URL="http://www.qdfd.com.cn/qdweb/realweb/fh/FhHouseStatus.jsp";
+	private static final String BASE_URL="http://www.qdfd.com.cn/qdweb/realweb/fh/FhBuildingList.jsp";
 	
 	@Override
 	protected void insideInit() {

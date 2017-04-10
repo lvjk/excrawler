@@ -27,7 +27,7 @@ public class QDFDProjectInfoWorker extends AbstractCrawlWorker{
 	private String urlTemplate="http://www.qdfd.com.cn/qdweb/realweb/fh/FhProjectQuery.jsp?regionFirstID=&houseTypeFirst=&houseArea=&selState=&averagePriceLow=&"
 			+ "projectName=+&projectAddr=%CF%EE%C4%BF%B5%D8%D6%B7&imageField2.x=21&imageField2.y=11&page="+pageIndexTemplate+"&rows=20&okey=&order=";
 	
-	private static final String BASE_URL="http://www.qdfd.com.cn/qdweb/realweb/fh/FhHouseStatus.jsp";
+	private static final String BASE_URL="http://www.qdfd.com.cn/qdweb/realweb/fh/FhProjectInfo.jsp";
 	
 	RedisWorkSpace<Page> projectInfoQueue;
 	// 第一页从1开始
@@ -81,21 +81,25 @@ public class QDFDProjectInfoWorker extends AbstractCrawlWorker{
 	@Override
 	protected void afterExtract(Page doingPage, ResultContext resultContext){
 		
-		Elements urls=doingPage.getDoc().select("ul[class=list]>table:eq(1)>tbody>tr>td>a");
+		Elements urls=doingPage.getDoc().select("ul[class=list]>table:eq(1)>tbody>tr");
 		
-		for (Element url:urls) {
-			String href=url.attr("href");
-			String proid=StringUtils.substringBetween(href, "javascript:detailProjectInfo(\"", "\")");
-			Page unitListPage = new Page(getSite().getCode(), 1, BASE_URL, BASE_URL);
-			unitListPage.setReferer(doingPage.getFinalUrl());
-			unitListPage.setMethod(HttpMethod.POST);
-			Map<String,Object> params=new HashMap<String,Object>();
-			params.put("projectID", proid);
-			unitListPage.setParameters(params);
-			unitListPage.getMetaMap().putAll(doingPage.getMetaMap());
-			unitListPage.getMetaMap().put("projectId", ArrayListUtils.asList(proid));
-			unitListPage.getMetaMap().put("projectName", ArrayListUtils.asList(url.ownText()));
-			projectInfoQueue.push(unitListPage);
+		for (int i=1;i<urls.size();i++) {
+			Element url=urls.get(i);
+			String state=url.select("td").first().ownText();
+			if(state.equals("在售")){
+				String href=url.select("td").get(1).getElementsByTag("a").attr("href");
+				String proid=StringUtils.substringBetween(href, "javascript:detailProjectInfo(\"", "\")");
+				Page unitListPage = new Page(getSite().getCode(), 1, BASE_URL, BASE_URL);
+				unitListPage.setReferer(doingPage.getFinalUrl());
+				unitListPage.setMethod(HttpMethod.POST);
+				Map<String,Object> params=new HashMap<String,Object>();
+				params.put("projectID", proid);
+				unitListPage.setParameters(params);
+				unitListPage.getMetaMap().putAll(doingPage.getMetaMap());
+				unitListPage.getMetaMap().put("projectId", ArrayListUtils.asList(proid));
+				unitListPage.getMetaMap().put("projectName", ArrayListUtils.asList(url.ownText()));
+				projectInfoQueue.push(unitListPage);
+			}
 		}
 		// 判断是否还有下一页 有下一页生成下一页丢进当前队列 即可
 		pageIndex++;
