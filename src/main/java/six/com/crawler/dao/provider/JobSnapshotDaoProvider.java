@@ -97,7 +97,7 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 		sql.SET("`maxProcessTime`=#{maxProcessTime}");
 		sql.SET("`minProcessTime`=#{minProcessTime}");
 		sql.SET("`errCount`=#{errCount}");
-		sql.WHERE("`id` = #{id}");
+		sql.WHERE("`id` = #{id} and `name` = #{name}");
 		return sql.toString();
 	}
 	
