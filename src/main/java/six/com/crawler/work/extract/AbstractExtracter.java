@@ -2,10 +2,9 @@ package six.com.crawler.work.extract;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.StringUtils;
@@ -15,7 +14,6 @@ import six.com.crawler.common.DateFormats;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.AutoCharsetDetectorUtils;
-import six.com.crawler.utils.ObjectCheckUtils;
 import six.com.crawler.utils.TelPhoneUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
@@ -52,22 +50,14 @@ public abstract class AbstractExtracter implements Extracter {
 	private AbstractCrawlWorker worker;
 	private List<ExtractItem> extractItems;
 	private Map<String, List<ExtractPath>> extractPathMap = new HashMap<>();
-	private static Set<Character> charSet = new HashSet<>();
 	private volatile int primaryResultSize = -1;
-	private static final String EMPTY_VALUE = "";
 	private AtomicInteger extracterIndex = new AtomicInteger(0);
 	private String workerName;
 	private String jobSnapshotId;
 
-	static {
-		charSet.add(' ');
-		charSet.add('\n');
-		charSet.add('\t');
-	}
-
 	public AbstractExtracter(AbstractCrawlWorker worker, List<ExtractItem> extractItems) {
-		ObjectCheckUtils.checkNotNull(worker, "worker");
-		ObjectCheckUtils.checkNotNull(extractItems, "extractItems");
+		Objects.requireNonNull(worker, "worker must not be null");
+		Objects.requireNonNull(extractItems, "extractItems must not be null");
 		ExtractItem firstExtractItem = null;
 		int primaryCount = 0;
 		int index = -1;
@@ -124,10 +114,11 @@ public abstract class AbstractExtracter implements Extracter {
 					throw new ExtractUnknownException("extractItem[" + doPaserItem.getOutputKey() + "] err", e);
 				}
 			}
-			if ((null == tempDoResults || tempDoResults.isEmpty())//判断是否必须有值，如果是那么抛出异常
-					&& 1 == doPaserItem.getMustHaveResult()) {
-				throw new ExtractEmptyResultException(
-						"extract resultKey [" + doPaserItem.getOutputKey() + "] value is empty");
+			if (null == tempDoResults || tempDoResults.isEmpty()) {// 判断是否必须有值，如果是那么抛出异常
+				if (1 == doPaserItem.getPrimary() || 1 == doPaserItem.getMustHaveResult()) {
+					throw new ExtractEmptyResultException(
+							"extract resultKey [" + doPaserItem.getOutputKey() + "] value is empty");
+				}
 			}
 			if (1 == doPaserItem.getPrimary()) {// 记录主键结果数量
 				if (-1 == primaryResultSize) {// primaryResultSize第一次直接赋值
@@ -149,7 +140,7 @@ public abstract class AbstractExtracter implements Extracter {
 																		// 空值
 					tempDoResults = null == tempDoResults ? new ArrayList<>(primaryResultSize) : tempDoResults;
 					for (int i = 0; i < primaryResultSize; i++) {
-						tempDoResults.add(EMPTY_VALUE);
+						tempDoResults.add(StringUtils.EMPTY);
 					}
 				} else if (tempDoResults.size() < primaryResultSize
 						&& doPaserItem.getType() == ExtractItemType.META.value()) {
@@ -161,7 +152,7 @@ public abstract class AbstractExtracter implements Extracter {
 				} else if (tempDoResults.size() < primaryResultSize) {
 					int supplementCount = primaryResultSize - tempDoResults.size();
 					for (int i = 0; i < supplementCount; i++) {
-						tempDoResults.add(EMPTY_VALUE);
+						tempDoResults.add(StringUtils.EMPTY);
 					}
 				}
 			}
@@ -229,17 +220,17 @@ public abstract class AbstractExtracter implements Extracter {
 	 *            抽取出来的结果
 	 */
 	protected String paserString(ExtractItem paserResult, Page page, String preText) {
-		String newStr=preText;
+		String newStr = preText;
 		if (StringUtils.isNoneBlank(preText)) {
 			if (ExtractItemType.STRING.value() == paserResult.getType()) {
-				newStr=StringUtils.trim(preText);
-				newStr=AutoCharsetDetectorUtils.instance().escape(newStr);
+				newStr = StringUtils.trim(preText);
+				newStr = AutoCharsetDetectorUtils.instance().escape(newStr);
 			} else if (ExtractItemType.URL.value() == paserResult.getType()) {
 				String newUrl = null;
 				if (!"#no".equals(preText)) {
 					newUrl = UrlUtils.paserUrl(page.getBaseUrl(), page.getFinalUrl(), StringUtils.trim(preText));
 				}
-				newStr=newUrl;
+				newStr = newUrl;
 			} else if (ExtractItemType.PHONE.value() == paserResult.getType()) {
 				String[] temp = preText.split(" ");
 				String telPhone = "";
@@ -248,10 +239,10 @@ public abstract class AbstractExtracter implements Extracter {
 						telPhone = StringUtils.trim(word);
 					}
 				}
-				newStr=telPhone;
+				newStr = telPhone;
 			} else {
-				newStr=StringUtils.trim(preText);
-				newStr=AutoCharsetDetectorUtils.instance().escape(newStr);
+				newStr = StringUtils.trim(preText);
+				newStr = AutoCharsetDetectorUtils.instance().escape(newStr);
 			}
 		}
 		return newStr;
