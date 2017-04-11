@@ -52,6 +52,8 @@ public class QDFDUnitInfoWorker extends AbstractCrawlWorker{
 			page.setReferer(doingPage.getFinalUrl());
 			page.getMetaMap().put("projectId", doingPage.getMetaMap().get("projectId"));
 			page.getMetaMap().put("projectName", doingPage.getMetaMap().get("projectName"));
+			page.getMetaMap().put("preId", doingPage.getMetaMap().get("preId"));
+			page.getMetaMap().put("preDesc", doingPage.getMetaMap().get("preDesc"));
 			page.getMetaMap().put("buildId", ArrayListUtils.asList(buildid));//楼栋ID
 			page.getMetaMap().put("startId", ArrayListUtils.asList(startid));//start ID
 			projectUnitInfoQueue.push(page);
