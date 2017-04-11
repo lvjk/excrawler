@@ -48,18 +48,16 @@ public class QDFDPresellInfoWorker extends AbstractCrawlWorker{
 			return;
 		}
 		
-		Element birdElement=doingPage.getDoc().select("a[id=Bird_btn]").first();
 		//FhProjectBird.jsp?projectID=2096&projectName=银盛泰 德郡四期&presell_id=3321&predesc=青房注字(城13)第37
-		String href=birdElement.attr("href");
-		String presell_id=StringUtils.substringBetween(href, "&presell_id=", "&predesc=");
-		String predesc=StringUtils.substringBetween(href, "&predesc=");
 		for (Element url:urlElement) {
-			String unitId=StringUtils.substringBetween(url.attr("href"), "javascript:getBuilingList(", "\",\"");
-			String pageUrl=BASE_URL+"?preid="+unitId;
+			String presell_id=StringUtils.substringBetween(url.attr("href"), "javascript:getBuilingList(\"", "\",\"");
+			String predesc=StringUtils.substringBetween(url.attr("href"), "\",\"", "\")");
+			String pageUrl=BASE_URL+"?preid="+presell_id;
 			Page page=new Page(doingPage.getSiteCode(),1,pageUrl,pageUrl);
 			page.setMethod(HttpMethod.GET);
 			page.setReferer(doingPage.getFinalUrl());
-			page.getMetaMap().putAll(doingPage.getMetaMap());
+			page.getMetaMap().put("projectId", doingPage.getMetaMap().get("projectId"));
+			page.getMetaMap().put("projectName", doingPage.getMetaMap().get("projectName"));
 			page.getMetaMap().put("preId", ArrayListUtils.asList(presell_id));
 			page.getMetaMap().put("preDesc", ArrayListUtils.asList(predesc));
 			projectUnitUrlQueue.push(page);

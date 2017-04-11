@@ -42,7 +42,7 @@ public class QDFDRoomStateWorker extends AbstractCrawlWorker{
 	protected void beforeExtract(Page doingPage) {
 		String roomStateCss="div[class=housestatus_bg] td[style=padding:15] table:eq(0) font";
 		if(roomStates.isEmpty()){
-			Elements stateElements=doingPage.getDoc().select("roomStateCss");
+			Elements stateElements=doingPage.getDoc().select(roomStateCss);
 			if(null==stateElements){
 				throw new RuntimeException("don't find state node:" + roomStateCss);
 			}
@@ -55,6 +55,37 @@ public class QDFDRoomStateWorker extends AbstractCrawlWorker{
 				roomStates.put(key, value);
 			}
 		}
+		Elements roomStatus=doingPage.getDoc().select(roomCss);
+		for (Element state:roomStatus) {
+			String key=state.attr("bgcolor");
+			if(roomStates.containsKey(key)){
+				doingPage.getMetaMap().put("projectId", doingPage.getMetaMap().get("projectId"));
+				doingPage.getMetaMap().put("projectName", doingPage.getMetaMap().get("projectName"));
+				doingPage.getMetaMap().put("preId", doingPage.getMetaMap().get("preId"));
+				doingPage.getMetaMap().put("preDesc", doingPage.getMetaMap().get("preDesc"));
+				doingPage.getMetaMap().put("buildId", doingPage.getMetaMap().get("buildId"));
+				doingPage.getMetaMap().put("roomNum", ArrayListUtils.asList(state.ownText().trim()));
+				doingPage.getMetaMap().put("startId", doingPage.getMetaMap().get("startId"));
+				
+				Element url=state.select("a").first();
+				if(url!=null){
+					String houseId=StringUtils.substringBetween(url.attr("href"), "javascript:houseDetail('", "')");
+					String pageUrl=BASE_URL+"?houseID="+houseId;
+					Page page=new Page(doingPage.getSiteCode(), 1, pageUrl, pageUrl);
+					page.setMethod(HttpMethod.GET);
+					page.setReferer(doingPage.getFinalUrl());
+					page.getMetaMap().put("projectId", doingPage.getMetaMap().get("projectId"));
+					page.getMetaMap().put("projectName", doingPage.getMetaMap().get("projectName"));
+					page.getMetaMap().put("preId", doingPage.getMetaMap().get("preId"));
+					page.getMetaMap().put("preDesc", doingPage.getMetaMap().get("preDesc"));
+					page.getMetaMap().put("buildId", doingPage.getMetaMap().get("buildId"));
+					page.getMetaMap().put("startId", doingPage.getMetaMap().get("startId"));
+					page.getMetaMap().put("houseId",ArrayListUtils.asList(houseId));
+					doingPage.getMetaMap().put("houseId", ArrayListUtils.asList(houseId));
+					roomInfoQueue.push(page);
+				}
+			}
+		}
 	}
 
 	@Override
@@ -64,22 +95,6 @@ public class QDFDRoomStateWorker extends AbstractCrawlWorker{
 
 	@Override
 	protected void onComplete(Page doingPage, ResultContext resultContext) {
-		Elements roomStatus=doingPage.getDoc().select(roomCss);
-		for (Element state:roomStatus) {
-			String key=state.attr("bgcolor");
-			if(roomStates.containsKey(key)){
-				Element url=state.select("a").first();
-				if(url!=null){
-					String houseId=StringUtils.substringBetween(url.attr("href"), "javascript:houseDetail('", "')");
-					String pageUrl=BASE_URL+"?houseID="+houseId;
-					Page page=new Page(doingPage.getSiteCode(), 1, pageUrl, pageUrl);
-					page.setMethod(HttpMethod.GET);
-					page.setReferer(doingPage.getFinalUrl());
-					page.getMetaMap().putAll(doingPage.getMetaMap());
-					page.getMetaMap().put("houseId",ArrayListUtils.asList(houseId));
-					roomInfoQueue.push(page);
-				}
-			}
-		}
+		
 	}
 }
