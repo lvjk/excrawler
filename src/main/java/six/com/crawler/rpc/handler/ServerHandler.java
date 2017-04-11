@@ -7,9 +7,9 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import six.com.crawler.rpc.RpcServer;
-import six.com.crawler.rpc.Signal;
-import six.com.crawler.rpc.Signals;
 import six.com.crawler.rpc.WrapperService;
+import six.com.crawler.rpc.exception.RpcSystenException;
+import six.com.crawler.rpc.exception.RpcSystenExceptions;
 import six.com.crawler.rpc.protocol.RpcMsg;
 
 import six.com.crawler.rpc.protocol.RpcRequest;
@@ -75,21 +75,21 @@ public class ServerHandler extends SimpleChannelInboundHandler<RpcMsg> {
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 		Channel ch = ctx.channel();
 		String address = ctx.channel().remoteAddress().toString();
-		if (cause instanceof Signal) {
-			Signal signalErr = (Signal) cause;
-			if (signalErr.getType() == Signals.MSG_ILLEGAL_TYPE) {
+		if (cause instanceof RpcSystenException) {
+			RpcSystenException signalErr = (RpcSystenException) cause;
+			if (signalErr.getRpcSystenType() == RpcSystenExceptions.MSG_ILLEGAL_TYPE) {
 				RpcResponse response = new RpcResponse();
 				response.setMsg("the msg is illegal");
 				ctx.writeAndFlush(response);
 				ctx.close();
 				log.error("the msg is illegal from channel[" + address + "]", cause);
-			} else if (signalErr.getType() == Signals.MSG_TOO_BIG) {
+			} else if (signalErr.getRpcSystenType() == RpcSystenExceptions.MSG_TOO_BIG) {
 				RpcResponse response = new RpcResponse();
 				response.setMsg("the msg is too big");
 				ctx.writeAndFlush(response);
 				ctx.close();
 				log.error("the msg is too big from channel[" + address + "]", cause);
-			} else if (signalErr.getType() == Signals.READER_IDLE) {
+			} else if (signalErr.getRpcSystenType() == RpcSystenExceptions.READER_IDLE) {
 				ch.close();
 				log.error("the channel[" + address + "] is reader idle and will be close", cause);
 			}

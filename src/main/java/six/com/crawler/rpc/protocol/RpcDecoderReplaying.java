@@ -8,8 +8,8 @@ import org.slf4j.LoggerFactory;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ReplayingDecoder;
-import six.com.crawler.rpc.Signal;
-import six.com.crawler.rpc.Signals;
+import six.com.crawler.rpc.exception.RpcSystenException;
+import six.com.crawler.rpc.exception.RpcSystenExceptions;
 import six.com.crawler.utils.JavaSerializeUtils;
 
 /**
@@ -70,7 +70,7 @@ public class RpcDecoderReplaying extends ReplayingDecoder<RpcDecoderReplaying.St
 				break;
 			}
 			default:
-				throw Signals.ILLEGAL_MSG_ERR;
+				throw RpcSystenExceptions.ILLEGAL_MSG_ERR;
 
 			}
 			checkpoint(State.HEADER_MSGTYPE);
@@ -78,16 +78,16 @@ public class RpcDecoderReplaying extends ReplayingDecoder<RpcDecoderReplaying.St
 
 	}
 
-	private static void checkMsgType(byte msgType) throws Signal {
+	private static void checkMsgType(byte msgType) throws RpcSystenException {
 		if (msgType != RpcProtocol.REQUEST && msgType != RpcProtocol.RESPONSE && msgType != RpcProtocol.HEARTBEAT) {
 			log.error("illegal msg type:" + msgType);
-			throw Signals.ILLEGAL_MSG_ERR;
+			throw RpcSystenExceptions.ILLEGAL_MSG_ERR;
 		}
 	}
 
-	private static int checkBodyLength(int size) throws Signal {
+	private static int checkBodyLength(int size) throws RpcSystenException {
 		if (size > RpcProtocol.MAX_BODY_SIZE) {
-			throw Signals.BODY_TOO_BIG_ERR;
+			throw RpcSystenExceptions.BODY_TOO_BIG_ERR;
 		}
 		return size;
 	}

@@ -7,11 +7,19 @@ package six.com.crawler.rpc;
  */
 public interface RpcServer {
 
-
 	/**
-	 * 基于Rpc Service注解注册
+	 * <p>
+	 * 基于RpcService注解(@RpcService)注册
+	 * </p>
+	 * <p>
+	 * 只需要在类方法上 使用 @RpcService(name="RpcService") 即可
+	 * </p>
+	 * <p>
+	 * 如果类里没有方法使用@RpcService的话那么不会注册
+	 * </p>
 	 * 
 	 * @param tagetOb
+	 *            必须有值 否则抛运行时异常
 	 */
 	public void register(Object tagetOb);
 

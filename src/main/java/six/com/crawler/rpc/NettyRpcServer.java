@@ -24,6 +24,7 @@ import six.com.crawler.rpc.handler.ServerAcceptorIdleStateTrigger;
 import six.com.crawler.rpc.handler.ServerHandler;
 import six.com.crawler.rpc.protocol.RpcDecoder;
 import six.com.crawler.rpc.protocol.RpcEncoder;
+import six.com.crawler.rpc.protocol.RpcSerialize;
 import six.com.crawler.utils.ObjectCheckUtils;
 
 /**
@@ -31,7 +32,7 @@ import six.com.crawler.utils.ObjectCheckUtils;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年3月20日 上午10:11:44
  */
-public class NettyRpcServer implements RpcServer {
+public class NettyRpcServer extends AbstractRemote implements RpcServer {
 
 	final static Logger log = LoggerFactory.getLogger(NettyRpcServer.class);
 
@@ -50,12 +51,15 @@ public class NettyRpcServer implements RpcServer {
 	private EventLoopGroup workerGroup;
 
 	private ServerBootstrap serverBootstrap;
-
+	
 	public NettyRpcServer(String loaclHost, int trafficPort) {
-		this(loaclHost, trafficPort, 0, 0);
+		this(loaclHost, trafficPort, 0, 0, new RpcSerialize() {
+		});
 	}
 
-	public NettyRpcServer(String loaclHost, int trafficPort, int bossGroupThreads, int workerGroupThreads) {
+	public NettyRpcServer(String loaclHost, int trafficPort, int bossGroupThreads, int workerGroupThreads,
+			RpcSerialize rpcSerialize) {
+		super(rpcSerialize);
 		this.loaclHost = loaclHost;
 		this.trafficPort = trafficPort;
 		bossGroup = new NioEventLoopGroup(bossGroupThreads < 0 ? 0 : bossGroupThreads);
@@ -67,8 +71,8 @@ public class NettyRpcServer implements RpcServer {
 					public void initChannel(SocketChannel ch) throws Exception {
 						ch.pipeline().addLast(new IdleStateHandler(0, 0, NettyConstant.ALL_IDLE_TIME_SECONDES));
 						ch.pipeline().addLast(idleStateTrigger);
-						ch.pipeline().addLast(new RpcEncoder());
-						ch.pipeline().addLast(new RpcDecoder());
+						ch.pipeline().addLast(new RpcEncoder(getRpcSerialize()));
+						ch.pipeline().addLast(new RpcDecoder(getRpcSerialize()));
 						ch.pipeline().addLast(new ServerHandler(NettyRpcServer.this));
 					}
 				}).option(ChannelOption.SO_BACKLOG, 128).childOption(ChannelOption.SO_KEEPALIVE, true);
@@ -76,6 +80,7 @@ public class NettyRpcServer implements RpcServer {
 		thread.setDaemon(true);
 		thread.start();
 	}
+	
 
 	public void register(Object tagetOb) {
 		ObjectCheckUtils.checkNotNull(tagetOb, "tagetOb");
@@ -86,9 +91,9 @@ public class NettyRpcServer implements RpcServer {
 			for (Method method : allMethods) {
 				RpcService rpcAnnotation = method.getAnnotation(RpcService.class);
 				if (null != rpcAnnotation) {
-					String serviceName=((RpcService) rpcAnnotation).name();
-					if(StringUtils.isBlank(serviceName)){
-						serviceName=method.getName();
+					String serviceName = ((RpcService) rpcAnnotation).name();
+					if (StringUtils.isBlank(serviceName)) {
+						serviceName = method.getName();
 					}
 					map.put(serviceName, method);
 				}

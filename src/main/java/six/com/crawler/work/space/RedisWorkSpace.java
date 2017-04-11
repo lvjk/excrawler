@@ -83,55 +83,49 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 		T data = null;
 		boolean isRepair = false;
 		boolean againGet = false;
-		while (!isRepair || againGet) {
-			// 先从代理队列里获取头元素数据key 并移除
-			String dataKey = redisManager.lpop(proxyQueueKey, String.class);
-			if (isRepair && null == dataKey) {
-				break;
-			} else {
-				if (null != dataKey) {
-					// 通过数据key 再获取数据
-					data = redisManager.hget(queueKey, dataKey, clz);
-					if (null == data) {
-						throw new RuntimeException("don't find value by data's key[" + dataKey + "] from queue");
-					}
+		try{
+			redisManager.lock(queueKey);
+			while (!isRepair || againGet) {
+				// 先从代理队列里获取头元素数据key 并移除
+				String dataKey = redisManager.lpop(proxyQueueKey, String.class);
+				if (isRepair && null == dataKey) {
 					break;
 				} else {
-					repairDoingData();
-					isRepair = true;
-					againGet = true;
+					if (null != dataKey) {
+						// 通过数据key 再获取数据
+						data = redisManager.hget(queueKey, dataKey, clz);
+						if (null == data) {
+							throw new RuntimeException("don't find value by data's key[" + dataKey + "] from queue");
+						}
+						break;
+					} else {
+						int proxyQueueLlen = redisManager.llen(proxyQueueKey);
+						int queueKeyLlen = redisManager.hllen(queueKey);
+						if (queueKeyLlen != proxyQueueLlen) {
+							redisManager.del(proxyQueueKey);
+							String cursorStr = "0";
+							Map<String, T> map = new HashMap<>();
+							do {
+								cursorStr = redisManager.hscan(queueKey, cursorStr, map, clz);
+								map.keySet().stream().forEach(mapKey -> {
+									redisManager.rpush(proxyQueueKey, mapKey);
+								});
+								map.clear();
+							} while (!"0".equals(cursorStr));
+						}
+						isRepair = true;
+						againGet = true;
+					}
 				}
 			}
-		}
-		return data;
-	}
-
-	/**
-	 * 填充代理队列数据 将实践存储的数据填充到代理队列
-	 */
-	private void repairDoingData() {
-		redisManager.lock(queueKey);
-		try {
-			int proxyQueueLlen = redisManager.llen(proxyQueueKey);
-			int queueKeyLlen = redisManager.hllen(queueKey);
-			if (queueKeyLlen != proxyQueueLlen) {
-				redisManager.del(proxyQueueKey);
-				String cursorStr = "0";
-				Map<String, T> map = new HashMap<>();
-				do {
-					cursorStr = redisManager.hscan(queueKey, cursorStr, map, clz);
-					map.keySet().stream().forEach(mapKey -> {
-						redisManager.rpush(proxyQueueKey, mapKey);
-					});
-					map.clear();
-				} while (!"0".equals(cursorStr));
-			}
-		} catch (Exception e) {
+		}catch (Exception e) {
 			throw e;
 		} finally {
 			redisManager.unlock(queueKey);
 		}
+		return data;
 	}
+
 
 	public String batchGetDoingData(List<T> resutList, String cursorStr) {
 		return batchGet(resutList, cursorStr, queueKey);

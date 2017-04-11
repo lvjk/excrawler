@@ -70,12 +70,6 @@ public interface JobDao extends BaseDao{
 	 * @param t
 	 * @return
 	 */
-	/**
-	 * 更新数据
-	 * 
-	 * @param t
-	 * @return
-	 */
 	@UpdateProvider(type = JobDaoProvider.class, method = "save")
 	public int save(Job job);
 

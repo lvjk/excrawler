@@ -9,8 +9,7 @@ import org.slf4j.LoggerFactory;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
-import six.com.crawler.rpc.Signals;
-import six.com.crawler.utils.JavaSerializeUtils;
+import six.com.crawler.rpc.exception.RpcSystenExceptions;
 
 /**
  * @author 作者
@@ -31,7 +30,16 @@ import six.com.crawler.utils.JavaSerializeUtils;
 public class RpcDecoder extends ByteToMessageDecoder implements RpcProtocol {
 
 	final static Logger log = LoggerFactory.getLogger(RpcDecoder.class);
+	
+	private RpcSerialize rpcSerialize;
 
+	public RpcDecoder(RpcSerialize rpcSerialize){
+		if(null==rpcSerialize){
+			throw new NullPointerException("rpcSerialize must be not null");
+		}
+		this.rpcSerialize=rpcSerialize;
+	}
+	
 	@Override
 	protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> out) throws Exception {
 		if (buffer.readableBytes() >= RpcProtocol.HEAD_MIN_LENGTH) {
@@ -42,7 +50,7 @@ public class RpcDecoder extends ByteToMessageDecoder implements RpcProtocol {
 			} else if (msgType != RpcProtocol.REQUEST && msgType != RpcProtocol.RESPONSE) {
 				buffer.resetReaderIndex();
 				log.error("received illegal msg type[" + msgType + "] from" + getRemoteAddress(ctx));
-				throw Signals.ILLEGAL_MSG_ERR;
+				throw RpcSystenExceptions.ILLEGAL_MSG_ERR;
 			} else {
 				int dataLength = buffer.readInt();
 				// 如果dataLength过大，可能导致问题
@@ -51,26 +59,26 @@ public class RpcDecoder extends ByteToMessageDecoder implements RpcProtocol {
 					return;
 				}
 				if (RpcProtocol.MAX_BODY_SIZE > 0 && dataLength > RpcProtocol.MAX_BODY_SIZE) {
-					throw Signals.BODY_TOO_BIG_ERR;
+					throw RpcSystenExceptions.BODY_TOO_BIG_ERR;
 				}
 				byte[] data = new byte[dataLength];
 				buffer.readBytes(data);
 				if(RpcProtocol.REQUEST==msgType){
 					try{
-						RpcRequest rpcRequest = JavaSerializeUtils.unSerialize(data, RpcRequest.class);
+						RpcRequest rpcRequest = rpcSerialize.unSerialize(data, RpcRequest.class);
 						out.add(rpcRequest);
 					}catch (Exception e) {
 						log.error("did not unSerialize rpcRequest from "+getRemoteAddress(ctx),e);
 					}
 				}else if(RpcProtocol.RESPONSE==msgType){
 					try{
-						RpcResponse rpcResponse = JavaSerializeUtils.unSerialize(data, RpcResponse.class);
+						RpcResponse rpcResponse = rpcSerialize.unSerialize(data, RpcResponse.class);
 						out.add(rpcResponse);
 					}catch (Exception e) {
 						log.error("did not unSerialize rpcResponse from "+getRemoteAddress(ctx),e);
 					}
 				}else{
-					throw Signals.ILLEGAL_MSG_ERR;
+					throw RpcSystenExceptions.ILLEGAL_MSG_ERR;
 				}
 			}
 		}

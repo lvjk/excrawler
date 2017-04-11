@@ -8,7 +8,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
-import six.com.crawler.rpc.Signals;
+import six.com.crawler.rpc.exception.RpcSystenExceptions;
 
 /**
  * @author 作者
@@ -25,7 +25,7 @@ public class ServerAcceptorIdleStateTrigger extends ChannelInboundHandlerAdapter
 		if (evt instanceof IdleStateEvent) {
 			IdleState state = ((IdleStateEvent) evt).state();
 			if (state == IdleState.ALL_IDLE) {
-				throw Signals.READER_IDLE_ERR;
+				throw RpcSystenExceptions.READER_IDLE_ERR;
 			}
 		} else {
 			super.userEventTriggered(ctx, evt);
