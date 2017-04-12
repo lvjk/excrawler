@@ -67,13 +67,16 @@ public class NbCnnbfdcProjectListWorker extends AbstractCrawlWorker {
 	protected void onComplete(Page doingPage, ResultContext resultContext) {
 		List<String> projectUrls = resultContext.getExtractResult("projectUrl");
 		List<String> districts = resultContext.getExtractResult("district");
+		List<String> projectIds = resultContext.getExtractResult("projectId");
 		if (null != projectUrls) {
 			for (int i = 0; i < projectUrls.size(); i++) {
 				String projectUrl = projectUrls.get(i);
 				String district = districts.get(i);
+				String projectId=projectIds.get(i);
 				Page projectInfoPage = new Page(doingPage.getSiteCode(), 1, projectUrl, projectUrl);
 				projectInfoPage.setReferer(doingPage.getFinalUrl());
 				projectInfoPage.getMetaMap().put("district", Arrays.asList(district));
+				projectInfoPage.getMetaMap().put("projectId",Arrays.asList(projectId));
 				projectInfoQueue.push(projectInfoPage);
 			}
 		}
