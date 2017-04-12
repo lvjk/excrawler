@@ -2,7 +2,7 @@ package six.com.crawler.admin.service;
 
 import java.util.List;
 
-import six.com.crawler.entity.Node;
+import six.com.crawler.node.Node;
 
 /** 
 * @author  作者 

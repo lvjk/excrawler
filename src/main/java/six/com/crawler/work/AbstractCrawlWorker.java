@@ -39,8 +39,6 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 
 	// 上次处理数据时间
 	protected int findElementTimeout = Constants.FIND_ELEMENT_TIMEOUT;
-	// 默认HTTP PROXY最小休息时间 5 秒
-	private int httpProxyMinResttime = Constants.DEFAULT_MIN_HTTPPROXY_RESTTIME;
 	// 站点
 	private Site site;
 	// 爬虫任务工作空间
@@ -83,9 +81,8 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		int httpProxyTypeInt = getJob().getParamInt(JobConTextConstants.HTTP_PROXY_TYPE, 0);
 		HttpProxyType httpProxyType = HttpProxyType.valueOf(httpProxyTypeInt);
 
-		// 初始化http 代理
-		int httpProxyRestTime = getJob().getParamInt(JobConTextConstants.HTTP_PROXY_REST_TIME, httpProxyMinResttime);
-		httpProxyPool = new HttpProxyPool(getManager().getRedisManager(), siteCode, httpProxyType, httpProxyRestTime);
+		httpProxyPool = new HttpProxyPool(getManager().getRedisManager(), siteCode, httpProxyType,
+				site.getVisitFrequency());
 		downer.setHttpProxy(httpProxyPool.getHttpProxy());
 		// 初始化内容抽取
 		List<ExtractItem> extractItems = getManager().getExtractItemDao().query(getJob().getName());

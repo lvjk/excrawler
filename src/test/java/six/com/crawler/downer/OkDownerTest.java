@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import okhttp3.Request;
 import six.com.crawler.BaseTest;
+import six.com.crawler.entity.HttpProxy;
 import six.com.crawler.http.HttpConstant;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.http.HttpResult;
@@ -25,20 +26,17 @@ public class OkDownerTest extends BaseTest {
 	@Test
 	public void test() {
 		String url = "http://newhouse.nc.fang.com/house/s/xihuqu/b81/b91/";
-		Request request = httpClient.buildRequest(url, null, HttpMethod.GET, HttpConstant.headMap, null, null);
+		HttpProxy httpProxy=new HttpProxy();
+		httpProxy.setHost("122.112.214.233");
+		httpProxy.setPort(8888);
+		httpProxy.setUserName("excrawler");
+		httpProxy.setPassWord("1234561");
+		Request request = httpClient.buildRequest(url, null, HttpMethod.GET, HttpConstant.headMap, null, null, httpProxy);
 		HttpResult httpResult = null;
-		String originalDir = "F:/test";
-		File file = null;
-		String fileName = null;
-		String nowTime = null;
-		String fileSuffix = ".txt";
 		try {
 			httpResult = httpClient.executeRequest(request);
-			nowTime = String.valueOf(System.currentTimeMillis());
-			fileName = nowTime + fileSuffix;
-			file = new File(originalDir, fileName);
 			String html=httpClient.getHtml(httpResult, ContentType.HTML);
-			FileUtils.write(new File("f://"+String.valueOf(System.currentTimeMillis())+".txt"),html);
+			System.out.println(html);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

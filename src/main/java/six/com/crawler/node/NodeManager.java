@@ -2,7 +2,7 @@ package six.com.crawler.node;
 
 import java.util.List;
 
-import six.com.crawler.entity.Node;
+import six.com.crawler.node.lock.DistributedLock;
 
 /**
  * @author 作者
@@ -61,6 +61,7 @@ public interface NodeManager {
 
 	/**
 	 * 寻找节点服务
+	 * 
 	 * @param node
 	 * @param clz
 	 * @return
@@ -80,5 +81,21 @@ public interface NodeManager {
 	 * @param commandName
 	 */
 	public void remove(String commandName);
+
+	/**
+	 * 根据path 获取一个 分布式读锁
+	 * 
+	 * @param path
+	 * @return
+	 */
+	public DistributedLock getReadLock(String path);
+
+	/**
+	 * 根据path获取一个分布式写锁
+	 * 
+	 * @param path
+	 * @return
+	 */
+	public DistributedLock getWriteLock(String path);
 
 }

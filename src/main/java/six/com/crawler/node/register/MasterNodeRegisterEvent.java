@@ -1,4 +1,4 @@
-package six.com.crawler.node;
+package six.com.crawler.node.register;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.CreateMode;
@@ -6,7 +6,9 @@ import org.apache.zookeeper.WatchedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import six.com.crawler.entity.Node;
+import six.com.crawler.node.Node;
+import six.com.crawler.node.NodeManager;
+import six.com.crawler.node.ZooKeeperPathUtils;
 import six.com.crawler.utils.JavaSerializeUtils;
 
 /**
@@ -23,7 +25,7 @@ public class MasterNodeRegisterEvent extends NodeRegisterEvent {
 	}
 
 	@Override
-	public boolean doRegister(NodeManager clusterManager, CuratorFramework zKClient) {
+	public boolean register(NodeManager clusterManager, CuratorFramework zKClient) {
 		try {
 			Node masterNode = clusterManager.getMasterNode();
 			if (null == masterNode || masterNode.equals(getCurrentNode())) {
@@ -41,6 +43,15 @@ public class MasterNodeRegisterEvent extends NodeRegisterEvent {
 		return false;
 	}
 
+	@Override
+	public void unRegister(NodeManager clusterManager, CuratorFramework zKClient) {
+		try {
+			zKClient.delete().forPath(ZooKeeperPathUtils.getMasterNodePath(getCurrentNode().getName()));
+		} catch (Exception e) {
+			log.error("", e);
+		}
+	}
+	
 	@Override
 	public void process(WatchedEvent arg0) {
 

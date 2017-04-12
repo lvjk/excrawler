@@ -13,10 +13,11 @@ import six.com.crawler.entity.Site;
 * @date 创建时间：2017年3月1日 上午11:58:06 
 */
 public class SiteDaoProvider extends BaseProvider{
-
+	
 	public String querySites(Map<String, Object> map) {
 		String sql = " select `code`,"
 				+ " mainUrl,"
+				+ " visitFrequency,"
 				+ "`describe` from "+SiteDao.TABLE_NAME;
 		return sql;
 	}
@@ -25,9 +26,11 @@ public class SiteDaoProvider extends BaseProvider{
 	public String save(Site site) {
 		String columns = "`code`,"
 				+ " mainUrl,"
+				+ " visitFrequency,"
 				+ "`describe`";
 		String values = "#{code},"
 				+ "#{mainUrl},"
+				+ "#{visitFrequency},"
 				+ "#{describe}";
 		SQL sql = new SQL();
 		sql.INSERT_INTO(SiteDao.TABLE_NAME);

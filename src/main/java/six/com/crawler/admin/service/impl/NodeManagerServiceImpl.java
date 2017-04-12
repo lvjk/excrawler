@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import six.com.crawler.admin.service.NodeManagerService;
-import six.com.crawler.entity.Node;
+import six.com.crawler.node.Node;
 import six.com.crawler.node.NodeManager;
 
 /**

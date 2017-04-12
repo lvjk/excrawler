@@ -170,15 +170,9 @@ public class HttpClient implements InitializingBean {
 			Proxy proxy = new Proxy(Type.HTTP, sa);
 			build.proxy(proxy);
 			if (StringUtils.isNotBlank(httpProxy.getUserName())) {
-				String nameAndPass = httpProxy.getUserName() + ":" + httpProxy.getPassword();
+				String nameAndPass = httpProxy.getUserName() + ":" + httpProxy.getPassWord();
 				String encoding = new String(Base64.getEncoder().encode(nameAndPass.getBytes()));
 				build.addHeader("Proxy-Authorization", "Basic " + encoding);
-				if (2 == httpProxy.getType()) {
-					// 设置IP切换头
-					final String ProxyHeadKey = "Proxy-Switch-Ip";
-					final String ProxyHeadVal = "yes";
-					build.addHeader(ProxyHeadKey, ProxyHeadVal);
-				}
 			}
 			headName = HttpConstant.PROXY_CONNECTION;
 			headValue = HttpConstant.KEEP_ALIVE;

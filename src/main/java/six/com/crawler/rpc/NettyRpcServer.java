@@ -4,7 +4,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+
+import javax.annotation.PreDestroy;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -25,7 +28,6 @@ import six.com.crawler.rpc.handler.ServerHandler;
 import six.com.crawler.rpc.protocol.RpcDecoder;
 import six.com.crawler.rpc.protocol.RpcEncoder;
 import six.com.crawler.rpc.protocol.RpcSerialize;
-import six.com.crawler.utils.ObjectCheckUtils;
 
 /**
  * @author 作者
@@ -81,9 +83,9 @@ public class NettyRpcServer extends AbstractRemote implements RpcServer {
 		thread.start();
 	}
 	
-
+	@Override
 	public void register(Object tagetOb) {
-		ObjectCheckUtils.checkNotNull(tagetOb, "tagetOb");
+		Objects.requireNonNull(tagetOb, "tagetOb must not be null");
 		Class<?> targetClz = tagetOb.getClass();
 		while (null != targetClz && targetClz != Object.class) {
 			Method[] allMethods = targetClz.getMethods();
@@ -112,6 +114,7 @@ public class NettyRpcServer extends AbstractRemote implements RpcServer {
 		}
 	}
 
+	@Override
 	public WrapperService get(String rpcServiceName) {
 		return registerMap.get(rpcServiceName);
 	}
@@ -136,6 +139,7 @@ public class NettyRpcServer extends AbstractRemote implements RpcServer {
 		}
 	}
 
+	@PreDestroy
 	public void destroy() {
 		if (null != workerGroup) {
 			workerGroup.shutdownGracefully();

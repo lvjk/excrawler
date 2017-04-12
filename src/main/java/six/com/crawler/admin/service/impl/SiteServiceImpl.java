@@ -103,7 +103,7 @@ public class SiteServiceImpl implements SiteService {
 					del(profile.getSite().getCode());
 					save(profile.getSite());
 					extracterService.delExtractPathBySiteCide(profile.getSite().getCode());
-					if (null != profile.getExtractPaths()) {
+					if (null != profile.getExtractPaths()&&!profile.getExtractPaths().isEmpty()) {
 						extracterService.saveExtractPath(profile.getExtractPaths());
 					}
 

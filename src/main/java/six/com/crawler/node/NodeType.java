@@ -1,4 +1,4 @@
-package six.com.crawler.entity;
+package six.com.crawler.node;
 
 /**
  * @author 作者

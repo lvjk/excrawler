@@ -235,10 +235,10 @@ public class JobServiceImpl extends BaseService implements JobService {
 					// 删除job
 					jobDao.del(job.getName());
 					jobDao.save(job);
-					if (null != job.getParamList()) {
+					if (null != job.getParamList()&&!job.getParamList().isEmpty()) {
 						jobParamDao.batchSave(job.getParamList());
 					}
-					if (null != profile.getExtractItems()) {
+					if (null != profile.getExtractItems()&&!profile.getExtractItems().isEmpty()) {
 						extractItemDao.batchSave(profile.getExtractItems());
 					}
 					msg = "uploadJobProfile[" + multipartFile.getName() + "] succeed";

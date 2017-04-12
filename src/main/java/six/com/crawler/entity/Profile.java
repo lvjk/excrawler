@@ -30,6 +30,10 @@ public class Profile {
 	public static int getValueInt(Node node) {
 		return null != node ? Integer.valueOf(node.getNodeValue()) : 0;
 	}
+	
+	public static int getValueInt(String text) {
+		return null != text ? Integer.valueOf(text) : 0;
+	}
 
 	public static String getValue(String value) {
 		if ("null".equalsIgnoreCase(value) || null == value) {

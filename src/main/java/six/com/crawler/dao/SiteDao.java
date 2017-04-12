@@ -22,7 +22,7 @@ public interface SiteDao extends BaseDao {
 	@SelectProvider(type = SiteDaoProvider.class, method = "querySites")
 	public List<Site> querySites(int pageIndex, int pageSize);
 
-	@Select("select code,mainurl,`describe` from " + TABLE_NAME + " where code=#{sitecode}")
+	@Select("select code,mainurl,visitFrequency,`describe` from " + TABLE_NAME + " where code=#{sitecode}")
 	public Site query(String sitecode);
 
 	@InsertProvider(type = SiteDaoProvider.class, method = "save")

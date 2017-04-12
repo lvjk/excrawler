@@ -1,13 +1,11 @@
 package six.com.crawler.rpc;
 
-import java.util.HashMap;
-import java.util.Map;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import six.com.crawler.rpc.NettyRpcCilent;
-import six.com.crawler.schedule.JobWorkerThreadFactory;
 
 /**
  * @author 作者
@@ -21,24 +19,26 @@ public class HttpNodeCommandClientTest {
 	
 	public static void main(String[] a) throws InterruptedException {
 		NettyRpcCilent client = new NettyRpcCilent();
-		Map<String, Object> params = new HashMap<>();
 		String targetHost = "192.168.12.80";
 		int targetPort = 8180;
-		params.put("jobName", "test");
-		TestService testService = client.lookupService(targetHost, targetPort, TestService.class,null);
-		String name = "six";
-		int requestCount = 1000;
-		ExecutorService executor = Executors.newFixedThreadPool(requestCount);
+		int requestCount = 1;
 		CountDownLatch cdl=new CountDownLatch(requestCount);
+		TestService testService = client.lookupService(targetHost, targetPort, TestService.class,result->{
+			System.out.println("result:" + result);
+		});
+		String name = "six";
+		
+		ExecutorService executor = Executors.newFixedThreadPool(requestCount);
 		for (int i = 0; i < requestCount; i++) {
 			executor.execute(()->{
 				try {
 					long startTime = System.currentTimeMillis();
-					String result = testService.say(name +"-"+index++);
+					Object result=testService.say(name +"-"+index++);
+					System.out.println(result);
 					long endTime = System.currentTimeMillis();
 					long totalTime = endTime - startTime;
 					allTime += totalTime;
-					System.out.println("result:" + result + "|消耗时间:" + totalTime);
+					System.out.println("消耗时间:" + totalTime);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}finally {

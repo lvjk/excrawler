@@ -55,11 +55,14 @@ public class SiteProfile extends Profile {
 				Element siteElement = doc.createElement("site");
 				Site site = siteProfile.getSite();
 				siteElement.setAttribute("code", getValue(site.getCode()));
+				siteElement.setAttribute("visitFrequency", String.valueOf(site.getVisitFrequency()));
+				
 				if (StringUtils.isNotBlank(site.getMainUrl())) {
 					Element mainUrlElement = doc.createElement("mainUrl");
 					mainUrlElement.setTextContent(site.getMainUrl());
 					siteElement.appendChild(mainUrlElement);
 				}
+								
 				if (StringUtils.isNotBlank(site.getDescribe())) {
 					Element describeElement = doc.createElement("describe");
 					describeElement.setTextContent(site.getDescribe());
@@ -152,6 +155,9 @@ public class SiteProfile extends Profile {
 				for (int i = 0; i < siteNodeList.getLength(); i++) {
 					Node siteNode = siteNodeList.item(i);
 					site.setCode(getValueStr(siteNode.getAttributes().getNamedItem("code")));
+					
+					site.setVisitFrequency(getValueInt(siteNode.getAttributes().getNamedItem("visitFrequency")));
+					
 					NodeList siteChildNodes = siteNode.getChildNodes();
 					for (int j = 0; j < siteChildNodes.getLength(); j++) {
 						Node siteChildNode = siteChildNodes.item(j);
