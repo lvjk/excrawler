@@ -95,9 +95,8 @@ public class QDFDProjectInfoWorker extends AbstractCrawlWorker{
 				Map<String,Object> params=new HashMap<String,Object>();
 				params.put("projectID", proid);
 				unitListPage.setParameters(params);
-				unitListPage.getMetaMap().putAll(doingPage.getMetaMap());
 				unitListPage.getMetaMap().put("projectId", ArrayListUtils.asList(proid));
-				unitListPage.getMetaMap().put("projectName", ArrayListUtils.asList(url.ownText()));
+				unitListPage.getMetaMap().put("projectName", ArrayListUtils.asList(url.select("td").get(1).getElementsByTag("a").text()));
 				projectInfoQueue.push(unitListPage);
 			}
 		}
