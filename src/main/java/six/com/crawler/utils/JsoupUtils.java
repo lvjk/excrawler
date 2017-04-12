@@ -299,8 +299,8 @@ public class JsoupUtils {
 	public static Map<String, List<String>> paserTableForMany(Element table, String headCssSelect,
 			String dataCssSelect) {
 		ObjectCheckUtils.checkNotNull(table, "table");
-		ObjectCheckUtils.checkStrBlank(headCssSelect, "headCssSelect");
-		ObjectCheckUtils.checkStrBlank(dataCssSelect, "dataCssSelect");
+		StringCheckUtils.checkStrBlank(headCssSelect, "headCssSelect");
+		StringCheckUtils.checkStrBlank(dataCssSelect, "dataCssSelect");
 		Elements headElements = table.select(headCssSelect);
 		if (null == headElements || headElements.isEmpty()) {
 			throw new RuntimeException("did not find table's head:" + headCssSelect);

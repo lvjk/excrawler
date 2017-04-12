@@ -32,7 +32,7 @@ function showDataTable(httpProxys){
 		.appendTo(tr);
 		$("<td>"+checkStr(httpProxy.userName)+"</td>")
 		.appendTo(tr);
-		$("<td>"+checkStr(httpProxy.password)+"</td>")
+		$("<td>"+checkStr(httpProxy.passWord)+"</td>")
 		.appendTo(tr);
 		$("<td>"+checkStr(httpProxy.expire)+"</td>")
 		.appendTo(tr);

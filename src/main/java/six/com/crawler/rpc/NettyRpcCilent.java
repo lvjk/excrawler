@@ -33,6 +33,7 @@ import six.com.crawler.rpc.protocol.RpcResponse;
 import six.com.crawler.rpc.protocol.RpcResponseStatus;
 import six.com.crawler.rpc.protocol.RpcSerialize;
 import six.com.crawler.utils.ObjectCheckUtils;
+import six.com.crawler.utils.StringCheckUtils;
 
 /**
  * @author 作者
@@ -110,7 +111,7 @@ public class NettyRpcCilent extends AbstractRemote implements RpcCilent {
 
 	@SuppressWarnings("unchecked")
 	public <T> T lookupService(String targetHost, int targetPort, Class<?> clz, final AsyCallback asyCallback) {
-		ObjectCheckUtils.checkStrBlank(targetHost, "targetHost");
+		StringCheckUtils.checkStrBlank(targetHost, "targetHost");
 		ObjectCheckUtils.checkIntValid(targetPort, 1, 65535, "targetPort");
 		ObjectCheckUtils.checkNotNull(clz, "clz");
 		String key = serviceKey(targetHost, targetPort, clz);

@@ -10,9 +10,7 @@ public class Constants {
 
 	// 上次处理数据时间
 	public static final int FIND_ELEMENT_TIMEOUT= 1000;
-	// 默认HTTP PROXY最小休息时间 5 秒
-	public static final int DEFAULT_MIN_HTTPPROXY_RESTTIME = 5000;
-
+	
 	public static final int WOKER_PROCESS_PAGE_MAX_RETRY_COUNT = 3;
 	/**
 	 * 存储在redis 正在处理的省份

@@ -10,6 +10,7 @@ import org.apache.curator.RetryPolicy;
 import org.apache.curator.RetrySleeper;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.locks.InterProcessReadWriteLock;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
@@ -22,14 +23,18 @@ import six.com.crawler.common.MyOperatingSystemMXBean;
 import six.com.crawler.configure.SpiderConfigure;
 import six.com.crawler.dao.RedisManager;
 import six.com.crawler.email.QQEmailClient;
-import six.com.crawler.entity.Node;
-import six.com.crawler.entity.NodeType;
+import six.com.crawler.node.lock.DistributedLock;
+import six.com.crawler.node.lock.DistributedReadLock;
+import six.com.crawler.node.lock.DistributedWriteLock;
+import six.com.crawler.node.register.NodeRegisterEvent;
+import six.com.crawler.node.register.NodeRegisterEventFactory;
 import six.com.crawler.rpc.NettyRpcCilent;
 import six.com.crawler.rpc.NettyRpcServer;
 import six.com.crawler.rpc.RpcService;
 
 import six.com.crawler.utils.JavaSerializeUtils;
 import six.com.crawler.utils.ObjectCheckUtils;
+import six.com.crawler.utils.StringCheckUtils;
 
 /**
  * @author 作者
@@ -60,6 +65,8 @@ public class StandardNodeManager implements NodeManager, InitializingBean {
 	private NettyRpcServer nettyRpcServer;
 
 	private NettyRpcCilent nettyRpcCilent;
+
+	private NodeRegisterEvent nodeRegisterEvent;
 
 	/**
 	 * 分布式锁保证每个节点都是有序的初始化注册
@@ -100,6 +107,9 @@ public class StandardNodeManager implements NodeManager, InitializingBean {
 			log.error("the zookeeper's host is blank");
 			System.exit(1);
 		}
+		// 因为redis 链接串是以;
+		// 拼接的，例如172.18.84.44:2181;172.18.84.45:2181;172.18.84.45:2181
+		connectString = StringUtils.replace(connectString, ";", ",");
 		zKClient = CuratorFrameworkFactory.newClient(connectString, new RetryPolicy() {
 			@Override
 			public boolean allowRetry(int arg0, long arg1, RetrySleeper arg2) {
@@ -135,8 +145,8 @@ public class StandardNodeManager implements NodeManager, InitializingBean {
 	}
 
 	protected void initRegisterNode() {
-		NodeRegisterEvent event = NodeRegisterEventFactory.createNodeRegisterEvent(currentNode);
-		if (!event.register(this, zKClient)) {
+		nodeRegisterEvent = NodeRegisterEventFactory.createNodeRegisterEvent(currentNode);
+		if (!nodeRegisterEvent.register(this, zKClient)) {
 			log.error("register node[" + currentNode.getName() + "] to zooKeeper failed");
 			System.exit(1);
 		}
@@ -171,6 +181,7 @@ public class StandardNodeManager implements NodeManager, InitializingBean {
 	 * 
 	 * @return
 	 */
+	@Override
 	public Node getMasterNode() {
 		Node masterNode = null;
 		if (getCurrentNode().getType() != NodeType.SINGLE) {
@@ -195,6 +206,7 @@ public class StandardNodeManager implements NodeManager, InitializingBean {
 	 * 
 	 * @return
 	 */
+	@Override
 	public List<Node> getWorkerNodes() {
 		List<Node> allNodes = new ArrayList<>();
 		if (getCurrentNode().getType() != NodeType.SINGLE) {
@@ -221,6 +233,7 @@ public class StandardNodeManager implements NodeManager, InitializingBean {
 	 * @param nodeName
 	 * @return
 	 */
+	@Override
 	public Node getWorkerNode(String nodeName) {
 		Node workerNode = null;
 		if (getCurrentNode().getType() != NodeType.SINGLE) {
@@ -242,6 +255,7 @@ public class StandardNodeManager implements NodeManager, InitializingBean {
 	 * @param needFresNodes
 	 * @return
 	 */
+	@Override
 	public List<Node> getFreeWorkerNodes(int needFresNodes) {
 		List<Node> freeNodes = new ArrayList<>(needFresNodes);
 		List<Node> allWorkerNodes = getWorkerNodes();
@@ -270,6 +284,7 @@ public class StandardNodeManager implements NodeManager, InitializingBean {
 	 * @param targetNode
 	 * @return
 	 */
+	@Override
 	public Node getNewestNode(Node targetNode) {
 		ObjectCheckUtils.checkNotNull(targetNode, "targetNode");
 		Node newestNode = targetNode;
@@ -290,6 +305,7 @@ public class StandardNodeManager implements NodeManager, InitializingBean {
 	 * @param param
 	 * @return
 	 */
+	@Override
 	public <T> T loolup(Node node, Class<T> clz) {
 		return nettyRpcCilent.lookupService(node.getHost(), node.getTrafficPort(), clz, null);
 	}
@@ -299,6 +315,7 @@ public class StandardNodeManager implements NodeManager, InitializingBean {
 	 * 
 	 * @param tagetOb
 	 */
+	@Override
 	public void register(Object tagetOb) {
 		nettyRpcServer.register(tagetOb);
 	}
@@ -308,20 +325,43 @@ public class StandardNodeManager implements NodeManager, InitializingBean {
 	 * 
 	 * @param commandName
 	 */
+	@Override
 	public void remove(String commandName) {
 		nettyRpcServer.remove(commandName);
 		log.info("remove nodeCommand:" + commandName);
 	}
 
 	@RpcService(name = "getCurrentNode")
+	@Override
 	public Node getCurrentNode() {
 		currentNode.setCpu(MyOperatingSystemMXBean.getAvailableProcessors());
 		currentNode.setMem(MyOperatingSystemMXBean.freeMemoryPRP());
 		return currentNode;
 	}
 
+	@Override
+	public DistributedLock getReadLock(String path) {
+		StringCheckUtils.checkStrBlank(path, "path must be not blank");
+		InterProcessReadWriteLock interProcessReadWriteLock = new InterProcessReadWriteLock(zKClient, path);
+		DistributedLock readLock = new DistributedReadLock(interProcessReadWriteLock);
+		return readLock;
+	}
+
+	@Override
+	public DistributedLock getWriteLock(String path) {
+		StringCheckUtils.checkStrBlank(path, "path must be not blank");
+		InterProcessReadWriteLock interProcessReadWriteLock = new InterProcessReadWriteLock(zKClient, path);
+		DistributedLock writeLock = new DistributedWriteLock(interProcessReadWriteLock);
+		return writeLock;
+	}
+
 	@PreDestroy
 	public void destroy() {
+
+		if (null != nodeRegisterEvent) {
+			nodeRegisterEvent.unRegister(this, zKClient);
+		}
+
 		if (null != nettyRpcCilent) {
 			nettyRpcCilent.destroy();
 		}

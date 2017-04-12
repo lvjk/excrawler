@@ -15,7 +15,18 @@ PID_FILE=$SPIDER_HOME'/bin/program.pid'
 
 CLASSPATH=${SPIDER_HOME}'/conf'
 
-#CLASSPATH=$CLASSPATH;${SPIDER_HOME}'/bin/spider.jar'
+
+##########
+# Setup JAVA if unset
+##################################################
+if [ -z "$JAVA" ]; then
+  JAVA=$(which java)
+fi
+
+if [ -z "$JAVA" ]; then
+  echo "Cannot find a Java JDK. Please set either set JAVA or put java (>=1.5) in your PATH." 2>&2
+  exit 1
+fi
 
 
 #-------------------------- class path jar package -----------------------
@@ -41,7 +52,7 @@ function start_program(){
 	  exit 0
     fi
     echo -n "starting program ... "
-      java -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=8000,suspend=n  -classpath $CLASSPATH $MAIN_CLASS --spider.home=${SPIDER_HOME} &
+	  nohup  $JAVA -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=8000,suspend=n  -classpath $CLASSPATH $MAIN_CLASS --spider.home=${SPIDER_HOME} >/dev/null 2>&1 &
     if [ $? -eq 0 ]
     then
       if /bin/echo -n $! > "$PID_FILE"

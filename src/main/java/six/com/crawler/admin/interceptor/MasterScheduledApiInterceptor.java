@@ -6,9 +6,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
-import six.com.crawler.entity.Node;
-import six.com.crawler.entity.NodeType;
+import six.com.crawler.node.Node;
 import six.com.crawler.node.NodeManager;
+import six.com.crawler.node.NodeType;
 
 /**
  * @author 作者

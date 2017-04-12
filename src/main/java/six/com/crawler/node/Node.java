@@ -1,4 +1,4 @@
-package six.com.crawler.entity;
+package six.com.crawler.node;
 
 import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicInteger;

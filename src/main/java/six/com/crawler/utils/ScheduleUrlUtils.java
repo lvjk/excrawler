@@ -1,6 +1,6 @@
 package six.com.crawler.utils;
 
-import six.com.crawler.entity.Node;
+import six.com.crawler.node.Node;
 
 /**
  * @author 作者

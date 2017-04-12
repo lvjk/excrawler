@@ -3,13 +3,13 @@ package six.com.crawler.work.space;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import six.com.crawler.dao.RedisManager;
-import six.com.crawler.utils.ObjectCheckUtils;
 
 /**
  * @author 作者
@@ -47,9 +47,9 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 	private Class<T> clz;
 
 	public RedisWorkSpace(RedisManager redisManager, String workSpaceName, Class<T> clz) {
-		ObjectCheckUtils.checkNotNull(redisManager, "redisManager");
-		ObjectCheckUtils.checkNotNull(workSpaceName, "workSpaceName");
-		ObjectCheckUtils.checkNotNull(clz, "clz");
+		Objects.requireNonNull(redisManager, "redisManager must not be null");
+		Objects.requireNonNull(workSpaceName, "workSpaceName must not be null");
+		Objects.requireNonNull(clz, "clz must not be null");
 		this.redisManager = redisManager;
 		this.workSpaceName = workSpaceName;
 		this.proxyQueueKey = WORK_PROXY_QUEUE_KEY_PRE + workSpaceName;
@@ -65,7 +65,7 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 
 	@Override
 	public boolean push(T data) {
-		ObjectCheckUtils.checkNotNull(data, "data");
+		Objects.requireNonNull(data, "data must not be null");
 		redisManager.lock(queueKey);
 		try {
 			redisManager.hset(queueKey, data.getKey(), data);
@@ -82,27 +82,27 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 	public T pull() {
 		T data = null;
 		boolean isRepair = false;
-		boolean againGet = false;
-		try{
+		try {
 			redisManager.lock(queueKey);
-			while (!isRepair || againGet) {
-				// 先从代理队列里获取头元素数据key 并移除
+			while (!isRepair) {
+				// 先从代理队列里lpop数据key
 				String dataKey = redisManager.lpop(proxyQueueKey, String.class);
+				// 如果已经被修复了，获取到的dataKey 为null的话，那么beak;
 				if (isRepair && null == dataKey) {
 					break;
 				} else {
+					// 如果dataKey！=null
 					if (null != dataKey) {
-						// 通过数据key 再获取数据
+						// 通过数据key hget获取数据
 						data = redisManager.hget(queueKey, dataKey, clz);
 						if (null == data) {
-							throw new RuntimeException("don't find value by data's key[" + dataKey + "] from queue");
+							continue;
 						}
 						break;
 					} else {
-						int proxyQueueLlen = redisManager.llen(proxyQueueKey);
+						// 如果dataKey==null的话，并且queueKeyLlen>0的话,那么启动队列修复
 						int queueKeyLlen = redisManager.hllen(queueKey);
-						if (queueKeyLlen != proxyQueueLlen) {
-							redisManager.del(proxyQueueKey);
+						if (queueKeyLlen>0) {
 							String cursorStr = "0";
 							Map<String, T> map = new HashMap<>();
 							do {
@@ -114,18 +114,16 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 							} while (!"0".equals(cursorStr));
 						}
 						isRepair = true;
-						againGet = true;
 					}
 				}
 			}
-		}catch (Exception e) {
+		} catch (Exception e) {
 			throw e;
 		} finally {
 			redisManager.unlock(queueKey);
 		}
 		return data;
 	}
-
 
 	public String batchGetDoingData(List<T> resutList, String cursorStr) {
 		return batchGet(resutList, cursorStr, queueKey);
@@ -136,7 +134,7 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 	}
 
 	private String batchGet(List<T> resutList, String cursorStr, String type) {
-		ObjectCheckUtils.checkNotNull(resutList, "resutList");
+		Objects.requireNonNull(resutList, "resutList must not be null");
 		if (StringUtils.isBlank(cursorStr)) {
 			cursorStr = "0";
 		}
@@ -192,7 +190,7 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 	}
 
 	public void ack(T data) {
-		ObjectCheckUtils.checkNotNull(data, "data");
+		Objects.requireNonNull(data, "data must not be null");
 		redisManager.lock(queueKey);
 		try {
 			redisManager.hdel(queueKey, data.getKey());

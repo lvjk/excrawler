@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import six.com.crawler.admin.service.NodeManagerService;
-import six.com.crawler.entity.Node;
+import six.com.crawler.node.Node;
 
 /** 
 * @author  作者 

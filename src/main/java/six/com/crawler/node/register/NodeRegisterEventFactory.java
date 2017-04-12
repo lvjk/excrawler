@@ -1,7 +1,7 @@
-package six.com.crawler.node;
+package six.com.crawler.node.register;
 
-import six.com.crawler.entity.Node;
-import six.com.crawler.entity.NodeType;
+import six.com.crawler.node.Node;
+import six.com.crawler.node.NodeType;
 
 /**
  * @author 作者

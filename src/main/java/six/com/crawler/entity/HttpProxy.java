@@ -17,7 +17,7 @@ public class HttpProxy implements Serializable {
 	private int port;// 代理主机端口
 	private int type;//1.自己独立ip代理   2.阿布代理
 	private String userName;// 代理账户
-	private String password;// 代理密码
+	private String passWord;// 代理密码
 	private String expire;// 有效期20170310120000
 	private String describe;// 代理密码
 	private long lastUseTime;//上一次试用时间
@@ -54,12 +54,12 @@ public class HttpProxy implements Serializable {
 		this.userName = userName;
 	}
 
-	public String getPassword() {
-		return password;
+	public String getPassWord() {
+		return passWord;
 	}
 
-	public void setPassword(String password) {
-		this.password = password;
+	public void setPassWord(String passWord) {
+		this.passWord = passWord;
 	}
 	
 	public long getLastUseTime() {

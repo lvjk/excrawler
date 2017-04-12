@@ -92,6 +92,8 @@ public class ExtractPathDaoProvider extends BaseProvider{
 				+ "#{list["+INDEX_FLAG+"].siteCode},"
 				+ "#{list["+INDEX_FLAG+"].ranking},"
 				+ "#{list["+INDEX_FLAG+"].path},"
+				+ "#{list["+INDEX_FLAG+"].tableHeadPath},"
+				+ "#{list["+INDEX_FLAG+"].tableDataPath},"
 				+ "#{list["+INDEX_FLAG+"].filterPath},"
 				+ "#{list["+INDEX_FLAG+"].extractAttName},"
 				+ "#{list["+INDEX_FLAG+"].substringStart},"
@@ -103,7 +105,7 @@ public class ExtractPathDaoProvider extends BaseProvider{
 				+ "#{list["+INDEX_FLAG+"].replaceWord},"
 				+ "#{list["+INDEX_FLAG+"].replaceValue},"
 				+ "#{list["+INDEX_FLAG+"].extractEmptyCount},"
-				+ "#{list["+INDEX_FLAG+"].extractEmptyCount})";
+				+ "#{list["+INDEX_FLAG+"].describe})";
 		StringBuilder sbd = new StringBuilder();  
 		sbd.append("insert into ").append(ExtractPathDao.TABLE_NAME);  
 		sbd.append("(").append(insertColumns).append(") ");  

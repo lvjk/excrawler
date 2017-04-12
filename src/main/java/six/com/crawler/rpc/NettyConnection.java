@@ -26,7 +26,7 @@ public abstract class NettyConnection extends SimpleChannelInboundHandler<RpcMsg
 	// netty Channel
 	private volatile Channel channel;
 
-	public NettyConnection(String host, int port) {
+	NettyConnection(String host, int port) {
 		this.host = host;
 		this.port = port;
 	}
