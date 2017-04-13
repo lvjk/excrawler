@@ -36,7 +36,7 @@ import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.PageQuery;
 import six.com.crawler.entity.WorkSpaceInfo;
 import six.com.crawler.entity.WorkerSnapshot;
-import six.com.crawler.schedule.master.MasterAbstractSchedulerManager;
+import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.utils.JobTableUtils;
 import six.com.crawler.work.extract.ExtractItem;
 
@@ -66,7 +66,7 @@ public class JobServiceImpl extends BaseService implements JobService {
 	private WorkerErrMsgDao workerErrMsgDao;
 
 	@Autowired
-	private MasterAbstractSchedulerManager scheduleManager;
+	private AbstractSchedulerManager scheduleManager;
 
 	@Autowired
 	private ExtractItemDao extractItemDao;
@@ -235,10 +235,10 @@ public class JobServiceImpl extends BaseService implements JobService {
 					// 删除job
 					jobDao.del(job.getName());
 					jobDao.save(job);
-					if (null != job.getParamList()&&!job.getParamList().isEmpty()) {
+					if (null != job.getParamList() && !job.getParamList().isEmpty()) {
 						jobParamDao.batchSave(job.getParamList());
 					}
-					if (null != profile.getExtractItems()&&!profile.getExtractItems().isEmpty()) {
+					if (null != profile.getExtractItems() && !profile.getExtractItems().isEmpty()) {
 						extractItemDao.batchSave(profile.getExtractItems());
 					}
 					msg = "uploadJobProfile[" + multipartFile.getName() + "] succeed";
@@ -448,11 +448,11 @@ public class JobServiceImpl extends BaseService implements JobService {
 		this.jobDao = jobDao;
 	}
 
-	public MasterAbstractSchedulerManager getScheduleManager() {
+	public AbstractSchedulerManager getScheduleManager() {
 		return scheduleManager;
 	}
 
-	public void setScheduleManager(MasterAbstractSchedulerManager scheduleManager) {
+	public void setScheduleManager(AbstractSchedulerManager scheduleManager) {
 		this.scheduleManager = scheduleManager;
 	}
 

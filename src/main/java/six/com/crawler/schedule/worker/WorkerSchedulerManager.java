@@ -12,11 +12,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.annotation.PreDestroy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import six.com.crawler.entity.Job;
 import six.com.crawler.entity.JobParam;
@@ -26,7 +24,7 @@ import six.com.crawler.entity.WorkerErrMsg;
 import six.com.crawler.entity.WorkerSnapshot;
 import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.schedule.JobWorkerThreadFactory;
-import six.com.crawler.schedule.master.MasterAbstractSchedulerManager;
+import six.com.crawler.schedule.master.AbstractMasterSchedulerManager;
 import six.com.crawler.schedule.master.MasterSchedulerManager;
 import six.com.crawler.work.Worker;
 
@@ -35,8 +33,7 @@ import six.com.crawler.work.Worker;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年3月13日 上午11:33:37
  */
-@Component
-public class WorkerSchedulerManager extends WorkerAbstractSchedulerManager {
+public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 
 	final static Logger log = LoggerFactory.getLogger(MasterSchedulerManager.class);
 
@@ -148,16 +145,6 @@ public class WorkerSchedulerManager extends WorkerAbstractSchedulerManager {
 		}
 	}
 
-	/**
-	 * 容器结束时调用此销毁方法
-	 */
-	@PreDestroy
-	public void destroy() {
-		// 然后获取当前节点有关的job worker 然后调用stop
-		stopAll();
-		// 然后shut down worker线程池
-		executor.shutdown();
-	}
 
 	private void startWorker(Worker worker) {
 		String jobName = worker.getJob().getName();
@@ -168,8 +155,8 @@ public class WorkerSchedulerManager extends WorkerAbstractSchedulerManager {
 		updateWorkerSnapshot(workerSnapshot);
 		getNodeManager().getCurrentNode().incrementAndGetRunningWorkerSize();
 		try {
-			MasterAbstractSchedulerManager masterSchedulerManager = getNodeManager()
-					.loolup(getNodeManager().getMasterNode(), MasterAbstractSchedulerManager.class);
+			AbstractMasterSchedulerManager masterSchedulerManager = getNodeManager()
+					.loolup(getNodeManager().getMasterNode(), AbstractMasterSchedulerManager.class);
 			masterSchedulerManager.startWorker(jobName, workerName);
 		} catch (Exception e) {
 			log.error("notice master node job[" + jobName + "]'s worker[" + workerName + "] is started err", e);
@@ -197,8 +184,8 @@ public class WorkerSchedulerManager extends WorkerAbstractSchedulerManager {
 		params.put("jobName", jobName);
 		params.put("workerName", workerName);
 		try {
-			MasterAbstractSchedulerManager masterSchedulerManager = getNodeManager()
-					.loolup(getNodeManager().getMasterNode(), MasterAbstractSchedulerManager.class);
+			AbstractMasterSchedulerManager masterSchedulerManager = getNodeManager()
+					.loolup(getNodeManager().getMasterNode(), AbstractMasterSchedulerManager.class);
 			masterSchedulerManager.endWorker(jobName, workerName);
 		} catch (Exception e) {
 			log.error("notice master node job[" + jobName + "]'s worker[" + workerName + "] is end err", e);
@@ -290,5 +277,13 @@ public class WorkerSchedulerManager extends WorkerAbstractSchedulerManager {
 		}
 		return newJobWorker;
 	}
+	
+	public void shutdown() {
+		// 然后获取当前节点有关的job worker 然后调用stop
+		stopAll();
+		// 然后shut down worker线程池
+		executor.shutdown();
+	}
+
 
 }

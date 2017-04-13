@@ -38,9 +38,10 @@ public class Job extends BaseVo implements Serializable {
 
 	private String user = "admin";// 任务 所属用户
 	
+	private List<JobParam> paramList;//任务参数
+	
 	private int version;//版本号
 
-	private List<JobParam> paramList;//任务参数
 	
 
 	public String getName() {

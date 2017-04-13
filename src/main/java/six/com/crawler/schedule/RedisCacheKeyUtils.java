@@ -4,7 +4,7 @@ package six.com.crawler.schedule;
  * @author sixliu E-mail:359852326@qq.com
  * @version 创建时间：2016年1月16日 上午4:16:17 类说明 bdb 表常量 RegisterCenter Constants
  */
-public class RedisRegisterKeyUtils {
+public class RedisCacheKeyUtils {
 
 	// 非node 信息注册的前缀
 	final static String REDIS_CACHE_PRE = "exCrawler_cache";

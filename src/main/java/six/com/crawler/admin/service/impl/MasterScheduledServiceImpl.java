@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 
 import six.com.crawler.admin.service.MasterScheduledService;
 import six.com.crawler.entity.WorkerSnapshot;
-import six.com.crawler.schedule.master.MasterAbstractSchedulerManager;
+import six.com.crawler.schedule.AbstractSchedulerManager;
 
 /**
  * @author 作者
@@ -24,7 +24,7 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 	final static Logger LOG = LoggerFactory.getLogger(MasterScheduledServiceImpl.class);
 
 	@Autowired
-	private MasterAbstractSchedulerManager scheduleManager;
+	private AbstractSchedulerManager scheduleManager;
 
 
 	@Override
@@ -103,11 +103,11 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 		return result;
 	}
 
-	public MasterAbstractSchedulerManager getScheduleManager() {
+	public AbstractSchedulerManager getScheduleManager() {
 		return scheduleManager;
 	}
 
-	public void setScheduleManager(MasterAbstractSchedulerManager scheduleManager) {
+	public void setScheduleManager(AbstractSchedulerManager scheduleManager) {
 		this.scheduleManager = scheduleManager;
 	}
 }

@@ -13,8 +13,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import javax.annotation.PreDestroy;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.eclipse.jetty.util.ConcurrentHashSet;
@@ -30,7 +28,6 @@ import org.quartz.TriggerBuilder;
 import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import six.com.crawler.common.DateFormats;
@@ -42,9 +39,9 @@ import six.com.crawler.entity.JobSnapshotState;
 import six.com.crawler.entity.WorkerSnapshot;
 import six.com.crawler.node.Node;
 import six.com.crawler.node.NodeType;
-import six.com.crawler.schedule.RedisRegisterKeyUtils;
+import six.com.crawler.schedule.RedisCacheKeyUtils;
 import six.com.crawler.schedule.ScheduledJob;
-import six.com.crawler.schedule.worker.WorkerAbstractSchedulerManager;
+import six.com.crawler.schedule.worker.AbstractWorkerSchedulerManager;
 import six.com.crawler.utils.JobTableUtils;
 import six.com.crawler.work.WorkerLifecycleState;
 
@@ -73,8 +70,7 @@ import six.com.crawler.work.WorkerLifecycleState;
  *          注意:集群 命令调用还需完善
  *          </p>
  */
-@Component
-public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
+public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 
 	final static Logger log = LoggerFactory.getLogger(MasterSchedulerManager.class);
 
@@ -269,10 +265,10 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 					updateJobSnapshot(jobSnapshot);
 					getJobSnapshotDao().save(jobSnapshot);
 					int callSucceedCount = 0;
-					WorkerAbstractSchedulerManager workerSchedulerManager=null;
+					AbstractWorkerSchedulerManager workerSchedulerManager=null;
 					for (Node freeNode : freeNodes) {
 						try {
-							workerSchedulerManager=getNodeManager().loolup(freeNode, WorkerAbstractSchedulerManager.class);
+							workerSchedulerManager=getNodeManager().loolup(freeNode, AbstractWorkerSchedulerManager.class);
 							workerSchedulerManager.execute(job.getName());
 							callSucceedCount++;
 							log.info("already request worker node[" + freeNode.getName() + "] to execut the job["
@@ -314,10 +310,10 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 			getRedisManager().lock(lockKey);
 			List<Node> nodes = getWorkerNode(jobName);
 			int callSuccessedCount = 0;
-			WorkerAbstractSchedulerManager workerSchedulerManager=null;
+			AbstractWorkerSchedulerManager workerSchedulerManager=null;
 			for (Node node : nodes) {
 				try {
-					workerSchedulerManager=getNodeManager().loolup(node, WorkerAbstractSchedulerManager.class);
+					workerSchedulerManager=getNodeManager().loolup(node, AbstractWorkerSchedulerManager.class);
 					workerSchedulerManager.suspend(jobName);
 					callSuccessedCount++;
 					log.info("Already request worker node[" + node.getName() + "] to suspend the job[" + jobName + "]");
@@ -351,10 +347,10 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 
 			List<Node> nodes = getWorkerNode(jobName);
 			int callSuccessedCount = 0;
-			WorkerAbstractSchedulerManager workerSchedulerManager=null;
+			AbstractWorkerSchedulerManager workerSchedulerManager=null;
 			for (Node node : nodes) {
 				try {
-					workerSchedulerManager=getNodeManager().loolup(node, WorkerAbstractSchedulerManager.class);
+					workerSchedulerManager=getNodeManager().loolup(node, AbstractWorkerSchedulerManager.class);
 					workerSchedulerManager.goOn(jobName);
 					callSuccessedCount++;
 					log.info("Already request worker node[" + node.getName() + "] to goOn the job[" + jobName + "]");
@@ -387,10 +383,10 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 
 			List<Node> nodes = getWorkerNode(jobName);
 			int callSuccessedCount = 0;
-			WorkerAbstractSchedulerManager workerSchedulerManager=null;
+			AbstractWorkerSchedulerManager workerSchedulerManager=null;
 			for (Node node : nodes) {
 				try {
-					workerSchedulerManager=getNodeManager().loolup(node, WorkerAbstractSchedulerManager.class);
+					workerSchedulerManager=getNodeManager().loolup(node, AbstractWorkerSchedulerManager.class);
 					workerSchedulerManager.stop(jobName);
 					callSuccessedCount++;
 					log.info("Already request worker node[" + node.getName() + "] to stop the job[" + jobName + "]");
@@ -415,11 +411,11 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 		for (JobSnapshot jobSnapshot : allJobs) {
 			Job job = getJobDao().query(jobSnapshot.getName());
 			List<Node> nodes = getWorkerNode(job.getName());
-			WorkerAbstractSchedulerManager workerSchedulerManager=null;
+			AbstractWorkerSchedulerManager workerSchedulerManager=null;
 			for (Node node : nodes) {
 				if (!currentNode.equals(node)) {
 					try {
-						workerSchedulerManager=getNodeManager().loolup(node, WorkerAbstractSchedulerManager.class);
+						workerSchedulerManager=getNodeManager().loolup(node, AbstractWorkerSchedulerManager.class);
 						workerSchedulerManager.stop(job.getName());
 						log.info("Already request worker node[" + node.getName() + "] to stop the job[" + job.getName()
 								+ "]");
@@ -430,11 +426,11 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 			}
 		}
 		List<Node> nodes = getNodeManager().getWorkerNodes();
-		WorkerAbstractSchedulerManager workerSchedulerManager=null;
+		AbstractWorkerSchedulerManager workerSchedulerManager=null;
 		for (Node node : nodes) {
 			if (!currentNode.equals(node)) {
 				try {
-					workerSchedulerManager=getNodeManager().loolup(node, WorkerAbstractSchedulerManager.class);
+					workerSchedulerManager=getNodeManager().loolup(node, AbstractWorkerSchedulerManager.class);
 					workerSchedulerManager.stopAll();
 					log.info("Already request worker node[" + node.getName() + "] to stop all");
 				} catch (Exception e) {
@@ -585,7 +581,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 
 	@Override
 	public void repair() {
-		String patternKey = RedisRegisterKeyUtils.getResetPreKey() + "*";
+		String patternKey = RedisCacheKeyUtils.getResetPreKey() + "*";
 		Set<String> keys = getRedisManager().keys(patternKey);
 		for (String key : keys) {
 			getRedisManager().del(key);
@@ -600,8 +596,7 @@ public class MasterSchedulerManager extends MasterAbstractSchedulerManager {
 	/**
 	 * 容器结束时调用此销毁方法
 	 */
-	@PreDestroy
-	public void destroy() {
+	public void shutdown() {
 		try {
 			scheduler.shutdown();
 		} catch (SchedulerException e) {

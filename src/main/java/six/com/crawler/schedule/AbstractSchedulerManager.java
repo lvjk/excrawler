@@ -143,9 +143,9 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	 */
 	public void registerJobSnapshot(JobSnapshot jobSnapshot) {
 		String jobName = jobSnapshot.getName();
-		String jobSnapshotskey = RedisRegisterKeyUtils.getJobSnapshotsKey();
-		String workerkey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(jobName);
-		String jobWorkerSerialNumberkey = RedisRegisterKeyUtils.getWorkerSerialNumbersKey(jobName);
+		String jobSnapshotskey = RedisCacheKeyUtils.getJobSnapshotsKey();
+		String workerkey = RedisCacheKeyUtils.getWorkerSnapshotsKey(jobName);
+		String jobWorkerSerialNumberkey = RedisCacheKeyUtils.getWorkerSerialNumbersKey(jobName);
 		getRedisManager().lock(jobSnapshotskey);
 		try {
 			// 先删除 过期job信息
@@ -167,7 +167,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	 * @param jobSnapshot
 	 */
 	public void updateJobSnapshot(JobSnapshot jobSnapshot) {
-		String jobSnapshotskey = RedisRegisterKeyUtils.getJobSnapshotsKey();
+		String jobSnapshotskey = RedisCacheKeyUtils.getJobSnapshotsKey();
 		getRedisManager().hset(jobSnapshotskey, jobSnapshot.getName(), jobSnapshot);
 	}
 
@@ -178,7 +178,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	 * @return
 	 */
 	public JobSnapshot getJobSnapshot(String jobName) {
-		String jobSnapshotskeyskey = RedisRegisterKeyUtils.getJobSnapshotsKey();
+		String jobSnapshotskeyskey = RedisCacheKeyUtils.getJobSnapshotsKey();
 		JobSnapshot jobSnapshot = getRedisManager().hget(jobSnapshotskeyskey, jobName, JobSnapshot.class);
 		return jobSnapshot;
 	}
@@ -227,7 +227,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	 * @return
 	 */
 	public List<JobSnapshot> getJobSnapshots() {
-		String jobSnapshotskeyskey = RedisRegisterKeyUtils.getJobSnapshotsKey();
+		String jobSnapshotskeyskey = RedisCacheKeyUtils.getJobSnapshotsKey();
 		Map<String, JobSnapshot> findMap = getRedisManager().hgetAll(jobSnapshotskeyskey, JobSnapshot.class);
 		return new ArrayList<>(findMap.values());
 	}
@@ -238,7 +238,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	 * @param jobName
 	 */
 	public void delJobSnapshot(String jobName) {
-		String jobSnapshotskey = RedisRegisterKeyUtils.getJobSnapshotsKey();
+		String jobSnapshotskey = RedisCacheKeyUtils.getJobSnapshotsKey();
 		getRedisManager().hdel(jobSnapshotskey, jobName);
 	}
 
@@ -248,7 +248,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	 * @param jobName
 	 */
 	public void delWorkerSnapshots(String jobName) {
-		String WorkerSnapshotkey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(jobName);
+		String WorkerSnapshotkey = RedisCacheKeyUtils.getWorkerSnapshotsKey(jobName);
 		getRedisManager().del(WorkerSnapshotkey);
 	}
 
@@ -259,7 +259,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	 * @return
 	 */
 	public List<WorkerSnapshot> getWorkerSnapshots(String jobName) {
-		String workerSnapshotkey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(jobName);
+		String workerSnapshotkey = RedisCacheKeyUtils.getWorkerSnapshotsKey(jobName);
 		List<WorkerSnapshot> workerSnapshots = new ArrayList<>();
 		Map<String, WorkerSnapshot> workerInfosMap = getRedisManager().hgetAll(workerSnapshotkey, WorkerSnapshot.class);
 		workerSnapshots.addAll(workerInfosMap.values());
@@ -305,7 +305,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	 * @param workerSnapshot
 	 */
 	public void updateWorkerSnapshot(WorkerSnapshot workerSnapshot) {
-		String workerSnapshotKey = RedisRegisterKeyUtils.getWorkerSnapshotsKey(workerSnapshot.getJobName());
+		String workerSnapshotKey = RedisCacheKeyUtils.getWorkerSnapshotsKey(workerSnapshot.getJobName());
 		getRedisManager().hset(workerSnapshotKey, workerSnapshot.getName(), workerSnapshot);
 	}
 
@@ -333,7 +333,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	 * @return
 	 */
 	public String getWorkerNameByJob(Job job) {
-		String key = RedisRegisterKeyUtils.getWorkerSerialNumbersKey(job.getName());
+		String key = RedisCacheKeyUtils.getWorkerSerialNumbersKey(job.getName());
 		Long sernum = getRedisManager().incr(key);
 		int serialNumber = sernum.intValue();
 		StringBuilder sbd = new StringBuilder();

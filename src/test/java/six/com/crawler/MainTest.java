@@ -11,10 +11,10 @@ public class MainTest extends BaseTest {
 
 	@Test
 	public synchronized void test() {
-//		try {
-//			this.wait();
-//		} catch (InterruptedException e) {
-//			e.printStackTrace();
-//		}
+		try {
+			this.wait();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 }

@@ -13,9 +13,9 @@ import six.com.crawler.schedule.AbstractSchedulerManager;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年3月13日 上午11:45:58
  */
-public abstract class MasterAbstractSchedulerManager extends AbstractSchedulerManager {
+public abstract class AbstractMasterSchedulerManager extends AbstractSchedulerManager {
 
-	final static Logger log = LoggerFactory.getLogger(MasterAbstractSchedulerManager.class);
+	final static Logger log = LoggerFactory.getLogger(AbstractMasterSchedulerManager.class);
 
 	protected final void init() {
 
