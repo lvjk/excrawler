@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import six.com.crawler.node.Node;
-import six.com.crawler.node.NodeManager;
+import six.com.crawler.node.ClusterManager;
 
 /**
  * @author 作者
@@ -24,9 +24,9 @@ public abstract class NodeRegisterEvent implements Watcher {
 		this.currentNode = currentNode;
 	}
 
-	public abstract boolean register(NodeManager clusterManager, CuratorFramework zKClient);
+	public abstract boolean register(ClusterManager clusterManager, CuratorFramework zKClient);
 
-	public abstract void unRegister(NodeManager clusterManager, CuratorFramework zKClient);
+	public abstract void unRegister(ClusterManager clusterManager, CuratorFramework zKClient);
 
 	Node getCurrentNode() {
 		return currentNode;

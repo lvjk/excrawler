@@ -97,7 +97,6 @@ function showJobTable(result) {
 			$("<input name='version' style='display:none' type='text' value='"+job.version+"' />").appendTo(tr);
 			$("<input name='name' style='display:none' type='text' value='"+job.name+"' />").appendTo(tr);
 			$("<input name='level' style='display:none' type='text' value='"+job.level+"' />").appendTo(tr);
-			$("<input name='localNode' style='display:none' type='text' value='"+job.localNode+"' />").appendTo(tr);
 			$("<input name='workSpaceName' style='display:none' type='text' value='"+job.workSpaceName+"' />").appendTo(tr);
 			$("<input name='workerClass' style='display:none' type='text' value='"+job.workerClass+"' />").appendTo(tr);
 			$("<input name='designatedNodeName' style='display:none' type='text' value='"+job.designatedNodeName+"' />").appendTo(tr);
@@ -124,12 +123,7 @@ function showJobTable(result) {
 			if(nextJobName==null||nextJobName==""||nextJobName=="null"){
 				nextJobName="#";
 			}
-			var nextJobNameTd=$("<td title='"+job.nextJobName+"'></td");
-			$("<input name='nextJobName'  flag='"+job.name+"' style='display:none' type='text' value='"+job.nextJobName+"' />").appendTo(nextJobNameTd);
-			$("<input name='update_nextJobName'  flag='"+job.name+"'  style='display:none' type='text' value='"+job.nextJobName+"' />").appendTo(nextJobNameTd);
-			$("<a     name='nextJobName'  style='color:#FF0000;text-decoration:none;' href=\"javascript:editNextJob('"+job.name+"')\">"+nextJobName+"</a>").appendTo(nextJobNameTd);
-			nextJobNameTd.appendTo(tr);
-			
+
 			var status=getState(job.status);
 			var color=getStateColor(status);
 			$("<td name='state' style='font-weight:bold;color:"+color+"'>"+ status + "</td>").appendTo(tr);

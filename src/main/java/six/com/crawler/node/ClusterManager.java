@@ -12,8 +12,9 @@ import six.com.crawler.node.lock.DistributedLock;
  *       集群节点管理接口:提供基本的集群和节点的操作
  */
 
-public interface NodeManager {
+public interface ClusterManager {
 
+	String getClusterName();
 	/**
 	 * 获取当前节点
 	 * 

@@ -1,7 +1,6 @@
 package six.com.crawler.node;
 
 import java.io.Serializable;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author sixliu E-mail:359852326@qq.com
@@ -13,6 +12,7 @@ public class Node implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 5609665168838994265L;
+	private String clusterName;// 集群名字
 	private String name;// 节点名字
 	private NodeType type;// 节点类型
 	private String host;// 节点host
@@ -24,7 +24,15 @@ public class Node implements Serializable {
 	private int totalJobSize;// 节点总任务数
 	private int totalScheduleJobSize;// 节点调度总任务数
 	private int totalNoScheduleJobSize;// 节点未调度总任务数
-	private AtomicInteger runningWorkerSize= new AtomicInteger(0);// 节点运行worker总数
+	private int runningWorkerSize;// 节点运行worker总数
+
+	public String getClusterName() {
+		return clusterName;
+	}
+
+	public void setClusterName(String clusterName) {
+		this.clusterName = clusterName;
+	}
 
 	public String getName() {
 		return name;
@@ -57,7 +65,7 @@ public class Node implements Serializable {
 	public void setTrafficPort(int trafficPort) {
 		this.trafficPort = trafficPort;
 	}
-	
+
 	public int getPort() {
 		return port;
 	}
@@ -90,6 +98,10 @@ public class Node implements Serializable {
 		this.runningWorkerMaxSize = runningWorkerMaxSize;
 	}
 
+	public synchronized int getFreeWorkerSize() {
+		return runningWorkerMaxSize - runningWorkerSize;
+	}
+
 	public int getTotalJobSize() {
 		return totalJobSize;
 	}
@@ -114,32 +126,35 @@ public class Node implements Serializable {
 		this.totalNoScheduleJobSize = totalNoScheduleJobSize;
 	}
 
-	public int getRunningWorkerSize() {
-		return runningWorkerSize.get();
+	public synchronized int getRunningWorkerSize() {
+		return runningWorkerSize;
 	}
 
 	/**
 	 * 节点运行任务数设值，并返回操作后的值
+	 * 
 	 * @return
 	 */
-	public void setRunningWorkerSize(int runningWorkerSize) {
-		this.runningWorkerSize.set(runningWorkerSize);
+	public synchronized void setRunningWorkerSize(int runningWorkerSize) {
+		this.runningWorkerSize = runningWorkerSize;
 	}
-	
+
 	/**
 	 * 节点运行任务数减1，并返回操作后的值
+	 * 
 	 * @return
 	 */
-	public int incrementAndGetRunningWorkerSize() {
-		return this.runningWorkerSize.incrementAndGet();
+	public synchronized int incrAndGetRunningWorkerSize() {
+		return this.runningWorkerSize++;
 	}
-	
+
 	/**
 	 * 节点运行任务数加1，并返回操作后的值
+	 * 
 	 * @return
 	 */
-	public int decrementAndGetRunningWorkerSize() {
-		return this.runningWorkerSize.decrementAndGet();
+	public synchronized int decrAndGetRunningWorkerSize() {
+		return this.runningWorkerSize--;
 	}
 
 	public String toString() {

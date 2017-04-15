@@ -30,7 +30,15 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 					+ "minProcessTime," 
 					+ "errCount,"
 					+ "`version`";
-	public String query(String jobName) {
+	public String query(Map<String, Object> map) {
+		SQL sql = new SQL();
+		sql.SELECT(selectColumns);
+		sql.FROM(JobSnapshotDao.TABLE_NAME);
+		sql.WHERE("id=#{id} and name=#{name}");
+		return sql.toString();
+	}
+	
+	public String queryByJob(String jobName) {
 		SQL sql = new SQL();
 		sql.SELECT(selectColumns);
 		sql.FROM(JobSnapshotDao.TABLE_NAME);

@@ -9,7 +9,7 @@ import six.com.crawler.node.Node;
 * @E-mail: 359852326@qq.com 
 * @date 创建时间：2017年2月24日 下午9:32:27 
 */
-public interface NodeManagerService {
+public interface ClusterManagerService {
 
 	List<Node> getClusterInfo();
 	

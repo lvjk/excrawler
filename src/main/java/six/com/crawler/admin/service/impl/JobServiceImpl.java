@@ -36,7 +36,7 @@ import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.PageQuery;
 import six.com.crawler.entity.WorkSpaceInfo;
 import six.com.crawler.entity.WorkerSnapshot;
-import six.com.crawler.schedule.master.MasterAbstractSchedulerManager;
+import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.utils.JobTableUtils;
 import six.com.crawler.work.extract.ExtractItem;
 
@@ -66,7 +66,7 @@ public class JobServiceImpl extends BaseService implements JobService {
 	private WorkerErrMsgDao workerErrMsgDao;
 
 	@Autowired
-	private MasterAbstractSchedulerManager scheduleManager;
+	private AbstractSchedulerManager scheduleManager;
 
 	@Autowired
 	private ExtractItemDao extractItemDao;
@@ -85,7 +85,7 @@ public class JobServiceImpl extends BaseService implements JobService {
 		if (StringUtils.isBlank(jobName)) {
 			jobs = new ArrayList<>();
 			// 优先获取运行中的任务
-			List<JobSnapshot> jobSnapshots = scheduleManager.getJobSnapshots();
+			List<JobSnapshot> jobSnapshots = scheduleManager.getScheduleCache().getJobSnapshots();
 			int end = pageIndex + pageSize;
 			if (jobSnapshots.size() > 0) {
 				if (jobSnapshots.size() > end) {
@@ -160,7 +160,7 @@ public class JobServiceImpl extends BaseService implements JobService {
 	@Override
 	public ResponseMsg<List<JobSnapshot>> queryJobSnapshotsFromHistory(String jobName) {
 		ResponseMsg<List<JobSnapshot>> responseMsg = createResponseMsg();
-		List<JobSnapshot> result = jobSnapshotDao.query(jobName);
+		List<JobSnapshot> result = jobSnapshotDao.queryByJob(jobName);
 		responseMsg.setIsOk(1);
 		responseMsg.setData(result);
 		return responseMsg;
@@ -172,10 +172,10 @@ public class JobServiceImpl extends BaseService implements JobService {
 		if (null != list) {
 			JobSnapshot findJobSnapshot = null;
 			for (JobSnapshot jobSnapshot : list) {
-				findJobSnapshot = scheduleManager.getJobSnapshot(jobSnapshot.getName());
+				findJobSnapshot = scheduleManager.getScheduleCache().getJobSnapshot(jobSnapshot.getName());
 				if (null != findJobSnapshot) {
 					jobSnapshot = findJobSnapshot;
-					List<WorkerSnapshot> workerSnapshots = scheduleManager.getWorkerSnapshots(jobSnapshot.getName());
+					List<WorkerSnapshot> workerSnapshots = scheduleManager.getScheduleCache().getWorkerSnapshots(jobSnapshot.getName());
 					scheduleManager.totalWorkerSnapshot(jobSnapshot, workerSnapshots);
 				}
 				WorkSpaceInfo workSpaceInfo = workSpaceService.getWorkSpaceInfo(jobSnapshot.getWorkSpaceName());
@@ -235,10 +235,10 @@ public class JobServiceImpl extends BaseService implements JobService {
 					// 删除job
 					jobDao.del(job.getName());
 					jobDao.save(job);
-					if (null != job.getParamList()&&!job.getParamList().isEmpty()) {
+					if (null != job.getParamList() && !job.getParamList().isEmpty()) {
 						jobParamDao.batchSave(job.getParamList());
 					}
-					if (null != profile.getExtractItems()&&!profile.getExtractItems().isEmpty()) {
+					if (null != profile.getExtractItems() && !profile.getExtractItems().isEmpty()) {
 						extractItemDao.batchSave(profile.getExtractItems());
 					}
 					msg = "uploadJobProfile[" + multipartFile.getName() + "] succeed";
@@ -353,37 +353,6 @@ public class JobServiceImpl extends BaseService implements JobService {
 		return responseMsg;
 	}
 
-	public ResponseMsg<Integer> updateNextJobName(int version, String name, String nextJobName) {
-		ResponseMsg<Integer> responseMsg = createResponseMsg();
-		String msg = null;
-		responseMsg.setIsOk(0);
-		if (!StringUtils.isBlank(name)) {
-			if (!StringUtils.equals(name, nextJobName)) {
-				int newVersion = version + 1;
-				try {
-					int result = jobDao.updateNextJobName(version, newVersion, name, nextJobName);
-					if (1 == result) {
-						msg = "update job[" + name + "]'s nextJobName[" + nextJobName + "] succeed";
-						responseMsg.setData(newVersion);
-						responseMsg.setIsOk(1);
-					} else {
-						msg = "update job[" + name + "]'s nextJobName[" + nextJobName + "] failed";
-					}
-				} catch (Exception e) {
-					msg = "update job[" + name + "]'s nextJobName[" + nextJobName + "] system exception";
-					log.error(msg, e);
-				}
-			} else {
-				msg = "the job's nextJob must not be own";
-			}
-		} else {
-			msg = "the job's name must not be blank";
-		}
-		log.info(msg);
-		responseMsg.setMsg(msg);
-		return responseMsg;
-	}
-
 	public ResponseMsg<Integer> updateJobSnapshotStatus(int version, String id, int status) {
 		ResponseMsg<Integer> responseMsg = createResponseMsg();
 		String msg = null;
@@ -448,11 +417,11 @@ public class JobServiceImpl extends BaseService implements JobService {
 		this.jobDao = jobDao;
 	}
 
-	public MasterAbstractSchedulerManager getScheduleManager() {
+	public AbstractSchedulerManager getScheduleManager() {
 		return scheduleManager;
 	}
 
-	public void setScheduleManager(MasterAbstractSchedulerManager scheduleManager) {
+	public void setScheduleManager(AbstractSchedulerManager scheduleManager) {
 		this.scheduleManager = scheduleManager;
 	}
 

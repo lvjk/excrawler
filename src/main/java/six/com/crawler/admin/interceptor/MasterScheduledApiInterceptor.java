@@ -7,7 +7,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
 import six.com.crawler.node.Node;
-import six.com.crawler.node.NodeManager;
+import six.com.crawler.node.ClusterManager;
 import six.com.crawler.node.NodeType;
 
 /**
@@ -19,9 +19,9 @@ import six.com.crawler.node.NodeType;
  */
 public class MasterScheduledApiInterceptor implements HandlerInterceptor {
 
-	NodeManager clusterManager;
+	ClusterManager clusterManager;
 
-	public MasterScheduledApiInterceptor(NodeManager clusterManager) {
+	public MasterScheduledApiInterceptor(ClusterManager clusterManager) {
 		this.clusterManager = clusterManager;
 	}
 

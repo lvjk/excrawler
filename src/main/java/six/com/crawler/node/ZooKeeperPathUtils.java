@@ -9,31 +9,45 @@ public class ZooKeeperPathUtils {
 
 	public static String EXCRAWLER_ROOT_PATH = "/excrawler";
 
+	public static String EXCRAWLER_CLUSTER_ROOT_PATH = "/excrawler";
+
 	public static String getRootPath() {
 		return EXCRAWLER_ROOT_PATH;
 	}
 
-	public static String getMasterNodesPath() {
-		return EXCRAWLER_ROOT_PATH + "/masternode";
-	}
-	
-	public static String getMasterNodePath(String masterNodeName) {
-		return EXCRAWLER_ROOT_PATH + "/masternode/"+masterNodeName;
+	public static String getClusterRootPath(String clusterName) {
+		return EXCRAWLER_ROOT_PATH + "/" + clusterName;
 	}
 
-	public static String getMasterStandbyNodesPath() {
-		return EXCRAWLER_ROOT_PATH + "/masterstandbynode";
-	}
-	
-	public static String getMasterStandbyNodePath(String masterstandbynodeName) {
-		return EXCRAWLER_ROOT_PATH + "/masterstandbynode/"+masterstandbynodeName;
+	public static String getMasterNodesPath(String clusterName) {
+		return getClusterRootPath(clusterName) + "/masternode";
 	}
 
-	public static String getWorkerNodesPath() {
-		return EXCRAWLER_ROOT_PATH + "/workernode";
+	public static String getMasterNodePath(String clusterName, String masterNodeName) {
+		return getMasterNodesPath(clusterName) + "/" + masterNodeName;
 	}
 
-	public static String getWorkerNodePath(String nodeName) {
-		return getWorkerNodesPath() + "/" + nodeName;
+	public static String getMasterStandbyNodesPath(String clusterName) {
+		return getClusterRootPath(clusterName) + "/masterstandbynode";
+	}
+
+	public static String getMasterStandbyNodePath(String clusterName, String masterstandbynodeName) {
+		return getMasterStandbyNodesPath(clusterName) + "/" + masterstandbynodeName;
+	}
+
+	public static String getWorkerNodesPath(String clusterName) {
+		return getClusterRootPath(clusterName) + "/workernode";
+	}
+
+	public static String getWorkerNodePath(String clusterName, String nodeName) {
+		return getWorkerNodesPath(clusterName) + "/" + nodeName;
+	}
+
+	public static String getDistributedLocksPath(String clusterName) {
+		return getClusterRootPath(clusterName) + "/lock";
+	}
+
+	public static String getDistributedLockPath(String clusterName, String lockPath) {
+		return getDistributedLocksPath(clusterName) + "/" + lockPath;
 	}
 }

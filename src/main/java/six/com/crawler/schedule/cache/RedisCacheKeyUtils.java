@@ -1,10 +1,10 @@
-package six.com.crawler.schedule;
+package six.com.crawler.schedule.cache;
 
 /**
  * @author sixliu E-mail:359852326@qq.com
  * @version 创建时间：2016年1月16日 上午4:16:17 类说明 bdb 表常量 RegisterCenter Constants
  */
-public class RedisRegisterKeyUtils {
+public class RedisCacheKeyUtils {
 
 	// 非node 信息注册的前缀
 	final static String REDIS_CACHE_PRE = "exCrawler_cache";
@@ -12,6 +12,30 @@ public class RedisRegisterKeyUtils {
 	public static String getResetPreKey() {
 		StringBuilder keySb = new StringBuilder();
 		keySb.append(REDIS_CACHE_PRE);
+		return keySb.toString();
+	}
+
+	/**
+	 * 获取执行的job缓存key
+	 * 
+	 * @return
+	 */
+	public static String getJobsKey() {
+		StringBuilder keySb = new StringBuilder();
+		keySb.append(REDIS_CACHE_PRE);
+		keySb.append("_execute_jobs");
+		return keySb.toString();
+	}
+
+	/**
+	 * 获取 job被执行的类型key
+	 * 
+	 * @return
+	 */
+	public static String getDispatchTypeKey() {
+		StringBuilder keySb = new StringBuilder();
+		keySb.append(REDIS_CACHE_PRE);
+		keySb.append("_job_dispatch_types");
 		return keySb.toString();
 	}
 
@@ -27,7 +51,8 @@ public class RedisRegisterKeyUtils {
 	public static String getJobSnapshotsKey() {
 		StringBuilder keySb = new StringBuilder();
 		keySb.append(REDIS_CACHE_PRE);
-		keySb.append("_jobs");
+		keySb.append("_job");
+		keySb.append("_snapshots");
 		return keySb.toString();
 	}
 

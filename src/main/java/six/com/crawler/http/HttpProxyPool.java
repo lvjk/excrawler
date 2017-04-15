@@ -19,8 +19,6 @@ public class HttpProxyPool {
 
 	public static final String REDIS_HTTP_PROXY_INDEX = "http_proxy_index";
 	public static final String REDIS_HTTP_PROXY_POOL = "http_proxy_pool";
-	// 默认最小休息时间 5 秒
-	private int DEFAULT_MIN_RESTTIME= 5000;
 	private HttpProxyType httpProxyType;
 	private String siteHttpProxyPoolKey;// 站点http代理池 key
 	private String siteHttpProxyIndexKey;// 站点http代理获取索引 key
@@ -33,9 +31,7 @@ public class HttpProxyPool {
 		this.httpProxyType = httpProxyType;
 		this.siteHttpProxyPoolKey = REDIS_HTTP_PROXY_POOL + "_" + siteCode;
 		this.siteHttpProxyIndexKey = REDIS_HTTP_PROXY_INDEX + "_" + siteCode;
-		if(restTime<DEFAULT_MIN_RESTTIME){
-			this.restTime = DEFAULT_MIN_RESTTIME;
-		}
+		this.restTime = restTime;
 	}
 
 	private int initPool() {

@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.commons.lang3.time.DateFormatUtils;
 
 import six.com.crawler.common.DateFormats;
+import six.com.crawler.schedule.DispatchType;
 
 /**
  * @author 作者
@@ -17,9 +18,9 @@ public class JobSnapshot extends BaseVo implements Serializable {
 	private static final long serialVersionUID = -5076089473208316846L;
 	private String id;// id
 	private String name;// 任务名
-	private String nextJobName;// 下一个执行任务
 	private String designatedNodeName;// 指定节点
 	private JobSnapshotState status=JobSnapshotState.READY;// 任务状态
+	private DispatchType dispatchType;//触发任务的类型
 	private String tableName;//数据表名
 	private String workSpaceName;// 任务工作空间名
 	private String startTime;// 开始时间
@@ -60,14 +61,6 @@ public class JobSnapshot extends BaseVo implements Serializable {
 		this.name = name;
 	}
 	
-	public String getNextJobName() {
-		return nextJobName;
-	}
-
-	public void setNextJobName(String nextJobName) {
-		this.nextJobName = nextJobName;
-	}
-	
 	public String getDesignatedNodeName() {
 		return designatedNodeName;
 	}
@@ -87,6 +80,14 @@ public class JobSnapshot extends BaseVo implements Serializable {
 	
 	public void setStatus(int status) {
 		this.status = JobSnapshotState.valueOf(status);
+	}
+	
+	public DispatchType getDispatchType() {
+		return dispatchType;
+	}
+
+	public void setDispatchType(DispatchType dispatchType) {
+		this.dispatchType = dispatchType;
 	}
 
 	public String getTableName() {

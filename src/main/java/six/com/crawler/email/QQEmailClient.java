@@ -31,7 +31,7 @@ public class QQEmailClient implements InitializingBean {
 
 	@Autowired
 	private SpiderConfigure configure;
-
+	private boolean open = false;
 	private Properties prop;
 	private Authenticator authenticator;
 	private String MAIL_Host;
@@ -92,7 +92,7 @@ public class QQEmailClient implements InitializingBean {
 	 * @throws AddressException
 	 */
 	public void sendMailToAdmin(String subject, String msg) {
-		if (null != adminsMail) {
+		if (open&&null != adminsMail) {
 			for (String to : adminsMail) {
 				try {
 					// 1、创建session

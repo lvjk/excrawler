@@ -18,7 +18,7 @@ public interface Worker extends WorkerLifecycle {
 	void bindJobSnapshot(JobSnapshot jobSnapshot);
 
 	void bindJob(Job job);
-
+	
 	/**
 	 * 初始化
 	 */

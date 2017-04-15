@@ -6,7 +6,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
-import six.com.crawler.node.NodeManager;
+import six.com.crawler.node.ClusterManager;
 
 /**
  * @author six
@@ -14,10 +14,10 @@ import six.com.crawler.node.NodeManager;
  */
 public class BaseInterceptor implements HandlerInterceptor {
 
-	NodeManager clusterManager;
+	ClusterManager clusterManager;
 	
 
-	public BaseInterceptor(NodeManager clusterManager){
+	public BaseInterceptor(ClusterManager clusterManager){
 		this.clusterManager=clusterManager;
 	}
 	

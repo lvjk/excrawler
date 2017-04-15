@@ -25,8 +25,9 @@ import six.com.crawler.dao.PageDao;
 import six.com.crawler.dao.RedisManager;
 import six.com.crawler.dao.SiteDao;
 import six.com.crawler.http.HttpClient;
+import six.com.crawler.node.ClusterManager;
 import six.com.crawler.ocr.ImageDistinguish;
-import six.com.crawler.schedule.master.MasterSchedulerManager;
+import six.com.crawler.schedule.AbstractSchedulerManager;
 
 /**
  * @author sixliu E-mail:359852326@qq.com
@@ -42,7 +43,10 @@ public  class BaseTest extends AbstractJUnit4SpringContextTests {
 	protected final static Logger LOG = LoggerFactory.getLogger(BaseTest.class);
 
 	@Autowired
-	public MasterSchedulerManager jobWorkerManager;
+	public AbstractSchedulerManager jobWorkerManager;
+	
+	@Autowired
+	public ClusterManager nodeManager;
 
 	@Autowired
 	public SiteService siteService;
