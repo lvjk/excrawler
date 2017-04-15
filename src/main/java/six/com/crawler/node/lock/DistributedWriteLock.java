@@ -2,6 +2,8 @@ package six.com.crawler.node.lock;
 
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.apache.curator.framework.recipes.locks.InterProcessReadWriteLock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author 作者
@@ -12,19 +14,30 @@ import org.apache.curator.framework.recipes.locks.InterProcessReadWriteLock;
  */
 public class DistributedWriteLock implements DistributedLock {
 
+	final static Logger log = LoggerFactory.getLogger(DistributedWriteLock.class);
+	private String path;
 	private InterProcessMutex interProcessMutex;
 
-	public DistributedWriteLock(InterProcessReadWriteLock interProcessReadWriteLock) {
+	public DistributedWriteLock(String path, InterProcessReadWriteLock interProcessReadWriteLock) {
+		this.path = path;
 		this.interProcessMutex = interProcessReadWriteLock.writeLock();
 	}
 
 	@Override
-	public void lock() throws Exception {
-		interProcessMutex.acquire();
+	public void lock() {
+		try {
+			interProcessMutex.acquire();
+		} catch (Exception e) {
+			log.error("distributed writeLock path:" + path, e);
+		}
 	}
 
 	@Override
-	public void unLock() throws Exception {
-		interProcessMutex.release();
+	public void unLock() {
+		try {
+			interProcessMutex.release();
+		} catch (Exception e) {
+			log.error("distributed writeLock path:" + path, e);
+		}
 	}
 }

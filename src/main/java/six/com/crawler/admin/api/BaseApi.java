@@ -15,7 +15,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
 import six.com.crawler.admin.service.DownloadAndUploadService;
-import six.com.crawler.admin.service.NodeManagerService;
+import six.com.crawler.admin.service.ClusterManagerService;
 
 /**
  * @author 作者
@@ -31,13 +31,13 @@ public class BaseApi {
 	private final static Logger LOG = LoggerFactory.getLogger(BaseApi.class);
 
 	@Autowired
-	private NodeManagerService clusterService;
+	private ClusterManagerService clusterService;
 
-	public NodeManagerService getClusterService() {
+	public ClusterManagerService getClusterService() {
 		return clusterService;
 	}
 
-	public void setClusterService(NodeManagerService clusterService) {
+	public void setClusterService(ClusterManagerService clusterService) {
 		this.clusterService = clusterService;
 	}
 

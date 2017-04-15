@@ -93,14 +93,6 @@ public interface JobService extends DownloadAndUploadService {
 	 */
 	public ResponseMsg<Integer> updateCronTrigger(int version, String name, String cronTrigger);
 
-	/**
-	 * 更新任务的下一个执行任务
-	 * @param version
-	 * @param name
-	 * @param nextJobName
-	 * @return
-	 */
-	public ResponseMsg<Integer> updateNextJobName(int version, String name, String nextJobName);
 
 	/**
 	 * 更新任务运行记录的状态

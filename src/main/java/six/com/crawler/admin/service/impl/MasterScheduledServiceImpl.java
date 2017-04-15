@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import six.com.crawler.admin.service.MasterScheduledService;
 import six.com.crawler.entity.WorkerSnapshot;
 import six.com.crawler.schedule.AbstractSchedulerManager;
+import six.com.crawler.schedule.DispatchType;
 
 /**
  * @author 作者
@@ -26,7 +27,6 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 	@Autowired
 	private AbstractSchedulerManager scheduleManager;
 
-
 	@Override
 	public String execute(String jobName) {
 		String msg = null;
@@ -34,7 +34,7 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 			if (scheduleManager.isRunning(jobName)) {
 				msg = "这个任务[" + jobName + "]正在运行";
 			} else {
-				scheduleManager.execute(jobName);
+				scheduleManager.execute(DispatchType.newDispatchTypeByManual(), jobName);
 				msg = "提交任务[" + jobName + "]到待执行队列";
 			}
 		} else {
@@ -50,7 +50,7 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 			if (!scheduleManager.isRunning(jobName)) {
 				msg = "the job[" + jobName + "] is not running and don't suspend";
 			} else {
-				scheduleManager.suspend(jobName);
+				scheduleManager.suspend(DispatchType.newDispatchTypeByManual(), jobName);
 				msg = "the job[" + jobName + "] have been requested to execute suspend";
 			}
 		} else {
@@ -66,7 +66,7 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 			if (!scheduleManager.isRunning(jobName)) {
 				msg = "the job[" + jobName + "] is not running and don't goOn";
 			} else {
-				scheduleManager.goOn(jobName);
+				scheduleManager.goOn(DispatchType.newDispatchTypeByManual(), jobName);
 				msg = "the job[" + jobName + "] have been requested to execute goOn";
 			}
 		} else {
@@ -83,7 +83,7 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 			if (!scheduleManager.isRunning(jobName)) {
 				msg = "the job[" + jobName + "] is not running and don't stop";
 			} else {
-				scheduleManager.stop(jobName);
+				scheduleManager.stop(DispatchType.newDispatchTypeByManual(), jobName);
 				msg = "the job[" + jobName + "] have been requested to execute stop";
 			}
 		} else {
@@ -92,11 +92,10 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 		return msg;
 	}
 
-
 	public List<WorkerSnapshot> getWorkerInfo(String jobName) {
 		List<WorkerSnapshot> result = null;
 		if (StringUtils.isNotBlank(jobName)) {
-			result = scheduleManager.getWorkerSnapshots(jobName);
+			result = scheduleManager.getScheduleCache().getWorkerSnapshots(jobName);
 		} else {
 			result = Collections.emptyList();
 		}

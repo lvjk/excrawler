@@ -2,6 +2,7 @@ package six.com.crawler.schedule.master;
 
 import six.com.crawler.entity.Job;
 import six.com.crawler.schedule.AbstractSchedulerManager;
+import six.com.crawler.schedule.DispatchType;
 
 /**
  * @author 作者
@@ -35,28 +36,28 @@ public class MasterAndWorkerSchedulerManager extends AbstractSchedulerManager {
 	}
 
 	@Override
-	public void execute(String jobName) {
-		masterSchedulerManager.execute(jobName);
+	public void execute(DispatchType dispatchType,String jobName) {
+		masterSchedulerManager.execute(dispatchType,jobName);
 	}
 
 	@Override
-	public void suspend(String jobName) {
-		masterSchedulerManager.suspend(jobName);
+	public void suspend(DispatchType dispatchType,String jobName) {
+		masterSchedulerManager.suspend(dispatchType,jobName);
 	}
 
 	@Override
-	public void goOn(String jobName) {
-		masterSchedulerManager.goOn(jobName);
+	public void goOn(DispatchType dispatchType,String jobName) {
+		masterSchedulerManager.goOn(dispatchType,jobName);
 	}
 
 	@Override
-	public void stop(String jobName) {
-		masterSchedulerManager.stop(jobName);
+	public void stop(DispatchType dispatchType,String jobName) {
+		masterSchedulerManager.stop(dispatchType,jobName);
 	}
 
 	@Override
-	public void stopAll() {
-		masterSchedulerManager.stopAll();
+	public void stopAll(DispatchType dispatchType) {
+		masterSchedulerManager.stopAll(dispatchType);
 	}
 
 	@Override

@@ -101,13 +101,6 @@ public class JobApi extends BaseApi {
 		return jobService.updateCronTrigger(version, name, cronTrigger);
 	}
 
-	@RequestMapping(value = "/crawler/job/updateNextJobName", method = RequestMethod.POST)
-	@ResponseBody
-	public ResponseMsg<Integer> updateNextJobName(@RequestParam("version") int version,
-			@RequestParam("name") String name, @RequestParam("nextJobName") String nextJobName) {
-		return jobService.updateNextJobName(version, name, nextJobName);
-	}
-
 	@RequestMapping(value = "/crawler/job/updateJobSnapshotStatus", method = RequestMethod.POST)
 	@ResponseBody
 	public ResponseMsg<Integer> updateJobSnapshotStatus(@RequestParam("version") int version,

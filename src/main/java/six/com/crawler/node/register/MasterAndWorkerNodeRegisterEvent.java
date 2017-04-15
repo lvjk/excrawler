@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import six.com.crawler.node.Node;
-import six.com.crawler.node.NodeManager;
+import six.com.crawler.node.ClusterManager;
 import six.com.crawler.node.ZooKeeperPathUtils;
 import six.com.crawler.utils.JavaSerializeUtils;
 
@@ -26,15 +26,19 @@ public class MasterAndWorkerNodeRegisterEvent extends NodeRegisterEvent {
 	}
 
 	@Override
-	public boolean register(NodeManager clusterManager, CuratorFramework zKClient) {
+	public boolean register(ClusterManager clusterManager, CuratorFramework zKClient) {
 		try {
 			Node masterNode = clusterManager.getMasterNode();
 			if (null == masterNode || masterNode.equals(getCurrentNode())) {
 				byte[] data = JavaSerializeUtils.serialize(getCurrentNode());
-				zKClient.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL)
-						.forPath(ZooKeeperPathUtils.getMasterNodePath(getCurrentNode().getName()), data);
-				zKClient.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL)
-						.forPath(ZooKeeperPathUtils.getWorkerNodePath(getCurrentNode().getName()), data);
+				zKClient.create()
+						.creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(ZooKeeperPathUtils
+								.getMasterNodePath(getCurrentNode().getClusterName(), getCurrentNode().getName()),
+								data);
+				zKClient.create()
+						.creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(ZooKeeperPathUtils
+								.getWorkerNodePath(getCurrentNode().getClusterName(), getCurrentNode().getName()),
+								data);
 				return true;
 			} else {
 				log.info("there is a master node:" + masterNode.toString());
@@ -47,10 +51,12 @@ public class MasterAndWorkerNodeRegisterEvent extends NodeRegisterEvent {
 	}
 
 	@Override
-	public void unRegister(NodeManager clusterManager, CuratorFramework zKClient) {
+	public void unRegister(ClusterManager clusterManager, CuratorFramework zKClient) {
 		try {
-			zKClient.delete().forPath(ZooKeeperPathUtils.getWorkerNodePath(getCurrentNode().getName()));
-			zKClient.delete().forPath(ZooKeeperPathUtils.getMasterNodePath(getCurrentNode().getName()));
+			zKClient.delete().forPath(ZooKeeperPathUtils.getWorkerNodePath(getCurrentNode().getClusterName(),
+					getCurrentNode().getName()));
+			zKClient.delete().forPath(ZooKeeperPathUtils.getMasterNodePath(getCurrentNode().getClusterName(),
+					getCurrentNode().getName()));
 		} catch (Exception e) {
 			log.error("", e);
 		}

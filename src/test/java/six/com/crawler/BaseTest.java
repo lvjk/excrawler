@@ -25,6 +25,7 @@ import six.com.crawler.dao.PageDao;
 import six.com.crawler.dao.RedisManager;
 import six.com.crawler.dao.SiteDao;
 import six.com.crawler.http.HttpClient;
+import six.com.crawler.node.ClusterManager;
 import six.com.crawler.ocr.ImageDistinguish;
 import six.com.crawler.schedule.AbstractSchedulerManager;
 
@@ -43,6 +44,9 @@ public  class BaseTest extends AbstractJUnit4SpringContextTests {
 
 	@Autowired
 	public AbstractSchedulerManager jobWorkerManager;
+	
+	@Autowired
+	public ClusterManager nodeManager;
 
 	@Autowired
 	public SiteService siteService;

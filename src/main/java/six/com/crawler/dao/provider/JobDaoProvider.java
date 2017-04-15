@@ -18,10 +18,10 @@ public class JobDaoProvider extends BaseProvider {
 	public String query(Map<String, Object> parameters) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("select `name`,"
-				+ "   nextJobName,"
-				+ "   level,"
+				+ "   level," 
 				+ " designatedNodeName,"
 				+ "needNodes,"
+				+ "threads,"
 				+ "isScheduled,"
 				+ "cronTrigger,"
 				+ "workFrequency,"
@@ -41,10 +41,10 @@ public class JobDaoProvider extends BaseProvider {
 		String sql="select b.totalSize,a.* "
 				+ " from("
 				+ "		select `name`,"
-				+ "       nextJobName,"
 				+ "			  `level`,"
 				+ "			designatedNodeName,"
 				+ "         needNodes,"
+				+ "			threads,"
 				+ "       isScheduled,"
 				+ "       cronTrigger,"
 				+ "     workFrequency,"
@@ -63,10 +63,10 @@ public class JobDaoProvider extends BaseProvider {
 	public String queryIsScheduled(){
 		StringBuilder sql = new StringBuilder();
 		sql.append("select `name`,"
-				+ "   nextJobName,"
 				+ "   level,"
 				+ " designatedNodeName,"
 				+ "needNodes,"
+				+ "threads,"
 				+ "isScheduled,"
 				+ "cronTrigger,"
 				+ "workFrequency,"
@@ -83,10 +83,10 @@ public class JobDaoProvider extends BaseProvider {
 	
 	public String save(Job job) {
 		String columns = "`name`,"
-				+ "nextJobName,"
 				+ "level,"
 				+ "designatedNodeName,"
 				+ "needNodes,"
+				+ "threads,"
 				+ "isScheduled,"
 				+ "cronTrigger,"
 				+ "workFrequency,"
@@ -96,10 +96,10 @@ public class JobDaoProvider extends BaseProvider {
 				+ "`describe`";
 		
 		String values = "#{name},"
-				+ "#{nextJobName},"
 				+ "#{level},"
 				+ "#{designatedNodeName},"
 				+ "#{needNodes},"
+				+ "#{threads},"
 				+ "#{isScheduled},"
 				+ "#{cronTrigger},"
 				+ "#{workFrequency},"
@@ -132,12 +132,4 @@ public class JobDaoProvider extends BaseProvider {
 		return sql.toString();
 	}
 	
-	public String updateNextJobName(Map<String, Object> queryParams) {
-		SQL sql=new SQL();
-		sql.UPDATE(JobDao.TABLE_NAME);
-		sql.SET("`version` = #{newVersion}");
-		sql.SET("nextJobName = #{nextJobName}");
-		sql.WHERE("name = #{name} and version = #{version}");
-		return sql.toString();
-	}
 }

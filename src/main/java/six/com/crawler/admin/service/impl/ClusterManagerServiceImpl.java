@@ -8,9 +8,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import six.com.crawler.admin.service.NodeManagerService;
+import six.com.crawler.admin.service.ClusterManagerService;
 import six.com.crawler.node.Node;
-import six.com.crawler.node.NodeManager;
+import six.com.crawler.node.ClusterManager;
 
 /**
  * @author 作者
@@ -19,12 +19,12 @@ import six.com.crawler.node.NodeManager;
  */
 
 @Service
-public class NodeManagerServiceImpl implements NodeManagerService {
+public class ClusterManagerServiceImpl implements ClusterManagerService {
 
-	final static Logger LOG = LoggerFactory.getLogger(NodeManagerServiceImpl.class);
+	final static Logger LOG = LoggerFactory.getLogger(ClusterManagerServiceImpl.class);
 
 	@Autowired
-	private NodeManager clusterManager;
+	private ClusterManager clusterManager;
 
 	public Node getCurrentNode() {
 		return clusterManager.getCurrentNode();
@@ -35,7 +35,8 @@ public class NodeManagerServiceImpl implements NodeManagerService {
 		List<Node> allNodes = new ArrayList<>();
 		Node masterNode = clusterManager.getMasterNode();
 		if (null != masterNode) {
-			allNodes.add(masterNode);
+			Node newestNode = clusterManager.getNewestNode(masterNode);
+			allNodes.add(newestNode);
 		}
 		List<Node> workerNodes = clusterManager.getWorkerNodes();
 		if (null != workerNodes) {
@@ -49,11 +50,11 @@ public class NodeManagerServiceImpl implements NodeManagerService {
 		return allNodes;
 	}
 
-	public NodeManager getClusterManager() {
+	public ClusterManager getClusterManager() {
 		return clusterManager;
 	}
 
-	public void setClusterManager(NodeManager clusterManager) {
+	public void setClusterManager(ClusterManager clusterManager) {
 		this.clusterManager = clusterManager;
 	}
 

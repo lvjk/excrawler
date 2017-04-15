@@ -7,6 +7,7 @@ import six.com.crawler.entity.Job;
 import six.com.crawler.node.NodeType;
 import six.com.crawler.rpc.RpcService;
 import six.com.crawler.schedule.AbstractSchedulerManager;
+import six.com.crawler.schedule.DispatchType;
 
 /**
  * @author 作者
@@ -27,7 +28,7 @@ public abstract class AbstractMasterSchedulerManager extends AbstractSchedulerMa
 		if (NodeType.MASTER == getNodeManager().getCurrentNode().getType()
 				|| NodeType.MASTER_WORKER == getNodeManager().getCurrentNode().getType()) {
 			try {
-				stopAll();
+				stopAll(DispatchType.newDispatchTypeByManual());
 			} catch (Exception e) {
 				log.error("master node stop all err", e);
 			}
@@ -40,6 +41,11 @@ public abstract class AbstractMasterSchedulerManager extends AbstractSchedulerMa
 
 		getNodeManager().register(this);
 
+	}
+
+	protected static String getOperationJobLockPath(String jobName) {
+		String path = "masterSchedulerManager_operation_" + jobName;
+		return path;
 	}
 
 	protected abstract void doInit();

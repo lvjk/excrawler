@@ -7,7 +7,7 @@ package six.com.crawler.node.lock;
  */
 public interface DistributedLock {
 
-	public void lock() throws Exception;
+	public void lock();
 
-	public void unLock() throws Exception;
+	public void unLock();
 }

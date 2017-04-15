@@ -88,10 +88,10 @@ public class NettyRpcCilent extends AbstractRemote implements RpcCilent {
 	 */
 	private Map<String, Object> serviceWeakHashMap;
 
-	// 请求超时时间
-	private long callTimeout = 6000;
-	// 建立连接超时时间
-	private long connectionTimeout = 300000;
+	// 请求超时时间  10秒
+	private long callTimeout = 10000;
+	// 建立连接超时时间 60秒
+	private long connectionTimeout = 60000;
 
 	private static AtomicInteger requestIndex = new AtomicInteger(0);
 

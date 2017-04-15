@@ -30,10 +30,10 @@ public interface JobDao extends BaseDao{
 	 * @return
 	 */
 	@Select("select `name`,"
-			+ "   nextJobName,"
 			+ "   level,"
 			+ " designatedNodeName,"
 			+ "needNodes,"
+			+ "threads,"
 			+ "isScheduled,"
 			+ "cronTrigger,"
 			+ "workFrequency,"
@@ -106,15 +106,4 @@ public interface JobDao extends BaseDao{
 			@Param("cronTrigger") String cronTrigger);
 	
 	
-	/**
-	 * 更新数据 job的 CronTrigger 时间表达式  
-	 * @param t
-	 * @return
-	 */
-	@UpdateProvider(type = JobDaoProvider.class, method = "updateNextJobName")
-	public int updateNextJobName(
-			@Param("version")int version,
-			@Param("newVersion")int newVersion,
-			@Param("name")String name,
-			@Param("nextJobName") String nextJobName);
 }

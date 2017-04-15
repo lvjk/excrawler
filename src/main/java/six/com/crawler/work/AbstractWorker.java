@@ -2,6 +2,7 @@ package six.com.crawler.work;
 
 import java.util.Random;
 import java.util.concurrent.locks.StampedLock;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -13,8 +14,11 @@ import org.slf4j.MDC;
 import six.com.crawler.common.DateFormats;
 import six.com.crawler.entity.Job;
 import six.com.crawler.entity.JobSnapshot;
+import six.com.crawler.entity.JobSnapshotState;
 import six.com.crawler.entity.WorkerErrMsg;
 import six.com.crawler.entity.WorkerSnapshot;
+import six.com.crawler.node.lock.DistributedLock;
+import six.com.crawler.schedule.DispatchType;
 import six.com.crawler.schedule.worker.WorkerSchedulerManager;
 import six.com.crawler.utils.ExceptionUtils;
 import six.com.crawler.utils.ThreadUtils;
@@ -25,7 +29,7 @@ import six.com.crawler.utils.ThreadUtils;
  */
 public abstract class AbstractWorker implements Worker {
 
-	private final static Logger LOG = LoggerFactory.getLogger(AbstractWorker.class);
+	private final static Logger log = LoggerFactory.getLogger(AbstractWorker.class);
 
 	// 用来lock 读写 状态
 	private final StampedLock setStateLock = new StampedLock();
@@ -33,6 +37,8 @@ public abstract class AbstractWorker implements Worker {
 	private final ReentrantLock reentrantLock = new ReentrantLock();
 	// 用来Condition.await() 和condition.signalAll();
 	private final Condition condition = reentrantLock.newCondition();
+
+	private DistributedLock distributedLock;
 
 	private WorkerSchedulerManager manager;
 
@@ -73,30 +79,31 @@ public abstract class AbstractWorker implements Worker {
 	@Override
 	public void init() {
 		String jobName = getJob().getName();
+		String path = "job_" + jobSnapshot.getId() + "_worker";
+		distributedLock = getManager().getNodeManager().getWriteLock(path);
 		MDC.put("jobName", jobName);
-		String lockKey = jobName + "_worker_init";
 		try {
-			getManager().getRedisManager().lock(lockKey);
+			distributedLock.lock();
 			this.minWorkFrequency = job.getWorkFrequency();
 			this.maxWorkFrequency = 2 * minWorkFrequency;
 			initWorker(jobSnapshot);
 		} catch (Exception e) {
 			throw new RuntimeException("init crawlWorker err", e);
 		} finally {
-			getManager().getRedisManager().unlock(lockKey);
+			distributedLock.unLock();
 		}
 	}
 
 	protected abstract void initWorker(JobSnapshot jobSnapshot);
 
 	private final void work() {
-		LOG.info("start worker:" + getName());
+		log.info("start worker:" + getName());
 		// 记录job 开始时间
 		workerSnapshot.setStartTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
 		// 只要job 状态不等于 FINISHED 那么会一直循环处理
 		try {
 			while (true) {
-				// 更新job 活动信息
+				// 更新worker 工作信息
 				manager.updateWorkSnapshotAndReport(workerSnapshot, false);
 				// 当状态为running时才会正常工作
 				if (getState() == WorkerLifecycleState.STARTED) {
@@ -105,7 +112,8 @@ public abstract class AbstractWorker implements Worker {
 					try {
 						insideWork();
 					} catch (Exception e) {
-						LOG.error("worker process err", e);
+						log.error("worker process err", e);
+						// 记录异常信息
 						String msg = ExceptionUtils.getExceptionMsg(e);
 						workerSnapshot.setErrCount(workerSnapshot.getErrCount() + 1);
 						WorkerErrMsg errMsg = new WorkerErrMsg();
@@ -115,9 +123,10 @@ public abstract class AbstractWorker implements Worker {
 						errMsg.setStartTime(
 								DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
 						errMsg.setMsg(msg);
+						// 添加异常信息至缓存
 						workerSnapshot.getWorkerErrMsgs().add(errMsg);
 						// 通知管理员异常
-						//getManager().getEmailClient().sendMailToAdmin("worker process err",msg);
+						getManager().getEmailClient().sendMailToAdmin("worker err", msg);
 						onError(e);
 					}
 					// 频率控制
@@ -128,23 +137,71 @@ public abstract class AbstractWorker implements Worker {
 					workerSnapshot.setTotalProcessTime((int) (workerSnapshot.getTotalProcessTime() + processTime));
 					if (processTime > workerSnapshot.getMaxProcessTime()) {
 						workerSnapshot.setMaxProcessTime((int) processTime);
-					}
-					if (processTime < workerSnapshot.getMinProcessTime()) {
+					} else if (processTime < workerSnapshot.getMinProcessTime()) {
 						workerSnapshot.setMinProcessTime((int) processTime);
 					}
 					workerSnapshot.setAvgProcessTime(
 							workerSnapshot.getTotalProcessTime() / workerSnapshot.getTotalProcessCount());
 					// 当state == WorkerLifecycleState.WAITED 时
 				} else if (getState() == WorkerLifecycleState.WAITED) {
-					// 通过job向注册中心检查 运行该job的所以worker是否已经全部等待
-					boolean isAllWait = getManager().workerIsAllWaited(job.getName());
-					if (isAllWait) {
+					// 判断当前worker's job是被什么类型调度的 1.MANUAL手动触发 2.SCHEDULER调度器触发
+					if (DispatchType.DISPATCH_TYPE_MANUAL.equals(jobSnapshot.getDispatchType().getName())
+							||DispatchType.DISPATCH_TYPE_SCHEDULER.equals(jobSnapshot.getDispatchType().getName())) {
 						compareAndSetState(WorkerLifecycleState.WAITED, WorkerLifecycleState.FINISHED);
-						continue;
+					}else{
+						// 被其他job触发
+						// 分布式锁 锁住并发并发执行以下代码
+						distributedLock.lock();
+						try {
+							// 通过当job的触发获取它触发的它的job快照
+							JobSnapshot lastJobSnapshot = getManager().getScheduleCache()
+									.getJobSnapshot(jobSnapshot.getDispatchType().getName());
+							// 如果触发的它的job快照==null,那么触发的它的job已经停止运行
+							if (null == lastJobSnapshot) {
+								// 从历史记录中获取触发它的 JobSnapshot
+								lastJobSnapshot = getManager().getJobSnapshotDao().query(
+										jobSnapshot.getDispatchType().getCurrentTimeMillis(),
+										jobSnapshot.getDispatchType().getName());
+								// 如果没获取到历史记录那么，我们将stop.然后打印日志
+								if (null == lastJobSnapshot) {
+									compareAndSetState(WorkerLifecycleState.WAITED, WorkerLifecycleState.STOPED);
+									log.error("the job[" + getJob().getName() + "]'s jobSnapshot["
+											+ getJobSnapshot().getId() + "] is illegal execution");
+								} else {
+									// 如果触发它的jobSnapshot状态等于finished stop 时
+									// 当前状态保持一致
+									if (JobSnapshotState.FINISHED == lastJobSnapshot.getEnumStatus()) {
+										compareAndSetState(WorkerLifecycleState.WAITED, WorkerLifecycleState.FINISHED);
+									} else if (JobSnapshotState.STOP == lastJobSnapshot.getEnumStatus()) {
+										compareAndSetState(WorkerLifecycleState.WAITED, WorkerLifecycleState.STOPED);
+									}
+									// 如果触发它的jobSnapshot状态等于EXECUTING
+									// 时，那么触发它的job没有被正常stop,但是当前状态应该设置为stop
+									else if (JobSnapshotState.EXECUTING == lastJobSnapshot.getEnumStatus()) {
+										compareAndSetState(WorkerLifecycleState.WAITED, WorkerLifecycleState.STOPED);
+									}
+								}
+							} else {
+								// 如果触发它的jobSnapshot状态等于EXECUTING 或者SUSPEND
+								// 时，那么应该休眠1000毫秒
+								// 否则保持跟触发它的jobSnapshot状态一样
+								if (JobSnapshotState.EXECUTING == lastJobSnapshot.getEnumStatus()
+										|| JobSnapshotState.SUSPEND == lastJobSnapshot.getEnumStatus()) {
+									signalWait(1000);
+									compareAndSetState(WorkerLifecycleState.WAITED, WorkerLifecycleState.STARTED);
+								} else if (JobSnapshotState.FINISHED == lastJobSnapshot.getEnumStatus()) {
+									compareAndSetState(WorkerLifecycleState.WAITED, WorkerLifecycleState.FINISHED);
+								} else if (JobSnapshotState.STOP == lastJobSnapshot.getEnumStatus()) {
+									compareAndSetState(WorkerLifecycleState.WAITED, WorkerLifecycleState.STOPED);
+								}
+							}
+						} finally {
+							distributedLock.unLock();
+						}
+					
 					}
-					signalWait();
 				} else if (getState() == WorkerLifecycleState.SUSPEND) {
-					signalWait();
+					signalWait(0);
 				} else if (getState() == WorkerLifecycleState.STOPED) {
 					break;
 				} else if (getState() == WorkerLifecycleState.FINISHED) {
@@ -161,7 +218,7 @@ public abstract class AbstractWorker implements Worker {
 						workerSnapshot.getTotalProcessTime() / workerSnapshot.getTotalProcessCount());
 			}
 			manager.updateWorkSnapshotAndReport(workerSnapshot, true);
-			LOG.info("jobWorker [" + getName() + "] is ended");
+			log.info("jobWorker [" + getName() + "] is ended");
 		}
 	}
 
@@ -205,7 +262,7 @@ public abstract class AbstractWorker implements Worker {
 	public final void suspend() {
 		// 只有设置状态前 state=WorkerLifecycleState.STARTED 才会设置 SUSPEND
 		if (compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.SUSPEND)) {
-			LOG.info("suspend worker:" + getName());
+			log.info("suspend worker:" + getName());
 		}
 	}
 
@@ -214,7 +271,7 @@ public abstract class AbstractWorker implements Worker {
 		// 只有设置状态前 state=WorkerLifecycleState.SUSPEND 才会调用 waitLock.notify() 方法
 		if (compareAndSetState(WorkerLifecycleState.SUSPEND, WorkerLifecycleState.STARTED)) {
 			signalRun();
-			LOG.info("goOn worker:" + getName());
+			log.info("goOn worker:" + getName());
 		}
 	}
 
@@ -225,18 +282,22 @@ public abstract class AbstractWorker implements Worker {
 		if (snapshot == WorkerLifecycleState.SUSPEND || snapshot == WorkerLifecycleState.WAITED) {
 			signalRun();
 		}
-		LOG.info("stop worker:" + getName());
+		log.info("stop worker:" + getName());
 	}
 
-	private void signalWait() {
+	private void signalWait(long restTime) {
 		if ((getState() == WorkerLifecycleState.SUSPEND || getState() == WorkerLifecycleState.WAITED)) {
 			reentrantLock.lock();
 			try {
 				if ((getState() == WorkerLifecycleState.SUSPEND || getState() == WorkerLifecycleState.WAITED)) {
-					condition.await();
+					if (restTime > 0) {
+						condition.await(restTime, TimeUnit.MILLISECONDS);
+					} else {
+						condition.await();
+					}
 				}
 			} catch (InterruptedException e) {
-				LOG.error("worker wait err", e);
+				log.error("worker wait err", e);
 			} finally {
 				reentrantLock.unlock();
 			}
@@ -283,7 +344,7 @@ public abstract class AbstractWorker implements Worker {
 		try {
 			this.state = updateState;
 			workerSnapshot.setState(updateState);
-			manager.updateWorkerSnapshot(workerSnapshot);
+			manager.getScheduleCache().updateWorkerSnapshot(workerSnapshot);
 		} finally {
 			setStateLock.unlock(stamp);
 		}
@@ -298,7 +359,7 @@ public abstract class AbstractWorker implements Worker {
 				if (this.getState() == expectState) {
 					this.state = updateState;
 					workerSnapshot.setState(updateState);
-					manager.updateWorkerSnapshot(workerSnapshot);
+					manager.getScheduleCache().updateWorkerSnapshot(workerSnapshot);
 					result = true;
 				}
 			} finally {
@@ -357,7 +418,7 @@ public abstract class AbstractWorker implements Worker {
 
 	@Override
 	public final void destroy() {
-		LOG.info("start destroy worker:" + getName());
+		log.info("start destroy worker:" + getName());
 		MDC.remove("jobName");
 		insideDestroy();
 	}

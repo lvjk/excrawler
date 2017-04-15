@@ -1,4 +1,4 @@
-package six.com.crawler.schedule;
+package six.com.crawler.schedule.cache;
 
 /**
  * @author sixliu E-mail:359852326@qq.com
@@ -16,6 +16,30 @@ public class RedisCacheKeyUtils {
 	}
 
 	/**
+	 * 获取执行的job缓存key
+	 * 
+	 * @return
+	 */
+	public static String getJobsKey() {
+		StringBuilder keySb = new StringBuilder();
+		keySb.append(REDIS_CACHE_PRE);
+		keySb.append("_execute_jobs");
+		return keySb.toString();
+	}
+
+	/**
+	 * 获取 job被执行的类型key
+	 * 
+	 * @return
+	 */
+	public static String getDispatchTypeKey() {
+		StringBuilder keySb = new StringBuilder();
+		keySb.append(REDIS_CACHE_PRE);
+		keySb.append("_job_dispatch_types");
+		return keySb.toString();
+	}
+
+	/**
 	 * 获取 jobSnapshot 注册 key 前缀=PRE_REDIS_REGISTER_CENTER+nodeName+"_jobs"
 	 * 
 	 * @param nodeName
@@ -27,7 +51,8 @@ public class RedisCacheKeyUtils {
 	public static String getJobSnapshotsKey() {
 		StringBuilder keySb = new StringBuilder();
 		keySb.append(REDIS_CACHE_PRE);
-		keySb.append("_jobs");
+		keySb.append("_job");
+		keySb.append("_snapshots");
 		return keySb.toString();
 	}
 

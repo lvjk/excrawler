@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import six.com.crawler.entity.Job;
 import six.com.crawler.rpc.RpcService;
 import six.com.crawler.schedule.AbstractSchedulerManager;
+import six.com.crawler.schedule.DispatchType;
 
 /**
  * @author 作者
@@ -25,28 +26,36 @@ public abstract class AbstractWorkerSchedulerManager extends AbstractSchedulerMa
 	}
 
 	protected abstract void doInit();
-	
-	@Override
-	public final void repair() {}
+
+	protected static String getOperationJobLockPath(String jobName) {
+		String path = "workerSchedulerManager_operation_" + jobName;
+		return path;
+	}
 
 	@Override
-	public final void scheduled(Job job) {}
+	public final void repair() {
+	}
 
 	@Override
-	public final void cancelScheduled(String jobChainName) {}
+	public final void scheduled(Job job) {
+	}
+
+	@Override
+	public final void cancelScheduled(String jobChainName) {
+	}
 
 	@RpcService(name = "execute")
-	public abstract void execute(String jobName);
+	public abstract void execute(DispatchType dispatchType, String jobName);
 
 	@RpcService(name = "suspend")
-	public abstract void suspend(String jobName);
+	public abstract void suspend(DispatchType dispatchType,String jobName);
 
 	@RpcService(name = "goOn")
-	public abstract void goOn(String jobName);
+	public abstract void goOn(DispatchType dispatchType,String jobName);
 
 	@RpcService(name = "stop")
-	public abstract void stop(String jobName);
+	public abstract void stop(DispatchType dispatchType,String jobName);
 
 	@RpcService(name = "stopAll")
-	public abstract void stopAll();
+	public abstract void stopAll(DispatchType dispatchType);
 }

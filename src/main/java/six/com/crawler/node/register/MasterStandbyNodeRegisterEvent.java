@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import six.com.crawler.node.Node;
-import six.com.crawler.node.NodeManager;
+import six.com.crawler.node.ClusterManager;
 import six.com.crawler.node.ZooKeeperPathUtils;
 import six.com.crawler.utils.JavaSerializeUtils;
 
@@ -26,18 +26,17 @@ public class MasterStandbyNodeRegisterEvent extends NodeRegisterEvent {
 	}
 
 	@Override
-	public boolean register(NodeManager clusterManager, CuratorFramework zKClient) {
+	public boolean register(ClusterManager clusterManager, CuratorFramework zKClient) {
 		try {
 			Node masterNode = clusterManager.getMasterNode();
 			if (null != masterNode) {
 				byte[] data = JavaSerializeUtils.serialize(getCurrentNode());
-				zKClient.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL)
-						.forPath(ZooKeeperPathUtils.getMasterStandbyNodePath(getCurrentNode().getName()), data);
-				zKClient.checkExists()
-						.usingWatcher(this)
-						.forPath(ZooKeeperPathUtils.getMasterNodesPath());
+				zKClient.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(ZooKeeperPathUtils
+						.getMasterStandbyNodePath(getCurrentNode().getClusterName(), getCurrentNode().getName()), data);
+				zKClient.checkExists().usingWatcher(this)
+						.forPath(ZooKeeperPathUtils.getMasterNodesPath(getCurrentNode().getClusterName()));
 				return true;
-			}else{
+			} else {
 				log.error("please first start the masterNode");
 				return false;
 			}
@@ -48,14 +47,15 @@ public class MasterStandbyNodeRegisterEvent extends NodeRegisterEvent {
 	}
 
 	@Override
-	public void unRegister(NodeManager clusterManager, CuratorFramework zKClient) {
+	public void unRegister(ClusterManager clusterManager, CuratorFramework zKClient) {
 		try {
-			zKClient.delete().forPath(ZooKeeperPathUtils.getMasterStandbyNodePath(getCurrentNode().getName()));
+			zKClient.delete().forPath(ZooKeeperPathUtils.getMasterStandbyNodePath(getCurrentNode().getClusterName(),
+					getCurrentNode().getName()));
 		} catch (Exception e) {
 			log.error("", e);
 		}
 	}
-	
+
 	@Override
 	public void process(WatchedEvent arg0) {
 		EventType type = arg0.getType();

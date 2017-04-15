@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import six.com.crawler.admin.service.NodeManagerService;
+import six.com.crawler.admin.service.ClusterManagerService;
 import six.com.crawler.node.Node;
 
 /** 
@@ -27,7 +27,7 @@ import six.com.crawler.node.Node;
 public class ClusterApi extends BaseApi{
 
 	@Autowired
-	private NodeManagerService clusterService;
+	private ClusterManagerService clusterService;
 	
 	@RequestMapping(value = "/crawler/cluster/info", method = RequestMethod.GET)
 	@ResponseBody
@@ -48,11 +48,11 @@ public class ClusterApi extends BaseApi{
 	} 
 	
 	
-	public NodeManagerService getClusterService() {
+	public ClusterManagerService getClusterService() {
 		return clusterService;
 	}
 
-	public void setClusterService(NodeManagerService clusterService) {
+	public void setClusterService(ClusterManagerService clusterService) {
 		this.clusterService = clusterService;
 	}
 }

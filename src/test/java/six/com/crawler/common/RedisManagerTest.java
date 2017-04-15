@@ -26,6 +26,10 @@ public class RedisManagerTest extends BaseTest {
 
 	@Test
 	public void test() {
+//		Set<String> keys=redisManager.keys("exCrawler_cache*");
+//		for(String key:keys){
+//			redisManager.del(key);
+//		}
 //		EnhanceJedisCluster jedis = newJedis();
 //		String fuzzKey = RedisWorkSpace.WORK_ERR_QUEUE_KEY_PRE+ "*";
 //		Set<String> keys = jedis.keys(fuzzKey);

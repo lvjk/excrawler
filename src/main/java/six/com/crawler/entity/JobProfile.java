@@ -55,7 +55,6 @@ public class JobProfile extends Profile {
 				Element jobElement = doc.createElement("job");
 				Job job = jobProfile.getJob();
 				jobElement.setAttribute("name", getValue(job.getName()));
-				jobElement.setAttribute("nextJobName", getValue(job.getNextJobName()));
 				jobElement.setAttribute("level", getValue(String.valueOf(job.getLevel())));
 				jobElement.setAttribute("designatedNodeName", getValue(job.getDesignatedNodeName()));
 				jobElement.setAttribute("needNodes", getValue(String.valueOf(job.getNeedNodes())));
@@ -154,7 +153,6 @@ public class JobProfile extends Profile {
 				for (int i = 0; i < jobNodeList.getLength(); i++) {
 					Node jobNode = jobNodeList.item(i);
 					job.setName(getValueStr(jobNode.getAttributes().getNamedItem("name")));
-					job.setNextJobName(getValueStr(jobNode.getAttributes().getNamedItem("nextJobName")));
 					job.setLevel(getValueInt(jobNode.getAttributes().getNamedItem("level")));
 					job.setDesignatedNodeName(getValueStr(jobNode.getAttributes().getNamedItem("designatedNodeName")));
 					job.setNeedNodes(getValueInt(jobNode.getAttributes().getNamedItem("needNodes")));

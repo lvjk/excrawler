@@ -147,7 +147,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 			}
 		} else {
 			// 没有处理数据时 设置 state == WorkerLifecycleState.FINISHED
-			compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.FINISHED);
+			compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.WAITED);
 		}
 	}
 
