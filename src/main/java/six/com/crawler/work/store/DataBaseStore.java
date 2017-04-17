@@ -25,7 +25,7 @@ import six.com.crawler.work.store.exception.StoreException;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年12月9日 上午11:15:34
  */
-public class DataBaseStore extends StoreAbstarct implements AutoCloseable {
+public class DataBaseStore extends StoreAbstarct {
 
 	final static String checkTableIsCreateSql = "select table_name  " + " from INFORMATION_SCHEMA.tables  "
 			+ " where TABLE_NAME=?";
@@ -152,8 +152,10 @@ public class DataBaseStore extends StoreAbstarct implements AutoCloseable {
 	}
 
 	@Override
-	public void close() throws Exception {
-		datasource.close();
+	public void close(){
+		if(null!=datasource){
+			datasource.close();
+		}
 	}
 
 }

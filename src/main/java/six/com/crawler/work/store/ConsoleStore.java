@@ -29,4 +29,10 @@ public class ConsoleStore extends StoreAbstarct{
 		return storeCount;
 	}
 
+	@Override
+	public void close() {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

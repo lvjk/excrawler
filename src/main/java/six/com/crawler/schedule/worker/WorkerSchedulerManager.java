@@ -107,7 +107,7 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 	 * @param job
 	 * @return
 	 */
-	public void suspend(DispatchType dispatchType,String jobName) {
+	public void suspend(DispatchType dispatchType, String jobName) {
 		if (null != dispatchType && DispatchType.DISPATCH_TYPE_MASTER.equals(dispatchType.getName())) {
 			String path = getOperationJobLockPath(jobName);
 			DistributedLock distributedLock = getNodeManager().getWriteLock(path);
@@ -129,7 +129,7 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 	 * @param job
 	 * @return
 	 */
-	public void goOn(DispatchType dispatchType,String jobName) {
+	public void goOn(DispatchType dispatchType, String jobName) {
 		if (null != dispatchType && DispatchType.DISPATCH_TYPE_MASTER.equals(dispatchType.getName())) {
 			String path = getOperationJobLockPath(jobName);
 			DistributedLock distributedLock = getNodeManager().getWriteLock(path);
@@ -151,7 +151,7 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 	 * @param job
 	 * @return
 	 */
-	public void stop(DispatchType dispatchType,String jobName) {
+	public void stop(DispatchType dispatchType, String jobName) {
 		if (null != dispatchType && DispatchType.DISPATCH_TYPE_MASTER.equals(dispatchType.getName())) {
 			String path = getOperationJobLockPath(jobName);
 			DistributedLock distributedLock = getNodeManager().getWriteLock(path);
@@ -166,7 +166,7 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 			}
 		}
 	}
-	
+
 	public synchronized void stopAll(DispatchType dispatchType) {
 		if (null != dispatchType && DispatchType.DISPATCH_TYPE_MASTER.equals(dispatchType.getName())) {
 			// 然后获取当前节点有关的job worker 然后调用stop
@@ -206,17 +206,19 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 		String workerName = worker.getName();
 		worker.destroy();
 		Map<String, Worker> jobWorkerMap = localJobWorkersMap.get(jobName);
-		jobWorkerMap.remove(workerName);
-		if (jobWorkerMap.size() == 0) {
-			localJobWorkersMap.remove(jobName);
-		}
-		getNodeManager().getCurrentNode().decrAndGetRunningWorkerSize();
-		try {
-			AbstractMasterSchedulerManager masterSchedulerManager = getNodeManager()
-					.loolup(getNodeManager().getMasterNode(), AbstractMasterSchedulerManager.class);
-			masterSchedulerManager.endWorker(jobName, workerName);
-		} catch (Exception e) {
-			log.error("notice master node job[" + jobName + "]'s worker[" + workerName + "] is end err", e);
+		if (null != jobWorkerMap) {
+			jobWorkerMap.remove(workerName);
+			if (jobWorkerMap.size() == 0) {
+				localJobWorkersMap.remove(jobName);
+			}
+			getNodeManager().getCurrentNode().decrAndGetRunningWorkerSize();
+			try {
+				AbstractMasterSchedulerManager masterSchedulerManager = getNodeManager()
+						.loolup(getNodeManager().getMasterNode(), AbstractMasterSchedulerManager.class);
+				masterSchedulerManager.endWorker(jobName, workerName);
+			} catch (Exception e) {
+				log.error("notice master node job[" + jobName + "]'s worker[" + workerName + "] is end err", e);
+			}
 		}
 	}
 

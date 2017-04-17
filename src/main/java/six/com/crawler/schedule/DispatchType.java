@@ -2,6 +2,10 @@ package six.com.crawler.schedule;
 
 import java.io.Serializable;
 
+import org.apache.commons.lang3.time.DateFormatUtils;
+
+import six.com.crawler.common.DateFormats;
+
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
@@ -48,7 +52,8 @@ public class DispatchType implements Serializable {
 	 * @return
 	 */
 	public static DispatchType newDispatchTypeByManual() {
-		return new DispatchType(DISPATCH_TYPE_MANUAL, String.valueOf(System.currentTimeMillis()));
+		return new DispatchType(DISPATCH_TYPE_MANUAL,
+				DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_2));
 	}
 
 	/**
@@ -57,7 +62,8 @@ public class DispatchType implements Serializable {
 	 * @return
 	 */
 	public static DispatchType newDispatchTypeByScheduler() {
-		return new DispatchType(DISPATCH_TYPE_SCHEDULER, String.valueOf(System.currentTimeMillis()));
+		return new DispatchType(DISPATCH_TYPE_SCHEDULER,
+				DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_2));
 	}
 
 	/**
@@ -66,7 +72,8 @@ public class DispatchType implements Serializable {
 	 * @return
 	 */
 	public static DispatchType newDispatchTypeByMaster() {
-		return new DispatchType(DISPATCH_TYPE_MASTER, String.valueOf(System.currentTimeMillis()));
+		return new DispatchType(DISPATCH_TYPE_MASTER,
+				DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_2));
 	}
 
 	private final String name;

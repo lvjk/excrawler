@@ -16,7 +16,7 @@ public interface WorkerLifecycle extends Lifecycle {
 
 	public static final String SUSPEND = "suspend";// 暂停
 	
-	public static final String STOPED = "stoped";// 停止
+	public static final String STOPED = "stop";// 停止
 	
 	public static final String FINISHED = "finished";// 停止
 
