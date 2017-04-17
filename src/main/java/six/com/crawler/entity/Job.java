@@ -16,10 +16,6 @@ public class Job extends BaseVo implements Serializable {
 
 	private String name = "";// job 名字
 
-	private int isScheduled;// 是否开启定时
-
-	private String cronTrigger = "";// cronTrigger 定时
-
 	private int level;// 任务级别
 
 	private String designatedNodeName = "";// 指定节点运行
@@ -27,6 +23,10 @@ public class Job extends BaseVo implements Serializable {
 	private int needNodes;// 工作需要的节点数
 
 	private int threads;// 节点执行任务的线程数
+	
+	private int isScheduled;// 是否开启定时
+
+	private String cronTrigger = "";// cronTrigger 定时
 
 	private long workFrequency = 1000;// 每次处理时间的阈值 默认1000毫秒
 

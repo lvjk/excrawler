@@ -265,5 +265,8 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		if (null != httpProxyPool) {
 			httpProxyPool.destroy();
 		}
+		if (null != store) {
+			store.close();
+		}
 	}
 }

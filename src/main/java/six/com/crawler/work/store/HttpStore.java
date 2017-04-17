@@ -22,4 +22,10 @@ public class HttpStore extends StoreAbstarct{
 		return 0;
 	}
 
+	@Override
+	public void close() {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

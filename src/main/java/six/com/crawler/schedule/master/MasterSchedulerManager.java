@@ -203,7 +203,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 		if (null != dispatchType && StringUtils.isNotBlank(jobName)) {
 			Job job = getJobDao().query(jobName);
 			if (null != job) {
-				String id = DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_2);
+				String id = dispatchType.getCurrentTimeMillis();
 				JobSnapshot jobSnapshot = new JobSnapshot();
 				jobSnapshot.setId(id);
 				jobSnapshot.setName(job.getName());
@@ -263,9 +263,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 								&& lastJobSnapshot.getEnumStatus() != JobSnapshotState.FINISHED) {
 							tempTbaleName = lastJobSnapshot.getTableName();
 						} else {
-							String jobStart = StringUtils.remove(jobSnapshot.getId(), job.getName() + "_");
-							// 判断是否启用镜像表
-							tempTbaleName = JobTableUtils.buildJobTableName(fixedTableName, jobStart);
+							tempTbaleName = JobTableUtils.buildJobTableName(fixedTableName, jobSnapshot.getId());
 						}
 					} else {
 						tempTbaleName = fixedTableName;
@@ -298,9 +296,9 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 					// 如果job成功被调度执行后查询job的 关系列表
 					if (callSucceedCount > 0) {
 						doJobRelationship(jobSnapshot, JobRelationship.TRIGGER_TYPE_PARALLEL);
-					}else{
+					} else {
 						List<WorkerSnapshot> workerSnapshots = getScheduleCache().getWorkerSnapshots(job.getName());
-						if(null==workerSnapshots||workerSnapshots.isEmpty()){
+						if (null == workerSnapshots || workerSnapshots.isEmpty()) {
 							getScheduleCache().delJob(job.getName());
 							getScheduleCache().delJobSnapshot(job.getName());
 						}
@@ -510,7 +508,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 		try {
 			distributedLock.lock();
 			Set<String> jobWorkerNames = jobRunningWorkerNames.get(jobName);
-			if(null!=jobWorkerNames){
+			if (null != jobWorkerNames) {
 				jobWorkerNames.remove(workerName);
 				if (0 == jobWorkerNames.size()) {
 					jobRunningWorkerNames.remove(jobName);
@@ -524,11 +522,11 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 						}
 					}
 					if (workerSnapshots.size() == finishedCount) {
-						state=JobSnapshotState.FINISHED;
+						state = JobSnapshotState.FINISHED;
 						jobSnapshot.setStatus(state.value());
 					}
 					jobSnapshot.setEndTime(DateFormatUtils.format(new Date(), DateFormats.DATE_FORMAT_1));
-					totalWorkerSnapshot(jobSnapshot,workerSnapshots);
+					totalWorkerSnapshot(jobSnapshot, workerSnapshots);
 					reportJobSnapshot(jobSnapshot);
 					getScheduleCache().delJob(jobName);
 					getScheduleCache().delWorkerSnapshots(jobName);
@@ -538,8 +536,8 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 						doJobRelationship(jobSnapshot, JobRelationship.TRIGGER_TYPE_SERIAL);
 					}
 				}
-			}else{
-				log.error("did not find job["+jobName+"]'s WorkerName set");
+			} else {
+				log.error("did not find job[" + jobName + "]'s WorkerName set");
 			}
 		} finally {
 			distributedLock.unLock();
@@ -564,13 +562,13 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 
 	}
 
-	class ScheduledJob implements org.quartz.Job {
+	public static class ScheduledJob implements org.quartz.Job {
 		@Override
 		public void execute(JobExecutionContext context) throws JobExecutionException {
 			AbstractSchedulerManager scheduleManager = (AbstractSchedulerManager) context.getJobDetail().getJobDataMap()
 					.get(SCHEDULER_MANAGER_KEY);
 			String jobName = (String) context.getJobDetail().getJobDataMap().get(JOB_NAME_KEY);
-			if (!isRunning(jobName)) {
+			if (!scheduleManager.isRunning(jobName)) {
 				scheduleManager.execute(DispatchType.newDispatchTypeByScheduler(), jobName);
 			}
 		}

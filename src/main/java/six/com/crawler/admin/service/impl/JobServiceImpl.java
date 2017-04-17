@@ -302,6 +302,8 @@ public class JobServiceImpl extends BaseService implements JobService {
 					}
 					responseMsg.setData(newVersion);
 					responseMsg.setIsOk(1);
+				}else {
+					msg = "update the job[" + name + "] fialed";
 				}
 			} else {
 				msg = "the job[" + name + "]'s isScheduled must be 0 or 1";

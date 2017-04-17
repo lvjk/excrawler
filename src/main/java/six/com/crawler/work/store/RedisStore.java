@@ -52,4 +52,10 @@ public class RedisStore extends StoreAbstarct {
 		return key;
 	}
 
+	@Override
+	public void close() {
+		// TODO Auto-generated method stub
+		
+	}
+
 }
