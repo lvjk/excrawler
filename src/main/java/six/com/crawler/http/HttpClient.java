@@ -187,6 +187,7 @@ public class HttpClient implements InitializingBean {
 		}
 		String url = request.url().toString();
 		HttpResult result = null;
+		long beforeRequestTime=System.currentTimeMillis();
 		try (Response response = okClient.newCall(request).execute();) {
 			result = new HttpResult();
 			int httpCode = response.code();
@@ -210,7 +211,8 @@ public class HttpClient implements InitializingBean {
 			}
 		} catch (IOException e) {
 			// request execute 异常处理
-			throw new HttpIoException("execute request[" + request.url() + "] by proxy[" + request.proxy() + "] err",
+			long afterRequestTime=System.currentTimeMillis();
+			throw new HttpIoException("execute request[" + request.url() + "] by proxy[" + request.proxy() + "] err, request time is ["+(afterRequestTime-beforeRequestTime)+"]",
 					e);
 		}
 		return result;
@@ -417,7 +419,7 @@ public class HttpClient implements InitializingBean {
 		OkHttpClient.Builder okHttpClientBuilder = new OkHttpClient.Builder();
 		okHttpClientBuilder.sslSocketFactory(MX509TrustManager.getSSLSocketFactory(),
 				MX509TrustManager.myX509TrustManager);
-		okHttpClientBuilder.connectTimeout(15, TimeUnit.SECONDS);
+		okHttpClientBuilder.connectTimeout(30, TimeUnit.SECONDS);
 		okHttpClientBuilder.writeTimeout(30, TimeUnit.SECONDS);
 		okHttpClientBuilder.readTimeout(30, TimeUnit.SECONDS);
 		okHttpClientBuilder.dispatcher(new Dispatcher());
