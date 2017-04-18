@@ -11,6 +11,7 @@ import org.jsoup.select.Elements;
 
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
+import six.com.crawler.utils.ArrayListUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.extract.Extracter;
 import six.com.crawler.work.space.RedisWorkSpace;
@@ -69,6 +70,8 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker{
 		String styleCssQuery = "table[id]>tbody>tr>td>table";
 		Elements styleElements = doingPage.getDoc().select(styleCssQuery);
 		List<String> roomStateList = new ArrayList<String>();
+		List<String> roomIds=new ArrayList<String>();
+		
 		for (Element et : styleElements) {
 			String bgColor = "";
 			String style = et.attr("style");
@@ -87,15 +90,20 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker{
 			if(elements==null || elements.size()==0){
 				//此时匹配的是未备案的房间号
 				elements = et.select("tbody>tr:eq(1)>td");
+				roomIds.add("");
+			}else{
+				roomIds.add(StringUtils.substringBetween(elements.first().attr("onclick"), "javascript:window.open(\"openRoomData.aspx?roomId=", "\",\""));
 			}
 			String s = elements.first().ownText();
 			roomNos.add(s);
 			roomStateList.add(roomState);
 			unitIds.add(unitId);
 		}
+		
 		doingPage.getMetaMap().put("roomState", roomStateList);
 		doingPage.getMetaMap().put("unitId", unitIds);
 		doingPage.getMetaMap().put("roomNo", roomNos);
+		doingPage.getMetaMap().put("roomId", roomIds);
 	}
 
 	@Override
@@ -109,12 +117,15 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker{
 		List<String> roomNos = resultContext.getExtractResult("roomNo");
 		if(roomNos!=null){
 			for(int i=0;i<roomNos.size();i++){
-				String roomStateId = resultContext.getOutResults().get(i).get(Extracter.DEFAULT_RESULT_ID);
 				String id = roomStateElements.get(i).attr("id");
 				id = id.replace("room", "");
 				String pageUrl = "http://newhouse.cnnbfdc.com/openRoomData.aspx?roomId=" + id;
 				Page roomPage = new Page(doingPage.getSiteCode(), 1, pageUrl, pageUrl);
-				roomPage.getMetaMap().computeIfAbsent("roomStateId",mapKey->new ArrayList<>()).add(roomStateId);
+				roomPage.getMetaMap().put("projectId", doingPage.getMeta("projectId"));
+				roomPage.getMetaMap().put("projectName", doingPage.getMeta("projectName"));
+				roomPage.getMetaMap().put("unitName", doingPage.getMeta("unitName"));
+				roomPage.getMetaMap().put("unitId", doingPage.getMeta("unitId"));
+				roomPage.getMetaMap().put("roomId", ArrayListUtils.asList(id));
 				roomPage.setReferer(doingPage.getFinalUrl());
 				if(!roomInfoQueue.isDone(roomPage.getPageKey())){
 					roomInfoQueue.push(roomPage);

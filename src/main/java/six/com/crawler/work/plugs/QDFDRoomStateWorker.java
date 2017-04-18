@@ -83,6 +83,8 @@ public class QDFDRoomStateWorker extends AbstractCrawlWorker{
 					page.getMetaMap().put("houseId",ArrayListUtils.asList(houseId));
 					doingPage.getMetaMap().put("houseId", ArrayListUtils.asList(houseId));
 					roomInfoQueue.push(page);
+				}else{
+					doingPage.getMetaMap().put("houseId", ArrayListUtils.asList(""));
 				}
 			}
 		}

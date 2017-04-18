@@ -1,6 +1,5 @@
 package six.com.crawler.work.plugs;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,7 +7,6 @@ import java.util.Map;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.extract.Extracter;
 import six.com.crawler.work.space.RedisWorkSpace;
 
 public class NbCnnbfdcUnitInfoWorker extends AbstractCrawlWorker{
@@ -41,11 +39,14 @@ public class NbCnnbfdcUnitInfoWorker extends AbstractCrawlWorker{
 		List<String> unitUrls = resultContext.getExtractResult("unitUrl");
 		List<String> unitName = resultContext.getExtractResult("unitName");
 		for(int i=0;i<unitName.size();i++){
-			String unitId = resultContext.getOutResults().get(i).get(Extracter.DEFAULT_RESULT_ID);
 			String roomInfoPageUrl =unitUrls.get(i);
 			Page roomStatePage = new Page(doingPage.getSiteCode(), 1, roomInfoPageUrl, roomInfoPageUrl);
 			roomStatePage.setReferer(doingPage.getFinalUrl());
-			roomStatePage.getMetaMap().computeIfAbsent("unitId",mapKey->new ArrayList<>()).add(unitId);
+			
+			roomStatePage.getMetaMap().put("projectId", doingPage.getMeta("projectId"));
+			roomStatePage.getMetaMap().put("projectName", doingPage.getMeta("projectName"));
+			roomStatePage.getMetaMap().put("unitName", doingPage.getMeta("unitName"));
+			roomStatePage.getMetaMap().put("unitId", doingPage.getMeta("unitId"));
 			roomStateInfoQueue.push(roomStatePage);
 		}
 	}
