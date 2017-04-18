@@ -63,7 +63,7 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 		jsonKeyMap.put("buildingArea", "builtuparea");
 		jsonKeyMap.put("roughPrice", "declarationofroughprice");
 		jsonKeyMap.put("totalPrice", "totalprice");
-		jsonKeyMap.put("address", "located");
+		jsonKeyMap.put("houseAddress", "located");
 		jsonKeyMap.put("internalArea", "setinsidefloorarea");
 		jsonKeyMap.put("houseStyle", "huxing");
 	}
@@ -120,7 +120,6 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 		String houseInfoJson = housePage.getPageSrc();
 		Map<String, Object> map = JsonUtils.toObject(houseInfoJson, Map.class);
 		List<Map<String, Object>> houseList = (List<Map<String, Object>>) map.get("list");
-
 		for (Map<String, Object> houseMap : houseList) {
 			for (String field : jsonKeyMap.keySet()) {
 				String jsonKey = jsonKeyMap.get(field);
@@ -158,7 +157,8 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 		
 		List<String> roughPrices = resultContext.getExtractResult("roughPrice");
 		List<String> totalPrices = resultContext.getExtractResult("totalPrice");
-		List<String> addresss = resultContext.getExtractResult("address");
+		                                                        
+		List<String> addresss = resultContext.getExtractResult("houseAddress");
 		
 		List<String> internalAreas = resultContext.getExtractResult("internalArea");
 		List<String> houseStyles = resultContext.getExtractResult("houseStyle");
@@ -173,7 +173,7 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 			String buildingArea = null;
 			String roughPrice = null;
 			String totalPrice = null;
-			String address = null;
+			String houseAddress = null;
 			String internalArea = null;
 			String houseStyle = null;
 			
@@ -186,7 +186,7 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 				buildingArea = buildingAreas.get(i);
 				roughPrice = roughPrices.get(i);
 				totalPrice = totalPrices.get(i);
-				address = addresss.get(i);
+				houseAddress = addresss.get(i);
 				internalArea = internalAreas.get(i);
 				houseStyle = houseStyles.get(i);
 				
@@ -214,7 +214,7 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 				houseInfoPage.getMetaMap().put("roughPrice", ArrayListUtils.asList(roughPrice));
 				
 				houseInfoPage.getMetaMap().put("totalPrice", ArrayListUtils.asList(totalPrice));
-				houseInfoPage.getMetaMap().put("address", ArrayListUtils.asList(address));
+				houseInfoPage.getMetaMap().put("houseAddress", ArrayListUtils.asList(houseAddress));
 				houseInfoPage.getMetaMap().put("internalArea", ArrayListUtils.asList(internalArea));
 				houseInfoPage.getMetaMap().put("houseStyle", ArrayListUtils.asList(houseStyle));
 				
