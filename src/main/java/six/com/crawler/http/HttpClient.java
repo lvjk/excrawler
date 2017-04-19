@@ -406,6 +406,10 @@ public class HttpClient implements InitializingBean {
 		return cookiesStore;
 	}
 
+	public void setCookiesStore(CookiesStore cookiesStore) {
+		this.cookiesStore = cookiesStore;
+	}
+
 	public SpiderConfigure getConfigure() {
 		return configure;
 	}
@@ -414,21 +418,29 @@ public class HttpClient implements InitializingBean {
 		this.configure = configure;
 	}
 
+	public OkHttpClient getOkClient() {
+		return okClient;
+	}
+
+	public void setOkClient(OkHttpClient okClient) {
+		this.okClient = okClient;
+	}
+
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		OkHttpClient.Builder okHttpClientBuilder = new OkHttpClient.Builder();
-		okHttpClientBuilder.sslSocketFactory(MX509TrustManager.getSSLSocketFactory(),
-				MX509TrustManager.myX509TrustManager);
-		okHttpClientBuilder.connectTimeout(30, TimeUnit.SECONDS);
-		okHttpClientBuilder.writeTimeout(30, TimeUnit.SECONDS);
-		okHttpClientBuilder.readTimeout(30, TimeUnit.SECONDS);
-		okHttpClientBuilder.dispatcher(new Dispatcher());
-		okHttpClientBuilder.followRedirects(true);
-		okHttpClientBuilder.followSslRedirects(true);
-		String cookirDir = configure.getSpiderHome() + File.separator + "cookies";
-		cookiesStore = new CookiesStore(cookirDir);
-		okHttpClientBuilder.cookieJar(cookiesStore);
-		okClient = okHttpClientBuilder.build();
+//		OkHttpClient.Builder okHttpClientBuilder = new OkHttpClient.Builder();
+//		okHttpClientBuilder.sslSocketFactory(MX509TrustManager.getSSLSocketFactory(),
+//				MX509TrustManager.myX509TrustManager);
+//		okHttpClientBuilder.connectTimeout(30, TimeUnit.SECONDS);
+//		okHttpClientBuilder.writeTimeout(30, TimeUnit.SECONDS);
+//		okHttpClientBuilder.readTimeout(30, TimeUnit.SECONDS);
+//		okHttpClientBuilder.dispatcher(new Dispatcher());
+//		okHttpClientBuilder.followRedirects(true);
+//		okHttpClientBuilder.followSslRedirects(true);
+//		String cookirDir = configure.getSpiderHome() + File.separator + "cookies";
+//		cookiesStore = new CookiesStore(cookirDir);
+//		okHttpClientBuilder.cookieJar(cookiesStore);
+//		okClient = okHttpClientBuilder.build();
 		// HttpClientBuilder httpClientBuilder=HttpClients.custom();
 		// httpClientBuilder.setDefaultCookieStore(cookieStore);
 		httpClient = HttpClients.createDefault();

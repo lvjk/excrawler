@@ -1,5 +1,7 @@
 package six.com.crawler.constants;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
@@ -16,6 +18,18 @@ public interface JobConTextConstants {
 	String HTTP_PROXY_TYPE = "httpProxyType";
 	//代理休息时间
 	String HTTP_PROXY_REST_TIME = "httpProxyRestTime";
+	
+	String HTTP_CONNECT_TIMEOUT = "httpConnectTimeOut";
+	
+	String HTTP_WRITE_TIMEOUT="httpWriteTimeOut";
+	
+	String HTTP_READ_TIMEOUT="httpReadTimeOut";
+	
+	int DEFAULT_HTTP_CONNECT_TIMEOUT=60;
+	
+	int DEFAULT_HTTP_WRITE_TIMEOUT=60;
+	
+	int DEFAULT_HTTP_READ_TIMEOUT=60;
 	
 	//抽取类型
 	String EXTRACTER_TYPE="extracterType";
