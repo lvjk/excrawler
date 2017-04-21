@@ -1,7 +1,5 @@
 package six.com.crawler.constants;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
@@ -30,6 +28,16 @@ public interface JobConTextConstants {
 	int DEFAULT_HTTP_WRITE_TIMEOUT=60;
 	
 	int DEFAULT_HTTP_READ_TIMEOUT=60;
+	
+	//是否保留源数据
+	String IS_SAVE_RAW_DATA="isSaveRawData";
+	
+	int DEFAULT_IS_SAVE_RAW_DATA=1;
+	
+	//是否使用源数据
+	String IS_USE_RAW_DATA="isUseRawdata";
+	
+	int DEFAULT_IS_USE_RAW_DATA=0;
 	
 	//抽取类型
 	String EXTRACTER_TYPE="extracterType";
