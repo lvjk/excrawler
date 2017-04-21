@@ -89,7 +89,7 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 							} catch (Exception e) {
 								log.error("execute worker [" + worker.getName() + "] err", e);
 							} finally {
-								endWorer(worker);
+								endWorker(worker);
 							}
 						});
 						log.info("the job[" + job.getName() + "] is be executed by worker[" + worker.getName() + "]");
@@ -201,7 +201,7 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 	 * @param worker
 	 * @param jobName
 	 */
-	public void endWorer(Worker worker) {
+	public void endWorker(Worker worker) {
 		String jobName = worker.getJob().getName();
 		String workerName = worker.getName();
 		worker.destroy();
@@ -220,7 +220,7 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 				log.error("notice master node job[" + jobName + "]'s worker[" + workerName + "] is end err", e);
 			}
 		}
-	}
+	}	
 
 	public Map<String, Worker> getWorkers(String jobName) {
 		Map<String, Worker> jobsWorkerMap = localJobWorkersMap.get(jobName);
