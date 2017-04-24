@@ -128,7 +128,7 @@ public class TmsfHouseStatus1Worker extends AbstractCrawlWorker {
 		String presellCode = doingPage.getMeta("presellCode").get(0);
 		
 		
-		String buildingName = doingPage.getMetaMap().get("buildingName").get(0);
+		List<String> buildingNames = doingPage.getMetaMap().get("buildingName");
 		
 		List<String> houseIds = resultContext.getExtractResult("houseId");
 		List<String> houseNos = resultContext.getExtractResult("houseNo");
@@ -157,6 +157,7 @@ public class TmsfHouseStatus1Worker extends AbstractCrawlWorker {
 			String houseAddress = null;
 			String internalArea = null;
 			String houseStyle = null;
+			String buildingName=null;
 			
 			for (int i = 0; i < houseIds.size(); i++) {
 				houseId = houseIds.get(i);
@@ -170,6 +171,7 @@ public class TmsfHouseStatus1Worker extends AbstractCrawlWorker {
 				houseAddress = addresss.get(i);
 				internalArea = internalAreas.get(i);
 				houseStyle = houseStyles.get(i);
+				buildingName=buildingNames.get(i);
 				
 				String houseInfoUrl = StringUtils.replace(houseInfoUrlTemplate, sidTemplate, sid);
 				houseInfoUrl = StringUtils.replace(houseInfoUrl, projectIdTemplate, propertyId);

@@ -112,7 +112,7 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 		houseJsonUrl = StringUtils.replace(houseJsonUrl, allpriceTemplate, allprice);
 		houseJsonUrl = StringUtils.replace(houseJsonUrl, housestateTemplate, housestate);
 		houseJsonUrl = StringUtils.replace(houseJsonUrl, housetypeTemplate, housetype);
-		houseJsonUrl = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), houseJsonUrl);
+ 		houseJsonUrl = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), houseJsonUrl);
 		Page housePage = new Page(doingPage.getSiteCode(), 1, houseJsonUrl, houseJsonUrl);
 		housePage.setReferer(doingPage.getFinalUrl());
 		housePage.setType(PageType.JSON.value());
@@ -145,7 +145,7 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 		
 		String presellId_org = doingPage.getMetaMap().get("presellId_org").get(0);
 
-		String buildingName = doingPage.getMetaMap().get("buildingName").get(0);
+		List<String> buildingNames = doingPage.getMetaMap().get("buildingName");
 		
 		List<String> houseIds = resultContext.getExtractResult("houseId");
 		List<String> houseNos = resultContext.getExtractResult("houseNo");
@@ -176,6 +176,8 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 			String houseAddress = null;
 			String internalArea = null;
 			String houseStyle = null;
+			String buildingName=null;
+			
 			
 			for (int i = 0; i < houseIds.size(); i++) {
 				houseId = houseIds.get(i);
@@ -189,6 +191,7 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 				houseAddress = addresss.get(i);
 				internalArea = internalAreas.get(i);
 				houseStyle = houseStyles.get(i);
+				buildingName=buildingNames.get(i);
 				
 				String houseInfoUrl = StringUtils.replace(houseInfoUrlTemplate, sidTemplate, sid);
 				houseInfoUrl = StringUtils.replace(houseInfoUrl, projectIdTemplate, propertyId);
