@@ -22,6 +22,7 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 					+ "DATE_FORMAT(startTime,'%Y-%m-%d %H:%i:%s') startTime,"
 					+ "DATE_FORMAT(endTime,'%Y-%m-%d %H:%i:%s') endTime," 
 					+ "`status`," 
+					+ "downloadState,"
 					+ "totalProcessCount," 
 					+ "totalResultCount,"
 					+ "totalProcessTime," 
@@ -52,6 +53,15 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 		sql.SELECT(selectColumns);
 		sql.FROM(JobSnapshotDao.TABLE_NAME);
 		sql.WHERE("`name`=#{jobName}");
+		sql.ORDER_BY("startTime desc limit 0,1");
+		return sql.toString();
+	}
+	
+	public String queryCurrentJob(Map<String, Object> map){
+		SQL sql = new SQL();
+		sql.SELECT(selectColumns);
+		sql.FROM(JobSnapshotDao.TABLE_NAME);
+		sql.WHERE("`name`=#{jobName} and date_format(startTime, '%Y%m%d') = date_format(NOW(), '%Y%m%d') and downloadState = 1 ");
 		sql.ORDER_BY("startTime desc limit 0,1");
 		return sql.toString();
 	}
@@ -114,6 +124,15 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 		sql.UPDATE(JobSnapshotDao.TABLE_NAME);
 		sql.SET("`version` = #{newVersion}");
 		sql.SET("`status`=#{status}");
+		sql.WHERE("`id` = #{id} and version = #{version}");
+		return sql.toString();
+	}
+	
+	public String updateDownloadStatus(Map<String, Object> map) {
+		SQL sql = new SQL();
+		sql.UPDATE(JobSnapshotDao.TABLE_NAME);
+		sql.SET("`version` = #{newVersion}");
+		sql.SET("`downloadState`=#{downloadState}");
 		sql.WHERE("`id` = #{id} and version = #{version}");
 		return sql.toString();
 	}

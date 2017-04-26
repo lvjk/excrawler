@@ -45,7 +45,17 @@ public interface JobSnapshotDao extends BaseDao {
 	 */
 	@SelectProvider(type = JobSnapshotDaoProvider.class, method = "queryLast")
 	public JobSnapshot queryLast(@Param("jobName") String jobName);
-
+	
+	
+	/**
+	 * 通过任务名称查询 任务的下载状态
+	 * 
+	 * @param jobName
+	 * @return 任务的下载状态
+	 */
+	@SelectProvider(type = JobSnapshotDaoProvider.class, method = "queryCurrentJob")
+	public JobSnapshot queryCurrentJob(@Param("jobName") String jobName);
+	
 	/**
 	 * 保存任务运行记录
 	 * 
@@ -74,5 +84,17 @@ public interface JobSnapshotDao extends BaseDao {
 	@InsertProvider(type = JobSnapshotDaoProvider.class, method = "updateStatus")
 	public int updateStatus(@Param("version") int version, @Param("newVersion") int newVersion, @Param("id") String id,
 			@Param("status") int status);
+	
+	/**
+	 * 更新下载状态
+	 * @param version
+	 * @param newVersion
+	 * @param id
+	 * @param downloadState
+	 * @return
+	 */
+	@InsertProvider(type = JobSnapshotDaoProvider.class, method = "updateDownloadStatus")
+	public int updateDownloadStatus(@Param("version") int version, @Param("newVersion") int newVersion, @Param("id") String id,
+			@Param("downloadState") int status);
 
 }
