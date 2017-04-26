@@ -18,6 +18,7 @@ import six.com.crawler.work.downer.Downer;
 import six.com.crawler.work.downer.DownerManager;
 import six.com.crawler.work.downer.DownerType;
 import six.com.crawler.work.downer.exception.DownerException;
+import six.com.crawler.work.downer.exception.HttpFiveZeroTwoException;
 import six.com.crawler.work.extract.ExtractItem;
 import six.com.crawler.work.extract.Extracter;
 import six.com.crawler.work.extract.ExtracterFactory;
@@ -116,8 +117,10 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 				downer.setHttpProxy(httpProxyPool.getHttpProxy());
 
 				long startTime = System.currentTimeMillis();
-				// 下载数据
-				downer.down(doingPage);
+				
+	            // 下载数据
+	            downer.down(doingPage);
+				
 				// 暴露给实现类的抽取前操作
 				beforeExtract(doingPage);
 				downTime = System.currentTimeMillis() - startTime;
@@ -223,11 +226,18 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 					workQueue.push(doingPage);
 					msg = "retry processor[" + doingPage.getRetryProcess() + "] page:" + doingPage.getFinalUrl();
 				} else {
-					workQueue.addErr(doingPage);
-					workQueue.ack(doingPage);
-					msg = "retry process count[" + doingPage.getRetryProcess() + "]>="
-							+ Constants.WOKER_PROCESS_PAGE_MAX_RETRY_COUNT + " and push to err queue:"
-							+ doingPage.getFinalUrl();
+					if(e instanceof HttpFiveZeroTwoException && doingPage.getFztRetryProcess() < Constants.WOKER_PROCESS_PAGE_MAX_RETRY_COUNT){
+						//当超过重试次数之后，如果是502异常，则重新写入队列
+						doingPage.setFztRetryProcess(doingPage.getFztRetryProcess() + 1);
+			            workQueue.push(doingPage);
+			            msg = "HttpCode[502] retry processor[" + doingPage.getRetryProcess() + "] page:" + doingPage.getFinalUrl();
+			          }else{
+							workQueue.addErr(doingPage);
+							workQueue.ack(doingPage);
+							msg = "retry process count[" + doingPage.getRetryProcess() + "]>="
+									+ Constants.WOKER_PROCESS_PAGE_MAX_RETRY_COUNT + " and push to err queue:"
+									+ doingPage.getFinalUrl();
+			          }
 				}
 				log.error(msg, e);
 			}
