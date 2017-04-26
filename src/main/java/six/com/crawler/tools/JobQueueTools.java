@@ -1,7 +1,6 @@
 package six.com.crawler.tools;
 
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
@@ -12,6 +11,11 @@ import six.com.crawler.dao.RedisManager;
 import six.com.crawler.entity.Page;
 import six.com.crawler.http.HttpMethod;
 
+/**
+ * 任务队列工具
+ * @author weijiyong@tospur.com
+ *
+ */
 public class JobQueueTools {
 	
 	private static String workSpaceName = "nb_cnnbfdc_project_list";
