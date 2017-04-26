@@ -21,6 +21,10 @@ public class DownerHelper {
 	
 	private String jobName;
 	
+	private boolean isUseRawData;
+	
+	private boolean downloadState;
+	
 	/**
 	 * 获得源数据存储路径
 	 * @return
@@ -67,5 +71,21 @@ public class DownerHelper {
 
 	public void setJobName(String jobName) {
 		this.jobName = jobName;
+	}
+
+	public boolean isUseRawData() {
+		return isUseRawData;
+	}
+
+	public void setUseRawData(boolean isUseRawData) {
+		this.isUseRawData = isUseRawData;
+	}
+
+	public boolean isDownloadState() {
+		return downloadState;
+	}
+
+	public void setDownloadState(boolean downloadState) {
+		this.downloadState = downloadState;
 	}
 }
