@@ -1,20 +1,18 @@
 package six.com.crawler.http;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.net.Proxy.Type;
 import java.net.SocketAddress;
 import java.net.URLEncoder;
-import java.net.Proxy.Type;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PreDestroy;
 
@@ -40,26 +38,25 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import okhttp3.Dispatcher;
 import okhttp3.FormBody;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.Request.Builder;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import okhttp3.Request.Builder;
 import six.com.crawler.configure.SpiderConfigure;
 import six.com.crawler.entity.HttpProxy;
 import six.com.crawler.exception.AbstractHttpException;
 import six.com.crawler.exception.HttpIoException;
 import six.com.crawler.exception.HttpReadDataMoreThanMaxException;
 import six.com.crawler.utils.AutoCharsetDetectorUtils;
+import six.com.crawler.utils.AutoCharsetDetectorUtils.ContentType;
 import six.com.crawler.utils.JsonUtils;
 import six.com.crawler.utils.UrlUtils;
-import six.com.crawler.utils.AutoCharsetDetectorUtils.ContentType;
 import six.com.crawler.work.downer.CookiesStore;
-import six.com.crawler.work.downer.MX509TrustManager;
 import six.com.crawler.work.downer.PostContentType;
+import six.com.crawler.work.downer.exception.HttpFiveZeroTwoException;
 import six.com.crawler.work.downer.exception.UnknownHttpStatusDownException;
 
 /**
@@ -181,7 +178,7 @@ public class HttpClient implements InitializingBean {
 		return build.build();
 	}
 
-	public HttpResult executeRequest(Request request) throws AbstractHttpException {
+	public HttpResult executeRequest(Request request) throws AbstractHttpException,HttpFiveZeroTwoException {
 		if (null == request) {
 			throw new RuntimeException("url must not be blank.");
 		}
@@ -206,7 +203,9 @@ public class HttpClient implements InitializingBean {
 				}
 				result.setRedirectedUrl(redirectUrl);
 				result.setReferer(url);
-			} else if (httpCode != 200) {
+			} else if(httpCode == 502){
+				throw new HttpFiveZeroTwoException("httpCode[" + httpCode + "]:" + url);
+			}else if (httpCode != 200) {
 				throw new UnknownHttpStatusDownException("httpCode[" + httpCode + "]:" + url);
 			}
 		} catch (IOException e) {
