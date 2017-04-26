@@ -53,6 +53,8 @@ public class Page implements WorkSpaceData, Serializable {
 	private String charset;// 编码
 
 	private int retryProcess;// 尝试处理次数
+	
+	private int fztRetryProcess;//502尝试重试次数
 
 	private DownerType downerType;// 下载器类型
 
@@ -160,7 +162,6 @@ public class Page implements WorkSpaceData, Serializable {
 
 	public void setPageSrc(String pageSrc) {
 		this.pageSrc = pageSrc;
-		doc = Jsoup.parse(pageSrc);
 	}
 
 	public Document getDoc() {
@@ -180,6 +181,14 @@ public class Page implements WorkSpaceData, Serializable {
 
 	public void setRetryProcess(int retryProcess) {
 		this.retryProcess = retryProcess;
+	}
+
+	public int getFztRetryProcess() {
+		return fztRetryProcess;
+	}
+
+	public void setFztRetryProcess(int fztRetryProcess) {
+		this.fztRetryProcess = fztRetryProcess;
 	}
 
 	public String getSiteCode() {
