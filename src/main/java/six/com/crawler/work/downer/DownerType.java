@@ -11,7 +11,8 @@ public enum DownerType implements Serializable {
 	OKHTTP(1),
 	HTTPCLIENT(2),
 	CHROME(3),
-	PHANTOMJS(4); 
+	PHANTOMJS(4),
+	FILE(5); 
 
 	final int value;
 
@@ -32,7 +33,9 @@ public enum DownerType implements Serializable {
 			return CHROME;
 		} else if (4==type) {
 			return PHANTOMJS;
-		} else {
+		} else if (5==type){
+			return FILE;
+		}else {
 			return OKHTTP;
 		}
 	}
