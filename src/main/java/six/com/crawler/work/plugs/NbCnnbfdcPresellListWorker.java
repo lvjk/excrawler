@@ -31,24 +31,26 @@ public class NbCnnbfdcPresellListWorker extends AbstractCrawlWorker {
 	protected void insideInit() {
 		String firstUrl = StringUtils.replace(projectListUrlTemplate, pageIndexTemplate, String.valueOf(pageIndex));
 		presellInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "nb_cnnbfdc_presell_info",Page.class);
-		Page firstPage = new Page(getSite().getCode(), 1, firstUrl, firstUrl);
-		firstPage.setMethod(HttpMethod.GET);
-		getDowner().down(firstPage);
-		Element pageCountElement = firstPage.getDoc().select(pageCountCss).first();
-		if (null == pageCountElement) {
-			throw new RuntimeException("don't find pageCountElement:" + pageCountCss);
-		} else {
-			String endPageUrl = pageCountElement.attr("href");
-			String pageCountStr = StringUtils.remove(endPageUrl, "http://newhouse.cnnbfdc.com/tmgs_xkzgs.aspx?p=");
-			if (NumberUtils.isNumber(pageCountStr)) {
-				pageCount = Integer.valueOf(pageCountStr);
+		if(!(helper.isDownloadState() && helper.isUseRawData())){
+			Page firstPage = new Page(getSite().getCode(), 1, firstUrl, firstUrl);
+			firstPage.setMethod(HttpMethod.GET);
+			getDowner().down(firstPage);
+			Element pageCountElement = firstPage.getDoc().select(pageCountCss).first();
+			if (null == pageCountElement) {
+				throw new RuntimeException("don't find pageCountElement:" + pageCountCss);
 			} else {
-				throw new RuntimeException("pageCount isn't num:" + pageCountStr);
-			}
+				String endPageUrl = pageCountElement.attr("href");
+				String pageCountStr = StringUtils.remove(endPageUrl, "http://newhouse.cnnbfdc.com/tmgs_xkzgs.aspx?p=");
+				if (NumberUtils.isNumber(pageCountStr)) {
+					pageCount = Integer.valueOf(pageCountStr);
+				} else {
+					throw new RuntimeException("pageCount isn't num:" + pageCountStr);
+				}
 
+			}
+			getWorkQueue().clearDoing();
+			getWorkQueue().push(firstPage);
 		}
-		getWorkQueue().clearDoing();
-		getWorkQueue().push(firstPage);
 	}
 
 	@Override
@@ -87,14 +89,17 @@ public class NbCnnbfdcPresellListWorker extends AbstractCrawlWorker {
 				presellInfoQueue.push(projectInfoPage);
 			}
 		}
-		pageIndex++;
-		if (pageIndex <= pageCount) {
-			String firstUrl = StringUtils.replace(projectListUrlTemplate, pageIndexTemplate, String.valueOf(pageIndex));
-			presellInfoQueue = new RedisWorkSpace<>(getManager().getRedisManager(), "nb_cnnbfdc_presell_info",Page.class);
-			Page nextgPage = new Page(getSite().getCode(), 1, firstUrl, firstUrl);
-			nextgPage.setReferer(doingPage.getFinalUrl());
-			nextgPage.setMethod(HttpMethod.GET);
-			getWorkQueue().push(nextgPage);
+		
+		if(!(helper.isDownloadState() && helper.isUseRawData())){
+			pageIndex++;
+			if (pageIndex <= pageCount) {
+				String firstUrl = StringUtils.replace(projectListUrlTemplate, pageIndexTemplate, String.valueOf(pageIndex));
+				presellInfoQueue = new RedisWorkSpace<>(getManager().getRedisManager(), "nb_cnnbfdc_presell_info",Page.class);
+				Page nextgPage = new Page(getSite().getCode(), 1, firstUrl, firstUrl);
+				nextgPage.setReferer(doingPage.getFinalUrl());
+				nextgPage.setMethod(HttpMethod.GET);
+				getWorkQueue().push(nextgPage);
+			}
 		}
 	}
 
