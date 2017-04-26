@@ -25,6 +25,8 @@ public class JobSnapshot extends BaseVo implements Serializable {
 	private String workSpaceName;// 任务工作空间名
 	private String startTime;// 开始时间
 	private String endTime;
+	private int downloadState;//下载状态
+	private boolean isSaveRawData;
 	private int isScheduled;//
 	private int workSpaceDoingSize;//任务队列数量
 	private int workSpaceErrSize;// 错误任务队列数量
@@ -210,12 +212,29 @@ public class JobSnapshot extends BaseVo implements Serializable {
 		this.errCount = errCount;
 	}
 
+	public int getDownloadState() {
+		return downloadState;
+	}
+
+	public void setDownloadState(int downloadState) {
+		this.downloadState = downloadState;
+	}
+
+	public boolean isSaveRawData() {
+		return isSaveRawData;
+	}
+
+	public void setSaveRawData(boolean isSaveRawData) {
+		this.isSaveRawData = isSaveRawData;
+	}
+
 	public String toString() {
 		StringBuilder sbd = new StringBuilder();
 		sbd.append("id:").append(id).append(",");
 		sbd.append("name:").append(name).append(",");
 		sbd.append("startTime:").append(startTime).append(",");
 		sbd.append("endTime:").append(endTime).append(",");
+		sbd.append("isSaveRawData:").append(isSaveRawData).append(",");
 		sbd.append("totalProcessCount:").append(totalProcessCount).append(",");
 		sbd.append("totalResultCount:").append(totalResultCount).append(",");
 		sbd.append("avgProcessTime:").append(avgProcessTime).append(",");
@@ -224,6 +243,4 @@ public class JobSnapshot extends BaseVo implements Serializable {
 		sbd.append("errCount:").append(errCount).append(",");
 		return sbd.toString();
 	}
-
-
 }
