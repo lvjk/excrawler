@@ -48,6 +48,7 @@ import six.com.crawler.node.lock.DistributedLock;
 import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.schedule.DispatchType;
 import six.com.crawler.schedule.cache.RedisCacheKeyUtils;
+import six.com.crawler.schedule.consts.DownloadContants;
 import six.com.crawler.schedule.worker.AbstractWorkerSchedulerManager;
 import six.com.crawler.utils.JobTableUtils;
 import six.com.crawler.work.WorkerLifecycleState;
@@ -202,6 +203,15 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	public void execute(DispatchType dispatchType, String jobName) {
 		if (null != dispatchType && StringUtils.isNotBlank(jobName)) {
 			Job job = getJobDao().query(jobName);
+			List<JobParam> params=getJobParamDao().queryJobParams(jobName);
+			boolean isSaveRawData=false;
+			for (JobParam param:params) {
+				if(param.getName().equals("isSaveRawData")){
+					isSaveRawData=Integer.parseInt(param.getValue())==1;
+					break;
+				}
+			}
+			
 			if (null != job) {
 				String id = dispatchType.getCurrentTimeMillis();
 				JobSnapshot jobSnapshot = new JobSnapshot();
@@ -211,6 +221,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 				jobSnapshot.setWorkSpaceName(job.getWorkSpaceName());
 				jobSnapshot.setDesignatedNodeName(job.getDesignatedNodeName());
 				jobSnapshot.setStatus(JobSnapshotState.WAITING_EXECUTED.value());
+				jobSnapshot.setSaveRawData(isSaveRawData);
 				getScheduleCache().setJobSnapshot(jobSnapshot);
 				submitWaitQueue(job);
 				log.info("already submit job[" + jobName + "] to queue and it[" + id + "] will to be executed");
@@ -533,6 +544,11 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 					getScheduleCache().delJobSnapshot(jobName);
 					// 当任务正常完成时 判断是否有当前任务是否有下个执行任务，如果有的话那么直接执行
 					if (JobSnapshotState.FINISHED == state) {
+						//更新downloadState。
+						if(jobSnapshot.isSaveRawData()){
+							getJobSnapshotDao().updateDownloadStatus(jobSnapshot.getVersion(), jobSnapshot.getVersion()+1, jobSnapshot.getId(), DownloadContants.DOWN_LOAD_FINISHED);
+						}
+						
 						doJobRelationship(jobSnapshot, JobRelationship.TRIGGER_TYPE_SERIAL);
 					}
 				}
