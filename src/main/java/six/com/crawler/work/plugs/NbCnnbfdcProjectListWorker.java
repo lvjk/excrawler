@@ -27,7 +27,7 @@ public class NbCnnbfdcProjectListWorker extends AbstractCrawlWorker {
 	protected void insideInit() {
 		String firstUrl = StringUtils.replace(projectListUrlTemplate, pageIndexTemplate, String.valueOf(pageIndex));
 		projectInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "nb_cnnbfdc_project_info",Page.class);
-		if(!helper.isDownloadState()){
+		if(!(helper.isDownloadState() && helper.isUseRawData())){
 			Page firstPage = new Page(getSite().getCode(), 1, firstUrl, firstUrl);
 			firstPage.setMethod(HttpMethod.GET);
 			getDowner().down(firstPage);
