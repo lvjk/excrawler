@@ -517,4 +517,8 @@ public class RedisManager implements InitializingBean {
 	public void setConfigure(SpiderConfigure configure) {
 		this.configure = configure;
 	}
+
+	public void setJedisCluster(EnhanceJedisCluster jedisCluster) {
+		this.jedisCluster = jedisCluster;
+	}
 }
