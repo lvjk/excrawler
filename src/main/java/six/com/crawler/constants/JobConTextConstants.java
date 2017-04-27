@@ -32,7 +32,7 @@ public interface JobConTextConstants {
 	//是否保留源数据
 	String IS_SAVE_RAW_DATA="isSaveRawData";
 	
-	int DEFAULT_IS_SAVE_RAW_DATA=1;
+	int DEFAULT_IS_SAVE_RAW_DATA=0;
 	
 	//是否使用源数据
 	String IS_USE_RAW_DATA="isUseRawdata";
