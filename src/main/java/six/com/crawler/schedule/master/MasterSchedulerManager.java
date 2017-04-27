@@ -524,32 +524,34 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 				if (0 == jobWorkerNames.size()) {
 					jobRunningWorkerNames.remove(jobName);
 					JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(jobName);
-					JobSnapshotState state = null;
-					List<WorkerSnapshot> workerSnapshots = getScheduleCache().getWorkerSnapshots(jobName);
-					int finishedCount = 0;
-					for (WorkerSnapshot workerSnapshot : workerSnapshots) {
-						if (workerSnapshot.getState() == WorkerLifecycleState.FINISHED) {
-							finishedCount++;
+					if(null!=jobSnapshot){
+						JobSnapshotState state = null;
+						List<WorkerSnapshot> workerSnapshots = getScheduleCache().getWorkerSnapshots(jobName);
+						int finishedCount = 0;
+						for (WorkerSnapshot workerSnapshot : workerSnapshots) {
+							if (workerSnapshot.getState() == WorkerLifecycleState.FINISHED) {
+								finishedCount++;
+							}
 						}
-					}
-					if (workerSnapshots.size() == finishedCount) {
-						state = JobSnapshotState.FINISHED;
-						jobSnapshot.setStatus(state.value());
-					}
-					jobSnapshot.setEndTime(DateFormatUtils.format(new Date(), DateFormats.DATE_FORMAT_1));
-					totalWorkerSnapshot(jobSnapshot, workerSnapshots);
-					reportJobSnapshot(jobSnapshot);
-					getScheduleCache().delJob(jobName);
-					getScheduleCache().delWorkerSnapshots(jobName);
-					getScheduleCache().delJobSnapshot(jobName);
-					// 当任务正常完成时 判断是否有当前任务是否有下个执行任务，如果有的话那么直接执行
-					if (JobSnapshotState.FINISHED == state) {
-						//更新downloadState。
-						if(jobSnapshot.isSaveRawData()){
-							getJobSnapshotDao().updateDownloadStatus(jobSnapshot.getVersion(), jobSnapshot.getVersion()+1, jobSnapshot.getId(), DownloadContants.DOWN_LOAD_FINISHED);
+						if (workerSnapshots.size() == finishedCount) {
+							state = JobSnapshotState.FINISHED;
+							jobSnapshot.setStatus(state.value());
 						}
-						
-						doJobRelationship(jobSnapshot, JobRelationship.TRIGGER_TYPE_SERIAL);
+						jobSnapshot.setEndTime(DateFormatUtils.format(new Date(), DateFormats.DATE_FORMAT_1));
+						totalWorkerSnapshot(jobSnapshot, workerSnapshots);
+						reportJobSnapshot(jobSnapshot);
+						getScheduleCache().delJob(jobName);
+						getScheduleCache().delWorkerSnapshots(jobName);
+						getScheduleCache().delJobSnapshot(jobName);
+						// 当任务正常完成时 判断是否有当前任务是否有下个执行任务，如果有的话那么直接执行
+						if (JobSnapshotState.FINISHED == state) {
+							//更新downloadState。
+							if(jobSnapshot.isSaveRawData()){
+								getJobSnapshotDao().updateDownloadStatus(jobSnapshot.getVersion(), jobSnapshot.getVersion()+1, jobSnapshot.getId(), DownloadContants.DOWN_LOAD_FINISHED);
+							}
+							
+							doJobRelationship(jobSnapshot, JobRelationship.TRIGGER_TYPE_SERIAL);
+						}
 					}
 				}
 			} else {
