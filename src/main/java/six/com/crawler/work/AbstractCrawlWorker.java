@@ -14,6 +14,7 @@ import java.util.concurrent.Executors;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -52,8 +53,7 @@ import six.com.crawler.work.store.StoreType;
  * 
  *       当爬虫队列数据为null时 那么就会设置状态为finished
  */
-@Component
-public abstract class AbstractCrawlWorker extends AbstractWorker {
+public abstract class AbstractCrawlWorker extends AbstractWorker implements InitializingBean{
 
 	final static Logger log = LoggerFactory.getLogger(AbstractCrawlWorker.class);
 
@@ -307,7 +307,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 	public DownerHelper initDownerHelper(String siteCode,JobSnapshot jobSnapshot){
 		boolean isSaveRawData=getJob().getParamInt(JobConTextConstants.IS_SAVE_RAW_DATA, JobConTextConstants.DEFAULT_IS_SAVE_RAW_DATA)==1?true:false;
 		helper=new DownerHelper();
-		helper.setRawdataBasePath("/home/excrawler/rawdata");//(configure.getConfig("spider.rawdata.path", "/home/excrawler/rawdata"));;
+		helper.setRawdataBasePath("/home/excrawler/rawdata");//configure.getConfig("spider.rawdata.path", "/home/excrawler/rawdata"));
 		helper.setSaveRawData(isSaveRawData);
 		helper.setSiteCode(siteCode);
 		helper.setJobName(getJob().getName());
@@ -405,13 +405,14 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 				workQueue.ack(doingPage);
 			} else {
 				String msg = null;
+				Integer retryProcess=getJob().getParamInt("worker_process_page_max_retry_count",Constants.WOKER_PROCESS_PAGE_MAX_RETRY_COUNT);
 				if (null == insideException
-						&& doingPage.getRetryProcess() < Constants.WOKER_PROCESS_PAGE_MAX_RETRY_COUNT) {
+						&& doingPage.getRetryProcess() < retryProcess) {
 					doingPage.setRetryProcess(doingPage.getRetryProcess() + 1);
 					workQueue.push(doingPage);
 					msg = "retry processor[" + doingPage.getRetryProcess() + "] page:" + doingPage.getFinalUrl();
 				} else {
-					if(e instanceof HttpFiveZeroTwoException && doingPage.getFztRetryProcess() < Constants.WOKER_PROCESS_PAGE_MAX_RETRY_COUNT){//当超过重试次数之后，如果是502异常，则重新写入队列
+					if(e instanceof HttpFiveZeroTwoException && doingPage.getFztRetryProcess() < retryProcess){//当超过重试次数之后，如果是502异常，则重新写入队列
 						doingPage.setFztRetryProcess(doingPage.getFztRetryProcess() + 1);
 						workQueue.push(doingPage);
 						msg = "HttpCode[502] retry processor[" + doingPage.getRetryProcess() + "] page:" + doingPage.getFinalUrl();
@@ -538,6 +539,14 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 		return site;
 	}
 
+	public SpiderConfigure getConfigure() {
+		return configure;
+	}
+
+	public void setConfigure(SpiderConfigure configure) {
+		this.configure = configure;
+	}
+
 	protected void insideDestroy() {
 		if (null != downer) {
 			downer.close();
@@ -549,4 +558,11 @@ public abstract class AbstractCrawlWorker extends AbstractWorker {
 			store.close();
 		}
 	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
+	
 }
