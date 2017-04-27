@@ -162,6 +162,7 @@ public class Page implements WorkSpaceData, Serializable {
 
 	public void setPageSrc(String pageSrc) {
 		this.pageSrc = pageSrc;
+		doc = Jsoup.parse(pageSrc);
 	}
 
 	public Document getDoc() {
