@@ -1,15 +1,26 @@
 package six.com.crawler.tools;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.alibaba.druid.support.json.JSONUtils;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.google.gson.JsonObject;
 
 import redis.clients.jedis.HostAndPort;
+import six.com.crawler.common.JsonUtils;
 import six.com.crawler.dao.EnhanceJedisCluster;
 import six.com.crawler.dao.RedisManager;
 import six.com.crawler.entity.Page;
 import six.com.crawler.http.HttpMethod;
+import six.com.crawler.utils.ArrayListUtils;
 
 /**
  * 任务队列工具
@@ -18,14 +29,42 @@ import six.com.crawler.http.HttpMethod;
  */
 public class JobQueueTools {
 	
-	private static String workSpaceName = "nb_cnnbfdc_project_list";
+	private static String workSpaceName = "nb_cnnbfdc_project_info";
 	private static String queueKey = "spider_redis_store_page_queue_" + workSpaceName;
 	private static String proxyQueueKey = "spider_redis_store_page_proxy_queue_" + workSpaceName;
 	
 	private static String hostStr = "172.18.84.44:6379;172.18.84.45:6379;172.18.84.46:6379";
 	
-	
 	public static void main(String[] args) {
+		if(args.length<10){
+			System.err.println("Use : JobQueueTools -jobName ${jobName} -redisHosts ${redisHosts} -siteCode ${siteCode} -url ${url} -httpMethod ${httpMethod} [-params ${params} -metamMap ${metaMap}]");
+		}
+		
+		String siteCode=null;
+		String url=null;
+		String method=null;
+		String metaMapStr=null;
+		String paramStr=null;
+		for (int i = 0; i < args.length; i++) {
+			if(args[i].equals("-jobName")){
+				workSpaceName=args[i+1];
+			}else if(args[i].equals("-jobName")){
+				hostStr=args[i+1];
+			}else if(args[i].equals("-redisHosts")){
+				hostStr=args[i+1];
+			}else if(args[i].equals("-siteCode")){
+				siteCode=args[i+1];
+			}else if(args[i].equals("-url")){
+				url=args[i+1];
+			}else if(args[i].equals("-method")){
+				method=args[i+1];
+			}else if(args[i].equals("-metaMap")){
+				metaMapStr=args[i+1];
+			}else if(args[i].equals("-params")){
+				paramStr=args[i+1];
+			}
+		}
+		
 		RedisManager redisManager=new RedisManager();
 		
 		GenericObjectPoolConfig config = new GenericObjectPoolConfig();
@@ -71,10 +110,23 @@ public class JobQueueTools {
 		Integer timeout = 200;
 		redisManager.setJedisCluster(new EnhanceJedisCluster(set, timeout, config));
 		
-		String siteCode="nb_cnnbfdc";
-		String url="http://newhouse.cnnbfdc.com/lpxx.aspx?p=2";
 		Page page=new Page(siteCode,1,url,url);
-		page.setMethod(HttpMethod.GET);
+		if(method.equals(HttpMethod.GET.value)){
+			page.setMethod(HttpMethod.GET);
+		}else{
+			page.setMethod(HttpMethod.POST);
+			if(null!=paramStr){
+				Map<String,Object> params=(Map<String, Object>) JSON.parseObject(paramStr);
+				page.setParameters(params);
+			}
+		}
+		
+		if(null!=metaMapStr){
+			Map<String,Object> params=(Map<String, Object>) JSON.parseObject(metaMapStr);
+			for (String key:params.keySet()) {
+				page.getMetaMap().put(key, ArrayListUtils.asList(params.get(key).toString()));
+			}
+		}
 		
 		try {
 			redisManager.hset(queueKey, page.getKey(), page);
