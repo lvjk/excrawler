@@ -1,21 +1,14 @@
 package six.com.crawler.tools;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
-import com.alibaba.druid.support.json.JSONUtils;
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import com.google.gson.JsonObject;
 
 import redis.clients.jedis.HostAndPort;
-import six.com.crawler.common.JsonUtils;
 import six.com.crawler.dao.EnhanceJedisCluster;
 import six.com.crawler.dao.RedisManager;
 import six.com.crawler.entity.Page;
@@ -48,6 +41,8 @@ public class JobQueueTools {
 		for (int i = 0; i < args.length; i++) {
 			if(args[i].equals("-jobName")){
 				workSpaceName=args[i+1];
+				queueKey = "spider_redis_store_page_queue_" + workSpaceName;
+				proxyQueueKey = "spider_redis_store_page_proxy_queue_" + workSpaceName;
 			}else if(args[i].equals("-jobName")){
 				hostStr=args[i+1];
 			}else if(args[i].equals("-redisHosts")){
