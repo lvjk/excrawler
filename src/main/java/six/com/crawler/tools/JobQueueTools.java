@@ -43,8 +43,6 @@ public class JobQueueTools {
 				workSpaceName=args[i+1];
 				queueKey = "spider_redis_store_page_queue_" + workSpaceName;
 				proxyQueueKey = "spider_redis_store_page_proxy_queue_" + workSpaceName;
-			}else if(args[i].equals("-jobName")){
-				hostStr=args[i+1];
 			}else if(args[i].equals("-redisHosts")){
 				hostStr=args[i+1];
 			}else if(args[i].equals("-siteCode")){
