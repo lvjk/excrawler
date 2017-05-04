@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import six.com.crawler.admin.api.ResponseMsg;
+import six.com.crawler.entity.Page;
 import six.com.crawler.entity.WorkSpaceInfo;
 
 /**
@@ -65,4 +66,12 @@ public interface WorkSpaceService {
 	 * @return
 	 */
 	public ResponseMsg<String> againDoErrQueue(String workSpaceName);
+	
+	/**
+	 * 往处理队列中添加数据
+	 * @param workSpaceName
+	 * @param page
+	 * @return
+	 */
+	public ResponseMsg<String> AddDoing(String workSpaceName,Page page);
 }
