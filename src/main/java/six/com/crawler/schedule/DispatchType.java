@@ -35,6 +35,12 @@ public class DispatchType implements Serializable {
 	 * master触发名称
 	 */
 	public final static String DISPATCH_TYPE_MASTER = "MASTER";
+	
+	
+	/**
+	 * worker触发名称
+	 */
+	public final static String DISPATCH_TYPE_WORKER= "worker";
 
 	/**
 	 * new 一个被job触发的类型DispatchType
@@ -73,6 +79,17 @@ public class DispatchType implements Serializable {
 	 */
 	public static DispatchType newDispatchTypeByMaster() {
 		return new DispatchType(DISPATCH_TYPE_MASTER,
+				DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_2));
+	}
+	
+	
+	/**
+	 * new 一个被动master触发类型DispatchType
+	 * 
+	 * @return
+	 */
+	public static DispatchType newDispatchTypeByWorker() {
+		return new DispatchType(DISPATCH_TYPE_WORKER,
 				DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_2));
 	}
 

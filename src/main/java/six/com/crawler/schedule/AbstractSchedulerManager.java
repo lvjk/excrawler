@@ -18,7 +18,6 @@ import six.com.crawler.dao.SiteDao;
 import six.com.crawler.dao.WorkerErrMsgDao;
 import six.com.crawler.dao.WorkerSnapshotDao;
 import six.com.crawler.email.QQEmailClient;
-import six.com.crawler.entity.Job;
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.JobSnapshotState;
 import six.com.crawler.entity.WorkerErrMsg;
@@ -27,7 +26,7 @@ import six.com.crawler.http.HttpClient;
 import six.com.crawler.node.Node;
 import six.com.crawler.node.ClusterManager;
 import six.com.crawler.ocr.ImageDistinguish;
-import six.com.crawler.schedule.cache.RedisCacheKeyUtils;
+import six.com.crawler.schedule.cache.RedisScheduleCache;
 import six.com.crawler.schedule.cache.ScheduleCache;
 import six.com.crawler.work.WorkerLifecycleState;
 import six.com.crawler.work.space.WorkSpaceManager;
@@ -39,8 +38,6 @@ import six.com.crawler.dao.JobRelationshipDao;
  * @date 创建时间：2016年9月25日 下午2:04:35
  */
 public abstract class AbstractSchedulerManager implements SchedulerManager, InitializingBean {
-
-	private final static String WORKER_NAME_PREFIX = "worker";
 
 	private final static int SAVE_ERR_MSG_MAX = 20;
 
@@ -97,8 +94,9 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	@Autowired
 	private WorkSpaceManager WorkSpaceManager;
 
-	@Autowired
 	private ScheduleCache scheduleCache;
+	
+	private ScheduleDispatchTypeIntercept scheduleDispatchTypeIntercept;
 
 	/**
 	 * 内部初始化
@@ -106,6 +104,10 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	protected abstract void init();
 
 	public void afterPropertiesSet() {
+		String clusterName = getNodeManager().getClusterName();
+		String basePreKey = clusterName + "_scheduler_cache";
+		scheduleCache = new RedisScheduleCache(getRedisManager(), basePreKey);
+		scheduleDispatchTypeIntercept = new ScheduleDispatchTypeIntercept(getNodeManager());
 		init();
 	}
 
@@ -252,7 +254,15 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	public void setScheduleCache(ScheduleCache scheduleCache) {
 		this.scheduleCache = scheduleCache;
 	}
+	
 
+	public ScheduleDispatchTypeIntercept getScheduleDispatchTypeIntercept() {
+		return scheduleDispatchTypeIntercept;
+	}
+
+	public void setScheduleDispatchTypeIntercept(ScheduleDispatchTypeIntercept scheduleDispatchTypeIntercept) {
+		this.scheduleDispatchTypeIntercept = scheduleDispatchTypeIntercept;
+	}
 	/**
 	 * 判断job是否运行。 通过jobName 获取job运行快照JobSnapshot 如果存在并且状态是执行或者暂停那么 返回true否则false
 	 * 
@@ -359,39 +369,23 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		getScheduleCache().updateWorkerSnapshot(workerSnapshot);
 	}
 
-	/**
-	 * 判断任务的所有worker是否全部wait
-	 */
-	public boolean workerIsAllWaited(String jobName) {
-		List<WorkerSnapshot> workerSnapshots = getScheduleCache().getWorkerSnapshots(jobName);
-		boolean result = true;
-		for (WorkerSnapshot workerSnapshot : workerSnapshots) {
-			// 判断其他工人是否还在运行
-			if (workerSnapshot.getState() != WorkerLifecycleState.WAITED) {
-				result = false;
-				break;
-			}
-		}
-		return result;
+	public boolean isStop(String jobName){
+		return isTargetStatus(jobName, WorkerLifecycleState.STOPED);
 	}
 
-	/**
-	 * 通过job 获取一个worker name 名字统一有 前缀 : 节点+job 名字
-	 * +Job类型+WORKER_NAME_PREFIX+当前Job worker的序列号组成
-	 * 
-	 * @param job
-	 * @return
-	 */
-	public String getWorkerNameByJob(Job job) {
-		String key = RedisCacheKeyUtils.getWorkerSerialNumbersKey(job.getName());
-		Long sernum = getRedisManager().incr(key);
-		int serialNumber = sernum.intValue();
-		StringBuilder sbd = new StringBuilder();
-		sbd.append(job.getName()).append("_");
-		sbd.append(WORKER_NAME_PREFIX).append("_");
-		sbd.append(getNodeManager().getCurrentNode().getName()).append("_");
-		sbd.append(serialNumber);
-		return sbd.toString();
+	public boolean isFinish(String jobName){
+		return isTargetStatus(jobName, WorkerLifecycleState.FINISHED);
+	}
+	
+	private boolean isTargetStatus(String jobName,WorkerLifecycleState status){
+		List<WorkerSnapshot> workers=getScheduleCache().getWorkerSnapshots(jobName);
+		boolean resut=true;
+		for(WorkerSnapshot worker:workers){
+			if(worker.getState()!=status){
+				resut=false;
+			}
+		}
+		return resut;
 	}
 
 }

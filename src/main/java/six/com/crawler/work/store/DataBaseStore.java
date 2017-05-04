@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import com.alibaba.druid.pool.DruidDataSource;
 
-import six.com.crawler.constants.JobConTextConstants;
+import six.com.crawler.entity.JobParamKeys;
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.utils.DbHelper;
 import six.com.crawler.utils.JobTableUtils;
@@ -45,7 +45,7 @@ public class DataBaseStore extends StoreAbstarct {
 
 	public DataBaseStore(AbstractWorker worker) {
 		super(worker);
-		String everySendSizeStr = worker.getJob().getParam(JobConTextConstants.BATCH_SIZE);
+		String everySendSizeStr = worker.getJob().getParam(JobParamKeys.BATCH_SIZE);
 		if (null != everySendSizeStr) {
 			try {
 				batchSize = Integer.valueOf(everySendSizeStr);
@@ -54,10 +54,10 @@ public class DataBaseStore extends StoreAbstarct {
 			}
 
 		}
-		dbUrl = worker.getJob().getParam(JobConTextConstants.DB_URL);
-		dbUser = worker.getJob().getParam(JobConTextConstants.DB_USER);
-		dbPasswd = worker.getJob().getParam(JobConTextConstants.DB_PASSWD);
-		dbDriverClassName = worker.getJob().getParam(JobConTextConstants.DB_DRIVER_CLASS_NAME);
+		dbUrl = worker.getJob().getParam(JobParamKeys.DB_URL);
+		dbUser = worker.getJob().getParam(JobParamKeys.DB_USER);
+		dbPasswd = worker.getJob().getParam(JobParamKeys.DB_PASSWD);
+		dbDriverClassName = worker.getJob().getParam(JobParamKeys.DB_DRIVER_CLASS_NAME);
 		datasource = new DruidDataSource();
 		datasource.setUrl(dbUrl);
 		datasource.setDriverClassName(dbDriverClassName);
@@ -66,7 +66,7 @@ public class DataBaseStore extends StoreAbstarct {
 		datasource.setMaxActive(1);
 		JobSnapshot jobSnapshot = getAbstractWorker().getJobSnapshot();
 		tableName = jobSnapshot.getTableName();
-		insertSqlTemplate = worker.getJob().getParam(JobConTextConstants.INSERT_SQL_TEMPLATE);
+		insertSqlTemplate = worker.getJob().getParam(JobParamKeys.INSERT_SQL_TEMPLATE);
 		insertSql = JobTableUtils.buildInsertSql(insertSqlTemplate, tableName);
 		String fieldsStr = StringUtils.substringBetween(insertSql, "(", ")");
 		fields = StringUtils.split(fieldsStr, ",");
@@ -77,7 +77,7 @@ public class DataBaseStore extends StoreAbstarct {
 			field=StringUtils.remove(field,"`");
 			fields[i] = StringUtils.trim(field);
 		}
-		createTableSqlTemplate = worker.getJob().getParam(JobConTextConstants.CREATE_TABLE_SQL_TEMPLATE);
+		createTableSqlTemplate = worker.getJob().getParam(JobParamKeys.CREATE_TABLE_SQL_TEMPLATE);
 		initTable();
 	}
 

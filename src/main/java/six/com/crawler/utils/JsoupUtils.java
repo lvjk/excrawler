@@ -32,14 +32,27 @@ public class JsoupUtils {
 		charSet.add('\t');
 	}
 
-	public static Elements select(Document doc, String cssQuery) {
+	public static Elements select(Element element, String cssQuery) {
 		Elements result = null;
-		if (null != doc) {
-			result = doc.select(cssQuery);
+		if (null != element) {
+			result = element.select(cssQuery);
 		}
 		return result;
 	}
 
+	
+	public static Elements children(Element element, String childrenTag) {
+		Elements findChildren=new Elements();
+		if (null != element) {
+			Elements allChildren=element.children();
+			for(Element children:allChildren){
+				if(StringUtils.equalsIgnoreCase(childrenTag, children.tagName())){
+					findChildren.add(children);
+				}
+			}
+		}
+		return findChildren;
+	}
 	/**
 	 * 抽取
 	 * 

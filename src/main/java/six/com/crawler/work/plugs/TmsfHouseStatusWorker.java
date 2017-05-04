@@ -6,15 +6,20 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
+import six.com.crawler.http.HttpMethod;
 import six.com.crawler.utils.ArrayListUtils;
+import six.com.crawler.utils.JsUtils;
 import six.com.crawler.utils.JsonUtils;
+import six.com.crawler.utils.JsoupUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.space.RedisWorkSpace;
@@ -120,16 +125,151 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 		String houseInfoJson = housePage.getPageSrc();
 		Map<String, Object> map = JsonUtils.toObject(houseInfoJson, Map.class);
 		List<Map<String, Object>> houseList = (List<Map<String, Object>>) map.get("list");
-		for (Map<String, Object> houseMap : houseList) {
-			for (String field : jsonKeyMap.keySet()) {
-				String jsonKey = jsonKeyMap.get(field);
-				Object valueOb = houseMap.get(jsonKey);
-				doingPage.getMetaMap().computeIfAbsent(field, mapKey -> new ArrayList<>())
-						.add(null != valueOb ? valueOb.toString() : "");
+		if (null != houseList && !houseList.isEmpty()) {
+			for (Map<String, Object> houseMap : houseList) {
+				Object valueOb = null;
+				String internalId = (valueOb = houseMap.get("internalid")) != null ? valueOb.toString() : "";
+				boolean isAdd = false;
+				// 先判断是否在div布局中存在 raphael_box
+				Elements raphaelBoxDiv = getDivLayoutDivs(doingPage);
+				if (!raphaelBoxDiv.isEmpty()) {
+					Element houseDivElement = raphaelBoxDiv.select("div[fwid=" + internalId + "]").first();
+					if (null != houseDivElement) {
+						isAdd = true;
+					}
+				} else {
+					// 如果div布局中不存在那么再判断是否在table布局中存在
+					Element scriptElement =getScriptElement(doingPage);
+					if (null != scriptElement) {
+						String dataUrl = scriptElement.attr("src");
+						dataUrl = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), dataUrl);
+						Page houseJsPage = new Page(doingPage.getSiteCode(), 1, dataUrl, dataUrl);
+						houseJsPage.setReferer(doingPage.getFinalUrl());
+						houseJsPage.setMethod(HttpMethod.GET);
+						getDowner().down(houseJsPage);
+						String js = houseJsPage.getPageSrc();
+						js = StringUtils.remove(js, "document.writeln(");
+						js = StringUtils.remove(js, ");");
+						js = JsUtils.evalJs(js);
+						Element table = Jsoup.parse(js);
+						Elements houseAs = table.select("a");
+						for (Element houseA : houseAs) {
+							String href = houseA.attr("href");
+							if (StringUtils.contains(href, internalId)) {
+								isAdd = true;
+								break;
+							}
+						}
+					}
+				}
+
+				if (isAdd) {
+					for (String field : jsonKeyMap.keySet()) {
+						String jsonKey = jsonKeyMap.get(field);
+						valueOb = houseMap.get(jsonKey);
+						doingPage.getMetaMap().computeIfAbsent(field, mapKey -> new ArrayList<>())
+								.add(null != valueOb ? valueOb.toString() : "");
+
+					}
+				}
 			}
+		} else {
+			if(isTableLayout(doingPage)){
+				Element scriptElement =getScriptElement(doingPage);
+				if (null != scriptElement) {
+					String dataUrl = scriptElement.attr("src");
+					dataUrl = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), dataUrl);
+					Page houseJsPage = new Page(doingPage.getSiteCode(), 1, dataUrl, dataUrl);
+					houseJsPage.setReferer(doingPage.getFinalUrl());
+					houseJsPage.setMethod(HttpMethod.GET);
+					getDowner().down(houseJsPage);
+					String js = houseJsPage.getPageSrc();
+					js = StringUtils.remove(js, "document.writeln(");
+					js = StringUtils.remove(js, ");");
+					js = JsUtils.evalJs(js);
+					Element table = Jsoup.parse(js);
+					Elements unitTds = table.select("body>table>tbody>tr:eq(0)>td:gt(0)");
+					List<String> unitList = new ArrayList<>();
+					for (Element unitTd : unitTds) {
+						String unitName = unitTd.text();
+						if (!StringUtils.contains(unitName, "单元名称")) {
+							unitList.add(unitName);
+						}
+					}
+					Element unitHouseTrElement = table.select("body>table>tbody>tr:eq(1)").first();
+					if (null!=unitHouseTrElement) {
+						Elements unitHouseTdElements=JsoupUtils.children(unitHouseTrElement, "td");
+						for (int i = 1; i < unitHouseTdElements.size(); i++) {
+							String unitName = StringUtils.EMPTY;
+							int unitIndex=i-1;
+							if (unitIndex < unitList.size()) {
+								unitName = unitList.get(unitIndex);
+							}
+							Element unitHouseElement = unitHouseTdElements.get(i);
+							Elements houseElements = unitHouseElement.select("a");
+							for (Element element : houseElements) {
+								String housePageUrl = element.attr("href");
+								if (StringUtils.isNotBlank(housePageUrl)) {
+									String houseNo = element.text();
+									String onmouseoverHtml = element.attr("onmouseover");
+									String houseData = StringUtils.substringBetween(onmouseoverHtml,
+											"<table><tr><td width=240>", "</td><td width=150>tupian</td>");
+									houseData = StringUtils.remove(houseData, "<br/>");
+									String houseStatus = StringUtils.substringBetween(houseData, "当前状态：", "房屋用途：");
+									String houseUsage = StringUtils.substringBetween(houseData, "房屋用途：", "建筑面积");
+									String buildingArea = StringUtils.substringBetween(houseData, "建筑面积：", "毛坯单价");
+									String roughPrice = StringUtils.substringBetween(houseData, "毛坯单价：", "总　　价");
+									String totalPrice = StringUtils.substringBetween(houseData, "总　　价：", "房屋坐落");
+									String houseAddress = StringUtils.substringAfterLast(houseData, "房屋坐落：");
+
+									doingPage.getMetaMap().computeIfAbsent("unitName", mapKey -> new ArrayList<>())
+											.add(unitName);
+									doingPage.getMetaMap().computeIfAbsent("houseNo", mapKey -> new ArrayList<>()).add(houseNo);
+									doingPage.getMetaMap().computeIfAbsent("status", mapKey -> new ArrayList<>())
+											.add(houseStatus);
+									doingPage.getMetaMap().computeIfAbsent("houseUsage", mapKey -> new ArrayList<>())
+											.add(houseUsage);
+									doingPage.getMetaMap().computeIfAbsent("buildingArea", mapKey -> new ArrayList<>())
+											.add(buildingArea);
+									doingPage.getMetaMap().computeIfAbsent("roughPrice", mapKey -> new ArrayList<>())
+											.add(roughPrice);
+									doingPage.getMetaMap().computeIfAbsent("totalPrice", mapKey -> new ArrayList<>())
+											.add(totalPrice);
+									doingPage.getMetaMap().computeIfAbsent("houseAddress", mapKey -> new ArrayList<>())
+											.add(houseAddress);
+
+								}
+
+							}
+
+						}
+						
+					}
+				}
+				
+			}
+		
 		}
 	}
 
+	private Element getScriptElement(Page doingPage){
+		String dataUrlCss = "div[id=yf_img]>div[class=scroll]>script";
+		Element scriptElement = doingPage.getDoc().select(dataUrlCss).first();
+		if(null==scriptElement){
+			dataUrlCss="div[class=saletable]>div[class=scroll]>script:eq(2)";
+			scriptElement = doingPage.getDoc().select(dataUrlCss).first();
+		}
+		return scriptElement;
+	}
+	
+	private boolean isTableLayout(Page doingPage){
+		return getDivLayoutDivs(doingPage).isEmpty()?true:false;
+	}
+	
+	private Elements getDivLayoutDivs(Page doingPage){
+		return doingPage.getDoc().select("div[id=PropertyTable]>div[class=raphael_box]");
+	}
+	
 	@Override
 	protected void afterExtract(Page doingPage, ResultContext result) {
 
@@ -145,7 +285,7 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 		
 		String presellId_org = doingPage.getMetaMap().get("presellId_org").get(0);
 
-		List<String> buildingNames = doingPage.getMetaMap().get("buildingName");
+		List<String> buildingNames = resultContext.getExtractResult("buildingName");
 		
 		List<String> houseIds = resultContext.getExtractResult("houseId");
 		List<String> houseNos = resultContext.getExtractResult("houseNo");

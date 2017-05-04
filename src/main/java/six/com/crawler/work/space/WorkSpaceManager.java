@@ -33,6 +33,7 @@ public class WorkSpaceManager {
 	 * @return
 	 */
 	public <T extends WorkSpaceData> WorkSpace<T> newWorkSpace(String workSpaceName, Class<T> clz) {
+		//TODO 需要引用集群名作为base前缀key
 		WorkSpace<T> workQueue = new RedisWorkSpace<>(redisManager, workSpaceName, clz);
 		return workQueue;
 	}

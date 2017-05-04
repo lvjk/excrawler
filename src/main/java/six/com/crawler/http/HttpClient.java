@@ -1,5 +1,6 @@
 package six.com.crawler.http;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
@@ -13,6 +14,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PreDestroy;
 
@@ -29,6 +31,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
@@ -55,6 +58,7 @@ import six.com.crawler.utils.AutoCharsetDetectorUtils.ContentType;
 import six.com.crawler.utils.JsonUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.downer.CookiesStore;
+import six.com.crawler.work.downer.MX509TrustManager;
 import six.com.crawler.work.downer.PostContentType;
 import six.com.crawler.work.downer.exception.HttpFiveZeroTwoException;
 import six.com.crawler.work.downer.exception.UnknownHttpStatusDownException;
@@ -178,13 +182,13 @@ public class HttpClient implements InitializingBean {
 		return build.build();
 	}
 
-	public HttpResult executeRequest(Request request) throws AbstractHttpException,HttpFiveZeroTwoException {
+	public HttpResult executeRequest(Request request) throws AbstractHttpException, HttpFiveZeroTwoException {
 		if (null == request) {
 			throw new RuntimeException("url must not be blank.");
 		}
 		String url = request.url().toString();
 		HttpResult result = null;
-		long beforeRequestTime=System.currentTimeMillis();
+		long beforeRequestTime = System.currentTimeMillis();
 		try (Response response = okClient.newCall(request).execute();) {
 			result = new HttpResult();
 			int httpCode = response.code();
@@ -203,16 +207,16 @@ public class HttpClient implements InitializingBean {
 				}
 				result.setRedirectedUrl(redirectUrl);
 				result.setReferer(url);
-			} else if(httpCode == 502){
+			} else if (httpCode == 502) {
 				throw new HttpFiveZeroTwoException("httpCode[" + httpCode + "]:" + url);
-			}else if (httpCode != 200) {
+			} else if (httpCode != 200) {
 				throw new UnknownHttpStatusDownException("httpCode[" + httpCode + "]:" + url);
 			}
 		} catch (IOException e) {
 			// request execute 异常处理
-			long afterRequestTime=System.currentTimeMillis();
-			throw new HttpIoException("execute request[" + request.url() + "] by proxy[" + request.proxy() + "] err, request time is ["+(afterRequestTime-beforeRequestTime)+"]",
-					e);
+			long afterRequestTime = System.currentTimeMillis();
+			throw new HttpIoException("execute request[" + request.url() + "] by proxy[" + request.proxy()
+					+ "] err, request time is [" + (afterRequestTime - beforeRequestTime) + "]", e);
 		}
 		return result;
 	}
@@ -427,21 +431,20 @@ public class HttpClient implements InitializingBean {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-//		OkHttpClient.Builder okHttpClientBuilder = new OkHttpClient.Builder();
-//		okHttpClientBuilder.sslSocketFactory(MX509TrustManager.getSSLSocketFactory(),
-//				MX509TrustManager.myX509TrustManager);
-//		okHttpClientBuilder.connectTimeout(30, TimeUnit.SECONDS);
-//		okHttpClientBuilder.writeTimeout(30, TimeUnit.SECONDS);
-//		okHttpClientBuilder.readTimeout(30, TimeUnit.SECONDS);
-//		okHttpClientBuilder.dispatcher(new Dispatcher());
-//		okHttpClientBuilder.followRedirects(true);
-//		okHttpClientBuilder.followSslRedirects(true);
-//		String cookirDir = configure.getSpiderHome() + File.separator + "cookies";
-//		cookiesStore = new CookiesStore(cookirDir);
-//		okHttpClientBuilder.cookieJar(cookiesStore);
-//		okClient = okHttpClientBuilder.build();
-		// HttpClientBuilder httpClientBuilder=HttpClients.custom();
-		// httpClientBuilder.setDefaultCookieStore(cookieStore);
+		OkHttpClient.Builder okHttpClientBuilder = new OkHttpClient.Builder();
+		okHttpClientBuilder.sslSocketFactory(MX509TrustManager.getSSLSocketFactory(),
+				MX509TrustManager.myX509TrustManager);
+		okHttpClientBuilder.connectTimeout(30, TimeUnit.SECONDS);
+		okHttpClientBuilder.writeTimeout(30, TimeUnit.SECONDS);
+		okHttpClientBuilder.readTimeout(30, TimeUnit.SECONDS);
+		okHttpClientBuilder.followRedirects(true);
+		okHttpClientBuilder.followSslRedirects(true);
+		String cookirDir = configure.getSpiderHome() + File.separator + "cookies";
+		cookiesStore = new CookiesStore(cookirDir);
+		okHttpClientBuilder.cookieJar(cookiesStore);
+		okClient = okHttpClientBuilder.build();
+		HttpClientBuilder httpClientBuilder = HttpClients.custom();
+		httpClientBuilder.setDefaultCookieStore(cookiesStore);
 		httpClient = HttpClients.createDefault();
 	}
 }

@@ -43,6 +43,15 @@ public interface WorkSpace<T extends WorkSpaceData> {
 	 * @return 成功或失败
 	 */
 	public boolean push(T data);
+	
+	
+	/**
+	 * 将数据 推到工作队列中
+	 * 
+	 * @param data
+	 * @return 成功或失败
+	 */
+	public boolean errRetryPush(T data);
 
 	/**
 	 * 从工作队列拉取数据

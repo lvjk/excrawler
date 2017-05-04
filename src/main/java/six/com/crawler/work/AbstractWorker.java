@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import six.com.crawler.common.DateFormats;
+import six.com.crawler.configure.SpiderConfigure;
 import six.com.crawler.entity.Job;
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.JobSnapshotState;
@@ -37,6 +38,8 @@ public abstract class AbstractWorker implements Worker {
 	private final ReentrantLock reentrantLock = new ReentrantLock();
 	// 用来Condition.await() 和condition.signalAll();
 	private final Condition condition = reentrantLock.newCondition();
+	
+	private SpiderConfigure configure;
 
 	private DistributedLock distributedLock;
 
@@ -60,6 +63,10 @@ public abstract class AbstractWorker implements Worker {
 	// 随机对象 产生随机控制时间
 	private static Random randomDownSleep = new Random();
 
+	public void bindConfigure(SpiderConfigure configure){
+		this.configure=configure;
+	}
+	
 	public void bindManager(WorkerSchedulerManager manager) {
 		this.manager = manager;
 	}
@@ -88,6 +95,7 @@ public abstract class AbstractWorker implements Worker {
 			this.maxWorkFrequency = 2 * minWorkFrequency;
 			initWorker(jobSnapshot);
 		} catch (Exception e) {
+			destroy();
 			throw new RuntimeException("init crawlWorker err", e);
 		} finally {
 			distributedLock.unLock();
@@ -324,10 +332,15 @@ public abstract class AbstractWorker implements Worker {
 	 * 
 	 * @return
 	 */
+	@Override
 	public String getName() {
 		return workerSnapshot.getName();
 	}
 
+	@Override
+	public SpiderConfigure getConfigure(){
+		return configure;
+	}
 	@Override
 	public WorkerLifecycleState getState() {
 		return state;

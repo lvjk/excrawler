@@ -67,7 +67,7 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 		// 检查集群名字是否设置
 		if (StringUtils.isBlank(clusterName)) {
 			log.error("don't set cluster's name ,please set it ,then to start");
-			System.exit(1);
+			exit(1);
 		}
 		String host = getConfigure().getHost();
 		int port = getConfigure().getPort();
@@ -77,7 +77,7 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 		// 检查节点名字是否设置
 		if (StringUtils.isBlank(nodeName)) {
 			log.error("don't set node's name ,please set it ,then to start");
-			System.exit(1);
+			exit(1);
 		}
 		// 检查节点类型
 		NodeType nodeType = getConfigure().getNodeType();
@@ -92,15 +92,14 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 		log.info("the node[" + nodeName + "] type:" + nodeType);
 		// 初始化curatorFramework
 		String connectString = getConfigure().getConfig("zookeeper.host", null);
-		// 检查 nodeName是否有注册过。如果注册过那么检查 ip 和端口是相同
 		if (StringUtils.isBlank(connectString)) {
 			log.error("the zookeeper's host is blank");
-			System.exit(1);
+			exit(1);
 		}
 		// 因为redis 链接串是以;
 		// 拼接的，例如172.18.84.44:2181;172.18.84.45:2181;172.18.84.45:2181
 		connectString = StringUtils.replace(connectString, ";", ",");
-		curatorFramework = CuratorFrameworkHelper.newCuratorFramework(connectString, getClusterName(),
+		curatorFramework = new CuratorFrameworkHelper().newCuratorFramework(connectString, getClusterName(),
 				new RetryPolicy() {
 					@Override
 					public boolean allowRetry(int retryCount, long elapsedTimeMs, RetrySleeper sleeper) {
@@ -109,7 +108,7 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 				});
 		if (null == curatorFramework) {
 			log.error("init curatorFramework err");
-			System.exit(1);
+			exit(1);
 		}
 		String path = "node_manager_init";
 		DistributedLock writeLock = getWriteLock(path);
@@ -119,7 +118,7 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 			nodeRegisterEvent = NodeRegisterEventFactory.createNodeRegisterEvent(currentNode);
 			if (!nodeRegisterEvent.register(this, curatorFramework)) {
 				log.error("register node[" + currentNode.getName() + "] to zooKeeper failed");
-				System.exit(1);
+				exit(1);
 			}
 			/**
 			 * 初始化 节点server和client 通信
@@ -129,7 +128,7 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 			register(this);
 		} catch (Exception e) {
 			log.error("init clusterManager err", e);
-			System.exit(1);
+			exit(1);
 		} finally {
 			writeLock.unLock();
 		}
@@ -331,6 +330,11 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 		if (null != curatorFramework) {
 			curatorFramework.close();
 		}
+	}
+
+	private void exit(int status) {
+		destroy();
+		System.exit(status);
 	}
 
 	public SpiderConfigure getConfigure() {

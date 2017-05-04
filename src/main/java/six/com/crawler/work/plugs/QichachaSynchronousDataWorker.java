@@ -14,7 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import okhttp3.Request;
-import six.com.crawler.constants.JobConTextConstants;
+import six.com.crawler.entity.JobParamKeys;
 import six.com.crawler.exception.AbstractHttpException;
 import six.com.crawler.http.HttpConstant;
 import six.com.crawler.http.HttpMethod;
@@ -45,13 +45,13 @@ public class QichachaSynchronousDataWorker extends DataBaseAbstractWorker{
 
 
 	public final void insideInit() {
-		fixedTableName =getJob().getParam(JobConTextConstants.FIXED_TABLE_NAME);
-		selectSqlTemplate = getJob().getParam(JobConTextConstants.SELECT_SQL_TEMPLATE);
-		updateSqlTemplate = getJob().getParam(JobConTextConstants.UPDATE_SQL_TEMPLATE);
-		sendHttpUlr = getJob().getParam(JobConTextConstants.SEND_HTTP_URL);
+		fixedTableName =getJob().getParam(JobParamKeys.FIXED_TABLE_NAME);
+		selectSqlTemplate = getJob().getParam(JobParamKeys.SELECT_SQL_TEMPLATE);
+		updateSqlTemplate = getJob().getParam(JobParamKeys.UPDATE_SQL_TEMPLATE);
+		sendHttpUlr = getJob().getParam(JobParamKeys.SEND_HTTP_URL);
 		selectSql=JobTableUtils.buildSelectSql(selectSqlTemplate, fixedTableName);
 		updateSql=JobTableUtils.buildUpdateSql(updateSqlTemplate, fixedTableName);
-		String httpMethod = getJob().getParam(JobConTextConstants.SEND_HTTP_METHOD);
+		String httpMethod = getJob().getParam(JobParamKeys.SEND_HTTP_METHOD);
 		method = "post".equalsIgnoreCase(httpMethod) ? HttpMethod.POST : HttpMethod.GET;
 	}
 	

@@ -23,7 +23,7 @@ public class Job extends BaseVo implements Serializable {
 	private int needNodes;// 工作需要的节点数
 
 	private int threads;// 节点执行任务的线程数
-	
+
 	private int isScheduled;// 是否开启定时
 
 	private String cronTrigger = "";// cronTrigger 定时
@@ -216,6 +216,34 @@ public class Job extends BaseVo implements Serializable {
 		String paramStr = getParam(paramKey);
 		try {
 			param = Integer.valueOf(paramStr);
+		} catch (Exception e) {
+
+		}
+		return param;
+	}
+
+	public boolean getParamBoolean(String paramKey, boolean defaultParam) {
+		if (StringUtils.isBlank(paramKey)) {
+			throw new NullPointerException("paramKey mustn't be blank");
+		}
+		boolean param = defaultParam;
+		String paramStr = getParam(paramKey);
+		try {
+			param = Integer.valueOf(paramStr) == 1 ? true : false;
+		} catch (Exception e) {
+
+		}
+		return param;
+	}
+
+	public boolean getParamBoolean(String paramKey) {
+		if (StringUtils.isBlank(paramKey)) {
+			throw new NullPointerException("paramKey mustn't be blank");
+		}
+		boolean param = false;
+		String paramStr = getParam(paramKey);
+		try {
+			param = Integer.valueOf(paramStr) == 1 ? true : false;
 		} catch (Exception e) {
 
 		}

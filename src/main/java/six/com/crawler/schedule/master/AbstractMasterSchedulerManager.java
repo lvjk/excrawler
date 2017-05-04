@@ -51,22 +51,13 @@ public abstract class AbstractMasterSchedulerManager extends AbstractSchedulerMa
 	protected abstract void doInit();
 
 	/**
-	 * 开始执行 job's worker
-	 * 
-	 * @param jobName
-	 * @param WorkName
-	 */
-	@RpcService(name = "startWorker")
-	public abstract void startWorker(String jobName, String workerName);
-
-	/**
 	 * 结束执行job's worker
 	 * 
 	 * @param jobName
 	 * @param WorkName
 	 */
 	@RpcService(name = "endWorker")
-	public abstract void endWorker(String jobName, String workerName);
+	public abstract void endWorker(DispatchType dispatchType,String jobName);
 
 	public abstract void repair();
 

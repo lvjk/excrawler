@@ -32,21 +32,21 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 
 	public final static int batch = 10000;
 
-	private String workSpaceName;
+	private final String workSpaceName;
+
+	private final String proxyQueueKey;
+
+	private final String queueKey;
+
+	private final String doneKey;
+
+	private final String errQueueKey;
+
+	private final Class<T> clz;
 
 	private RedisManager redisManager;
 
-	private String proxyQueueKey;
-
-	private String queueKey;
-
-	private String doneKey;
-
-	private String errQueueKey;
-
-	private Class<T> clz;
-
-	public RedisWorkSpace(RedisManager redisManager, String workSpaceName, Class<T> clz) {
+	public RedisWorkSpace(RedisManager redisManager,String workSpaceName, Class<T> clz) {
 		Objects.requireNonNull(redisManager, "redisManager must not be null");
 		Objects.requireNonNull(workSpaceName, "workSpaceName must not be null");
 		Objects.requireNonNull(clz, "clz must not be null");
@@ -68,8 +68,32 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 		Objects.requireNonNull(data, "data must not be null");
 		redisManager.lock(queueKey);
 		try {
+			T oldData = redisManager.hget(queueKey, data.getKey(), clz);
+			/**
+			 * 检查队列是否存在一样的key的数据，如果不存在那么将key 添加(rpush)
+			 */
+			if (null == oldData) {
+				redisManager.rpush(proxyQueueKey, data.getKey());
+			}
+			/**
+			 * hset 数据
+			 */
 			redisManager.hset(queueKey, data.getKey(), data);
+			return true;
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			redisManager.unlock(queueKey);
+		}
+	}
+	
+	@Override
+	public boolean errRetryPush(T data){
+		Objects.requireNonNull(data, "data must not be null");
+		redisManager.lock(queueKey);
+		try {
 			redisManager.rpush(proxyQueueKey, data.getKey());
+			redisManager.hset(queueKey, data.getKey(), data);
 			return true;
 		} catch (Exception e) {
 			throw e;
@@ -102,7 +126,7 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 					} else {
 						// 如果dataKey==null的话，并且queueKeyLlen>0的话,那么启动队列修复
 						int queueKeyLlen = redisManager.hllen(queueKey);
-						if (queueKeyLlen>0) {
+						if (queueKeyLlen > 0) {
 							String cursorStr = "0";
 							Map<String, T> map = new HashMap<>();
 							do {

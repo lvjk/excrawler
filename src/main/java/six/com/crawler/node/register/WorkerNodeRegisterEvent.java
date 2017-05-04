@@ -30,6 +30,7 @@ public class WorkerNodeRegisterEvent extends NodeRegisterEvent {
 		try {
 			Node masterNode = clusterManager.getMasterNode();
 			if (null != masterNode) {
+				unRegister(clusterManager, zKClient);
 				byte[] data = JavaSerializeUtils.serialize(getCurrentNode());
 				zKClient.create()
 						.creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(ZooKeeperPathUtils
@@ -50,9 +51,13 @@ public class WorkerNodeRegisterEvent extends NodeRegisterEvent {
 
 	@Override
 	public void unRegister(ClusterManager clusterManager, CuratorFramework zKClient) {
+		String workerNodePath = ZooKeeperPathUtils.getWorkerNodePath(getCurrentNode().getClusterName(),
+				getCurrentNode().getName());
 		try {
-			zKClient.delete().forPath(ZooKeeperPathUtils.getWorkerNodePath(getCurrentNode().getClusterName(),
-					getCurrentNode().getName()));
+			if (checkIsRegister(zKClient, workerNodePath)) {
+				zKClient.delete().forPath(workerNodePath);
+			}
+
 		} catch (Exception e) {
 			log.error("", e);
 		}

@@ -11,8 +11,8 @@ import org.slf4j.LoggerFactory;
 import okhttp3.Dispatcher;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import six.com.crawler.constants.JobConTextConstants;
 import six.com.crawler.entity.HttpProxy;
+import six.com.crawler.entity.JobParamKeys;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.PageType;
 import six.com.crawler.exception.AbstractHttpException;
@@ -39,9 +39,9 @@ public class OkHttpDowner extends AbstractDowner {
 		super(worker);
 		httpClient = worker.getManager().getHttpClient();
 		
-		int httpTimeout=worker.getJob().getParamInt(JobConTextConstants.HTTP_CONNECT_TIMEOUT,JobConTextConstants.DEFAULT_HTTP_CONNECT_TIMEOUT);
-		int writeTimeout=worker.getJob().getParamInt(JobConTextConstants.HTTP_WRITE_TIMEOUT,JobConTextConstants.DEFAULT_HTTP_WRITE_TIMEOUT);
-		int readTimeout=worker.getJob().getParamInt(JobConTextConstants.HTTP_READ_TIMEOUT,JobConTextConstants.DEFAULT_HTTP_READ_TIMEOUT);
+		int httpTimeout=worker.getJob().getParamInt(JobParamKeys.HTTP_CONNECT_TIMEOUT,JobParamKeys.DEFAULT_HTTP_CONNECT_TIMEOUT);
+		int writeTimeout=worker.getJob().getParamInt(JobParamKeys.HTTP_WRITE_TIMEOUT,JobParamKeys.DEFAULT_HTTP_WRITE_TIMEOUT);
+		int readTimeout=worker.getJob().getParamInt(JobParamKeys.HTTP_READ_TIMEOUT,JobParamKeys.DEFAULT_HTTP_READ_TIMEOUT);
 		
 		OkHttpClient.Builder okHttpClientBuilder = new OkHttpClient.Builder();
 		okHttpClientBuilder.sslSocketFactory(MX509TrustManager.getSSLSocketFactory(),

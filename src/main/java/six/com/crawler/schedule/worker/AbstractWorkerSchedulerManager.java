@@ -27,7 +27,7 @@ public abstract class AbstractWorkerSchedulerManager extends AbstractSchedulerMa
 
 	protected abstract void doInit();
 
-	protected static String getOperationJobLockPath(String jobName) {
+	protected  String getOperationJobLockPath(String jobName) {
 		String path = "workerSchedulerManager_operation_" + jobName;
 		return path;
 	}
@@ -58,4 +58,5 @@ public abstract class AbstractWorkerSchedulerManager extends AbstractSchedulerMa
 
 	@RpcService(name = "stopAll")
 	public abstract void stopAll(DispatchType dispatchType);
+	
 }

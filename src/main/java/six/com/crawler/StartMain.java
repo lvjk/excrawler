@@ -34,28 +34,52 @@ import six.com.crawler.node.ClusterManager;
  *       <p>
  *       数据存储层
  *       </p>
- *     
- *    <p> 人为触发任务------</p>
- *    <p>                |-->主节点执行任务,在缓存中初始化任务执行信息--->主节点计算出执行任务的节点List---->call工作节点执行任务---></p>
- *    <p> 定时触发任务------</p>
- *       
- *       
- *    <p>---->工作节点接收到主节点执行任务的信号--->工作节点创建worker--->工作节点运行worker--->通知主节点worker运行---></p>
- *     
- *    <p>---->主节点接收到工作节点worker运行信息，并登记运行信息---></p>
- *     
- *                   <p>  --->工作空间处理数据为空--->任务完成</p>
- *    <p>---->worker运行--->停止                                                              ----工作节点worker通知主节点,worker运行结束---> </p>  
- *                   <p>  --->手动停止------------->任务停止 </p>  
- *     
- *                                                               <p> --->没有全部结束，不做任何处理  </p>
- *    <p>---->主节点接收到工作节点worker运行结束信号--->检查任务的全部worker是否结束</p>
- *                                                                
- *     
- *    <p>---->全部结束，统计各worker的运行信息，并生成运行任务运行记录入库，删除缓存中任务运行记录---></p>
- *    
- *    <p>---->如果任务是完成结束的话,那么检查检查任务是否有下一个执行任务 </p>
- *       
+ * 
+ *       <p>
+ *       人为触发任务------
+ *       </p>
+ *       <p>
+ *       |-->主节点执行任务,在缓存中初始化任务执行信息--->主节点计算出执行任务的节点List---->call工作节点执行任务--->
+ *       </p>
+ *       <p>
+ *       定时触发任务------
+ *       </p>
+ * 
+ * 
+ *       <p>
+ * 		---->工作节点接收到主节点执行任务的信号--->工作节点创建worker--->工作节点运行worker--->通知主节点worker运行--->
+ *       </p>
+ * 
+ *       <p>
+ * 		---->主节点接收到工作节点worker运行信息，并登记运行信息--->
+ *       </p>
+ * 
+ *       <p>
+ *       --->工作空间处理数据为空--->任务完成
+ *       </p>
+ *       <p>
+ * 		---->worker运行--->停止 ----工作节点worker通知主节点,worker运行结束--->
+ *       </p>
+ *       <p>
+ *       --->手动停止------------->任务停止
+ *       </p>
+ * 
+ *       <p>
+ *       --->没有全部结束，不做任何处理
+ *       </p>
+ *       <p>
+ * 		---->主节点接收到工作节点worker运行结束信号--->检查任务的全部worker是否结束
+ *       </p>
+ * 
+ * 
+ *       <p>
+ * 		---->全部结束，统计各worker的运行信息，并生成运行任务运行记录入库，删除缓存中任务运行记录--->
+ *       </p>
+ * 
+ *       <p>
+ * 		---->如果任务是完成结束的话,那么检查检查任务是否有下一个执行任务
+ *       </p>
+ * 
  */
 @ComponentScan
 @Configuration
@@ -76,15 +100,15 @@ public class StartMain extends WebMvcConfigurerAdapter {
 	}
 
 	public static void main(String[] args) {
-		String spiderHome = null;
+		String homePath = null;
 		if (args == null || args.length == 0) {
-			System.out.println("please set spider home");
-			log.info("please set spider home");
+			System.out.println("please set homePath");
+			log.info("please set homePath");
 		} else {
-			spiderHome = args[0];
-			System.out.println("set spider home:" + spiderHome);
-			log.info("set spider home:" + spiderHome);
-			SpringApplication.run(StartMain.class, spiderHome);
+			homePath = args[0];
+			System.out.println("set homePath:" + homePath);
+			log.info("set homePath:" + homePath);
+			SpringApplication.run(StartMain.class, homePath);
 		}
 	}
 

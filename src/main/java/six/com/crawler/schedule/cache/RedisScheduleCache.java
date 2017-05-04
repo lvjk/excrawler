@@ -3,9 +3,7 @@ package six.com.crawler.schedule.cache;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import java.util.Set;
 
 import six.com.crawler.dao.RedisManager;
 import six.com.crawler.entity.Job;
@@ -17,41 +15,46 @@ import six.com.crawler.entity.WorkerSnapshot;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年4月14日 下午5:00:51
  */
-@Component
 public class RedisScheduleCache implements ScheduleCache {
 
-	@Autowired
 	private RedisManager redisManager;
+
+	private RedisCacheKeyHelper redisCacheKeyHelper;
+
+	public RedisScheduleCache(RedisManager redisManager, String basePreKey) {
+		this.redisManager = redisManager;
+		redisCacheKeyHelper = new RedisCacheKeyHelper(basePreKey);
+	}
 
 	@Override
 	public Job getJob(String jobName) {
-		String jobskey = RedisCacheKeyUtils.getJobsKey();
+		String jobskey = redisCacheKeyHelper.getJobsKey();
 		Job job = getRedisManager().hget(jobskey, jobName, Job.class);
 		return job;
 	}
 
 	@Override
 	public void setJob(Job job) {
-		String jobskey = RedisCacheKeyUtils.getJobsKey();
+		String jobskey = redisCacheKeyHelper.getJobsKey();
 		getRedisManager().hset(jobskey, job.getName(), job);
 	}
 
 	@Override
 	public void delJob(String jobName) {
-		String jobskey = RedisCacheKeyUtils.getJobsKey();
+		String jobskey = redisCacheKeyHelper.getJobsKey();
 		getRedisManager().hdel(jobskey, jobName);
 	}
 
 	@Override
 	public JobSnapshot getJobSnapshot(String jobName) {
-		String jobSnapshotskeyskey = RedisCacheKeyUtils.getJobSnapshotsKey();
+		String jobSnapshotskeyskey = redisCacheKeyHelper.getJobSnapshotsKey();
 		JobSnapshot jobSnapshot = getRedisManager().hget(jobSnapshotskeyskey, jobName, JobSnapshot.class);
 		return jobSnapshot;
 	}
 
 	@Override
 	public List<JobSnapshot> getJobSnapshots() {
-		String jobSnapshotskeyskey = RedisCacheKeyUtils.getJobSnapshotsKey();
+		String jobSnapshotskeyskey = redisCacheKeyHelper.getJobSnapshotsKey();
 		Map<String, JobSnapshot> findMap = getRedisManager().hgetAll(jobSnapshotskeyskey, JobSnapshot.class);
 		return new ArrayList<>(findMap.values());
 	}
@@ -59,9 +62,9 @@ public class RedisScheduleCache implements ScheduleCache {
 	@Override
 	public void setJobSnapshot(JobSnapshot jobSnapshot) {
 		String jobName = jobSnapshot.getName();
-		String jobSnapshotskey = RedisCacheKeyUtils.getJobSnapshotsKey();
-		String workerkey = RedisCacheKeyUtils.getWorkerSnapshotsKey(jobName);
-		String jobWorkerSerialNumberkey = RedisCacheKeyUtils.getWorkerSerialNumbersKey(jobName);
+		String jobSnapshotskey = redisCacheKeyHelper.getJobSnapshotsKey();
+		String workerkey = redisCacheKeyHelper.getWorkerSnapshotsKey(jobName);
+		String jobWorkerSerialNumberkey = redisCacheKeyHelper.getWorkerSerialNumbersKey(jobName);
 		getRedisManager().lock(jobSnapshotskey);
 		try {
 			// 先删除 过期job信息
@@ -79,19 +82,32 @@ public class RedisScheduleCache implements ScheduleCache {
 
 	@Override
 	public void updateJobSnapshot(JobSnapshot jobSnapshot) {
-		String jobSnapshotskey = RedisCacheKeyUtils.getJobSnapshotsKey();
+		String jobSnapshotskey = redisCacheKeyHelper.getJobSnapshotsKey();
 		getRedisManager().hset(jobSnapshotskey, jobSnapshot.getName(), jobSnapshot);
 	}
 
 	@Override
 	public void delJobSnapshot(String jobName) {
-		String jobSnapshotskey = RedisCacheKeyUtils.getJobSnapshotsKey();
+		String jobSnapshotskey = redisCacheKeyHelper.getJobSnapshotsKey();
 		getRedisManager().hdel(jobSnapshotskey, jobName);
 	}
 
 	@Override
+	public String newWorkerNameByJob(String jobName, String currentNodeName) {
+		String key = redisCacheKeyHelper.getWorkerSerialNumbersKey(jobName);
+		Long sernum = getRedisManager().incr(key);
+		int serialNumber = sernum.intValue();
+		StringBuilder sbd = new StringBuilder();
+		sbd.append(jobName).append("_");
+		sbd.append("worker_");
+		sbd.append(currentNodeName).append("_");
+		sbd.append(serialNumber);
+		return sbd.toString();
+	}
+
+	@Override
 	public List<WorkerSnapshot> getWorkerSnapshots(String jobName) {
-		String workerSnapshotkey = RedisCacheKeyUtils.getWorkerSnapshotsKey(jobName);
+		String workerSnapshotkey = redisCacheKeyHelper.getWorkerSnapshotsKey(jobName);
 		List<WorkerSnapshot> workerSnapshots = new ArrayList<>();
 		Map<String, WorkerSnapshot> workerInfosMap = getRedisManager().hgetAll(workerSnapshotkey, WorkerSnapshot.class);
 		workerSnapshots.addAll(workerInfosMap.values());
@@ -105,22 +121,26 @@ public class RedisScheduleCache implements ScheduleCache {
 
 	@Override
 	public void updateWorkerSnapshot(WorkerSnapshot workerSnapshot) {
-		String workerSnapshotKey = RedisCacheKeyUtils.getWorkerSnapshotsKey(workerSnapshot.getJobName());
+		String workerSnapshotKey = redisCacheKeyHelper.getWorkerSnapshotsKey(workerSnapshot.getJobName());
 		getRedisManager().hset(workerSnapshotKey, workerSnapshot.getName(), workerSnapshot);
 	}
 
 	@Override
 	public void delWorkerSnapshots(String jobName) {
-		String WorkerSnapshotkey = RedisCacheKeyUtils.getWorkerSnapshotsKey(jobName);
+		String WorkerSnapshotkey = redisCacheKeyHelper.getWorkerSnapshotsKey(jobName);
 		getRedisManager().del(WorkerSnapshotkey);
+	}
+
+	@Override
+	public void clear() {
+		String patternKey = redisCacheKeyHelper.getResetPreKey() + "*";
+		Set<String> keys = getRedisManager().keys(patternKey);
+		for (String key : keys) {
+			getRedisManager().del(key);
+		}
 	}
 
 	public RedisManager getRedisManager() {
 		return redisManager;
 	}
-
-	public void setRedisManager(RedisManager redisManager) {
-		this.redisManager = redisManager;
-	}
-
 }

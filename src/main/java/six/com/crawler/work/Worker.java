@@ -1,5 +1,6 @@
 package six.com.crawler.work;
 
+import six.com.crawler.configure.SpiderConfigure;
 import six.com.crawler.entity.Job;
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.WorkerSnapshot;
@@ -11,6 +12,8 @@ import six.com.crawler.schedule.worker.WorkerSchedulerManager;
  */
 public interface Worker extends WorkerLifecycle {
 
+	void bindConfigure(SpiderConfigure configure);
+	
 	void bindWorkerSnapshot(WorkerSnapshot workerSnapshot);
 
 	void bindManager(WorkerSchedulerManager manager);
@@ -25,18 +28,21 @@ public interface Worker extends WorkerLifecycle {
 	public void init();
 
 	/**
-	 * 获取 manager
-	 * 
-	 * @return
-	 */
-	WorkerSchedulerManager getManager();
-
-	/**
 	 * 获取 worker name
 	 * 
 	 * @return
 	 */
 	String getName();
+	
+	
+	SpiderConfigure getConfigure();
+	
+	/**
+	 * 获取 manager
+	 * 
+	 * @return
+	 */
+	WorkerSchedulerManager getManager();
 
 	/**
 	 * 获取worker 快照

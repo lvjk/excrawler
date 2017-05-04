@@ -1,11 +1,11 @@
-package six.com.crawler.constants;
+package six.com.crawler.entity;
 
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年9月12日 下午6:05:04
  */
-public interface JobConTextConstants {
+public interface JobParamKeys {
 
 	// 站点 code key
 	String SITE_CODE = "siteCode";
@@ -80,4 +80,5 @@ public interface JobConTextConstants {
 	String UPDATE_SQL_TEMPLATE = "updateSqlTemplate";
 
 	String DEL_SQL_TEMPLATE = "delSqlTemplate";
+	
 }

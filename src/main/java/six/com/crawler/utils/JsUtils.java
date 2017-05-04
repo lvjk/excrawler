@@ -48,6 +48,24 @@ public class JsUtils {
 		}
 		return result;
 	}
+	
+	/**
+	 * 计算 结果 "2+2"="4"; "2-2"="0"; "2*2"="4"; "2/2"="1"; "二二"=defaultResult;
+	 * 
+	 * @param js
+	 * @param defaultResult
+	 * @return
+	 */
+	public static String evalJs(String js) {
+		Object ob = null;
+		String result = null;
+		try {
+			result = (ob = engine.eval(js)) != null ? ob.toString() : result;
+		} catch (ScriptException e) {
+			// 忽略
+		}
+		return result;
+	}
 
 	public static String convert(String js) {
 		for (String key : arithmeticSymbolMap.keySet()) {

@@ -4,19 +4,22 @@ package six.com.crawler.node;
  * @author 作者
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年3月16日 上午11:44:14
+ * 
+ * zookeeper path 工具类  路径规则 /应用名/集群名/服务名
+ * 
+ *   
+ * 
  */
 public class ZooKeeperPathUtils {
 
 	public static String EXCRAWLER_ROOT_PATH = "/excrawler";
-
-	public static String EXCRAWLER_CLUSTER_ROOT_PATH = "/excrawler";
 
 	public static String getRootPath() {
 		return EXCRAWLER_ROOT_PATH;
 	}
 
 	public static String getClusterRootPath(String clusterName) {
-		return EXCRAWLER_ROOT_PATH + "/" + clusterName;
+		return getRootPath() + "/" + clusterName;
 	}
 
 	public static String getMasterNodesPath(String clusterName) {

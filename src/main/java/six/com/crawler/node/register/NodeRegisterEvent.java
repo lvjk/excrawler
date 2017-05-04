@@ -28,6 +28,16 @@ public abstract class NodeRegisterEvent implements Watcher {
 
 	public abstract void unRegister(ClusterManager clusterManager, CuratorFramework zKClient);
 
+	public boolean checkIsRegister(CuratorFramework zKClient, String path) {
+		boolean isRegister = false;
+		try {
+			isRegister = null != zKClient.checkExists().forPath(path);
+		} catch (Exception e) {
+			log.error("", e);
+		}
+		return isRegister;
+	}
+
 	Node getCurrentNode() {
 		return currentNode;
 	}

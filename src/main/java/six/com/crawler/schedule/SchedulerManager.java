@@ -44,7 +44,7 @@ public interface SchedulerManager {
 	 * @param job
 	 * @return
 	 */
-	public void suspend(DispatchType dispatchType,String jobName);
+	public void suspend(DispatchType dispatchType, String jobName);
 
 	/**
 	 * 继续任务
@@ -52,7 +52,7 @@ public interface SchedulerManager {
 	 * @param job
 	 * @return
 	 */
-	public void goOn(DispatchType dispatchType,String jobName);
+	public void goOn(DispatchType dispatchType, String jobName);
 
 	/**
 	 * 停止任务
@@ -60,7 +60,7 @@ public interface SchedulerManager {
 	 * @param job
 	 * @return
 	 */
-	public void stop(DispatchType dispatchType,String jobName);
+	public void stop(DispatchType dispatchType, String jobName);
 
 	/**
 	 * 停止所有任务
@@ -70,13 +70,21 @@ public interface SchedulerManager {
 	 */
 	public void stopAll(DispatchType dispatchType);
 
-	public void shutdown();
-
 	/**
-	 * job worker 是否全部waited
+	 * job下的worker是否全部stop
 	 * 
 	 * @param jobName
 	 * @return
 	 */
-	public boolean workerIsAllWaited(String jobName);
+	public boolean isStop(String jobName);
+
+	/**
+	 * job下的worker是否全部finish
+	 * 
+	 * @param jobName
+	 * @return
+	 */
+	public boolean isFinish(String jobName);
+
+	public void shutdown();
 }
