@@ -30,20 +30,6 @@ public class NbCnnbfdcProjectListWorker extends AbstractCrawlWorker {
 		if(!(helper.isDownloadState() && helper.isUseRawData())){
 			Page firstPage = new Page(getSite().getCode(), 1, firstUrl, firstUrl);
 			firstPage.setMethod(HttpMethod.GET);
-			getDowner().down(firstPage);
-			Element pageCountElement = firstPage.getDoc().select(pageCountCss).first();
-			if (null == pageCountElement) {
-				throw new RuntimeException("don't find pageCountElement:" + pageCountCss);
-			} else {
-				String endPageUrl = pageCountElement.attr("href");
-				String pageCountStr = StringUtils.remove(endPageUrl, "http://newhouse.cnnbfdc.com/lpxx.aspx?p=");
-				if (NumberUtils.isNumber(pageCountStr)) {
-					pageCount = Integer.valueOf(pageCountStr);
-				} else {
-					throw new RuntimeException("pageCount isn't num:" + pageCountStr);
-				}
-			}
-
 			getWorkQueue().clearDoing();
 			getWorkQueue().push(firstPage);
 		}
@@ -56,14 +42,27 @@ public class NbCnnbfdcProjectListWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void beforeExtract(Page doingPage) {
-
+		if(pageCount!=-1){
+			Element pageCountElement = doingPage.getDoc().select(pageCountCss).first();
+			if (null == pageCountElement) {
+				throw new RuntimeException("don't find pageCountElement:" + pageCountCss);
+			} else {
+				String endPageUrl = pageCountElement.attr("href");
+				String pageCountStr = StringUtils.remove(endPageUrl, "http://newhouse.cnnbfdc.com/lpxx.aspx?p=");
+				if (NumberUtils.isNumber(pageCountStr)) {
+					pageCount = Integer.valueOf(pageCountStr);
+				} else {
+					throw new RuntimeException("pageCount isn't num:" + pageCountStr);
+				}
+			}
+		}
 	}
 
 	@Override
 	protected void afterExtract(Page doingPage, ResultContext resultContext) {
 
 	}
-
+	
 	@Override
 	protected void onComplete(Page doingPage, ResultContext resultContext) {
 		List<String> projectUrls = resultContext.getExtractResult("projectUrl");
