@@ -1,6 +1,11 @@
 package six.com.crawler.tools;
 
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -16,12 +21,11 @@ import six.com.crawler.http.HttpMethod;
 import six.com.crawler.utils.ArrayListUtils;
 
 /**
- * 任务队列工具
+ * 
  * @author weijiyong@tospur.com
  *
  */
-public class JobQueueTools {
-	
+public class JobQueueBatchTools {
 	private static String workSpaceName = "nb_cnnbfdc_project_info";
 	private static String queueKey = "spider_redis_store_page_queue_" + workSpaceName;
 	private static String proxyQueueKey = "spider_redis_store_page_proxy_queue_" + workSpaceName;
@@ -29,15 +33,14 @@ public class JobQueueTools {
 	private static String hostStr = "172.18.84.44:6379;172.18.84.45:6379;172.18.84.46:6379";
 	
 	public static void main(String[] args) {
-		if(args.length<10){
-			System.err.println("Use : JobQueueTools -jobName ${jobName} -redisHosts ${redisHosts} -siteCode ${siteCode} -url ${url} -httpMethod ${httpMethod} [-params ${params} -metamMap ${metaMap}]");
+		if(args.length<8){
+			System.err.println("Use : JobQueueTools -jobName ${jobName} -redisHosts ${redisHosts} -siteCode ${siteCode} -fileName ${fileName}");
 		}
 		
 		String siteCode=null;
 		String url=null;
 		String method=null;
-		String metaMapStr=null;
-		String paramStr=null;
+		String fileName =null;
 		for (int i = 0; i < args.length; i++) {
 			if(args[i].equals("-jobName")){
 				workSpaceName=args[i+1];
@@ -47,14 +50,8 @@ public class JobQueueTools {
 				hostStr=args[i+1];
 			}else if(args[i].equals("-siteCode")){
 				siteCode=args[i+1];
-			}else if(args[i].equals("-url")){
-				url=args[i+1];
-			}else if(args[i].equals("-method")){
-				method=args[i+1];
-			}else if(args[i].equals("-metaMap")){
-				metaMapStr=args[i+1];
-			}else if(args[i].equals("-params")){
-				paramStr=args[i+1];
+			}else if(args[i].equals("-fileName")){
+				fileName=args[i+1];
 			}
 		}
 		
@@ -102,30 +99,41 @@ public class JobQueueTools {
 		}
 		Integer timeout = 200;
 		redisManager.setJedisCluster(new EnhanceJedisCluster(set, timeout, config));
-		
-		Page page=new Page(siteCode,1,url,url);
-		if(method.equals(HttpMethod.GET.value)){
-			page.setMethod(HttpMethod.GET);
-		}else{
-			page.setMethod(HttpMethod.POST);
-			if(null!=paramStr){
-				Map<String,Object> params=(Map<String, Object>) JSON.parseObject(paramStr);
-				page.setParameters(params);
-			}
-		}
-		
-		if(null!=metaMapStr){
-			Map<String,Object> params=(Map<String, Object>) JSON.parseObject(metaMapStr);
-			for (String key:params.keySet()) {
-				page.getMetaMap().put(key, ArrayListUtils.asList(params.get(key).toString()));
-			}
-		}
+		List<String> lines=null;
 		
 		try {
-			redisManager.hset(queueKey, page.getKey(), page);
-			redisManager.rpush(proxyQueueKey, page.getKey());
-		} catch (Exception e) {
-			throw e;
-		} 
+			lines=Files.readAllLines(Paths.get(fileName),  
+			        Charset.defaultCharset());
+			
+			for(String line:lines){
+				JobQueueParam job=JSON.parseObject(line,JobQueueParam.class);
+				
+				url=job.getUrl();
+				method=job.getMethod();
+				
+				Page page=new Page(siteCode,1,url,url);
+				if(method.equals(HttpMethod.GET.value)){
+					page.setMethod(HttpMethod.GET);
+				}else{
+					page.setMethod(HttpMethod.POST);
+					if(null!=job.getParams()){
+						page.setParameters(job.getParams());
+					}
+				}
+				
+				if(null!=job.getMetas()){
+					Map<String,Object> params=job.getMetas();
+					for (String key:params.keySet()) {
+						page.getMetaMap().put(key, ArrayListUtils.asList(params.get(key).toString()));
+					}
+				}
+				
+				redisManager.hset(queueKey, page.getKey(), page);
+				redisManager.rpush(proxyQueueKey, page.getKey());
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}  
 	}
 }
