@@ -6,12 +6,19 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.alibaba.fastjson.JSON;
+
 import six.com.crawler.admin.service.WorkSpaceService;
+import six.com.crawler.entity.Page;
 import six.com.crawler.entity.WorkSpaceInfo;
+import six.com.crawler.http.HttpMethod;
+import six.com.crawler.utils.ArrayListUtils;
 
 /**
  * @author 作者
@@ -67,6 +74,35 @@ public class WorkSpaceApi extends BaseApi {
 	@ResponseBody
 	public ResponseMsg<String> againDoErrQueue(@PathVariable("queueName") String queueName) {
 		return workQueueService.againDoErrQueue(queueName);
+	}
+	
+	@RequestMapping(value = "/crawler/tools/addDoingQueue/{workSpaceName}", method = RequestMethod.POST)
+	@ResponseBody
+	public ResponseMsg<String> addDoingQueue(@PathVariable("workSpaceName") String workSpaceName, @RequestBody Map<String,Object> requestBoby) {
+		String siteCode = requestBoby.get("siteCode").toString();
+		String url = requestBoby.get("url").toString();
+		String httpMethod = requestBoby.get("httpMethod").toString();
+		String params = requestBoby.get("params").toString();
+		String meta = requestBoby.get("meta").toString();
+		Page page=new Page(siteCode,1,url,url);
+		if(httpMethod.equals(HttpMethod.GET.value)){
+			page.setMethod(HttpMethod.GET);
+		}else{
+			page.setMethod(HttpMethod.POST);
+			if(null!=params&&params.length()>0){
+				Map<String,Object> paramsMap=(Map<String, Object>) JSON.parseObject(params);
+				page.setParameters(paramsMap);
+			}
+		}
+		
+		if(null!=meta&&meta.length()>0){
+			Map<String,Object> metaMap=(Map<String, Object>) JSON.parseObject(meta);
+			for (String key:metaMap.keySet()) {
+				page.getMetaMap().put(key, ArrayListUtils.asList(metaMap.get(key).toString()));
+			}
+		}
+		
+		return workQueueService.AddDoing(workSpaceName, page);
 	}
 
 }
