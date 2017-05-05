@@ -182,6 +182,7 @@ public abstract class AbstractExtracter implements Extracter {
 			List<String> workerNameList = new ArrayList<>(primaryResultSize);
 			List<String> collectionDateList = new ArrayList<>(primaryResultSize);
 			List<String> originUrlList = new ArrayList<>(primaryResultSize);
+			List<String> refererUrlList=new ArrayList<>(primaryResultSize);
 			String id = null;
 			for (int i = 0; i < primaryResultSize; i++) {
 				Map<String, String> dataMap = new HashMap<>();
@@ -194,6 +195,7 @@ public abstract class AbstractExtracter implements Extracter {
 				dataMap.put(Extracter.DEFAULT_RESULT_ID, id);
 				dataMap.put(Extracter.DEFAULT_RESULT_COLLECTION_DATE, nowTime);
 				dataMap.put(Extracter.DEFAULT_RESULT_ORIGIN_URL, doingPage.getFinalUrl());
+				dataMap.put(Extracter.DEFAULT_REAULT_REFERER_URL, doingPage.getReferer());
 
 				idList.add(id);
 				workerNameList.add(workerName);
@@ -217,10 +219,12 @@ public abstract class AbstractExtracter implements Extracter {
 					originUrlList.add(doingPage.getFinalUrl());
 				}
 				resultContext.addoutResult(dataMap);
+				refererUrlList.add(doingPage.getReferer());
 			}
 			resultContext.addExtractResult(Extracter.DEFAULT_RESULT_ID, idList);
 			resultContext.addExtractResult(Extracter.DEFAULT_RESULT_COLLECTION_DATE, collectionDateList);
 			resultContext.addExtractResult(Extracter.DEFAULT_RESULT_ORIGIN_URL, originUrlList);
+			resultContext.addExtractResult(Extracter.DEFAULT_REAULT_REFERER_URL, refererUrlList);
 		}
 	}
 

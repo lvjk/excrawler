@@ -33,6 +33,11 @@ public interface Extracter {
 	 * 系统默认 数据源url 字段
 	 */
 	public static final String DEFAULT_RESULT_ORIGIN_URL = "originUrl";
+	
+	/**
+	 * 引用URL
+	 */
+	public static final String DEFAULT_REAULT_REFERER_URL="refererUrl";
 
 	public static final Set<String> DEFAULT_RESULT_KEY_SET = new HashSet<String>() {
 		
@@ -41,6 +46,7 @@ public interface Extracter {
 			DEFAULT_RESULT_KEY_SET.add(DEFAULT_RESULT_ID);
 			DEFAULT_RESULT_KEY_SET.add(DEFAULT_RESULT_COLLECTION_DATE);
 			DEFAULT_RESULT_KEY_SET.add(DEFAULT_RESULT_ORIGIN_URL);
+			DEFAULT_RESULT_KEY_SET.add(DEFAULT_REAULT_REFERER_URL);
 		}
 	};
 
