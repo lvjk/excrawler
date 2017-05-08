@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.http.HttpMethod;
+import six.com.crawler.utils.ArrayListUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.WorkerLifecycleState;
 import six.com.crawler.work.space.RedisWorkSpace;
@@ -84,11 +85,14 @@ public class DLDCJZProjectListWorker extends AbstractCrawlWorker{
 	@Override
 	protected void onComplete(Page doingPage, ResultContext resultContext) {
 		// TODO Auto-generated method stub
-		List<String> projectInfoUrls = resultContext.getExtractResult("dldc_jz_project_info");
+		List<String> projectInfoUrls = resultContext.getExtractResult("projectUrl");
 		if (null != projectInfoUrls) {
 			for (String projectInfoUrl : projectInfoUrls) {
 				Page projectInfo = new Page(getSite().getCode(), 1, projectInfoUrl, projectInfoUrl);
 				projectInfo.setReferer(doingPage.getFinalUrl());
+				
+				String projId=projectInfoUrl.substring(projectInfoUrl.indexOf("ysxkid="), projectInfoUrl.length());
+				projectInfo.getMetaMap().put("projectId", ArrayListUtils.asList(projId));
 				projectInfoQueue.push(projectInfo);
 			}
 		}
