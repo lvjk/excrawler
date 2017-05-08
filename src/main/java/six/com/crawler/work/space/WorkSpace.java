@@ -14,7 +14,7 @@ public interface WorkSpace<T extends WorkSpaceData> {
 	 * 
 	 * @return
 	 */
-	public String getName();
+	String getName();
 
 	/**
 	 * 批量获取处理数据 当传入cursorStr为blank或者"0"的话，默认为新的查询,
@@ -24,7 +24,7 @@ public interface WorkSpace<T extends WorkSpaceData> {
 	 * @param cursorStr
 	 * @return
 	 */
-	public String batchGetDoingData(List<T> resutList, String cursorStr);
+	String batchGetDoingData(List<T> resutList, String cursorStr);
 
 	/**
 	 * 批量获取异常数据 当传入cursorStr为blank或者"0"的话，默认为新的查询,
@@ -34,7 +34,7 @@ public interface WorkSpace<T extends WorkSpaceData> {
 	 * @param cursorStr
 	 * @return
 	 */
-	public String batchGetErrData(List<T> resutList, String cursorStr);
+	String batchGetErrData(List<T> resutList, String cursorStr);
 
 	/**
 	 * 将数据 推到工作队列中
@@ -42,16 +42,15 @@ public interface WorkSpace<T extends WorkSpaceData> {
 	 * @param data
 	 * @return 成功或失败
 	 */
-	public boolean push(T data);
-	
-	
+	boolean push(T data);
+
 	/**
 	 * 将数据 推到工作队列中
 	 * 
 	 * @param data
 	 * @return 成功或失败
 	 */
-	public boolean errRetryPush(T data);
+	boolean errRetryPush(T data);
 
 	/**
 	 * 从工作队列拉取数据
@@ -61,29 +60,28 @@ public interface WorkSpace<T extends WorkSpaceData> {
 	 * 
 	 * @return 有数据返回队列头数据，否则返回null
 	 */
-	public T pull();
+	T pull();
 
 	/**
 	 * 确认pull出来得数据被成功处理，然后删除实际数据
 	 * 
 	 * @param data
 	 */
-	public void ack(T data);
-	
-	
-	public void repair();
+	void ack(T data);
+
+	void repair();
 
 	/**
 	 * 用来保存处理不了的数据
 	 * 
 	 * @param data
 	 */
-	public void addErr(T data);
+	void addErr(T data);
 
 	/**
 	 * 将异常数据再一次添加进工作队列
 	 */
-	public void againDoErrQueue();
+	void againDoErrQueue();
 
 	/**
 	 * 判断key是否被处理过
@@ -91,49 +89,49 @@ public interface WorkSpace<T extends WorkSpaceData> {
 	 * @param key
 	 * @return
 	 */
-	public boolean isDone(String key);
+	boolean isDone(String key);
 
 	/**
 	 * 添加处理过的数据
 	 * 
 	 * @param data
 	 */
-	public void addDone(T data);
+	void addDone(T data);
 
 	/**
 	 * 获取工作队列size
 	 * 
 	 * @return
 	 */
-	public int doingSize();
+	int doingSize();
 
 	/**
 	 * 获取工作异常队列size
 	 * 
 	 * @return
 	 */
-	public int errSize();
+	int errSize();
 
 	/**
 	 * 获取工作处理过的队列size
 	 * 
 	 * @return
 	 */
-	public int doneSize();
+	int doneSize();
 
 	/**
 	 * 清除工作队列
 	 */
-	public void clearDoing();
+	void clearDoing();
 
 	/**
 	 * 清除工作异常队列
 	 */
-	public void clearErr();
+	void clearErr();
 
 	/**
 	 * 清除工作处理过的队列
 	 */
-	public void clearDone();
+	void clearDone();
 
 }

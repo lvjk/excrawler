@@ -223,10 +223,9 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 			workerSnapshot.setLocalNode(getNodeManager().getCurrentNode().getName());
 			workerSnapshot.setName(workerName);
 			workerSnapshot.setWorkerErrMsgs(new ArrayList<WorkerErrMsg>());
-			newJobWorker.bindConfigure(getConfigure());
 			newJobWorker.bindWorkerSnapshot(workerSnapshot);
+			newJobWorker.bindConfigure(getConfigure());
 			newJobWorker.bindManager(this);
-			newJobWorker.bindJobSnapshot(jobSnapshot);
 			newJobWorker.bindJob(job);
 		}
 		return newJobWorker;

@@ -1,6 +1,7 @@
 package six.com.crawler.schedule.cache;
 
 import java.util.List;
+import java.util.Map;
 
 import six.com.crawler.entity.Job;
 import six.com.crawler.entity.JobSnapshot;
@@ -72,6 +73,14 @@ public interface ScheduleCache {
 	public void delJobSnapshot(String jobName);
 
 	
+	
+	public void setJobParam(String jobName,String paramKey,String param);
+	
+	public String getJobParam(String jobName,String paramKey);
+	
+	public Map<String,String> getJobParams(String jobName );
+	
+	public void delJobParam(String jobName);
 	/**
 	 * 通过job 获取一个worker name 名字统一有 前缀 : 节点+job 名字
 	 * +Job类型+WORKER_NAME_PREFIX+当前Job worker的序列号组成

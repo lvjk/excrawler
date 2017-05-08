@@ -15,6 +15,7 @@ import com.alibaba.druid.pool.DruidDataSource;
 
 import six.com.crawler.entity.JobParamKeys;
 import six.com.crawler.entity.JobSnapshot;
+import six.com.crawler.entity.JobSnapshotState;
 import six.com.crawler.utils.DbHelper;
 import six.com.crawler.utils.JobTableUtils;
 import six.com.crawler.work.AbstractWorker;
@@ -43,6 +44,8 @@ public class DataBaseStore extends AbstarctStore {
 	// 处理的结果key
 	private String[] fields;
 
+	private final static String TABLE_KEY = "table";
+
 	public DataBaseStore(AbstractWorker<?> worker) {
 		super(worker);
 		String everySendSizeStr = worker.getJob().getParam(JobParamKeys.BATCH_SIZE);
@@ -64,17 +67,34 @@ public class DataBaseStore extends AbstarctStore {
 		datasource.setUsername(dbUser);
 		datasource.setPassword(dbPasswd);
 		datasource.setMaxActive(1);
-		JobSnapshot jobSnapshot = getAbstractWorker().getJobSnapshot();
-		tableName = jobSnapshot.getTableName();
+		tableName = getWorker().getManager().getScheduleCache().getJobParam(getWorker().getJob().getName(), TABLE_KEY);
+		if (StringUtils.isBlank(tableName)) {
+			String fixedTableName = getWorker().getJob().getParam(JobParamKeys.FIXED_TABLE_NAME);
+			String isSnapshotTable = getWorker().getJob().getParam(JobParamKeys.IS_SNAPSHOT_TABLE);
+			if ("1".equals(isSnapshotTable)) {
+				JobSnapshot lastJobSnapshot = getWorker().getManager().getJobSnapshotDao()
+						.queryLast(getWorker().getJob().getName());
+				if (null != lastJobSnapshot && lastJobSnapshot.getEnumStatus() != JobSnapshotState.FINISHED) {
+					tableName = lastJobSnapshot.getParam(TABLE_KEY);
+				} else {
+					tableName = JobTableUtils.buildJobTableName(fixedTableName,
+							getWorker().getWorkerSnapshot().getJobSnapshotId());
+				}
+			} else {
+				tableName = fixedTableName;
+			}
+			getWorker().getManager().getScheduleCache().setJobParam(getWorker().getJob().getName(), TABLE_KEY,
+					tableName);
+		}
 		insertSqlTemplate = worker.getJob().getParam(JobParamKeys.INSERT_SQL_TEMPLATE);
 		insertSql = JobTableUtils.buildInsertSql(insertSqlTemplate, tableName);
 		String fieldsStr = StringUtils.substringBetween(insertSql, "(", ")");
 		fields = StringUtils.split(fieldsStr, ",");
-		String field=null;
+		String field = null;
 		for (int i = 0; i < fields.length; i++) {
-			field=fields[i];
-			field=StringUtils.trim(field);
-			field=StringUtils.remove(field,"`");
+			field = fields[i];
+			field = StringUtils.trim(field);
+			field = StringUtils.remove(field, "`");
 			fields[i] = StringUtils.trim(field);
 		}
 		createTableSqlTemplate = worker.getJob().getParam(JobParamKeys.CREATE_TABLE_SQL_TEMPLATE);
@@ -152,8 +172,8 @@ public class DataBaseStore extends AbstarctStore {
 	}
 
 	@Override
-	public void close(){
-		if(null!=datasource){
+	public void close() {
+		if (null != datasource) {
 			datasource.close();
 		}
 	}

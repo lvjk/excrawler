@@ -132,6 +132,32 @@ public class RedisScheduleCache implements ScheduleCache {
 	}
 
 	@Override
+	public void setJobParam(String jobName, String paramKey, String param) {
+		String jobParamKey = redisCacheKeyHelper.getJobParamKey(jobName);
+		getRedisManager().hset(jobParamKey, paramKey, param);
+	}
+
+	@Override
+	public String getJobParam(String jobName, String paramKey) {
+		String jobParamKey = redisCacheKeyHelper.getJobParamKey(jobName);
+		String jobParam = getRedisManager().hget(jobParamKey, paramKey, String.class);
+		return jobParam;
+	}
+
+	@Override
+	public Map<String, String> getJobParams(String jobName) {
+		String jobParamKey = redisCacheKeyHelper.getJobParamKey(jobName);
+		Map<String, String> jobParams = getRedisManager().hgetAll(jobParamKey, String.class);
+		return jobParams;
+	}
+
+	@Override
+	public void delJobParam(String jobName) {
+		String jobParamKey = redisCacheKeyHelper.getJobParamKey(jobName);
+		getRedisManager().del(jobParamKey);
+	}
+
+	@Override
 	public void clear() {
 		String patternKey = redisCacheKeyHelper.getResetPreKey() + "*";
 		Set<String> keys = getRedisManager().keys(patternKey);
