@@ -14,12 +14,12 @@ import six.com.crawler.work.store.exception.StoreException;
  * @author six
  * @date 2016年8月26日 上午9:24:48
  */
-public abstract class StoreAbstarct implements Store{
+public abstract class AbstarctStore implements Store{
 
-	final static Logger LOG = LoggerFactory.getLogger(StoreAbstarct.class);
-	private AbstractWorker worker;
+	final static Logger LOG = LoggerFactory.getLogger(AbstarctStore.class);
+	private AbstractWorker<?> worker;
 	
-	public StoreAbstarct(AbstractWorker worker) {
+	public AbstarctStore(AbstractWorker<?> worker) {
 		this.worker = worker;
 	}
 
@@ -39,7 +39,7 @@ public abstract class StoreAbstarct implements Store{
 		return insideStore(resultContext.getOutResults());
 	}
 
-	public AbstractWorker getAbstractWorker() {
+	public AbstractWorker<?> getAbstractWorker() {
 		return worker;
 	}
 

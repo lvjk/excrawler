@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import six.com.crawler.entity.JobParamKeys;
+import six.com.crawler.entity.Page;
 import six.com.crawler.utils.DbHelper;
 import six.com.crawler.utils.JobTableUtils;
 
@@ -32,7 +33,7 @@ public class DataBaseMergeTableWorker extends DataBaseAbstractWorker {
 
 
 	@Override
-	protected void insideWork() throws Exception {
+	protected void insideWork(Page doingPage) throws Exception {
 		if (null != tableNameSuffixs && tableNameSuffixs.size() > 0) {
 			Connection connection = null;
 			try {

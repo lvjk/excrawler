@@ -53,8 +53,8 @@ public class Page implements WorkSpaceData, Serializable {
 	private String charset;// 编码
 
 	private int retryProcess;// 尝试处理次数
-	
-	private int fztRetryProcess;//502尝试重试次数
+
+	private int fztRetryProcess;// 502尝试重试次数
 
 	private DownerType downerType;// 下载器类型
 
@@ -332,6 +332,26 @@ public class Page implements WorkSpaceData, Serializable {
 		return metaMap;
 	}
 
+	public String toString() {
+		String toString=null;
+		if (getMethod().value.equals(HttpMethod.POST.value)) {
+			Map<String, Object> params = getParameters();
+			StringBuilder originUrlBf = new StringBuilder();
+			if (null != params && params.size() > 0) {
+				for (String key : params.keySet()) {
+					originUrlBf.append(key + "=" + params.get(key) + "&");
+				}
+				originUrlBf.delete(originUrlBf.length() - 1, originUrlBf.length());
+			}
+			originUrlBf.append("?post@");
+			originUrlBf.append(getFinalUrl());
+			toString=originUrlBf.toString();
+		} else {
+			toString="get@"+getFinalUrl();
+		}
+		return toString;
+	}
+	
 	@Override
 	public String getKey() {
 		return getPageKey();

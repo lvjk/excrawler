@@ -28,6 +28,7 @@ import six.com.crawler.http.HttpClient;
 import six.com.crawler.node.ClusterManager;
 import six.com.crawler.ocr.ImageDistinguish;
 import six.com.crawler.schedule.AbstractSchedulerManager;
+import six.com.crawler.schedule.worker.AbstractWorkerPlugsManager;
 
 /**
  * @author sixliu E-mail:359852326@qq.com
@@ -40,7 +41,7 @@ import six.com.crawler.schedule.AbstractSchedulerManager;
 @WebIntegrationTest("spider.home:F:/six/git/exCrawler")
 public  class BaseTest extends AbstractJUnit4SpringContextTests {
 
-	protected final static Logger LOG = LoggerFactory.getLogger(BaseTest.class);
+	protected final static Logger log = LoggerFactory.getLogger(BaseTest.class);
 
 	@Autowired
 	public AbstractSchedulerManager jobWorkerManager;
@@ -96,6 +97,9 @@ public  class BaseTest extends AbstractJUnit4SpringContextTests {
 	
 	@Autowired
 	public six.com.crawler.email.QQEmailClient QQEmailClient;
+	
+	@Autowired
+	public AbstractWorkerPlugsManager workerPlugsManager;
 	
 
 	static {

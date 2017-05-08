@@ -20,7 +20,7 @@ import six.com.crawler.dao.RedisManager;
  */
 public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 
-	final static Logger LOG = LoggerFactory.getLogger(RedisWorkSpace.class);
+	final static Logger log = LoggerFactory.getLogger(RedisWorkSpace.class);
 
 	public final static String WORK_PROXY_QUEUE_KEY_PRE = "spider_redis_store_page_proxy_queue_";
 
@@ -46,7 +46,7 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 
 	private RedisManager redisManager;
 
-	public RedisWorkSpace(RedisManager redisManager,String workSpaceName, Class<T> clz) {
+	public RedisWorkSpace(RedisManager redisManager, String workSpaceName, Class<T> clz) {
 		Objects.requireNonNull(redisManager, "redisManager must not be null");
 		Objects.requireNonNull(workSpaceName, "workSpaceName must not be null");
 		Objects.requireNonNull(clz, "clz must not be null");
@@ -79,16 +79,18 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 			 * hset 数据
 			 */
 			redisManager.hset(queueKey, data.getKey(), data);
+			log.info("push workSpace[" + queueKey + "] data:" + data.toString());
 			return true;
 		} catch (Exception e) {
+			log.error("push workSpace[" + queueKey + "] data err:" + data.toString(), e);
 			throw e;
 		} finally {
 			redisManager.unlock(queueKey);
 		}
 	}
-	
+
 	@Override
-	public boolean errRetryPush(T data){
+	public boolean errRetryPush(T data) {
 		Objects.requireNonNull(data, "data must not be null");
 		redisManager.lock(queueKey);
 		try {
@@ -105,48 +107,46 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 	@Override
 	public T pull() {
 		T data = null;
-		boolean isRepair = false;
 		try {
 			redisManager.lock(queueKey);
-			while (!isRepair) {
-				// 先从代理队列里lpop数据key
-				String dataKey = redisManager.lpop(proxyQueueKey, String.class);
-				// 如果已经被修复了，获取到的dataKey 为null的话，那么beak;
-				if (isRepair && null == dataKey) {
-					break;
-				} else {
-					// 如果dataKey！=null
-					if (null != dataKey) {
-						// 通过数据key hget获取数据
-						data = redisManager.hget(queueKey, dataKey, clz);
-						if (null == data) {
-							continue;
-						}
-						break;
-					} else {
-						// 如果dataKey==null的话，并且queueKeyLlen>0的话,那么启动队列修复
-						int queueKeyLlen = redisManager.hllen(queueKey);
-						if (queueKeyLlen > 0) {
-							String cursorStr = "0";
-							Map<String, T> map = new HashMap<>();
-							do {
-								cursorStr = redisManager.hscan(queueKey, cursorStr, map, clz);
-								map.keySet().stream().forEach(mapKey -> {
-									redisManager.rpush(proxyQueueKey, mapKey);
-								});
-								map.clear();
-							} while (!"0".equals(cursorStr));
-						}
-						isRepair = true;
-					}
-				}
+			// 先从代理队列里lpop数据key
+			String dataKey = redisManager.lpop(proxyQueueKey, String.class);
+			// 如果dataKey！=null
+			if (null != dataKey) {
+				// 通过数据key hget获取数据
+				data = redisManager.hget(queueKey, dataKey, clz);
 			}
 		} catch (Exception e) {
+			log.error("pull workSpace[" + queueKey + "] data err", e);
 			throw e;
 		} finally {
 			redisManager.unlock(queueKey);
 		}
 		return data;
+	}
+
+	public void repair() {
+		try {
+			redisManager.lock(queueKey);
+			// 如果dataKey==null的话，并且queueKeyLlen>0的话,那么启动队列修复
+			int queueKeyLlen = redisManager.hllen(queueKey);
+			if (queueKeyLlen > 0) {
+				String cursorStr = "0";
+				Map<String, T> map = new HashMap<>();
+				do {
+					cursorStr = redisManager.hscan(queueKey, cursorStr, map, clz);
+					map.keySet().stream().forEach(mapKey -> {
+						redisManager.rpush(proxyQueueKey, mapKey);
+					});
+					map.clear();
+				} while (!"0".equals(cursorStr));
+			}
+		} catch (Exception e) {
+			log.error("repair workSpace[" + queueKey + "] err", e);
+			throw e;
+		} finally {
+			redisManager.unlock(queueKey);
+		}
 	}
 
 	public String batchGetDoingData(List<T> resutList, String cursorStr) {

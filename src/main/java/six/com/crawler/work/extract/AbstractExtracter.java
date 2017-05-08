@@ -13,7 +13,6 @@ import org.apache.commons.lang3.time.DateFormatUtils;
 import six.com.crawler.common.DateFormats;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
-import six.com.crawler.http.HttpMethod;
 import six.com.crawler.utils.AutoCharsetDetectorUtils;
 import six.com.crawler.utils.TelPhoneUtils;
 import six.com.crawler.utils.UrlUtils;
@@ -198,24 +197,7 @@ public abstract class AbstractExtracter implements Extracter {
 				idList.add(id);
 				workerNameList.add(workerName);
 				collectionDateList.add(nowTime);
-				if(doingPage.getMethod().value.equals(HttpMethod.POST.value)){
-					Map<String,Object> params=doingPage.getParameters();
-					StringBuffer originUrlBf=new StringBuffer(doingPage.getFinalUrl());
-					if(doingPage.getFinalUrl().contains("?")){
-						originUrlBf.append("&");
-					}else{
-						originUrlBf.append("?");
-					}
-					if(null!=params){
-						for (String key:params.keySet()) {
-							originUrlBf.append(key+"="+params.get(key)+"&");
-						}
-					}
-					String originUrl=originUrlBf.toString();
-					originUrlList.add(originUrl.substring(0,originUrl.length()-1));
-				}else{
-					originUrlList.add(doingPage.getFinalUrl());
-				}
+				originUrlList.add(doingPage.toString());
 				resultContext.addoutResult(dataMap);
 			}
 			resultContext.addExtractResult(Extracter.DEFAULT_RESULT_ID, idList);

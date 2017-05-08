@@ -53,6 +53,13 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 	private String housetypeCss = "input[id=housetype]";
 	private String houseInfoUrlTemplate = "http://www.tmsf.com/newhouse/property_house_" + sidTemplate + "_"
 			+ projectIdTemplate + "_" + houseIdTemplate + ".htm";
+	
+	private String houseStatusJsUrlTemplate=""
+			+ "/newhouse/NewPropertyControl_load.jspx?"
+			+ "sid="+sidTemplate
+			+ "&propertyid="+projectIdTemplate
+			+ "&presellid="+presellIdTemplate
+			+ "&buildingid="+buildingidTemplate;
 
 	@Override
 	protected void insideInit() {
@@ -107,9 +114,10 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 		if (null != housetypeElement) {
 			housetype = housetypeElement.attr("value");
 		}
-
+		String propertyId = doingPage.getMeta("propertyId").get(0);
 		String presellId_org = doingPage.getMetaMap().get("presellId_org").get(0);
 		String buildingId = doingPage.getMetaMap().get("buildingId").get(0);
+		
 		String houseJsonUrl = StringUtils.replace(houseJsonUrlTemplate, buildingidTemplate, buildingId);
 		houseJsonUrl = StringUtils.replace(houseJsonUrl, presellIdTemplate, presellId_org);
 		houseJsonUrl = StringUtils.replace(houseJsonUrl, sidTemplate, sid);
@@ -139,28 +147,30 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 					}
 				} else {
 					// 如果div布局中不存在那么再判断是否在table布局中存在
-					Element scriptElement =getScriptElement(doingPage);
-					if (null != scriptElement) {
-						String dataUrl = scriptElement.attr("src");
-						dataUrl = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), dataUrl);
-						Page houseJsPage = new Page(doingPage.getSiteCode(), 1, dataUrl, dataUrl);
-						houseJsPage.setReferer(doingPage.getFinalUrl());
-						houseJsPage.setMethod(HttpMethod.GET);
-						getDowner().down(houseJsPage);
-						String js = houseJsPage.getPageSrc();
-						js = StringUtils.remove(js, "document.writeln(");
-						js = StringUtils.remove(js, ");");
-						js = JsUtils.evalJs(js);
-						Element table = Jsoup.parse(js);
-						Elements houseAs = table.select("a");
-						for (Element houseA : houseAs) {
-							String href = houseA.attr("href");
-							if (StringUtils.contains(href, internalId)) {
-								isAdd = true;
-								break;
-							}
+					String jsUrl=StringUtils.replace(houseStatusJsUrlTemplate, sidTemplate, sid);
+					jsUrl=StringUtils.replace(jsUrl, projectIdTemplate, propertyId);
+					jsUrl=StringUtils.replace(jsUrl, presellIdTemplate, presellId_org);
+					jsUrl=StringUtils.replace(jsUrl, buildingidTemplate, buildingId);
+					String dataUrl = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), jsUrl);
+					Page houseJsPage = new Page(doingPage.getSiteCode(), 1, dataUrl, dataUrl);
+					houseJsPage.setReferer(doingPage.getFinalUrl());
+					houseJsPage.setMethod(HttpMethod.GET);
+					getDowner().down(houseJsPage);
+					String js = houseJsPage.getPageSrc();
+					js = StringUtils.remove(js, "document.writeln(");
+					js = StringUtils.remove(js, ");");
+					js = JsUtils.evalJs(js);
+					Element table = Jsoup.parse(js);
+					Elements houseAs = table.select("a");
+					String houseId = (valueOb = houseMap.get("houseid")) != null ? valueOb.toString() : "";
+					for (Element houseA : houseAs) {
+						String href = houseA.attr("href");
+						if (StringUtils.contains(href, houseId)) {
+							isAdd = true;
+							break;
 						}
 					}
+				
 				}
 
 				if (isAdd) {
@@ -175,93 +185,82 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 			}
 		} else {
 			if(isTableLayout(doingPage)){
-				Element scriptElement =getScriptElement(doingPage);
-				if (null != scriptElement) {
-					String dataUrl = scriptElement.attr("src");
-					dataUrl = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), dataUrl);
-					Page houseJsPage = new Page(doingPage.getSiteCode(), 1, dataUrl, dataUrl);
-					houseJsPage.setReferer(doingPage.getFinalUrl());
-					houseJsPage.setMethod(HttpMethod.GET);
-					getDowner().down(houseJsPage);
-					String js = houseJsPage.getPageSrc();
-					js = StringUtils.remove(js, "document.writeln(");
-					js = StringUtils.remove(js, ");");
-					js = JsUtils.evalJs(js);
-					Element table = Jsoup.parse(js);
-					Elements unitTds = table.select("body>table>tbody>tr:eq(0)>td:gt(0)");
-					List<String> unitList = new ArrayList<>();
-					for (Element unitTd : unitTds) {
-						String unitName = unitTd.text();
-						if (!StringUtils.contains(unitName, "单元名称")) {
-							unitList.add(unitName);
-						}
-					}
-					Element unitHouseTrElement = table.select("body>table>tbody>tr:eq(1)").first();
-					if (null!=unitHouseTrElement) {
-						Elements unitHouseTdElements=JsoupUtils.children(unitHouseTrElement, "td");
-						for (int i = 1; i < unitHouseTdElements.size(); i++) {
-							String unitName = StringUtils.EMPTY;
-							int unitIndex=i-1;
-							if (unitIndex < unitList.size()) {
-								unitName = unitList.get(unitIndex);
-							}
-							Element unitHouseElement = unitHouseTdElements.get(i);
-							Elements houseElements = unitHouseElement.select("a");
-							for (Element element : houseElements) {
-								String housePageUrl = element.attr("href");
-								if (StringUtils.isNotBlank(housePageUrl)) {
-									String houseNo = element.text();
-									String onmouseoverHtml = element.attr("onmouseover");
-									String houseData = StringUtils.substringBetween(onmouseoverHtml,
-											"<table><tr><td width=240>", "</td><td width=150>tupian</td>");
-									houseData = StringUtils.remove(houseData, "<br/>");
-									String houseStatus = StringUtils.substringBetween(houseData, "当前状态：", "房屋用途：");
-									String houseUsage = StringUtils.substringBetween(houseData, "房屋用途：", "建筑面积");
-									String buildingArea = StringUtils.substringBetween(houseData, "建筑面积：", "毛坯单价");
-									String roughPrice = StringUtils.substringBetween(houseData, "毛坯单价：", "总　　价");
-									String totalPrice = StringUtils.substringBetween(houseData, "总　　价：", "房屋坐落");
-									String houseAddress = StringUtils.substringAfterLast(houseData, "房屋坐落：");
-
-									doingPage.getMetaMap().computeIfAbsent("unitName", mapKey -> new ArrayList<>())
-											.add(unitName);
-									doingPage.getMetaMap().computeIfAbsent("houseNo", mapKey -> new ArrayList<>()).add(houseNo);
-									doingPage.getMetaMap().computeIfAbsent("status", mapKey -> new ArrayList<>())
-											.add(houseStatus);
-									doingPage.getMetaMap().computeIfAbsent("houseUsage", mapKey -> new ArrayList<>())
-											.add(houseUsage);
-									doingPage.getMetaMap().computeIfAbsent("buildingArea", mapKey -> new ArrayList<>())
-											.add(buildingArea);
-									doingPage.getMetaMap().computeIfAbsent("roughPrice", mapKey -> new ArrayList<>())
-											.add(roughPrice);
-									doingPage.getMetaMap().computeIfAbsent("totalPrice", mapKey -> new ArrayList<>())
-											.add(totalPrice);
-									doingPage.getMetaMap().computeIfAbsent("houseAddress", mapKey -> new ArrayList<>())
-											.add(houseAddress);
-
-								}
-
-							}
-
-						}
-						
+				String jsUrl=StringUtils.replace(houseStatusJsUrlTemplate, sidTemplate, sid);
+				jsUrl=StringUtils.replace(jsUrl, projectIdTemplate, propertyId);
+				jsUrl=StringUtils.replace(jsUrl, presellIdTemplate, presellId_org);
+				jsUrl=StringUtils.replace(jsUrl, buildingidTemplate, buildingId);
+				String dataUrl = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), jsUrl);
+				Page houseJsPage = new Page(doingPage.getSiteCode(), 1, dataUrl, dataUrl);
+				houseJsPage.setReferer(doingPage.getFinalUrl());
+				houseJsPage.setMethod(HttpMethod.GET);
+				getDowner().down(houseJsPage);
+				String js = houseJsPage.getPageSrc();
+				js = StringUtils.remove(js, "document.writeln(");
+				js = StringUtils.remove(js, ");");
+				js = JsUtils.evalJs(js);
+				Element table = Jsoup.parse(js);
+				Elements unitTds = table.select("body>table>tbody>tr:eq(0)>td:gt(0)");
+				List<String> unitList = new ArrayList<>();
+				for (Element unitTd : unitTds) {
+					String unitName = unitTd.text();
+					if (!StringUtils.contains(unitName, "单元名称")) {
+						unitList.add(unitName);
 					}
 				}
-				
+				Element unitHouseTrElement = table.select("body>table>tbody>tr:eq(1)").first();
+				if (null!=unitHouseTrElement) {
+					Elements unitHouseTdElements=JsoupUtils.children(unitHouseTrElement, "td");
+					for (int i = 1; i < unitHouseTdElements.size(); i++) {
+						String unitName = StringUtils.EMPTY;
+						int unitIndex=i-1;
+						if (unitIndex < unitList.size()) {
+							unitName = unitList.get(unitIndex);
+						}
+						Element unitHouseElement = unitHouseTdElements.get(i);
+						Elements houseElements = unitHouseElement.select("a");
+						for (Element element : houseElements) {
+							String housePageUrl = element.attr("href");
+							if (StringUtils.isNotBlank(housePageUrl)) {
+								String houseNo = element.text();
+								String onmouseoverHtml = element.attr("onmouseover");
+								String houseData = StringUtils.substringBetween(onmouseoverHtml,
+										"<table><tr><td width=240>", "</td><td width=150>tupian</td>");
+								houseData = StringUtils.remove(houseData, "<br/>");
+								String houseStatus = StringUtils.substringBetween(houseData, "当前状态：", "房屋用途：");
+								String houseUsage = StringUtils.substringBetween(houseData, "房屋用途：", "建筑面积");
+								String buildingArea = StringUtils.substringBetween(houseData, "建筑面积：", "毛坯单价");
+								String roughPrice = StringUtils.substringBetween(houseData, "毛坯单价：", "总　　价");
+								String totalPrice = StringUtils.substringBetween(houseData, "总　　价：", "房屋坐落");
+								String houseAddress = StringUtils.substringAfterLast(houseData, "房屋坐落：");
+
+								doingPage.getMetaMap().computeIfAbsent("unitName", mapKey -> new ArrayList<>())
+										.add(unitName);
+								doingPage.getMetaMap().computeIfAbsent("houseNo", mapKey -> new ArrayList<>()).add(houseNo);
+								doingPage.getMetaMap().computeIfAbsent("status", mapKey -> new ArrayList<>())
+										.add(houseStatus);
+								doingPage.getMetaMap().computeIfAbsent("houseUsage", mapKey -> new ArrayList<>())
+										.add(houseUsage);
+								doingPage.getMetaMap().computeIfAbsent("buildingArea", mapKey -> new ArrayList<>())
+										.add(buildingArea);
+								doingPage.getMetaMap().computeIfAbsent("roughPrice", mapKey -> new ArrayList<>())
+										.add(roughPrice);
+								doingPage.getMetaMap().computeIfAbsent("totalPrice", mapKey -> new ArrayList<>())
+										.add(totalPrice);
+								doingPage.getMetaMap().computeIfAbsent("houseAddress", mapKey -> new ArrayList<>())
+										.add(houseAddress);
+
+							}
+
+						}
+
+					}
+					
+				}			
 			}
 		
 		}
 	}
 
-	private Element getScriptElement(Page doingPage){
-		String dataUrlCss = "div[id=yf_img]>div[class=scroll]>script";
-		Element scriptElement = doingPage.getDoc().select(dataUrlCss).first();
-		if(null==scriptElement){
-			dataUrlCss="div[class=saletable]>div[class=scroll]>script:eq(2)";
-			scriptElement = doingPage.getDoc().select(dataUrlCss).first();
-		}
-		return scriptElement;
-	}
-	
 	private boolean isTableLayout(Page doingPage){
 		return getDivLayoutDivs(doingPage).isEmpty()?true:false;
 	}

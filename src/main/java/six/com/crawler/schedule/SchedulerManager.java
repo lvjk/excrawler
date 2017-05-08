@@ -70,6 +70,16 @@ public interface SchedulerManager {
 	 */
 	public void stopAll(DispatchType dispatchType);
 
+	
+	public boolean isNotRuning(String jobName);
+	/**
+	 * job下的worker是否全部Wait
+	 * 
+	 * @param jobName
+	 * @return
+	 */
+	public boolean isWait(String jobName);
+	
 	/**
 	 * job下的worker是否全部stop
 	 * 

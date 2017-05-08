@@ -3,6 +3,8 @@ package six.com.crawler.schedule;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -28,6 +30,7 @@ import six.com.crawler.node.ClusterManager;
 import six.com.crawler.ocr.ImageDistinguish;
 import six.com.crawler.schedule.cache.RedisScheduleCache;
 import six.com.crawler.schedule.cache.ScheduleCache;
+import six.com.crawler.schedule.worker.AbstractWorkerPlugsManager;
 import six.com.crawler.work.WorkerLifecycleState;
 import six.com.crawler.work.space.WorkSpaceManager;
 import six.com.crawler.dao.JobRelationshipDao;
@@ -38,6 +41,8 @@ import six.com.crawler.dao.JobRelationshipDao;
  * @date 创建时间：2016年9月25日 下午2:04:35
  */
 public abstract class AbstractSchedulerManager implements SchedulerManager, InitializingBean {
+
+	final static Logger log = LoggerFactory.getLogger(AbstractSchedulerManager.class);
 
 	private final static int SAVE_ERR_MSG_MAX = 20;
 
@@ -95,8 +100,12 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	private WorkSpaceManager WorkSpaceManager;
 
 	private ScheduleCache scheduleCache;
-	
+
 	private ScheduleDispatchTypeIntercept scheduleDispatchTypeIntercept;
+
+	
+	@Autowired
+	private AbstractWorkerPlugsManager workerPlugsManager;
 
 	/**
 	 * 内部初始化
@@ -254,7 +263,6 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	public void setScheduleCache(ScheduleCache scheduleCache) {
 		this.scheduleCache = scheduleCache;
 	}
-	
 
 	public ScheduleDispatchTypeIntercept getScheduleDispatchTypeIntercept() {
 		return scheduleDispatchTypeIntercept;
@@ -263,6 +271,15 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	public void setScheduleDispatchTypeIntercept(ScheduleDispatchTypeIntercept scheduleDispatchTypeIntercept) {
 		this.scheduleDispatchTypeIntercept = scheduleDispatchTypeIntercept;
 	}
+	
+	public AbstractWorkerPlugsManager getWorkerPlugsManager() {
+		return workerPlugsManager;
+	}
+
+	public void setWorkerPlugsManager(AbstractWorkerPlugsManager workerPlugsManager) {
+		this.workerPlugsManager = workerPlugsManager;
+	}
+
 	/**
 	 * 判断job是否运行。 通过jobName 获取job运行快照JobSnapshot 如果存在并且状态是执行或者暂停那么 返回true否则false
 	 * 
@@ -369,20 +386,37 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		getScheduleCache().updateWorkerSnapshot(workerSnapshot);
 	}
 
-	public boolean isStop(String jobName){
+	public boolean isNotRuning(String jobName) {
+		List<WorkerSnapshot> workers = getScheduleCache().getWorkerSnapshots(jobName);
+		boolean resut = true;
+		for (WorkerSnapshot worker : workers) {
+			//log.info("worker[" + worker.getName() + "] stauts:" + worker.getState());
+			if (worker.getState() == WorkerLifecycleState.READY || worker.getState() == WorkerLifecycleState.STARTED
+					|| worker.getState() == WorkerLifecycleState.SUSPEND) {
+				resut = false;
+			}
+		}
+		return resut;
+	}
+
+	public boolean isWait(String jobName) {
+		return isTargetStatus(jobName, WorkerLifecycleState.WAITED);
+	}
+
+	public boolean isStop(String jobName) {
 		return isTargetStatus(jobName, WorkerLifecycleState.STOPED);
 	}
 
-	public boolean isFinish(String jobName){
+	public boolean isFinish(String jobName) {
 		return isTargetStatus(jobName, WorkerLifecycleState.FINISHED);
 	}
-	
-	private boolean isTargetStatus(String jobName,WorkerLifecycleState status){
-		List<WorkerSnapshot> workers=getScheduleCache().getWorkerSnapshots(jobName);
-		boolean resut=true;
-		for(WorkerSnapshot worker:workers){
-			if(worker.getState()!=status){
-				resut=false;
+
+	private boolean isTargetStatus(String jobName, WorkerLifecycleState status) {
+		List<WorkerSnapshot> workers = getScheduleCache().getWorkerSnapshots(jobName);
+		boolean resut = true;
+		for (WorkerSnapshot worker : workers) {
+			if (worker.getState() != status) {
+				resut = false;
 			}
 		}
 		return resut;

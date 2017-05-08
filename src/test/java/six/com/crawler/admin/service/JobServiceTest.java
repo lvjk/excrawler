@@ -48,9 +48,9 @@ public class JobServiceTest extends BaseTest {
 		String jobName = "test_name";
 		ResponseMsg<List<JobSnapshot>> result = jobService.queryJobSnapshotsFromHistory(jobName);
 		for (JobSnapshot JobSnapshot : result.getData()) {
-			LOG.info(JobSnapshot.toString());
+			log.info(JobSnapshot.toString());
 		}
-		LOG.info("query size:" + result.getData().size());
+		log.info("query size:" + result.getData().size());
 	}
 
 	protected WorkerSnapshot buildWorkerSnapshot(String jobSnapshotid, String jobName, String workerName,

@@ -5,12 +5,14 @@ import six.com.crawler.entity.Job;
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.WorkerSnapshot;
 import six.com.crawler.schedule.worker.WorkerSchedulerManager;
+import six.com.crawler.work.space.WorkSpace;
+import six.com.crawler.work.space.WorkSpaceData;
 
 /**
  * @author six
  * @date 2016年1月15日 下午6:20:00
  */
-public interface Worker extends WorkerLifecycle {
+public interface Worker<T extends WorkSpaceData> extends WorkerLifecycle {
 
 	void bindConfigure(SpiderConfigure configure);
 	
@@ -73,4 +75,6 @@ public interface Worker extends WorkerLifecycle {
 	 * @return
 	 */
 	Job getJob();
+	
+	WorkSpace<T> getWorkQueue();
 }
