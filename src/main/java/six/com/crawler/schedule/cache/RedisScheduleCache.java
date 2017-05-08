@@ -131,6 +131,7 @@ public class RedisScheduleCache implements ScheduleCache {
 		getRedisManager().del(WorkerSnapshotkey);
 	}
 
+
 	@Override
 	public void clear() {
 		String patternKey = redisCacheKeyHelper.getResetPreKey() + "*";

@@ -39,7 +39,7 @@ public abstract class AbstarctStore implements Store{
 		return insideStore(resultContext.getOutResults());
 	}
 
-	public AbstractWorker<?> getAbstractWorker() {
+	public AbstractWorker<?> getWorker() {
 		return worker;
 	}
 

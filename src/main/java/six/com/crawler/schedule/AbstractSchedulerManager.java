@@ -103,7 +103,6 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 
 	private ScheduleDispatchTypeIntercept scheduleDispatchTypeIntercept;
 
-	
 	@Autowired
 	private AbstractWorkerPlugsManager workerPlugsManager;
 
@@ -271,7 +270,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	public void setScheduleDispatchTypeIntercept(ScheduleDispatchTypeIntercept scheduleDispatchTypeIntercept) {
 		this.scheduleDispatchTypeIntercept = scheduleDispatchTypeIntercept;
 	}
-	
+
 	public AbstractWorkerPlugsManager getWorkerPlugsManager() {
 		return workerPlugsManager;
 	}
@@ -390,7 +389,8 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		List<WorkerSnapshot> workers = getScheduleCache().getWorkerSnapshots(jobName);
 		boolean resut = true;
 		for (WorkerSnapshot worker : workers) {
-			//log.info("worker[" + worker.getName() + "] stauts:" + worker.getState());
+			// log.info("worker[" + worker.getName() + "] stauts:" +
+			// worker.getState());
 			if (worker.getState() == WorkerLifecycleState.READY || worker.getState() == WorkerLifecycleState.STARTED
 					|| worker.getState() == WorkerLifecycleState.SUSPEND) {
 				resut = false;
@@ -409,6 +409,16 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 
 	public boolean isFinish(String jobName) {
 		return isTargetStatus(jobName, WorkerLifecycleState.FINISHED);
+	}
+
+	public JobSnapshot getLastEnd(String jobName,String excludeId) {
+		JobSnapshot lastJobSnapshot = getJobSnapshotDao().queryLastEnd(jobName,excludeId);
+		return lastJobSnapshot;
+	}
+
+	public void updateJobSnapshot(JobSnapshot jobSnapshot) {
+		getScheduleCache().updateJobSnapshot(jobSnapshot);
+		getJobSnapshotDao().update(jobSnapshot);
 	}
 
 	private boolean isTargetStatus(String jobName, WorkerLifecycleState status) {

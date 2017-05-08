@@ -51,7 +51,7 @@ public class Cq315housePresell1Worker extends AbstractCrawlWorker {
 	}
 
 	protected void insideInit() {
-		presell2Queue = new RedisWorkSpace<Page>(getManager().getRedisManager(),"cq315house_presell_2",Page.class);
+		presell2Queue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "cq315house_presell_2", Page.class);
 		fieldMap = new HashMap<>();
 		fieldMap.put("PARENTPROJID", "projectId");
 		fieldMap.put("F_PROJECT_NAME", "projectName");
@@ -61,8 +61,8 @@ public class Cq315housePresell1Worker extends AbstractCrawlWorker {
 		fieldMap.put("F_PRESALE_CERT", "presellPermit");
 		fieldMap.put("F_BLOCK", "forSellBuilding");
 		Page firstPage = buildPage(pageIndex, pageSize);// 初始化第一页
-		getWorkQueue().clearDoing();
-		getWorkQueue().push(firstPage);
+		getWorkSpace().clearDoing();
+		getWorkSpace().push(firstPage);
 	}
 
 	protected void beforeDown(Page doingPage) {
@@ -126,6 +126,6 @@ public class Cq315housePresell1Worker extends AbstractCrawlWorker {
 		}
 		pageIndex++;
 		Page newPage = buildPage(pageIndex, pageSize);
-		getWorkQueue().push(newPage);
+		getWorkSpace().push(newPage);
 	}
 }

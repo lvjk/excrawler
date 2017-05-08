@@ -64,13 +64,13 @@ public class QichachaSearchWorker extends AbstractCrawlWorker {
 		nextPage = "//a[@id='ajaxpage' and text()='>']";
 		String searchPageUrl = "http://www.qichacha.com/search?key=%E5%9C%B0%E4%BA%A7&index=0";
 		Page searchPage = new Page(getSite().getCode(), 1,searchPageUrl, searchPageUrl);
-		getWorkQueue().push(searchPage);
+		getWorkSpace().push(searchPage);
 		qichachaQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "qichacha",Page.class);
 	}
 
 	@Override
 	public void onComplete(Page doingPage, ResultContext resultContext) {
-		getWorkQueue().push(doingPage);
+		getWorkSpace().push(doingPage);
 	}
 
 	protected void beforeDown(Page doingPage) {

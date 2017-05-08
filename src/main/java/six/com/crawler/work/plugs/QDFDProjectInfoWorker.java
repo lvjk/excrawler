@@ -48,8 +48,8 @@ public class QDFDProjectInfoWorker extends AbstractCrawlWorker{
 	protected void insideInit() {
 		projectInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(),"qdfd_presell_info", Page.class);
 		Page firstPage = buildPage(pageIndex, refererUrl);// 初始化第一页
-		getWorkQueue().clearDoing();
-		getWorkQueue().push(firstPage);
+		getWorkSpace().clearDoing();
+		getWorkSpace().push(firstPage);
 	}
 
 	@Override
@@ -104,7 +104,7 @@ public class QDFDProjectInfoWorker extends AbstractCrawlWorker{
 		pageIndex++;
 		if (pageIndex <= pageCount) {
 			Page page = buildPage(pageIndex, doingPage.getFinalUrl());// 初始化第一页
-			getWorkQueue().push(page);
+			getWorkSpace().push(page);
 		}
 	}
 

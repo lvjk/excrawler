@@ -341,7 +341,7 @@ function showJobSnapshots(jobSnapshots) {
 function getErrCountHtml(jobName,jobSnapshotId,errCount){
 	var errCountHtml;
 	if(errCount>0){
-		errCountHtml="<a href=\"javascript:showErrMsg('" + jobSnapshot.name+ "','" + jobSnapshot.id+ "')\">"+errCount+"</a>";
+		errCountHtml="<a href=\"javascript:showErrMsg('" + jobName+ "','" + jobSnapshotId+ "')\">"+errCount+"</a>";
 	}else{
 		errCountHtml=errCount;
 	}

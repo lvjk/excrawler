@@ -1,6 +1,7 @@
 package six.com.crawler.schedule;
 
 import six.com.crawler.entity.Job;
+import six.com.crawler.entity.JobSnapshot;
 
 /**
  * @author 作者
@@ -70,8 +71,8 @@ public interface SchedulerManager {
 	 */
 	public void stopAll(DispatchType dispatchType);
 
-	
 	public boolean isNotRuning(String jobName);
+
 	/**
 	 * job下的worker是否全部Wait
 	 * 
@@ -79,7 +80,7 @@ public interface SchedulerManager {
 	 * @return
 	 */
 	public boolean isWait(String jobName);
-	
+
 	/**
 	 * job下的worker是否全部stop
 	 * 
@@ -95,6 +96,16 @@ public interface SchedulerManager {
 	 * @return
 	 */
 	public boolean isFinish(String jobName);
+
+	/**
+	 * 获取最后一个结束的任务
+	 * 
+	 * @param jobName
+	 * @return
+	 */
+	JobSnapshot getLastEnd(String jobName,String excludeId);
+	
+	void updateJobSnapshot(JobSnapshot jobSnapshot);
 
 	public void shutdown();
 }

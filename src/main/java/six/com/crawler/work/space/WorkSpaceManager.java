@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 
 import six.com.crawler.dao.RedisManager;
 
-
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
@@ -33,7 +32,7 @@ public class WorkSpaceManager {
 	 * @return
 	 */
 	public <T extends WorkSpaceData> WorkSpace<T> newWorkSpace(String workSpaceName, Class<T> clz) {
-		//TODO 需要引用集群名作为base前缀key
+		// TODO 需要引用集群名作为base前缀key
 		WorkSpace<T> workQueue = new RedisWorkSpace<>(redisManager, workSpaceName, clz);
 		return workQueue;
 	}
@@ -45,7 +44,7 @@ public class WorkSpaceManager {
 	 */
 	public List<WorkSpace<WorkSpaceData>> getAllWorkSpaces() {
 		List<WorkSpace<WorkSpaceData>> allWorkSpace = new ArrayList<>();
-		Set<String> allWorkSpaceName=new HashSet<>();
+		Set<String> allWorkSpaceName = new HashSet<>();
 		Set<String> allWorkQueueKeys = redisManager.keys(RedisWorkSpace.WORK_QUEUE_KEY_PRE + "*");
 		String findWorkSpaceName = null;
 		WorkSpace<WorkSpaceData> redisWorkSpace = null;

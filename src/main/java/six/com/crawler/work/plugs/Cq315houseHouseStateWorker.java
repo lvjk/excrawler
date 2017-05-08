@@ -167,7 +167,7 @@ public class Cq315houseHouseStateWorker extends AbstractCrawlWorker {
 			houseInfoPage.setReferer(doingPage.getFinalUrl());
 			houseInfoPage.setType(PageType.DATA.value());
 			houseInfoPage.getMetaMap().put("houseId", Arrays.asList(systemHouseId));
-			if (!getWorkQueue().isDone(houseInfoPage.getPageKey())) {
+			if (!getWorkSpace().isDone(houseInfoPage.getPageKey())) {
 				houseInfoQueue.push(houseInfoPage);
 			}
 		}

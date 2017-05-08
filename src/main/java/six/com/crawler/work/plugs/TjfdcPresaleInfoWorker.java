@@ -161,7 +161,7 @@ public class TjfdcPresaleInfoWorker extends AbstractCrawlWorker {
 					nextPage.setReferer(doingPage.getFinalUrl());
 					nextPage.getMetaMap().put("projectName", Arrays.asList(projectName));
 					nextPage.setType(PageType.DATA.value());
-					getWorkQueue().push(nextPage);
+					getWorkSpace().push(nextPage);
 				}
 			}
 

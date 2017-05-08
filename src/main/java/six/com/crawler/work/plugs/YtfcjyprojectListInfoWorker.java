@@ -51,7 +51,7 @@ public class YtfcjyprojectListInfoWorker extends AbstractCrawlWorker{
 		//初始化项目队列
 		projectInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "ytfcjy_project_info",Page.class);
 		Page projectListPage = new Page(getSite().getCode(), 1, projectListUril, projectListUril);
-		getWorkQueue().push(projectListPage);
+		getWorkSpace().push(projectListPage);
 		
 	}
 

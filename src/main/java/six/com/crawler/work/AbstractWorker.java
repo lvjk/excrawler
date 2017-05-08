@@ -54,8 +54,6 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 
 	private Class<T> workSpaceDataClz;
 
-	private JobSnapshot jobSnapshot;
-
 	private volatile WorkerLifecycleState state = WorkerLifecycleState.READY;// 状态
 
 	private volatile WorkerSnapshot workerSnapshot;
@@ -82,34 +80,28 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 		this.manager = manager;
 	}
 
-	public void bindWorkerSnapshot(WorkerSnapshot workerSnapshot) {
-		this.workerSnapshot = workerSnapshot;
-	}
-
-	public void bindJobSnapshot(JobSnapshot jobSnapshot) {
-		this.jobSnapshot = jobSnapshot;
-	}
-
 	public void bindJob(Job job) {
 		this.job = job;
+	}
+
+	public void bindWorkerSnapshot(WorkerSnapshot workerSnapshot) {
+		this.workerSnapshot = workerSnapshot;
 	}
 
 	@Override
 	public void init() {
 		String jobName = getJob().getName();
-		String path = "job_" + jobSnapshot.getId() + "_worker";
+		String path = "job_" + getWorkerSnapshot().getJobSnapshotId() + "_worker";
 		distributedLock = getManager().getNodeManager().getWriteLock(path);
 		MDC.put("jobName", jobName);
 		try {
 			distributedLock.lock();
+			JobSnapshot jobSnapshot = getJobSnapshot();
 			this.minWorkFrequency = job.getWorkFrequency();
 			this.maxWorkFrequency = 2 * minWorkFrequency;
 			String workSpaceName = getJob().getWorkSpaceName();
-			if (StringUtils.isBlank(workSpaceName)) {
-				throw new NullPointerException("please set workSpace's name");
-			}
-			// 初始化 工作队列
-			workSpace = getManager().getWorkSpaceManager().newWorkSpace(workSpaceName, workSpaceDataClz);
+			workSpace = getManager().getWorkSpaceManager().newWorkSpace(
+					StringUtils.isBlank(workSpaceName) ? getJob().getName() : workSpaceName, workSpaceDataClz);
 			initWorker(jobSnapshot);
 		} catch (Exception e) {
 			destroy();
@@ -159,7 +151,7 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 		long processTime = System.currentTimeMillis();
 		T workData = null;
 		try {
-			workData = getWorkQueue().pull();
+			workData = getWorkSpace().pull();
 		} catch (Exception e) {
 			log.error("get data from workSpace err", e);
 		}
@@ -212,6 +204,7 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 				if (workSpace.doingSize() > 0) {// 如果队列还有数据那么继续处理
 					compareAndSetState(WorkerLifecycleState.WAITED, WorkerLifecycleState.STARTED);
 				} else {
+					JobSnapshot jobSnapshot = getJobSnapshot();
 					// 判断当前worker's job是被什么类型调度的 1.MANUAL手动触发 2.SCHEDULER调度器触发
 					if (DispatchType.DISPATCH_TYPE_MANUAL.equals(jobSnapshot.getDispatchType().getName())
 							|| DispatchType.DISPATCH_TYPE_SCHEDULER.equals(jobSnapshot.getDispatchType().getName())) {
@@ -382,7 +375,7 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 	}
 
 	@Override
-	public WorkSpace<T> getWorkQueue() {
+	public WorkSpace<T> getWorkSpace() {
 		return workSpace;
 	}
 
@@ -442,6 +435,7 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 	}
 
 	public JobSnapshot getJobSnapshot() {
+		JobSnapshot jobSnapshot = getManager().getScheduleCache().getJobSnapshot(getJob().getName());
 		return jobSnapshot;
 	}
 
@@ -450,10 +444,12 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 		return job;
 	}
 
+	@Override
 	public long getWorkFrequency() {
 		return minWorkFrequency;
 	}
 
+	@Override
 	public long getLastActivityTime() {
 		return lastActivityTime;
 	}
@@ -477,8 +473,8 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 	@Override
 	public final void destroy() {
 		log.info("start destroy worker:" + getName());
-		MDC.remove("jobName");
 		insideDestroy();
+		MDC.remove("jobName");
 	}
 
 	protected abstract void insideDestroy();

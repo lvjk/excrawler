@@ -1,12 +1,15 @@
 package six.com.crawler.entity;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.time.DateFormatUtils;
 
 import six.com.crawler.common.DateFormats;
 import six.com.crawler.schedule.DispatchType;
+import six.com.crawler.utils.JsonUtils;
 
 /**
  * @author 作者
@@ -19,16 +22,15 @@ public class JobSnapshot extends BaseVo implements Serializable {
 	private String id;// id
 	private String name;// 任务名
 	private String designatedNodeName;// 指定节点
-	private JobSnapshotState status=JobSnapshotState.READY;// 任务状态
-	private DispatchType dispatchType;//触发任务的类型
-	private String tableName;//数据表名
+	private JobSnapshotState status = JobSnapshotState.READY;// 任务状态
+	private DispatchType dispatchType;// 触发任务的类型
 	private String workSpaceName;// 任务工作空间名
 	private String startTime;// 开始时间
 	private String endTime;
-	private int downloadState;//下载状态
+	private int downloadState;// 下载状态
 	private boolean isSaveRawData;
 	private int isScheduled;//
-	private int workSpaceDoingSize;//任务队列数量
+	private int workSpaceDoingSize;// 任务队列数量
 	private int workSpaceErrSize;// 错误任务队列数量
 	private int totalProcessCount;// 统计处理多少个数据
 	private int totalResultCount;// 统计获取多少个数据
@@ -38,6 +40,8 @@ public class JobSnapshot extends BaseVo implements Serializable {
 	private int minProcessTime;// 最小任务处理时间
 	private int errCount;// 异常次数
 	private transient List<WorkerSnapshot> workerSnapshots;// job运行记录WorkerSnapshot
+	private String runtimeParams;
+	private Map<String, String> runtimeParamMap = new HashMap<String, String>();
 
 	public JobSnapshot() {
 	}
@@ -62,7 +66,7 @@ public class JobSnapshot extends BaseVo implements Serializable {
 	public void setName(String name) {
 		this.name = name;
 	}
-	
+
 	public String getDesignatedNodeName() {
 		return designatedNodeName;
 	}
@@ -71,7 +75,6 @@ public class JobSnapshot extends BaseVo implements Serializable {
 		this.designatedNodeName = designatedNodeName;
 	}
 
-	
 	public int getStatus() {
 		return status.value();
 	}
@@ -79,25 +82,17 @@ public class JobSnapshot extends BaseVo implements Serializable {
 	public JobSnapshotState getEnumStatus() {
 		return status;
 	}
-	
+
 	public void setStatus(int status) {
 		this.status = JobSnapshotState.valueOf(status);
 	}
-	
+
 	public DispatchType getDispatchType() {
 		return dispatchType;
 	}
 
 	public void setDispatchType(DispatchType dispatchType) {
 		this.dispatchType = dispatchType;
-	}
-
-	public String getTableName() {
-		return tableName;
-	}
-
-	public void setTableName(String tableName) {
-		this.tableName = tableName;
 	}
 
 	public String getWorkSpaceName() {
@@ -119,7 +114,7 @@ public class JobSnapshot extends BaseVo implements Serializable {
 	public String getEndTime() {
 		return endTime;
 	}
-	
+
 	public void setEndTime(String endTime) {
 		this.endTime = endTime;
 	}
@@ -147,7 +142,7 @@ public class JobSnapshot extends BaseVo implements Serializable {
 	public void setWorkSpaceErrSize(int workSpaceErrSize) {
 		this.workSpaceErrSize = workSpaceErrSize;
 	}
-	
+
 	public int getTotalProcessCount() {
 		return totalProcessCount;
 	}
@@ -226,6 +221,30 @@ public class JobSnapshot extends BaseVo implements Serializable {
 
 	public void setSaveRawData(boolean isSaveRawData) {
 		this.isSaveRawData = isSaveRawData;
+	}
+
+	public String getParam(String key) {
+		return this.runtimeParamMap.get(key);
+	}
+
+	public void putParam(String key, String param) {
+		runtimeParamMap.put(key, param);
+	}
+
+	public String getRuntimeParams() {
+		if (null == runtimeParams) {
+			runtimeParams = JsonUtils.toJson(runtimeParamMap);
+		}
+		return runtimeParams;
+	}
+
+	public void setRuntimeParams(String runtimeParams) {
+		this.runtimeParams = runtimeParams;
+		@SuppressWarnings("unchecked")
+		Map<String, String> hostoryParamMap = JsonUtils.toObject(runtimeParams, Map.class);
+		if (null != hostoryParamMap) {
+			runtimeParamMap.putAll(hostoryParamMap);
+		}
 	}
 
 	public String toString() {

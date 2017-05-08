@@ -47,7 +47,6 @@ import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.schedule.DispatchType;
 import six.com.crawler.schedule.consts.DownloadContants;
 import six.com.crawler.schedule.worker.AbstractWorkerSchedulerManager;
-import six.com.crawler.utils.JobTableUtils;
 
 /**
  * @author sixliu E-mail:359852326@qq.com
@@ -249,29 +248,13 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 				if (null != freeNodes && freeNodes.size() > 0) {
 					List<JobParam> jobParams = getJobParamDao().queryJobParams(job.getName());
 					job.setParamList(jobParams);
-
 					JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(job.getName());
 					jobSnapshot.setSaveRawData(job.getParamBoolean(JobParamKeys.IS_SAVE_RAW_DATA, false));
-					String fixedTableName = job.getParam(JobParamKeys.FIXED_TABLE_NAME);
-					String isSnapshotTable = job.getParam(JobParamKeys.IS_SNAPSHOT_TABLE);
-					String tempTbaleName = null;
-					if ("1".equals(isSnapshotTable)) {
-						JobSnapshot lastJobSnapshot = getJobSnapshotDao().queryLast(job.getName());
-						if (null != lastJobSnapshot && StringUtils.isNotBlank(lastJobSnapshot.getTableName())
-								&& lastJobSnapshot.getEnumStatus() != JobSnapshotState.FINISHED) {
-							tempTbaleName = lastJobSnapshot.getTableName();
-						} else {
-							tempTbaleName = JobTableUtils.buildJobTableName(fixedTableName, jobSnapshot.getId());
-						}
-					} else {
-						tempTbaleName = fixedTableName;
-					}
 					// 任务开始时候 开始时间和结束时间默认是一样的
 					jobSnapshot.setStartTime(
 							DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
 					jobSnapshot
 							.setEndTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
-					jobSnapshot.setTableName(tempTbaleName);
 					jobSnapshot.setStatus(JobSnapshotState.EXECUTING.value());
 					// 缓存将被执行的job,提供给workerSchedule那边使用。
 					getScheduleCache().setJob(job);
@@ -499,12 +482,16 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 							}
 							jobSnapshot.setStatus(state.value());
 							jobSnapshot.setEndTime(DateFormatUtils.format(new Date(), DateFormats.DATE_FORMAT_1));
+
 							List<WorkerSnapshot> workerSnapshots = getScheduleCache().getWorkerSnapshots(jobName);
 							totalWorkerSnapshot(jobSnapshot, workerSnapshots);
+							
 							reportJobSnapshot(jobSnapshot);
+							
 							getScheduleCache().delJob(jobName);
 							getScheduleCache().delWorkerSnapshots(jobName);
 							getScheduleCache().delJobSnapshot(jobName);
+
 							// 当任务正常完成时 判断是否有当前任务是否有下个执行任务，如果有的话那么直接执行
 							if (JobSnapshotState.FINISHED == state) {
 								// 更新downloadState。

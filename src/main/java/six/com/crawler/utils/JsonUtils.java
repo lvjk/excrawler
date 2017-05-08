@@ -2,6 +2,7 @@ package six.com.crawler.utils;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -110,33 +111,36 @@ public class JsonUtils {
 
 	public static String toJson(Object ob) {
 		if (null == ob) {
-			throw new RuntimeException("this ob must not null");
+			return null;
+		} else {
+			return getGson().toJson(ob);
 		}
-		return getGson().toJson(ob);
 	}
-	
+
 	@SuppressWarnings("unchecked")
-	public static Map<String,Object> toMap(Object ob) {
+	public static Map<String, Object> toMap(Object ob) {
 		if (null == ob) {
-			throw new RuntimeException("this ob must not null");
+			return Collections.EMPTY_MAP;
+		} else {
+			String json = getGson().toJson(ob);
+			Map<String, Object> map = toObject(json, Map.class);
+			return map;
 		}
-		String json=getGson().toJson(ob);
-		Map<String,Object> map=toObject(json, Map.class);
-		return map;
 	}
 
 	public static <T> T toObject(String json, Class<T> clz) {
 		if (StringUtils.isBlank(json)) {
-			throw new RuntimeException("this json must not be blank");
+			return null;
+		}else{
+			// 替换掉json里带有 单个反斜杠 避免转换异常
+			json = StringUtils.replace(json, "\\", "\\\\");
+			TypeToken<T> typeToken = TypeToken.of(clz);
+			return getGson().fromJson(json.toString(), typeToken.getType());
 		}
-		// 替换掉json里带有 单个反斜杠 避免转换异常
-		json = StringUtils.replace(json, "\\", "\\\\");
-		TypeToken<T> typeToken = TypeToken.of(clz);
-		return getGson().fromJson(json.toString(), typeToken.getType());
 	}
-	
+
 	public static <T> T mapToObject(Map<String, Object> map, Class<T> clz) {
-		String json=toJson(map);
+		String json = toJson(map);
 		TypeToken<T> typeToken = TypeToken.of(clz);
 		return getGson().fromJson(json, typeToken.getType());
 	}

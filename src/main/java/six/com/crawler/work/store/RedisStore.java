@@ -48,7 +48,7 @@ public class RedisStore extends AbstarctStore {
 	 * @return
 	 */
 	private String getRedisStoreDataKey() {
-		String key = getAbstractWorker().getName() + "_" + storeCount.getAndIncrement();
+		String key = getWorker().getName() + "_" + storeCount.getAndIncrement();
 		return key;
 	}
 

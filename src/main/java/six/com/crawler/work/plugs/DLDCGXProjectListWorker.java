@@ -41,8 +41,8 @@ RedisWorkSpace<Page> projectInfoQueue;
 	protected void insideInit() {
 		projectInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(),"dldc_gx_project_info", Page.class);
 		Page firstPage = buildPage(pageIndex, refererUrl);// 初始化第一页
-		getWorkQueue().clearDoing();
-		getWorkQueue().push(firstPage);
+		getWorkSpace().clearDoing();
+		getWorkSpace().push(firstPage);
 	}
 	@Override
 	protected void beforeDown(Page doingPage) {
@@ -78,7 +78,7 @@ RedisWorkSpace<Page> projectInfoQueue;
 		pageIndex++;
 		if (pageIndex <= pageCount) {
 			Page page = buildPage(pageIndex, doingPage.getFinalUrl());// 初始化第一页
-			getWorkQueue().push(page);
+			getWorkSpace().push(page);
 		}
 	}
 

@@ -7,9 +7,9 @@ package six.com.crawler.schedule.cache;
 public class RedisCacheKeyHelper {
 
 	private String basePre;
-	
-	RedisCacheKeyHelper(String basePre){
-		this.basePre=basePre;
+
+	RedisCacheKeyHelper(String basePre) {
+		this.basePre = basePre;
 	}
 
 	public String getResetPreKey() {

@@ -39,8 +39,8 @@ final static Logger log = LoggerFactory.getLogger(DLDCJZProjectListWorker.class)
 		projectInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(),"dldc_sq_project_info", Page.class);
 		if(!(helper.isDownloadState() && helper.isUseRawData())){
 			Page firstPage = buildPage(pageIndex, refererUrl);// 初始化第一页
-			getWorkQueue().clearDoing();
-			getWorkQueue().push(firstPage);
+			getWorkSpace().clearDoing();
+			getWorkSpace().push(firstPage);
 		}
 	}
 
@@ -91,7 +91,7 @@ final static Logger log = LoggerFactory.getLogger(DLDCJZProjectListWorker.class)
 		pageIndex++;
 		if (pageIndex <= pageCount) {
 			Page page = buildPage(pageIndex, doingPage.getFinalUrl());// 初始化第一页
-			getWorkQueue().push(page);
+			getWorkSpace().push(page);
 		}
 	}
 
