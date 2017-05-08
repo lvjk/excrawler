@@ -73,6 +73,12 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker{
 		List<String> roomIds=new ArrayList<String>();
 		List<String> contractNos=new ArrayList<String>();
 		
+		Elements rooms=doingPage.getDoc().select("table[id]");
+		for (Element room:rooms) {
+			String roomId=room.attr("id").replaceAll("room", "");
+			roomIds.add(roomId);
+		}
+		
 		for (Element et : styleElements) {
 			String bgColor = "";
 			String style = et.attr("style");
@@ -91,7 +97,6 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker{
 			if(elements==null || elements.size()==0){
 				//此时匹配的是未备案的房间号
 				elements = et.select("tbody>tr:eq(1)>td");
-				roomIds.add("");
 				String contractNo=et.attr("title");
 				if(contractNo!=null && contractNo.contains("合同编号")){
 					contractNo=contractNo.split("：")[1];
@@ -100,7 +105,6 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker{
 				}
 				contractNos.add(contractNo);
 			}else{
-				roomIds.add(StringUtils.substringBetween(elements.first().attr("onclick"), "javascript:window.open(\"openRoomData.aspx?roomId=", "\",\""));
 				contractNos.add("");
 			}
 			String s = elements.first().ownText();
