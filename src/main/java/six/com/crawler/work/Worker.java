@@ -15,19 +15,17 @@ import six.com.crawler.work.space.WorkSpaceData;
 public interface Worker<T extends WorkSpaceData> extends WorkerLifecycle {
 
 	void bindConfigure(SpiderConfigure configure);
-	
-	void bindWorkerSnapshot(WorkerSnapshot workerSnapshot);
 
 	void bindManager(WorkerSchedulerManager manager);
 
-	void bindJobSnapshot(JobSnapshot jobSnapshot);
-
 	void bindJob(Job job);
-	
+
+	void bindWorkerSnapshot(WorkerSnapshot workerSnapshot);
+
 	/**
 	 * 初始化
 	 */
-	public void init();
+	void init();
 
 	/**
 	 * 获取 worker name
@@ -35,10 +33,9 @@ public interface Worker<T extends WorkSpaceData> extends WorkerLifecycle {
 	 * @return
 	 */
 	String getName();
-	
-	
+
 	SpiderConfigure getConfigure();
-	
+
 	/**
 	 * 获取 manager
 	 * 
@@ -75,6 +72,6 @@ public interface Worker<T extends WorkSpaceData> extends WorkerLifecycle {
 	 * @return
 	 */
 	Job getJob();
-	
-	WorkSpace<T> getWorkQueue();
+
+	WorkSpace<T> getWorkSpace();
 }
