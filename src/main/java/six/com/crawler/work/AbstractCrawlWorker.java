@@ -122,7 +122,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 
 	@Override
 	protected void insideWork(Page doingPage) throws Exception {
-		if(null!=doingPage){
+		if (null != doingPage) {
 			long downTime = 0;
 			long extractTime = 0;
 			long storeTime = 0;
@@ -167,9 +167,9 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 				// 暴露给实现类的完成操作
 				onComplete(doingPage, resultContext);
 				// 流程走到这步，可以确认数据已经被完全处理,那么ack 数据，最终删除数据备份
-				getWorkQueue().ack(doingPage);
+				getWorkSpace().ack(doingPage);
 				// 添加数据被处理记录
-				getWorkQueue().addDone(doingPage);
+				getWorkSpace().addDone(doingPage);
 
 				log.info("finished processing,down time[" + downTime + "],extract time[" + extractTime + "],store time["
 						+ storeTime + "]:" + doingPage.getOriginalUrl());
@@ -184,20 +184,22 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 	 */
 	protected abstract void insideInit();
 
-//	private void outToWorkSpace(ResultContext resultContext, Page doingPage) {
-//		for(int i=0;null!=extractItems&&i<extractItems.size();i++){
-//			ExtractItem extractItem=extractItems.get(i);
-//			if(extractItem.getType()==ExtractItemType.URL.value()
-//					&&extractItem.getOutputType()==3){
-//				List<String> urlList=resultContext.getExtractResult(extractItem.getOutputKey());
-//				if(1==urlList.size()){
-//					String newUrl=urlList.get(0);
-//				}else if(urlList.size()>1){
-//					
-//				}
-//			}
-//		}
-//	}
+	// private void outToWorkSpace(ResultContext resultContext, Page doingPage)
+	// {
+	// for(int i=0;null!=extractItems&&i<extractItems.size();i++){
+	// ExtractItem extractItem=extractItems.get(i);
+	// if(extractItem.getType()==ExtractItemType.URL.value()
+	// &&extractItem.getOutputType()==3){
+	// List<String>
+	// urlList=resultContext.getExtractResult(extractItem.getOutputKey());
+	// if(1==urlList.size()){
+	// String newUrl=urlList.get(0);
+	// }else if(urlList.size()>1){
+	//
+	// }
+	// }
+	// }
+	// }
 
 	/**
 	 * doingPage下载前 可以进行相关操作
@@ -288,7 +290,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 					}
 					// data.setPageSrc(rawDataStr);
 
-					getWorkQueue().push(data);
+					getWorkSpace().push(data);
 				}
 			}
 		}
@@ -404,24 +406,24 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 			}
 			// 判断内部处理是否可处理,如果不可处理那么这里默认处理
 			if (insideExceptionResult) {
-				getWorkQueue().ack(doingPage);
+				getWorkSpace().ack(doingPage);
 			} else {
 				String msg = null;
 				Integer retryProcess = getJob().getParamInt("worker_process_page_max_retry_count",
 						Constants.WOKER_PROCESS_PAGE_MAX_RETRY_COUNT);
 				if (null == insideException && doingPage.getRetryProcess() < retryProcess) {
 					doingPage.setRetryProcess(doingPage.getRetryProcess() + 1);
-					getWorkQueue().errRetryPush(doingPage);
+					getWorkSpace().errRetryPush(doingPage);
 					msg = "retry processor[" + doingPage.getRetryProcess() + "] page:" + doingPage.getFinalUrl();
 				} else {
 					if (e instanceof HttpFiveZeroTwoException && doingPage.getFztRetryProcess() < retryProcess) {// 当超过重试次数之后，如果是502异常，则重新写入队列
 						doingPage.setFztRetryProcess(doingPage.getFztRetryProcess() + 1);
-						getWorkQueue().errRetryPush(doingPage);
+						getWorkSpace().errRetryPush(doingPage);
 						msg = "HttpCode[502] retry processor[" + doingPage.getRetryProcess() + "] page:"
 								+ doingPage.getFinalUrl();
 					} else {
-						getWorkQueue().addErr(doingPage);
-						getWorkQueue().ack(doingPage);
+						getWorkSpace().addErr(doingPage);
+						getWorkSpace().ack(doingPage);
 						msg = "retry process count[" + doingPage.getRetryProcess() + "]>="
 								+ Constants.WOKER_PROCESS_PAGE_MAX_RETRY_COUNT + " and push to err queue:"
 								+ doingPage.getFinalUrl();
