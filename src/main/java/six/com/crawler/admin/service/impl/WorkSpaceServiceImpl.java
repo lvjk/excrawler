@@ -147,4 +147,15 @@ public class WorkSpaceServiceImpl extends BaseService implements WorkSpaceServic
 	public void setWorkSpaceManager(WorkSpaceManager workSpaceManager) {
 		this.workSpaceManager = workSpaceManager;
 	}
+
+	@Override
+	public ResponseMsg<String> AddDoing(String workSpaceName, Page page) {
+		ResponseMsg<String> responseMsg = createResponseMsg();
+		new RedisWorkSpace<Page>(redisManager, workSpaceName, Page.class).push(page);
+		String msg = "add workSpace[" + workSpaceName + "]  doing data succeed";
+		responseMsg.setMsg(msg);
+		responseMsg.setIsOk(1);
+		log.info(msg);
+		return null;
+	}
 }
