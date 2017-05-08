@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
@@ -44,6 +45,11 @@ public class NbCnnbfdcProjectListWorker extends AbstractCrawlWorker {
 	protected void beforeExtract(Page doingPage) {
 		if(pageCount!=-1){
 			Element pageCountElement = doingPage.getDoc().select(pageCountCss).first();
+			if(null == pageCountElement){
+				Elements pageElements=doingPage.getDoc().select("div[class=PagerCss]>a");
+				pageCountElement=pageElements.get(pageElements.size()-2);
+			}
+			
 			if (null == pageCountElement) {
 				throw new RuntimeException("don't find pageCountElement:" + pageCountCss);
 			} else {
