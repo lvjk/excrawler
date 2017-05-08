@@ -67,24 +67,26 @@ public class DataBaseStore extends AbstarctStore {
 		datasource.setUsername(dbUser);
 		datasource.setPassword(dbPasswd);
 		datasource.setMaxActive(1);
-		tableName = getWorker().getManager().getScheduleCache().getJobParam(getWorker().getJob().getName(), TABLE_KEY);
+		JobSnapshot jobSnapshot = getWorker().getManager().getScheduleCache()
+				.getJobSnapshot(getWorker().getJob().getName());
+		tableName = jobSnapshot.getParam(TABLE_KEY);
 		if (StringUtils.isBlank(tableName)) {
 			String fixedTableName = getWorker().getJob().getParam(JobParamKeys.FIXED_TABLE_NAME);
 			String isSnapshotTable = getWorker().getJob().getParam(JobParamKeys.IS_SNAPSHOT_TABLE);
 			if ("1".equals(isSnapshotTable)) {
-				JobSnapshot lastJobSnapshot = getWorker().getManager().getJobSnapshotDao()
-						.queryLast(getWorker().getJob().getName());
-				if (null != lastJobSnapshot && lastJobSnapshot.getEnumStatus() != JobSnapshotState.FINISHED) {
+				JobSnapshot lastJobSnapshot = getWorker().getManager().getLastEnd(getWorker().getJob().getName(),jobSnapshot.getId());
+				if (null != lastJobSnapshot && JobSnapshotState.FINISHED != lastJobSnapshot.getEnumStatus()) {
 					tableName = lastJobSnapshot.getParam(TABLE_KEY);
-				} else {
+				}
+				if (StringUtils.isBlank(tableName)||!checkIsCreated(tableName)) {
 					tableName = JobTableUtils.buildJobTableName(fixedTableName,
 							getWorker().getWorkerSnapshot().getJobSnapshotId());
 				}
 			} else {
 				tableName = fixedTableName;
 			}
-			getWorker().getManager().getScheduleCache().setJobParam(getWorker().getJob().getName(), TABLE_KEY,
-					tableName);
+			jobSnapshot.putParam(TABLE_KEY, tableName);
+			getWorker().getManager().updateJobSnapshot(jobSnapshot);
 		}
 		insertSqlTemplate = worker.getJob().getParam(JobParamKeys.INSERT_SQL_TEMPLATE);
 		insertSql = JobTableUtils.buildInsertSql(insertSqlTemplate, tableName);

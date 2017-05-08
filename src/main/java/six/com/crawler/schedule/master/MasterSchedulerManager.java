@@ -3,7 +3,6 @@ package six.com.crawler.schedule.master;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -48,7 +47,6 @@ import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.schedule.DispatchType;
 import six.com.crawler.schedule.consts.DownloadContants;
 import six.com.crawler.schedule.worker.AbstractWorkerSchedulerManager;
-import six.com.crawler.utils.JsonUtils;
 
 /**
  * @author sixliu E-mail:359852326@qq.com
@@ -485,14 +483,11 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 							jobSnapshot.setStatus(state.value());
 							jobSnapshot.setEndTime(DateFormatUtils.format(new Date(), DateFormats.DATE_FORMAT_1));
 
-							Map<String, String> runtimeParams = getScheduleCache().getJobParams(jobName);
-							String runtimeParamsJson = JsonUtils.toJson(runtimeParams);
-							jobSnapshot.setRuntimeParamsJson(runtimeParamsJson);
-							getScheduleCache().delJobParam(jobName);
-
 							List<WorkerSnapshot> workerSnapshots = getScheduleCache().getWorkerSnapshots(jobName);
 							totalWorkerSnapshot(jobSnapshot, workerSnapshots);
+							
 							reportJobSnapshot(jobSnapshot);
+							
 							getScheduleCache().delJob(jobName);
 							getScheduleCache().delWorkerSnapshots(jobName);
 							getScheduleCache().delJobSnapshot(jobName);

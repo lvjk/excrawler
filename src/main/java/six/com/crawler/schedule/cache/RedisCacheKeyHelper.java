@@ -60,24 +60,6 @@ public class RedisCacheKeyHelper {
 	}
 
 	/**
-	 * 获取 jobSnapshot 注册 key 前缀=PRE_REDIS_REGISTER_CENTER+nodeName+"_jobs"
-	 * 
-	 * @param nodeName
-	 *            job 所属的node name
-	 * @param jobName
-	 *            job's name
-	 * @return job 注册 前缀key
-	 */
-	public String getJobParamKey(String jobName) {
-		StringBuilder keySb = new StringBuilder();
-		keySb.append(basePre);
-		keySb.append("_job");
-		keySb.append("_").append(jobName);
-		keySb.append("_params");
-		return keySb.toString();
-	}
-
-	/**
 	 * 获取 WorkerSnapshot 注册前缀key
 	 * 
 	 * @param nodeName

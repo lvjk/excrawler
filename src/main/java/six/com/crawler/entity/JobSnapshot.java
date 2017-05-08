@@ -40,7 +40,8 @@ public class JobSnapshot extends BaseVo implements Serializable {
 	private int minProcessTime;// 最小任务处理时间
 	private int errCount;// 异常次数
 	private transient List<WorkerSnapshot> workerSnapshots;// job运行记录WorkerSnapshot
-	private Map<String, String> jobParams;
+	private String runtimeParams;
+	private Map<String, String> runtimeParamMap = new HashMap<String, String>();
 
 	public JobSnapshot() {
 	}
@@ -223,32 +224,27 @@ public class JobSnapshot extends BaseVo implements Serializable {
 	}
 
 	public String getParam(String key) {
-		if (null == jobParams) {
-			return null;
-		} else {
-			return this.jobParams.get(key);
+		return this.runtimeParamMap.get(key);
+	}
+
+	public void putParam(String key, String param) {
+		runtimeParamMap.put(key, param);
+	}
+
+	public String getRuntimeParams() {
+		if (null == runtimeParams) {
+			runtimeParams = JsonUtils.toJson(runtimeParamMap);
 		}
+		return runtimeParams;
 	}
 
-	public synchronized void putParam(String key, String param) {
-		if (null == jobParams) {
-			synchronized (this) {
-				if (null == jobParams) {
-					jobParams = new HashMap<>();
-				}
-			}
+	public void setRuntimeParams(String runtimeParams) {
+		this.runtimeParams = runtimeParams;
+		@SuppressWarnings("unchecked")
+		Map<String, String> hostoryParamMap = JsonUtils.toObject(runtimeParams, Map.class);
+		if (null != hostoryParamMap) {
+			runtimeParamMap.putAll(hostoryParamMap);
 		}
-		jobParams.put(key, param);
-	}
-
-	public String getRuntimeParamsJson() {
-		String runtimeParamsJson = JsonUtils.toJson(jobParams);
-		return runtimeParamsJson;
-	}
-
-	@SuppressWarnings("unchecked")
-	public void setRuntimeParamsJson(String runtimeParamsJson) {
-		this.jobParams = JsonUtils.toObject(runtimeParamsJson, Map.class);
 	}
 
 	public String toString() {

@@ -29,7 +29,7 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 					+ "maxProcessTime," 
 					+ "minProcessTime," 
 					+ "errCount,"
-					+ "runtimeParamsJson,"
+					+ "runtimeParams,"
 					+ "`version`";
 	public String query(Map<String, Object> map) {
 		SQL sql = new SQL();
@@ -48,11 +48,11 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 		return sql.toString();
 	}
 	
-	public String queryLast(Map<String, Object> map) {
+	public String queryLastEnd(Map<String, Object> map) {
 		SQL sql = new SQL();
 		sql.SELECT(selectColumns);
 		sql.FROM(JobSnapshotDao.TABLE_NAME);
-		sql.WHERE("`name`=#{jobName}");
+		sql.WHERE("`name`=#{jobName} and `id`!=#{excludeId}");
 		sql.ORDER_BY("startTime desc limit 0,1");
 		return sql.toString();
 	}
@@ -65,14 +65,34 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 		sql.ORDER_BY("startTime desc limit 0,1");
 		return sql.toString();
 	}
-
+	
 	public String save(JobSnapshot jobSnapshot) {
-		String columns = "id," + "`name`," + "startTime," + "endTime," + "`status`,"
-				+ "totalProcessCount," + "totalResultCount," + "totalProcessTime," + "avgProcessTime,"
-				+ "maxProcessTime," + "minProcessTime," + "errCount,"+ "runtimeParamsJson";
-		String values = "#{id}," + "#{name}," + "#{startTime}," + "#{endTime}," + "#{status},"
-				+ "#{totalProcessCount}," + "#{totalResultCount}," + "#{totalProcessTime}," + "#{avgProcessTime},"
-				+ "#{maxProcessTime}," + "#{minProcessTime}," + "#{errCount},"+ "#{runtimeParamsJson}";
+		String columns = "id," 
+				+ "`name`,"
+				+ "startTime," 
+				+ "endTime," 
+				+ "`status`,"
+				+ "totalProcessCount," 
+				+ "totalResultCount," 
+				+ "totalProcessTime," 
+				+ "avgProcessTime,"
+				+ "maxProcessTime," 
+				+ "minProcessTime," 
+				+ "errCount,"
+				+ "runtimeParams";
+		String values = "#{id}," 
+				+ "#{name},"
+				+ "#{startTime}," 
+				+ "#{endTime}," 
+				+ "#{status},"
+				+ "#{totalProcessCount}," 
+				+ "#{totalResultCount}," 
+				+ "#{totalProcessTime}," 
+				+ "#{avgProcessTime},"
+				+ "#{maxProcessTime}," 
+				+ "#{minProcessTime}," 
+				+ "#{errCount},"
+				+ "#{runtimeParams}";
 		SQL sql = new SQL();
 		sql.INSERT_INTO(JobSnapshotDao.TABLE_NAME);
 		sql.VALUES(columns, values);
@@ -82,16 +102,32 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 	@SuppressWarnings("unchecked")
 	public String batchSave(Map<String, Object> map) {
 		List<JobSnapshot> jobSnapshots = (List<JobSnapshot>) map.get(BaseDao.BATCH_SAVE_PARAM);
-		String columns = "id," + "`name`,"+ "startTime," + "endTime," + "`status`,"
-				+ "totalProcessCount," + "totalResultCount," + "totalProcessTime," + "avgProcessTime,"
-				+ "maxProcessTime," + "minProcessTime," + "errCount,"+ "runtimeParamsJson";
-		String values = "(#{list[" + INDEX_FLAG + "].id}," + "#{list[" + INDEX_FLAG + "].name},"
-				+ "#{list[" + INDEX_FLAG + "].startTime}," + "#{list[" + INDEX_FLAG
-				+ "].endTime}," + "#{list[" + INDEX_FLAG + "].status}," + "#{list[" + INDEX_FLAG
-				+ "].totalProcessCount}," + "#{list[" + INDEX_FLAG + "].totalResultCount}," + "#{list[" + INDEX_FLAG
-				+ "].totalProcessTime}," + "#{list[" + INDEX_FLAG + "].avgProcessTime}," + "#{list[" + INDEX_FLAG
-				+ "].maxProcessTime}," + "#{list[" + INDEX_FLAG + "].minProcessTime}," + "#{list[" + INDEX_FLAG
-				+ "].errCount},#{list[" + INDEX_FLAG + "].runtimeParamsJson})";
+		String columns = "id," 
+				+ "`name`,"
+				+ "startTime," 
+				+ "endTime," 
+				+ "`status`,"
+				+ "totalProcessCount," 
+				+ "totalResultCount," 
+				+ "totalProcessTime," 
+				+ "avgProcessTime,"
+				+ "maxProcessTime," 
+				+ "minProcessTime," 
+				+ "errCount,"
+				+ "runtimeParams";
+		String values = "(#{list[" + INDEX_FLAG + "].id}," 
+				+ "#{list[" + INDEX_FLAG + "].name},"
+				+ "#{list[" + INDEX_FLAG + "].startTime}," 
+				+ "#{list[" + INDEX_FLAG + "].endTime}," 
+				+ "#{list[" + INDEX_FLAG + "].status}," 
+				+ "#{list[" + INDEX_FLAG + "].totalProcessCount}," 
+				+ "#{list[" + INDEX_FLAG + "].totalResultCount},"
+				+ "#{list[" + INDEX_FLAG + "].totalProcessTime}," 
+				+ "#{list[" + INDEX_FLAG + "].avgProcessTime}," 
+				+ "#{list[" + INDEX_FLAG + "].maxProcessTime}," 
+				+ "#{list[" + INDEX_FLAG + "].minProcessTime}," 
+				+ "#{list[" + INDEX_FLAG + "].errCount},"
+				+ "#{list[" + INDEX_FLAG + "].runtimeParams})";
 		StringBuilder sbd = new StringBuilder();
 		sbd.append("insert into ").append(JobSnapshotDao.TABLE_NAME);
 		sbd.append("(").append(columns).append(") ");
@@ -114,7 +150,7 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 		sql.SET("`maxProcessTime`=#{maxProcessTime}");
 		sql.SET("`minProcessTime`=#{minProcessTime}");
 		sql.SET("`errCount`=#{errCount}");
-		sql.SET("`runtimeParamsJson`=#{runtimeParamsJson}");
+		sql.SET("`runtimeParams`=#{runtimeParams}");
 		sql.WHERE("`id` = #{id} and `name` = #{name}");
 		return sql.toString();
 	}

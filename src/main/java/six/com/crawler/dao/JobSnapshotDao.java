@@ -43,8 +43,8 @@ public interface JobSnapshotDao extends BaseDao {
 	 * @param jobName
 	 * @return 最后一条运行记录
 	 */
-	@SelectProvider(type = JobSnapshotDaoProvider.class, method = "queryLast")
-	public JobSnapshot queryLast(@Param("jobName") String jobName);
+	@SelectProvider(type = JobSnapshotDaoProvider.class, method = "queryLastEnd")
+	public JobSnapshot queryLastEnd(@Param("jobName") String jobName,@Param("excludeId") String excludeId);
 	
 	
 	/**
