@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import okhttp3.Request;
 import six.com.crawler.entity.JobParamKeys;
+import six.com.crawler.entity.Page;
 import six.com.crawler.exception.AbstractHttpException;
 import six.com.crawler.http.HttpConstant;
 import six.com.crawler.http.HttpMethod;
@@ -56,7 +57,7 @@ public class QichachaSynchronousDataWorker extends DataBaseAbstractWorker{
 	}
 	
 	@Override
-	protected void insideWork() throws Exception {
+	protected void insideWork(Page doingPage) throws Exception {
 		final Connection connection = getConnection();
 		PreparedStatement ps = null;
 		ResultSet resultSet = null;

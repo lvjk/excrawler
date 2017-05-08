@@ -12,13 +12,18 @@ import com.alibaba.druid.pool.DruidDataSource;
 
 import six.com.crawler.entity.JobParamKeys;
 import six.com.crawler.entity.JobSnapshot;
+import six.com.crawler.entity.Page;
 
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年2月20日 下午1:32:48
  */
-public abstract class DataBaseAbstractWorker extends AbstractWorker {
+public abstract class DataBaseAbstractWorker extends AbstractWorker<Page> {
+
+	public DataBaseAbstractWorker() {
+		super(Page.class);
+	}
 
 	final static Logger LOG = LoggerFactory.getLogger(DataBaseAbstractWorker.class);
 	private String dbDriverClassName;
@@ -67,7 +72,7 @@ public abstract class DataBaseAbstractWorker extends AbstractWorker {
 	}
 
 	@Override
-	protected void onError(Exception t) {
+	protected void onError(Exception t,Page doingPage) {
 	}
 
 	protected abstract void insideInit();

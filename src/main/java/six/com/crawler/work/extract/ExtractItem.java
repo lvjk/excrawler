@@ -32,6 +32,8 @@ public class ExtractItem extends BaseVo implements Serializable {
 	private int outputType;
 
 	private String outputKey;// 结果 key
+	
+	private String httpMethod;//httpMethod
 
 	private int mustHaveResult;// 是否必须有值 1 ：必须有值
 
@@ -91,6 +93,14 @@ public class ExtractItem extends BaseVo implements Serializable {
 
 	public void setOutputKey(String outputKey) {
 		this.outputKey = outputKey;
+	}
+	
+	public String getHttpMethod() {
+		return httpMethod;
+	}
+
+	public void setHttpMethod(String httpMethod) {
+		this.httpMethod = httpMethod;
 	}
 
 	public int getMustHaveResult() {

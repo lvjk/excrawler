@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import six.com.crawler.entity.JobSnapshot;
+import six.com.crawler.entity.Page;
 import six.com.crawler.utils.ThreadUtils;
 import six.com.crawler.work.AbstractWorker;
 
@@ -12,16 +13,20 @@ import six.com.crawler.work.AbstractWorker;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年10月27日 上午10:38:51
  */
-public class TestWorker extends AbstractWorker {
+public class TestWorker extends AbstractWorker<Page> {
 
-	final static Logger LOG = LoggerFactory.getLogger(TestWorker.class);
+	public TestWorker() {
+		super(Page.class);
+	}
+
+	final static Logger log = LoggerFactory.getLogger(TestWorker.class);
 
 	int processCount;
 
 	@Override
-	protected void insideWork() throws Exception {
+	protected void insideWork(Page doingPage) throws Exception {
 		processCount++;
-		LOG.info("test worker process:" + processCount);
+		log.info("test worker process:" + processCount);
 		ThreadUtils.sleep(3000);
 	}
 
@@ -30,7 +35,7 @@ public class TestWorker extends AbstractWorker {
 	}
 
 	@Override
-	protected void onError(Exception t) {
+	protected void onError(Exception t,Page doingPage) {
 
 	}
 

@@ -69,6 +69,9 @@ public interface WorkSpace<T extends WorkSpaceData> {
 	 * @param data
 	 */
 	public void ack(T data);
+	
+	
+	public void repair();
 
 	/**
 	 * 用来保存处理不了的数据

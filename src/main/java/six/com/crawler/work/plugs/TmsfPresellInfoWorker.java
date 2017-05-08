@@ -32,9 +32,7 @@ public class TmsfPresellInfoWorker extends AbstractCrawlWorker {
 	protected void insideInit() {
 		houseUrlQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tmsf_house_url",Page.class);
 		jsonKeyMap = new HashMap<>();
-		jsonKeyMap.put("propertyid", "property.propertyid");
 		jsonKeyMap.put("presellid", "presell.presellid");
-		jsonKeyMap.put("projectName", "property.propertyname");
 		jsonKeyMap.put("presellName", "presell.presellname");
 		jsonKeyMap.put("presellCode", "presell.persellno");
 		jsonKeyMap.put("presellIssueDate", "presell.applydate");

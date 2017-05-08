@@ -332,9 +332,58 @@ function showJobSnapshots(jobSnapshots) {
 					jobSnapshot.workSpaceDoingSize,
 					jobSnapshot.workSpaceErrSize);
 			$("#" + job_queue_count + jobName).html(workSpaceShowStr);
-			$("#" + job_exception_count + jobName).html(jobSnapshot.errCount);	
+			var errCountHtml=getErrCountHtml(jobSnapshot.name,jobSnapshot.id,jobSnapshot.errCount);
+			$("#" + job_exception_count + jobName).html(errCountHtml);	
 		}
 	}
+}
+
+function getErrCountHtml(jobName,jobSnapshotId,errCount){
+	var errCountHtml;
+	if(errCount>0){
+		errCountHtml="<a href=\"javascript:showErrMsg('" + jobSnapshot.name+ "','" + jobSnapshot.id+ "')\">"+errCount+"</a>";
+	}else{
+		errCountHtml=errCount;
+	}
+	return errCountHtml;
+}
+
+function showErrMsg(jobName,jobSnapshotId){
+	var workSpaceDiv=$("#job_errMsg_div");
+	var workSpace_table = workSpaceDiv.find("table");
+	var doingDataCursor = workSpaceDiv.find("input[id='doingDataCursor']").val();
+	var doingDataCursorInputs=workSpaceDiv.find("input[id='errDataCursor_"+workSpaceName+"']");
+	var doingDataCursor = "0";
+	if(null!=doingDataCursorInputs&&doingDataCursorInputs.length>0){
+		doingDataCursor=doingDataCursorInputs.val();
+	}
+	var url = "/crawler/workSpace/getDoingData/" + workSpaceName + "/" + doingDataCursor;
+	$.get(url, function(result) {
+		var dataMap = result.data;
+		var cursor = dataMap.cursor;
+		var data = dataMap.list;
+		if (null != data && data.length > 0) {
+			workSpaceDiv.find("input[id='doingDataCursor']").val(cursor);
+			workSpaceDiv.find("[id='job_workSpace_name']").html("工作空间[<span style='color:#FF0000'>" 
+							+ workSpaceName+ "</span>]信息");
+			workSpace_table.find("[name='data_page']").remove();
+			workSpace_table.find("[name='dataCursor']").remove();
+			for (var i = 0; i < data.length; i++) {
+				var page = data[i];
+				var tr = $("<tr name='data_page'></tr>");
+				$("<td><span style='color:#FF0000;font-size:6px;'>"
+						+ page.originalUrl + "</span></td>").appendTo(tr);
+				var operationTd = $("<td></td>");
+				var operation = "<a  href=\"javascript:clearDoing('"+ workSpaceName+ "')\">全部删除</a>&nbsp;";
+				//operation += "<a href=\"javascript:#\">处理</a>&nbsp;";
+				$(operation).appendTo(operationTd);
+				operationTd.appendTo(tr);
+				tr.appendTo(workSpace_table);
+			}
+			$("<input type='text' name='dataCursor' id='doingDataCursor_"+workSpaceName+"' value='"+cursor+"' style='display:none'/>").appendTo(workSpace_table);
+			showLayer(workSpaceDiv);
+		}
+	});
 }
 
 function updateJobInfo() {

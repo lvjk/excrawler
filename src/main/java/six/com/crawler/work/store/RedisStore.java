@@ -13,7 +13,7 @@ import six.com.crawler.work.store.exception.StoreException;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年3月29日 上午11:25:00
  */
-public class RedisStore extends StoreAbstarct {
+public class RedisStore extends AbstarctStore {
 
 	private final static String REDIS_SOTRE_KEY_PRE = "redisStore";
 
@@ -21,7 +21,7 @@ public class RedisStore extends StoreAbstarct {
 
 	private AtomicInteger storeCount = new AtomicInteger();
 
-	public RedisStore(AbstractWorker worker) {
+	public RedisStore(AbstractWorker<?> worker) {
 		super(worker);
 		String redisStoreKey = REDIS_SOTRE_KEY_PRE + "_" + worker.getJobSnapshot().getName() + "_"
 				+ worker.getJobSnapshot().getId();

@@ -2,7 +2,6 @@ package six.com.crawler.schedule.worker;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import six.com.crawler.entity.Job;
 import six.com.crawler.rpc.RpcService;
 import six.com.crawler.schedule.AbstractSchedulerManager;
@@ -27,7 +26,7 @@ public abstract class AbstractWorkerSchedulerManager extends AbstractSchedulerMa
 
 	protected abstract void doInit();
 
-	protected  String getOperationJobLockPath(String jobName) {
+	protected String getOperationJobLockPath(String jobName) {
 		String path = "workerSchedulerManager_operation_" + jobName;
 		return path;
 	}
@@ -48,15 +47,15 @@ public abstract class AbstractWorkerSchedulerManager extends AbstractSchedulerMa
 	public abstract void execute(DispatchType dispatchType, String jobName);
 
 	@RpcService(name = "suspend")
-	public abstract void suspend(DispatchType dispatchType,String jobName);
+	public abstract void suspend(DispatchType dispatchType, String jobName);
 
 	@RpcService(name = "goOn")
-	public abstract void goOn(DispatchType dispatchType,String jobName);
+	public abstract void goOn(DispatchType dispatchType, String jobName);
 
 	@RpcService(name = "stop")
-	public abstract void stop(DispatchType dispatchType,String jobName);
+	public abstract void stop(DispatchType dispatchType, String jobName);
 
 	@RpcService(name = "stopAll")
 	public abstract void stopAll(DispatchType dispatchType);
-	
+
 }

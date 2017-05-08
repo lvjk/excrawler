@@ -11,9 +11,9 @@ import six.com.crawler.work.store.exception.StoreException;
 * @E-mail: 359852326@qq.com 
 * @date 创建时间：2017年3月27日 上午11:36:28 
 */
-public class ConsoleStore extends StoreAbstarct{
+public class ConsoleStore extends AbstarctStore{
 
-	public ConsoleStore(AbstractWorker worker) {
+	public ConsoleStore(AbstractWorker<?> worker) {
 		super(worker);
 	}
 

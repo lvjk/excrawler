@@ -25,7 +25,7 @@ import six.com.crawler.work.store.exception.StoreException;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年12月9日 上午11:15:34
  */
-public class DataBaseStore extends StoreAbstarct {
+public class DataBaseStore extends AbstarctStore {
 
 	final static String checkTableIsCreateSql = "select table_name  " + " from INFORMATION_SCHEMA.tables  "
 			+ " where TABLE_NAME=?";
@@ -43,7 +43,7 @@ public class DataBaseStore extends StoreAbstarct {
 	// 处理的结果key
 	private String[] fields;
 
-	public DataBaseStore(AbstractWorker worker) {
+	public DataBaseStore(AbstractWorker<?> worker) {
 		super(worker);
 		String everySendSizeStr = worker.getJob().getParam(JobParamKeys.BATCH_SIZE);
 		if (null != everySendSizeStr) {
