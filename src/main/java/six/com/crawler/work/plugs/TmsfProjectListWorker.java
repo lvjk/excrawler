@@ -63,14 +63,14 @@ public class TmsfProjectListWorker extends AbstractCrawlWorker {
 		String pageCountStr = pageCountParams[1];
 		int pageCount = Integer.valueOf(pageCountStr);
 		
-		getWorkQueue().clearDoing();
+		getWorkSpace().clearDoing();
 		
-		getWorkQueue().push(firstPage);
+		getWorkSpace().push(firstPage);
 		
 		Page lastPage = firstPage;
 		while (pageIndex <= pageCount) {
 			Page nextPage = buildPage(pageIndex, lastPage.getFinalUrl());// 初始化第一页
-			getWorkQueue().push(nextPage);
+			getWorkSpace().push(nextPage);
 			lastPage = nextPage;
 			pageIndex++;
 		}

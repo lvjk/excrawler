@@ -35,7 +35,7 @@ public class LianJiaEsfPlateListWorker extends AbstractCrawlWorker {
 		Page firstPage=new Page(getSite().getCode(), 1, firstUrl, firstUrl);
 		getDowner().down(firstPage);
 		Elements districtElements=firstPage.getDoc().select(districtCss);
-		getWorkQueue().clearDoing();
+		getWorkSpace().clearDoing();
 		for(Element districtElement:districtElements){
 			String district=districtElement.text();
 			String districtUrl=districtElement.attr("href");
@@ -45,7 +45,7 @@ public class LianJiaEsfPlateListWorker extends AbstractCrawlWorker {
 			districtPage.getMetaMap().put("district",Arrays.asList(district));
 			districtPage.getMetaMap().put("city",Arrays.asList("sh"));
 			districtPage.getMetaMap().put("cityName",Arrays.asList("上海"));
-			getWorkQueue().push(districtPage);
+			getWorkSpace().push(districtPage);
 		}
 	}
 

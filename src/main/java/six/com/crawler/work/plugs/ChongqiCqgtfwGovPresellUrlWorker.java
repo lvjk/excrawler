@@ -50,15 +50,15 @@ public class ChongqiCqgtfwGovPresellUrlWorker extends AbstractCrawlWorker {
 			getAndSetState(WorkerLifecycleState.STOPED);
 			throw new RuntimeException("don't find pageCount");
 		}
-		getWorkQueue().clearDoing();
-		getWorkQueue().push(firstPage);
+		getWorkSpace().clearDoing();
+		getWorkSpace().push(firstPage);
 		String referer=firstPage.getFinalUrl();
 		for(int pageIndex=1;pageIndex<pageCount;pageIndex++){
 			String nextPageUrl = StringUtils.replace(urlTemplate, pageIndexTemplate, String.valueOf(pageIndex));
 			Page nextPage = new Page(getSite().getCode(), 1, nextPageUrl, nextPageUrl);
 			nextPage.setSiteCode(getSite().getCode());
 			nextPage.setReferer(referer);
-			getWorkQueue().push(nextPage);
+			getWorkSpace().push(nextPage);
 			referer=nextPage.getOriginalUrl();
 		}
 	}

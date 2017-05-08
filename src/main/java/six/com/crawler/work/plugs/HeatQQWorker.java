@@ -121,7 +121,7 @@ public class HeatQQWorker extends AbstractCrawlWorker {
 		cityDataJson = StringUtils.removeStart(cityDataJson, "define(");
 		cityDataJson = StringUtils.removeEnd(cityDataJson, ");");
 		Map<String, Object> cityMap = JsonUtils.toObject(cityDataJson, Map.class);
-		getWorkQueue().clearDoing();
+		getWorkSpace().clearDoing();
 		for (String direction : directionMap.keySet()) {
 			String directionValue = directionMap.get(direction);
 			for (String type : typeMap.keySet()) {
@@ -147,8 +147,8 @@ public class HeatQQWorker extends AbstractCrawlWorker {
 						searchPage.getMetaMap().put("date", Arrays.asList(dateStr));
 						searchPage.getMetaMap().put("type", Arrays.asList(type));
 						searchPage.getMetaMap().put("direction", Arrays.asList(direction));
-						if(!getWorkQueue().isDone(searchPage.getPageKey())){
-							getWorkQueue().push(searchPage);
+						if(!getWorkSpace().isDone(searchPage.getPageKey())){
+							getWorkSpace().push(searchPage);
 						}
 					}
 				}

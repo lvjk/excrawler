@@ -34,8 +34,8 @@ public class NbCnnbfdcPresellListWorker extends AbstractCrawlWorker {
 		if(!(helper.isDownloadState() && helper.isUseRawData())){
 			Page firstPage = new Page(getSite().getCode(), 1, firstUrl, firstUrl);
 			firstPage.setMethod(HttpMethod.GET);
-			getWorkQueue().clearDoing();
-			getWorkQueue().push(firstPage);
+			getWorkSpace().clearDoing();
+			getWorkSpace().push(firstPage);
 		}
 	}
 
@@ -98,7 +98,7 @@ public class NbCnnbfdcPresellListWorker extends AbstractCrawlWorker {
 				Page nextgPage = new Page(getSite().getCode(), 1, firstUrl, firstUrl);
 				nextgPage.setReferer(doingPage.getFinalUrl());
 				nextgPage.setMethod(HttpMethod.GET);
-				getWorkQueue().push(nextgPage);
+				getWorkSpace().push(nextgPage);
 			}
 		}
 	}

@@ -53,7 +53,7 @@ public class LianJiaCjEsfListWorker extends AbstractCrawlWorker {
 			Page nextPage = new Page(getSite().getCode(), 1, nextPageUrl, nextPageUrl);
 			nextPage.setReferer(doingPage.getFinalUrl());
 			nextPage.getMetaMap().putAll(doingPage.getMetaMap());
-			getWorkQueue().push(nextPage);
+			getWorkSpace().push(nextPage);
 		}
 	}
 

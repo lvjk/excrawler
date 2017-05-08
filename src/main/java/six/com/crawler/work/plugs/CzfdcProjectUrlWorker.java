@@ -61,7 +61,7 @@ public class CzfdcProjectUrlWorker extends AbstractCrawlWorker {
 			newPage = new Page(doingPage.getSiteCode(), 1, tempUrl, tempUrl);
 			newPage.setReferer(doingPage.getFinalUrl());
 			newPage.setType(PageType.DATA.value());
-			getWorkQueue().push(newPage);
+			getWorkSpace().push(newPage);
 		}
 		WebElement selectPageIndexElement = WebDriverUtils.findElement(webDriver, selectPageIndexXpath,
 				findElementTimeout);
