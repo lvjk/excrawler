@@ -42,7 +42,7 @@ public class DLDCGXProjectListWorker extends AbstractCrawlWorker {
 	@Override
 	protected void insideInit() {
 		projectInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("dldc_gx_project_info", Page.class);
-		Page firstPage = buildPage(pageIndex, refererUrl);// 鍒濆鍖栫涓�椤�
+		Page firstPage = buildPage(pageIndex, refererUrl);
 		getWorkSpace().clearDoing();
 		getWorkSpace().push(firstPage);
 	}
@@ -82,10 +82,9 @@ public class DLDCGXProjectListWorker extends AbstractCrawlWorker {
 				projectInfoQueue.push(projectInfo);
 			}
 		}
-		// 鍒ゆ柇鏄惁杩樻湁涓嬩竴椤� 鏈変笅涓�椤电敓鎴愪笅涓�椤典涪杩涘綋鍓嶉槦鍒� 鍗冲彲
 		pageIndex++;
 		if (pageIndex <= pageCount) {
-			Page page = buildPage(pageIndex, doingPage.getFinalUrl());// 鍒濆鍖栫涓�椤�
+			Page page = buildPage(pageIndex, doingPage.getFinalUrl());
 			getWorkSpace().push(page);
 		}
 	}
