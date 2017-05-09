@@ -8,6 +8,7 @@ import six.com.crawler.entity.Page;
 import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.http.HttpMethod;
+import six.com.crawler.utils.ArrayListUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.space.RedisWorkSpace;
 
@@ -52,8 +53,9 @@ RedisWorkSpace<Page> projectInfoQueue;
 
 	@Override
 	protected void beforeExtract(Page doingPage) {
-		// TODO Auto-generated method stub
-		
+		if(pageCount==-1){
+			pageCount=Integer.parseInt(doingPage.getDoc().select("NewDataSet>Table1>PageCount").first().ownText());
+		}
 	}
 
 	@Override
@@ -64,13 +66,17 @@ RedisWorkSpace<Page> projectInfoQueue;
 
 	@Override
 	protected void onComplete(Page doingPage, ResultContext resultContext) {
-		// TODO Auto-generated method stub
-		List<String> projectInfoUrls = resultContext.getExtractResult("dldc_gx_project_info");
-		if (null != projectInfoUrls) {
-			for (String projectInfoUrl : projectInfoUrls) {
-				Page projectInfo = new Page(getSite().getCode(), 1, projectInfoUrl, projectInfoUrl);
+		String BASE_URL="http://218.25.171.244/InfoLayOut_GX/Config/LoadProcToXML.aspx?pid=Arty_YSXX&csnum=1&cn1=ysxkid&cv1=";
+		List<String> projectIds = resultContext.getExtractResult("projectId");
+		if (null != projectIds) {
+			for (String projectId : projectIds) {
+				String URL=BASE_URL+projectId;
+				Page projectInfo = new Page(getSite().getCode(), 1, URL, URL);
 				projectInfo.setReferer(doingPage.getFinalUrl());
 				projectInfo.setMethod(HttpMethod.GET);
+				projectInfo.setType(PageType.XML.value());
+				
+				projectInfo.getMetaMap().put("projectId", ArrayListUtils.asList(projectId));
 				projectInfoQueue.push(projectInfo);
 			}
 		}
