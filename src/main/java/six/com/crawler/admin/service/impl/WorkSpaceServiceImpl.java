@@ -14,10 +14,8 @@ import org.springframework.stereotype.Service;
 import six.com.crawler.admin.api.ResponseMsg;
 import six.com.crawler.admin.service.BaseService;
 import six.com.crawler.admin.service.WorkSpaceService;
-import six.com.crawler.dao.RedisManager;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.WorkSpaceInfo;
-import six.com.crawler.work.space.RedisWorkSpace;
 import six.com.crawler.work.space.WorkSpace;
 import six.com.crawler.work.space.WorkSpaceData;
 import six.com.crawler.work.space.WorkSpaceManager;
@@ -32,9 +30,6 @@ import six.com.crawler.work.space.WorkSpaceManager;
 public class WorkSpaceServiceImpl extends BaseService implements WorkSpaceService {
 
 	final static Logger log = LoggerFactory.getLogger(WorkSpaceServiceImpl.class);
-
-	@Autowired
-	private RedisManager redisManager;
 
 	@Autowired
 	private WorkSpaceManager workSpaceManager;
@@ -95,7 +90,7 @@ public class WorkSpaceServiceImpl extends BaseService implements WorkSpaceServic
 
 	public ResponseMsg<String> clearDoing(String workSpaceName) {
 		ResponseMsg<String> responseMsg = createResponseMsg();
-		new RedisWorkSpace<>(getRedisManager(), workSpaceName, WorkSpaceData.class).clearDoing();
+		workSpaceManager.newWorkSpace(workSpaceName, WorkSpaceData.class).clearDoing();
 		String msg = "clean workSpace[" + workSpaceName + "]  doing data succeed";
 		responseMsg.setMsg(msg);
 		responseMsg.setIsOk(1);
@@ -105,7 +100,7 @@ public class WorkSpaceServiceImpl extends BaseService implements WorkSpaceServic
 
 	public ResponseMsg<String> clearErr(String workSpaceName) {
 		ResponseMsg<String> responseMsg = createResponseMsg();
-		new RedisWorkSpace<>(getRedisManager(), workSpaceName, WorkSpaceData.class).clearErr();
+		workSpaceManager.newWorkSpace(workSpaceName, WorkSpaceData.class).clearErr();
 		String msg = "clean workSpace[" + workSpaceName + "]  err data succeed";
 		responseMsg.setMsg(msg);
 		responseMsg.setIsOk(1);
@@ -115,7 +110,7 @@ public class WorkSpaceServiceImpl extends BaseService implements WorkSpaceServic
 
 	public ResponseMsg<String> clearDone(String workSpaceName) {
 		ResponseMsg<String> responseMsg = createResponseMsg();
-		new RedisWorkSpace<>(getRedisManager(), workSpaceName, WorkSpaceData.class).clearDone();
+		workSpaceManager.newWorkSpace(workSpaceName, WorkSpaceData.class).clearDone();
 		String msg = "clean workSpace[" + workSpaceName + "]  done data succeed";
 		responseMsg.setMsg(msg);
 		responseMsg.setIsOk(1);
@@ -124,20 +119,12 @@ public class WorkSpaceServiceImpl extends BaseService implements WorkSpaceServic
 	}
 
 	@Override
-	public ResponseMsg<String> againDoErrQueue(String queueName) {
+	public ResponseMsg<String> againDoErrQueue(String workSpaceName) {
 		ResponseMsg<String> responseMsg = createResponseMsg();
-		new RedisWorkSpace<Page>(redisManager, queueName, Page.class).againDoErrQueue();
+		workSpaceManager.newWorkSpace(workSpaceName, WorkSpaceData.class).againDoErrQueue();
 		responseMsg.setIsOk(1);
-		responseMsg.setMsg("again do errQueue[" + queueName + "] succeed");
+		responseMsg.setMsg("again do errQueue[" + workSpaceName + "] succeed");
 		return responseMsg;
-	}
-
-	public RedisManager getRedisManager() {
-		return redisManager;
-	}
-
-	public void setRedisManager(RedisManager redisManager) {
-		this.redisManager = redisManager;
 	}
 
 	public WorkSpaceManager getWorkSpaceManager() {
@@ -151,7 +138,7 @@ public class WorkSpaceServiceImpl extends BaseService implements WorkSpaceServic
 	@Override
 	public ResponseMsg<String> AddDoing(String workSpaceName, Page page) {
 		ResponseMsg<String> responseMsg = createResponseMsg();
-		new RedisWorkSpace<Page>(redisManager, workSpaceName, Page.class).push(page);
+		workSpaceManager.newWorkSpace(workSpaceName, WorkSpaceData.class).push(page);
 		String msg = "add workSpace[" + workSpaceName + "]  doing data succeed";
 		responseMsg.setMsg(msg);
 		responseMsg.setIsOk(1);

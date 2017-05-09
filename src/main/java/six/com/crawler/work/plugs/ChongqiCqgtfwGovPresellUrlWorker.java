@@ -12,7 +12,7 @@ import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.WorkerLifecycleState;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
 /**
  * @author 作者
@@ -22,7 +22,7 @@ import six.com.crawler.work.space.RedisWorkSpace;
 public class ChongqiCqgtfwGovPresellUrlWorker extends AbstractCrawlWorker {
 
 	final static Logger LOG = LoggerFactory.getLogger(ChongqiCqgtfwGovPresellUrlWorker.class);
-	RedisWorkSpace<Page> presellInfoQueue;
+	WorkSpace<Page> presellInfoQueue;
 	String pageIndexTemplate = "<<pageIndex>>";
 	String firstUrl = "http://www.cqgtfw.gov.cn/spjggs/fw/spfysxk/index.htm";
 	String urlTemplate = "http://www.cqgtfw.gov.cn/spjggs/fw/spfysxk/index_" + pageIndexTemplate + ".htm";
@@ -30,7 +30,8 @@ public class ChongqiCqgtfwGovPresellUrlWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void insideInit() {
-		presellInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(),"chongqi_cqgtfw_gov_presell_info",Page.class);
+		presellInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("chongqi_cqgtfw_gov_presell_info",
+				Page.class);
 		Page firstPage = new Page(getSite().getCode(), 1, firstUrl, firstUrl);
 		getDowner().down(firstPage);
 		Element pageInfoElement = firstPage.getDoc().select(pageInfoCss).first();
@@ -52,14 +53,14 @@ public class ChongqiCqgtfwGovPresellUrlWorker extends AbstractCrawlWorker {
 		}
 		getWorkSpace().clearDoing();
 		getWorkSpace().push(firstPage);
-		String referer=firstPage.getFinalUrl();
-		for(int pageIndex=1;pageIndex<pageCount;pageIndex++){
+		String referer = firstPage.getFinalUrl();
+		for (int pageIndex = 1; pageIndex < pageCount; pageIndex++) {
 			String nextPageUrl = StringUtils.replace(urlTemplate, pageIndexTemplate, String.valueOf(pageIndex));
 			Page nextPage = new Page(getSite().getCode(), 1, nextPageUrl, nextPageUrl);
 			nextPage.setSiteCode(getSite().getCode());
 			nextPage.setReferer(referer);
 			getWorkSpace().push(nextPage);
-			referer=nextPage.getOriginalUrl();
+			referer = nextPage.getOriginalUrl();
 		}
 	}
 
@@ -70,7 +71,7 @@ public class ChongqiCqgtfwGovPresellUrlWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void beforeExtract(Page doingPage) {
-		
+
 	}
 
 	@Override

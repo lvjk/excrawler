@@ -166,16 +166,25 @@ public class JobServiceImpl extends BaseService implements JobService {
 		return responseMsg;
 	}
 
-	public ResponseMsg<List<JobSnapshot>> getJobSnapshots(List<JobSnapshot> list) {
+	public ResponseMsg<List<JobSnapshot>> getJobSnapshots(String[] jobNames, String[] workSpaceNames) {
 		ResponseMsg<List<JobSnapshot>> responseMsg = createResponseMsg();
 		List<JobSnapshot> result = new ArrayList<JobSnapshot>();
-		if (null != list) {
+		if (null != jobNames && null != workSpaceNames && jobNames.length == workSpaceNames.length) {
 			JobSnapshot findJobSnapshot = null;
-			for (JobSnapshot jobSnapshot : list) {
+			JobSnapshot jobSnapshot = null;
+			String jobName = null;
+			String workSpaceName = null;
+			for (int i = 0; i < jobNames.length; i++) {
+				jobName = jobNames[i];
+				workSpaceName = workSpaceNames[i];
+				jobSnapshot = new JobSnapshot();
+				jobSnapshot.setName(jobName);
+				jobSnapshot.setWorkSpaceName(workSpaceName);
 				findJobSnapshot = scheduleManager.getScheduleCache().getJobSnapshot(jobSnapshot.getName());
 				if (null != findJobSnapshot) {
 					jobSnapshot = findJobSnapshot;
-					List<WorkerSnapshot> workerSnapshots = scheduleManager.getScheduleCache().getWorkerSnapshots(jobSnapshot.getName());
+					List<WorkerSnapshot> workerSnapshots = scheduleManager.getScheduleCache()
+							.getWorkerSnapshots(jobSnapshot.getName());
 					scheduleManager.totalWorkerSnapshot(jobSnapshot, workerSnapshots);
 				}
 				WorkSpaceInfo workSpaceInfo = workSpaceService.getWorkSpaceInfo(jobSnapshot.getWorkSpaceName());
@@ -302,7 +311,7 @@ public class JobServiceImpl extends BaseService implements JobService {
 					}
 					responseMsg.setData(newVersion);
 					responseMsg.setIsOk(1);
-				}else {
+				} else {
 					msg = "update the job[" + name + "] fialed";
 				}
 			} else {

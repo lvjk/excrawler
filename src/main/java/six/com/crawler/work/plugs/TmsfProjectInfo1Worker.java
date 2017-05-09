@@ -14,7 +14,7 @@ import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.ArrayListUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
 /**
  * @author 作者
@@ -29,13 +29,12 @@ public class TmsfProjectInfo1Worker extends AbstractCrawlWorker {
 	int longitudeMin = 73;
 	int latitudeMax = 53;
 	int latitudeMix = 4;
-	RedisWorkSpace<Page> sellControlUrlQueue;
+	WorkSpace<Page> sellControlUrlQueue;
 	String mapDivCss = "div[id=container]>script";
 
 	@Override
 	protected void insideInit() {
-		sellControlUrlQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tmsf_presell_url_1",
-				Page.class);
+		sellControlUrlQueue = getManager().getWorkSpaceManager().newWorkSpace("tmsf_presell_url_1", Page.class);
 	}
 
 	@Override
@@ -85,13 +84,13 @@ public class TmsfProjectInfo1Worker extends AbstractCrawlWorker {
 		fields.add("totalHouses");
 		fields.add("parkingInfo");
 		fields.add("propertyLife");
-		List<Map<String, String>> results=resultContext.getOutResults();
-		if(null!=results){
+		List<Map<String, String>> results = resultContext.getOutResults();
+		if (null != results) {
 			for (Map<String, String> result : results) {
 				for (String field : fields) {
 					String value = result.get(field);
 					if (null != value && value.length() > 45) {
-						result.put(field,"");
+						result.put(field, "");
 					}
 				}
 			}

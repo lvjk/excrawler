@@ -14,7 +14,7 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.extract.Extracter;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
 /**
  * 
@@ -25,7 +25,7 @@ public class BJJSPreSaleProjectInfoWorker extends AbstractCrawlWorker {
 
 	final static Logger LOG = LoggerFactory.getLogger(BJJSPreSaleProjectInfoWorker.class);
 
-	RedisWorkSpace<Page> projectUnitUrlQueue;
+	WorkSpace<Page> projectUnitUrlQueue;
 
 	private String unitUrlTemplate = "http://www.bjjs.gov.cn/eportal/ui?pageId=411612&systemId=2&srcId=1";
 
@@ -34,7 +34,7 @@ public class BJJSPreSaleProjectInfoWorker extends AbstractCrawlWorker {
 	@Override
 	protected void insideInit() {
 		// TODO Auto-generated method stub
-		projectUnitUrlQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(),"bjjs_gov_unit_url", Page.class);
+		projectUnitUrlQueue = getManager().getWorkSpaceManager().newWorkSpace("bjjs_gov_unit_url", Page.class);
 	}
 
 	@Override

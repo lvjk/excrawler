@@ -10,26 +10,27 @@ import org.slf4j.LoggerFactory;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.http.HttpMethod;
+import six.com.crawler.utils.ArrayListUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.WorkerLifecycleState;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
 /**
  * 
  * @author weijiyong@tospur.com
  *
  */
-public class DLDCJZProjectListWorker extends AbstractCrawlWorker{
-	
+public class DLDCJZProjectListWorker extends AbstractCrawlWorker {
+
 	final static Logger log = LoggerFactory.getLogger(DLDCJZProjectListWorker.class);
-	
-	RedisWorkSpace<Page> projectInfoQueue;
+
+	WorkSpace<Page> projectInfoQueue;
 	String pageCountCss = "input[name='pageNo']";
 	int pageIndex = 1;
-	int pageCount=-1;
+	int pageCount = -1;
 	String PROJECT_LIST_URL = "http://www.fczw.cn/ysxkzList.xhtml?method=doQuery";
 	String refererUrl;
-	
+
 	private Page buildPage(int pageIndex, String refererUrl) {
 		Page page = new Page(getSite().getCode(), 1, PROJECT_LIST_URL, PROJECT_LIST_URL);
 		page.setReferer(refererUrl);
@@ -38,11 +39,11 @@ public class DLDCJZProjectListWorker extends AbstractCrawlWorker{
 		page.getParameters().put("pageSize", 10);
 		return page;
 	}
-	
+
 	@Override
 	protected void insideInit() {
-		projectInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(),"dldc_jz_project_info", Page.class);
-		if(!(helper.isDownloadState() && helper.isUseRawData())){
+		projectInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("dldc_jz_project_info", Page.class);
+		if (!(helper.isDownloadState() && helper.isUseRawData())) {
 			Page firstPage = buildPage(pageIndex, refererUrl);// 初始化第一页
 			getWorkSpace().clearDoing();
 			getWorkSpace().push(firstPage);
@@ -52,7 +53,7 @@ public class DLDCJZProjectListWorker extends AbstractCrawlWorker{
 	@Override
 	protected void beforeDown(Page doingPage) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
@@ -78,17 +79,20 @@ public class DLDCJZProjectListWorker extends AbstractCrawlWorker{
 	@Override
 	protected void afterExtract(Page doingPage, ResultContext resultContext) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	protected void onComplete(Page doingPage, ResultContext resultContext) {
 		// TODO Auto-generated method stub
-		List<String> projectInfoUrls = resultContext.getExtractResult("dldc_jz_project_info");
+		List<String> projectInfoUrls = resultContext.getExtractResult("projectUrl");
 		if (null != projectInfoUrls) {
 			for (String projectInfoUrl : projectInfoUrls) {
 				Page projectInfo = new Page(getSite().getCode(), 1, projectInfoUrl, projectInfoUrl);
 				projectInfo.setReferer(doingPage.getFinalUrl());
+
+				String projId = projectInfoUrl.substring(projectInfoUrl.indexOf("ysxkid="), projectInfoUrl.length());
+				projectInfo.getMetaMap().put("projectId", ArrayListUtils.asList(projId));
 				projectInfoQueue.push(projectInfo);
 			}
 		}

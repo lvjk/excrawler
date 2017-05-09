@@ -18,7 +18,7 @@ import six.com.crawler.utils.JsoupUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.utils.JsoupUtils.TableResult;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
 /**
  * @author 作者
@@ -27,13 +27,13 @@ import six.com.crawler.work.space.RedisWorkSpace;
  */
 public class TmsfPresellInfo1Worker extends AbstractCrawlWorker {
 
-	RedisWorkSpace<Page> houseStatusQueue;
+	WorkSpace<Page> houseStatusQueue;
 	String tableCss = "dd[id=myCont2]>div>table";
 	Map<String, String> tableKeyMap;
 
 	@Override
 	protected void insideInit() {
-		houseStatusQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tmsf_house_status_1",Page.class);
+		houseStatusQueue = getManager().getWorkSpaceManager().newWorkSpace("tmsf_house_status_1", Page.class);
 		tableKeyMap = new HashMap<>();
 		tableKeyMap.put("预售证名称", "presellName");
 		tableKeyMap.put("预售证号", "presellCode");
@@ -79,7 +79,7 @@ public class TmsfPresellInfo1Worker extends AbstractCrawlWorker {
 							}
 							doingPage.getMetaMap().put(key, ArrayListUtils.asList(value));
 						}
-					}else{
+					} else {
 						doingPage.getMetaMap().put(key, ArrayListUtils.asList(value));
 					}
 				}
@@ -116,7 +116,7 @@ public class TmsfPresellInfo1Worker extends AbstractCrawlWorker {
 
 		String buildingidCss = "div[id=yf_one]>dl:eq(1)>dd>a";
 		Elements buildingidElements = doingPage.getDoc().select(buildingidCss);
-		
+
 		for (Element buildingidElement : buildingidElements) {
 			String buildingid = buildingidElement.attr("href");
 			buildingid = StringUtils.substringBetween(buildingid, "javascript:doBuilding('", "')");

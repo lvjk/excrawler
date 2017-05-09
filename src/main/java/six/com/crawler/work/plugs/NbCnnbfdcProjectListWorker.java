@@ -12,23 +12,22 @@ import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
 public class NbCnnbfdcProjectListWorker extends AbstractCrawlWorker {
 
-	RedisWorkSpace<Page> projectInfoQueue;
+	WorkSpace<Page> projectInfoQueue;
 	String pageIndexTemplate = "<<pageIndex>>";
 	String pageCountCss = "div[class=PagerCss]>a:contains(>|)";
 	int pageIndex = 1;
 	int pageCount;
 	String projectListUrlTemplate = "http://newhouse.cnnbfdc.com/lpxx.aspx?p=" + pageIndexTemplate;
 
-
 	@Override
 	protected void insideInit() {
 		String firstUrl = StringUtils.replace(projectListUrlTemplate, pageIndexTemplate, String.valueOf(pageIndex));
-		projectInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "nb_cnnbfdc_project_info",Page.class);
-		if(!(helper.isDownloadState() && helper.isUseRawData())){
+		projectInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("nb_cnnbfdc_project_info", Page.class);
+		if (!(helper.isDownloadState() && helper.isUseRawData())) {
 			Page firstPage = new Page(getSite().getCode(), 1, firstUrl, firstUrl);
 			firstPage.setMethod(HttpMethod.GET);
 			getWorkSpace().clearDoing();
@@ -43,13 +42,13 @@ public class NbCnnbfdcProjectListWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void beforeExtract(Page doingPage) {
-		if(pageCount!=-1){
+		if (pageCount != -1) {
 			Element pageCountElement = doingPage.getDoc().select(pageCountCss).first();
-			if(null == pageCountElement){
-				Elements pageElements=doingPage.getDoc().select("div[class=PagerCss]>a");
-				pageCountElement=pageElements.get(pageElements.size()-2);
+			if (null == pageCountElement) {
+				Elements pageElements = doingPage.getDoc().select("div[class=PagerCss]>a");
+				pageCountElement = pageElements.get(pageElements.size() - 2);
 			}
-			
+
 			if (null == pageCountElement) {
 				throw new RuntimeException("don't find pageCountElement:" + pageCountCss);
 			} else {
@@ -68,7 +67,7 @@ public class NbCnnbfdcProjectListWorker extends AbstractCrawlWorker {
 	protected void afterExtract(Page doingPage, ResultContext resultContext) {
 
 	}
-	
+
 	@Override
 	protected void onComplete(Page doingPage, ResultContext resultContext) {
 		List<String> projectUrls = resultContext.getExtractResult("projectUrl");
@@ -78,18 +77,19 @@ public class NbCnnbfdcProjectListWorker extends AbstractCrawlWorker {
 			for (int i = 0; i < projectUrls.size(); i++) {
 				String projectUrl = projectUrls.get(i);
 				String district = districts.get(i);
-				String projectId=projectIds.get(i);
+				String projectId = projectIds.get(i);
 				Page projectInfoPage = new Page(doingPage.getSiteCode(), 1, projectUrl, projectUrl);
 				projectInfoPage.setReferer(doingPage.getFinalUrl());
 				projectInfoPage.getMetaMap().put("district", Arrays.asList(district));
-				projectInfoPage.getMetaMap().put("projectId",Arrays.asList(projectId));
+				projectInfoPage.getMetaMap().put("projectId", Arrays.asList(projectId));
 				projectInfoQueue.push(projectInfoPage);
 			}
 		}
-		if(!(helper.isUseRawData() && helper.isDownloadState())){
+		if (!(helper.isUseRawData() && helper.isDownloadState())) {
 			pageIndex++;
 			if (pageIndex <= pageCount) {
-				String firstUrl = StringUtils.replace(projectListUrlTemplate, pageIndexTemplate, String.valueOf(pageIndex));
+				String firstUrl = StringUtils.replace(projectListUrlTemplate, pageIndexTemplate,
+						String.valueOf(pageIndex));
 				Page nextgPage = new Page(getSite().getCode(), 1, firstUrl, firstUrl);
 				nextgPage.setReferer(doingPage.getFinalUrl());
 				nextgPage.setMethod(HttpMethod.GET);

@@ -1,4 +1,3 @@
-var stompClient = null;
 var connected = false;
 var connectDelayTime = 1000;
 var updateJobDelayTime =1000;
@@ -160,7 +159,7 @@ function showJobTable(result) {
 			  }  
 		}); 
 		$('#pageInfo').html(pageInfo(totalPage,totalSize));
-		window.setTimeout(connection, connectDelayTime);
+		window.setTimeout(updateJobInfo, updateJobDelayTime);
 	}
 }
 
@@ -222,24 +221,6 @@ function getStateColor(state){
 		color = "#FF3333";
 	}
 	return color;
-}
-function connection() {
-	if (null == stompClient) {
-		var socket = new SockJS('/crawler/websocket');
-		stompClient = Stomp.over(socket);
-		stompClient.connect({}, function(frame) {
-			connected = true;
-			stompClient.subscribe('/topic/job/jobSnapshot', function(responseMsg) {
-				var data = JSON.parse(responseMsg.body);
-				showJobSnapshots(data.data);
-			});
-		});
-	}
-	if (connected) {
-		window.setTimeout(updateJobInfo, updateJobDelayTime);
-	} else {
-		window.setTimeout(connection, connectDelayTime);
-	}
 }
 
 // 对Date的扩展，将 Date 转化为指定格式的String
@@ -338,17 +319,17 @@ function showJobSnapshots(jobSnapshots) {
 	}
 }
 
-function getErrCountHtml(jobName,jobSnapshotId,errCount){
+function getErrCountHtml(jobName,workSpaceName,jobSnapshotId,errCount){
 	var errCountHtml;
 	if(errCount>0){
-		errCountHtml="<a href=\"javascript:showErrMsg('" + jobName+ "','" + jobSnapshotId+ "')\">"+errCount+"</a>";
+		errCountHtml="<a href=\"javascript:showErrMsg('" + jobName+ "','"+ workSpaceName+ "','" + jobSnapshotId+ "')\">"+errCount+"</a>";
 	}else{
 		errCountHtml=errCount;
 	}
 	return errCountHtml;
 }
 
-function showErrMsg(jobName,jobSnapshotId){
+function showErrMsg(jobName,workSpaceName,jobSnapshotId){
 	var workSpaceDiv=$("#job_errMsg_div");
 	var workSpace_table = workSpaceDiv.find("table");
 	var doingDataCursor = workSpaceDiv.find("input[id='doingDataCursor']").val();
@@ -388,27 +369,23 @@ function showErrMsg(jobName,jobSnapshotId){
 
 function updateJobInfo() {
 	var jobTrs = $('#jobs').find("tr");
-	var JobSnapshots = new Array();
-	var JobSnapshot;
+	var jobNames="";
+	var workSpaceNames="";
 	for (var i = 0; i < jobTrs.length; i++) {
 		var jobTr=$(jobTrs[i]);
-		JobSnapshot=new Object();
-		JobSnapshot.name=jobTr.find("[name='name']").val();
-		JobSnapshot.workSpaceName=jobTr.find("[name='workSpaceName']").val();
-		JobSnapshots[i] =JobSnapshot;
+		var jobSnapshot = new Object();
+		jobNames+=jobTr.find("[name='name']").val()+",";
+		workSpaceNames+=jobTr.find("[name='workSpaceName']").val()+",";
 	}
-	var josn=JSON.stringify(JobSnapshots);
-	try {
-		stompClient.send("/crawler/jobSnapshot", {},josn);
-	} catch (e) {
-		console.log('websocket err: ' + e);
-		if (null != stompClient) {
-			stompClient.disconnect();
+	var url = "/crawler/job/getJobSnapshots";
+	$.post(url, {
+		jobNames:jobNames,
+		workSpaceNames:workSpaceNames
+	}, function(responseMsg) {
+		if (responseMsg.isOk == 1) {
+			showJobSnapshots(responseMsg.data);
 		}
-		connected = false;
-		window.setTimeout(connection, connectDelayTime);
-		return;
-	}
+	});
 	window.setTimeout(updateJobInfo, updateJobDelayTime);
 }
 

@@ -20,7 +20,7 @@ import six.com.crawler.utils.JsoupUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.utils.JsoupUtils.TableResult;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
 /**
  * @author 作者
@@ -29,7 +29,7 @@ import six.com.crawler.work.space.RedisWorkSpace;
  */
 public class TjfdcBuildingInfoWorker extends AbstractCrawlWorker {
 
-	private RedisWorkSpace<Page> tjfdcHouseStateQueue;
+	private WorkSpace<Page> tjfdcHouseStateQueue;
 	private Map<String, String> fieldMap;
 	private String tableCss = "table[id=LouDongInfo]";
 	private String doorNoUrlCss = "div[id=divLouDongInfo]>div>div:eq(1)>div>table>tbody>tr:eq(1)>td>a";
@@ -46,7 +46,7 @@ public class TjfdcBuildingInfoWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void insideInit() {
-		tjfdcHouseStateQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tjfdc_house_state",Page.class);
+		tjfdcHouseStateQueue = getManager().getWorkSpaceManager().newWorkSpace("tjfdc_house_state", Page.class);
 		fieldMap = new HashMap<String, String>();
 		fieldMap.put("楼盘名称", "projectName");
 		fieldMap.put("楼栋名称", "loudongName");
@@ -130,7 +130,7 @@ public class TjfdcBuildingInfoWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	protected void onComplete(Page doingPage,ResultContext resultContext) {
+	protected void onComplete(Page doingPage, ResultContext resultContext) {
 
 	}
 

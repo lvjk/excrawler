@@ -18,7 +18,7 @@ import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.utils.WebDriverUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.WorkerLifecycleState;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
 /**
  * @author 作者
@@ -35,7 +35,7 @@ public class ShFangDiProjectListWorker extends AbstractCrawlWorker {
 	Queue<String> districtQueue;
 	Set<String> districtSet;
 	int findElementTimeout = 1000;
-	RedisWorkSpace<Page> projectInfoQueue;
+	WorkSpace<Page> projectInfoQueue;
 	String doingDistrict;
 	
 	@Override
@@ -196,7 +196,7 @@ public class ShFangDiProjectListWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void insideInit() {
-		projectInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "sh_fangdi_project_info",Page.class);
+		projectInfoQueue =getManager().getWorkSpaceManager().newWorkSpace("sh_fangdi_project_info", Page.class); 
 	}
 
 	@Override

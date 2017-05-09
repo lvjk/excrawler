@@ -17,7 +17,7 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
 /**
  * @author 作者
@@ -26,13 +26,13 @@ import six.com.crawler.work.space.RedisWorkSpace;
  */
 public class TjfdcHouseStateWorker extends AbstractCrawlWorker {
 
-	RedisWorkSpace<Page> tjfdcHouseInfoQueue;
+	WorkSpace<Page> tjfdcHouseInfoQueue;
 	String houseCss = "table[id=LouDongInfo1_dgData]>tbody>tr>td:gt(0)";
 	Map<String, String> stateMap;
 
 	@Override
 	protected void insideInit() {
-		tjfdcHouseInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tjfdc_house_info",Page.class);
+		tjfdcHouseInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("tjfdc_house_info", Page.class);
 		stateMap = new HashMap<>();
 		stateMap.put("background-color:#ff5e59", "已售");
 		stateMap.put("background-color:#aade9c", "未售");
@@ -47,7 +47,7 @@ public class TjfdcHouseStateWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	protected void beforeExtract(Page doingPage){
+	protected void beforeExtract(Page doingPage) {
 		String html = doingPage.getPageSrc();
 		Document doc = Jsoup.parse(html);
 		Elements houseTdElements = doc.select(houseCss);
@@ -97,7 +97,7 @@ public class TjfdcHouseStateWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	protected void onComplete(Page doingPage,ResultContext resultContext) {
+	protected void onComplete(Page doingPage, ResultContext resultContext) {
 
 	}
 

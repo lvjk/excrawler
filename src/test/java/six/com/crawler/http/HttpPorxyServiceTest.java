@@ -39,127 +39,73 @@ public class HttpPorxyServiceTest extends BaseTest {
 
 	@Test
 	public void test() {
-//		List<HttpProxy> list=httpPorxyService.getHttpProxys();
-//
-//		GenericObjectPoolConfig config = new GenericObjectPoolConfig();
-//		config.setMaxIdle(10);
-//		config.setBlockWhenExhausted(true);
-//		// 获取连接时的最大等待毫秒数(如果设置为阻塞时BlockWhenExhausted), 如果超时就抛异常, 小于零: 阻塞不确定的时间
-//		config.setMaxWaitMillis(-1);
-//		// 连接耗尽时是否阻塞, false报异常, ture阻塞直到超时, 默认true
-//		config.setBlockWhenExhausted(true);
-//		// 设置的逐出策略类名, 默认DefaultEvictionPolicy(当连接超过最大空闲时间,或连接数超过最大空闲连接数)
-//		config.setEvictionPolicyClassName("org.apache.commons.pool2.impl.DefaultEvictionPolicy");
-//		// 是否启用pool的jmx管理功能
-//		config.setJmxEnabled(false);
-//		// 是否启用后进先出
-//		config.setLifo(true);
-//		// 最大空闲连接数
-//		config.setMaxIdle(8);
-//		// 最大连接数
-//		config.setMaxTotal(8);
-//		// 逐出连接的最小空闲时间 默认1800 000 毫秒(30分钟)
-//		config.setMinEvictableIdleTimeMillis(1800000);
-//		// 最小空闲连接数
-//		config.setMinIdle(0);
-//		// 每次逐出检查时 逐出的最大数目 如果为负数就是 : 1/abs(n), 默认3
-//		config.setNumTestsPerEvictionRun(3);
-//		// 对象空闲多久后逐出, 当空闲时间>该值 且 空闲连接>最大空闲数
-//		// 时直接逐出,不再根据MinEvictableIdleTimeMillis判断 (默认逐出策略)
-//		config.setSoftMinEvictableIdleTimeMillis(1800000);
-//		// 在获取连接的时候检查有效性
-//		config.setTestOnBorrow(true);
-//		// 在空闲时检查有效性
-//		config.setTestWhileIdle(true);
-//		// 逐出扫描的时间间隔(毫秒) 如果为负数, 则不运行逐出线程
-//		config.setTimeBetweenEvictionRunsMillis(-1);
-//		
-//		Set<HostAndPort> set = new HashSet<>();
-//		set.add(new HostAndPort("122.112.214.232",6379));
-//		set.add(new HostAndPort("122.112.214.232",6380));
-//		
-//		set.add(new HostAndPort("122.112.214.233",6379));
-//		set.add(new HostAndPort("122.112.214.233",6380));
-//		
-//		set.add(new HostAndPort("122.112.210.132",6379));
-//		set.add(new HostAndPort("122.112.210.132",6380));
-//		
-//		
-//		EnhanceJedisCluster jedisCluster=new EnhanceJedisCluster(set, 50000, config);
-//		for(HttpProxy pg:list){
-//			byte[] lKeyByte = JavaSerializeUtils.serializeString(HttpProxyPool.REDIS_HTTP_PROXY_POOL);
-//			byte[] vKeyByte = JavaSerializeUtils.serializeString(pg.toString());
-//			byte[] value = JavaSerializeUtils.serialize(pg);
-//			jedisCluster.hset(lKeyByte,vKeyByte,value);
-//		}
-//		try {
-//			jedisCluster.close();
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+		// List<HttpProxy> list=httpPorxyService.getHttpProxys();
+		//
+		// GenericObjectPoolConfig config = new GenericObjectPoolConfig();
+		// config.setMaxIdle(10);
+		// config.setBlockWhenExhausted(true);
+		// // 获取连接时的最大等待毫秒数(如果设置为阻塞时BlockWhenExhausted), 如果超时就抛异常, 小于零: 阻塞不确定的时间
+		// config.setMaxWaitMillis(-1);
+		// // 连接耗尽时是否阻塞, false报异常, ture阻塞直到超时, 默认true
+		// config.setBlockWhenExhausted(true);
+		// // 设置的逐出策略类名, 默认DefaultEvictionPolicy(当连接超过最大空闲时间,或连接数超过最大空闲连接数)
+		// config.setEvictionPolicyClassName("org.apache.commons.pool2.impl.DefaultEvictionPolicy");
+		// // 是否启用pool的jmx管理功能
+		// config.setJmxEnabled(false);
+		// // 是否启用后进先出
+		// config.setLifo(true);
+		// // 最大空闲连接数
+		// config.setMaxIdle(8);
+		// // 最大连接数
+		// config.setMaxTotal(8);
+		// // 逐出连接的最小空闲时间 默认1800 000 毫秒(30分钟)
+		// config.setMinEvictableIdleTimeMillis(1800000);
+		// // 最小空闲连接数
+		// config.setMinIdle(0);
+		// // 每次逐出检查时 逐出的最大数目 如果为负数就是 : 1/abs(n), 默认3
+		// config.setNumTestsPerEvictionRun(3);
+		// // 对象空闲多久后逐出, 当空闲时间>该值 且 空闲连接>最大空闲数
+		// // 时直接逐出,不再根据MinEvictableIdleTimeMillis判断 (默认逐出策略)
+		// config.setSoftMinEvictableIdleTimeMillis(1800000);
+		// // 在获取连接的时候检查有效性
+		// config.setTestOnBorrow(true);
+		// // 在空闲时检查有效性
+		// config.setTestWhileIdle(true);
+		// // 逐出扫描的时间间隔(毫秒) 如果为负数, 则不运行逐出线程
+		// config.setTimeBetweenEvictionRunsMillis(-1);
+		//
+		// Set<HostAndPort> set = new HashSet<>();
+		// set.add(new HostAndPort("122.112.214.232",6379));
+		// set.add(new HostAndPort("122.112.214.232",6380));
+		//
+		// set.add(new HostAndPort("122.112.214.233",6379));
+		// set.add(new HostAndPort("122.112.214.233",6380));
+		//
+		// set.add(new HostAndPort("122.112.210.132",6379));
+		// set.add(new HostAndPort("122.112.210.132",6380));
+		//
+		//
+		// EnhanceJedisCluster jedisCluster=new EnhanceJedisCluster(set, 50000,
+		// config);
+		// for(HttpProxy pg:list){
+		// byte[] lKeyByte =
+		// JavaSerializeUtils.serializeString(HttpProxyPool.REDIS_HTTP_PROXY_POOL);
+		// byte[] vKeyByte = JavaSerializeUtils.serializeString(pg.toString());
+		// byte[] value = JavaSerializeUtils.serialize(pg);
+		// jedisCluster.hset(lKeyByte,vKeyByte,value);
+		// }
+		// try {
+		// jedisCluster.close();
+		// } catch (IOException e) {
+		// // TODO Auto-generated catch block
+		// e.printStackTrace();
+		// }
 	}
 
 	public void capacityTest() {
-		HttpProxyPool httpProxyPool=new HttpProxyPool(redisManager, "HttpPorxyServiceTest",HttpProxyType.ENABLE_MANY, 0);
-		final CountDownLatch countDownLatch = new CountDownLatch(2);
-		new Thread(() -> {
-			long start = System.currentTimeMillis();
-			for (int i = 0; i < loopCount; i++) {
-				HttpProxy httpProxy = httpProxyPool.getHttpProxy();
-				Request request = httpClient.buildRequest(url, null, HttpMethod.GET, HttpConstant.headMap, null, null,
-						httpProxy);
-				try {
-					HttpResult httpResult = httpClient.executeRequest(request);
-					LOG.info("capacityTest proxy request:" + httpResult.getCode());
-				} catch (Exception e) {
-					LOG.error("capacityTest executeRequest httpResult err:" + request.url(), e);
-				}
-			}
-			long end = System.currentTimeMillis();
-			proxyTime = end - start;
-			countDownLatch.countDown();
-		}).start();
-		new Thread(() -> {
-			long start = System.currentTimeMillis();
-			for (int i = 0; i < loopCount; i++) {
-				Request request = httpClient.buildRequest(url, null, HttpMethod.GET, HttpConstant.headMap, null, null,
-						null);
-				try {
-					HttpResult httpResult = httpClient.executeRequest(request);
-					LOG.info("capacityTest noproxy request:" + httpResult.getCode());
-				} catch (Exception e) {
-					LOG.error("capacityTest executeRequest httpResult err:" + request.url(), e);
-				}
-			}
-			long end = System.currentTimeMillis();
-			noProxyTime = end - start;
-			countDownLatch.countDown();
-		}).start();
-		try {
-			countDownLatch.await();
-		} catch (InterruptedException e) {
-			LOG.error("capacityTest countDownLatch await err", e);
-		}
-		LOG.info("capacityTest proxyTime:" + proxyTime);
-		LOG.info("capacityTest noProxyTime:" + noProxyTime);
-		LOG.info("capacityTest noProxyTime-proxyTime:" + (noProxyTime - proxyTime));
 	}
 
 	public void useTest() {
-		HttpProxyPool httpProxyPool=new HttpProxyPool(redisManager, "HttpPorxyServiceTest",HttpProxyType.ENABLE_MANY, 0);
-		for (int i = 0; i < loopCount; i++) {
-			HttpProxy httpProxy = httpProxyPool.getHttpProxy();
-			LOG.info("useTest use httpProxy:" + httpProxy.toString());
-			Request request = httpClient.buildRequest(url, null, HttpMethod.GET, HttpConstant.headMap, null, null,
-					httpProxy);
-			try {
-				HttpResult httpResult = httpClient.executeRequest(request);
-				LOG.info("useTest proxy request:" + httpResult.getCode());
-			} catch (Exception e) {
-				LOG.error("useTest executeRequest httpResult err:" + request.url(), e);
-			}
-		}
 	}
 
 }

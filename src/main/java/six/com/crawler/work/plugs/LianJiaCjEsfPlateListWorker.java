@@ -9,7 +9,6 @@ import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.space.RedisWorkSpace;
 import six.com.crawler.work.space.WorkSpace;
 
 /** 
@@ -32,7 +31,7 @@ public class LianJiaCjEsfPlateListWorker extends AbstractCrawlWorker {
 	
 	@Override
 	protected void insideInit() {
-		nextWorkQueue=new RedisWorkSpace<Page>(getManager().getRedisManager(), "lianjia_cjerf_list",Page.class);
+		nextWorkQueue=getManager().getWorkSpaceManager().newWorkSpace("lianjia_cjerf_list", Page.class);
 		Page firstPage=new Page(getSite().getCode(), 1, firstUrl, firstUrl);
 		getDowner().down(firstPage);
 		Elements districtElements=firstPage.getDoc().select(districtCss);

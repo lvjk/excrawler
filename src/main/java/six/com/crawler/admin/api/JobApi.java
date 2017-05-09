@@ -1,14 +1,11 @@
 package six.com.crawler.admin.api;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,7 +29,6 @@ public class JobApi extends BaseApi {
 
 	@Autowired
 	private JobService jobService;
-
 
 	@RequestMapping(value = "/crawler/job/query", method = RequestMethod.POST)
 	@ResponseBody
@@ -60,30 +56,15 @@ public class JobApi extends BaseApi {
 	}
 
 	/**
-	 * 向前段推送 job的 活动信息数据
+	 * 获取job运行信息
 	 * 
 	 * @param jobNameList
 	 * @return
 	 */
-	@MessageMapping("/jobSnapshot")
-	@SendTo("/topic/job/jobSnapshot")
-	public ResponseMsg<List<JobSnapshot>> getJobSnapshots(List<Map<String, String>> list) {
-		ResponseMsg<List<JobSnapshot>> msg = null;
-		if (null != list) {
-			List<JobSnapshot> jobSnapshots = new ArrayList<>(list.size());
-			JobSnapshot jobSnapshot = null;
-			String name = null;
-			String workSpaceName = null;
-			for (Map<String, String> map : list) {
-				name = map.get("name");
-				workSpaceName = map.get("workSpaceName");
-				jobSnapshot = new JobSnapshot();
-				jobSnapshot.setName(name);
-				jobSnapshot.setWorkSpaceName(workSpaceName);
-				jobSnapshots.add(jobSnapshot);
-			}
-			msg = jobService.getJobSnapshots(jobSnapshots);
-		}
+	@RequestMapping(value = "/crawler/job/getJobSnapshots", method = RequestMethod.POST)
+	@ResponseBody
+	public ResponseMsg<List<JobSnapshot>> getJobSnapshots(@RequestParam("jobNames")String jobNames, @RequestParam("workSpaceNames")String workSpaceNames) {
+		ResponseMsg<List<JobSnapshot>> msg = jobService.getJobSnapshots(StringUtils.split(jobNames, ","),StringUtils.split(workSpaceNames, ","));
 		return msg;
 	}
 

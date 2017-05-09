@@ -11,27 +11,27 @@ import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
 public class NbCnnbfdcPresellListWorker extends AbstractCrawlWorker {
-	
-	RedisWorkSpace<Page> presellInfoQueue;
-	
+
+	WorkSpace<Page> presellInfoQueue;
+
 	String pageIndexTemplate = "<<pageIndex>>";
-	
+
 	String pageCountCss = "div[class='PagerCss']>a:contains(>|)";
-	
+
 	int pageIndex = 1;
-	
+
 	int pageCount;
-	
+
 	String projectListUrlTemplate = "http://newhouse.cnnbfdc.com/tmgs_xkzgs.aspx?p=" + pageIndexTemplate;
 
 	@Override
 	protected void insideInit() {
 		String firstUrl = StringUtils.replace(projectListUrlTemplate, pageIndexTemplate, String.valueOf(pageIndex));
-		presellInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "nb_cnnbfdc_presell_info",Page.class);
-		if(!(helper.isDownloadState() && helper.isUseRawData())){
+		presellInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("nb_cnnbfdc_presell_info", Page.class);
+		if (!(helper.isDownloadState() && helper.isUseRawData())) {
 			Page firstPage = new Page(getSite().getCode(), 1, firstUrl, firstUrl);
 			firstPage.setMethod(HttpMethod.GET);
 			getWorkSpace().clearDoing();
@@ -45,7 +45,7 @@ public class NbCnnbfdcPresellListWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void beforeExtract(Page doingPage) {
-		if(pageCount==-1){
+		if (pageCount == -1) {
 			Element pageCountElement = doingPage.getDoc().select(pageCountCss).first();
 			if (null == pageCountElement) {
 				throw new RuntimeException("don't find pageCountElement:" + pageCountCss);
@@ -75,7 +75,7 @@ public class NbCnnbfdcPresellListWorker extends AbstractCrawlWorker {
 		if (null != presellNames) {
 			for (int i = 0; i < presellUrls.size(); i++) {
 				String presellUrl = presellUrls.get(i);
-				presellUrl = presellUrl.substring(presellUrl.indexOf("'")+1, presellUrl.indexOf(",")-1);
+				presellUrl = presellUrl.substring(presellUrl.indexOf("'") + 1, presellUrl.indexOf(",") - 1);
 				String presellName = presellNames.get(i);
 				String projectName = projectNames.get(i);
 				String region = regions.get(i);
@@ -89,12 +89,12 @@ public class NbCnnbfdcPresellListWorker extends AbstractCrawlWorker {
 				presellInfoQueue.push(projectInfoPage);
 			}
 		}
-		
-		if(!(helper.isDownloadState() && helper.isUseRawData())){
+
+		if (!(helper.isDownloadState() && helper.isUseRawData())) {
 			pageIndex++;
 			if (pageIndex <= pageCount) {
-				String firstUrl = StringUtils.replace(projectListUrlTemplate, pageIndexTemplate, String.valueOf(pageIndex));
-				presellInfoQueue = new RedisWorkSpace<>(getManager().getRedisManager(), "nb_cnnbfdc_presell_info",Page.class);
+				String firstUrl = StringUtils.replace(projectListUrlTemplate, pageIndexTemplate,
+						String.valueOf(pageIndex));
 				Page nextgPage = new Page(getSite().getCode(), 1, firstUrl, firstUrl);
 				nextgPage.setReferer(doingPage.getFinalUrl());
 				nextgPage.setMethod(HttpMethod.GET);

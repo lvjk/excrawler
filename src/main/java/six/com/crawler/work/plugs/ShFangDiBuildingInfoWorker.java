@@ -14,7 +14,7 @@ import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
 /**
  * @author 作者
@@ -23,12 +23,12 @@ import six.com.crawler.work.space.RedisWorkSpace;
  */
 public class ShFangDiBuildingInfoWorker extends AbstractCrawlWorker {
 
-	RedisWorkSpace<Page> houseInfoQueue;
+	WorkSpace<Page> houseInfoQueue;
 
 
 	@Override
 	protected void insideInit() {
-		houseInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "sh_fangdi_house_info",Page.class);
+		houseInfoQueue =getManager().getWorkSpaceManager().newWorkSpace("sh_fangdi_house_info", Page.class);
 
 	}
 

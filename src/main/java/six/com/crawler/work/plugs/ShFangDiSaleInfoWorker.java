@@ -14,7 +14,7 @@ import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.JsoupUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
 /**
  * @author 作者
@@ -23,13 +23,12 @@ import six.com.crawler.work.space.RedisWorkSpace;
  */
 public class ShFangDiSaleInfoWorker extends AbstractCrawlWorker {
 
-	RedisWorkSpace<Page> buildingInfoQueue;
+	WorkSpace<Page> buildingInfoQueue;
 	Map<String, String> fieldMap = new HashMap<String, String>();
-
 
 	@Override
 	protected void insideInit() {
-		buildingInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "sh_fangdi_building_info",Page.class);
+		buildingInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("sh_fangdi_building_info", Page.class);
 
 		fieldMap.put("楼栋名称", "louDongName");
 		fieldMap.put("最高报价/最低报价", "refPrice");
@@ -46,6 +45,7 @@ public class ShFangDiSaleInfoWorker extends AbstractCrawlWorker {
 
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	protected void beforeExtract(Page doingPage) {
 		String tableXpath = "table>tbody>tr>td>table>tbody>tr>td>table";
@@ -117,7 +117,7 @@ public class ShFangDiSaleInfoWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	public void onComplete(Page p,ResultContext resultContext) {
+	public void onComplete(Page p, ResultContext resultContext) {
 	}
 
 	@Override

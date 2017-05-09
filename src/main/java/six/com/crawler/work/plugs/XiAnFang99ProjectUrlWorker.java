@@ -6,7 +6,7 @@ import six.com.crawler.entity.Page;
 import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
 /**
  * @author 作者
@@ -15,12 +15,11 @@ import six.com.crawler.work.space.RedisWorkSpace;
  */
 public class XiAnFang99ProjectUrlWorker extends AbstractCrawlWorker {
 
-	RedisWorkSpace<Page> projectInfoQueue;
+	WorkSpace<Page> projectInfoQueue;
 
 	@Override
 	protected void insideInit() {
-		projectInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "xianfang99_project_info_2",
-				Page.class);
+		projectInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("xianfang99_project_info_2", Page.class);
 	}
 
 	@Override

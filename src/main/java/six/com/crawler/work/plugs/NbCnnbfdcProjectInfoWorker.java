@@ -13,19 +13,17 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.JsoupUtils;
 import six.com.crawler.utils.JsoupUtils.TableResult;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.extract.Extracter;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
 public class NbCnnbfdcProjectInfoWorker extends AbstractCrawlWorker {
 
-	
-	RedisWorkSpace<Page> unitInfoQueue;
+	WorkSpace<Page> unitInfoQueue;
 	private Map<String, String> fieldMap = new HashMap<String, String>();
 	String tabaleCss = "td[valign=top]:eq(0)>table[bgcolor=#DDDDDD]:eq(1)";
 
 	@Override
 	protected void insideInit() {
-		unitInfoQueue=new RedisWorkSpace<Page>(getManager().getRedisManager(), "nb_cnnbfdc_unit_info",Page.class);
+		unitInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("nb_cnnbfdc_unit_info", Page.class);
 		fieldMap.put("项目名称：", "projectName");
 		fieldMap.put("项目地址：", "address");
 		fieldMap.put("开发公司：", "developer");
@@ -49,14 +47,14 @@ public class NbCnnbfdcProjectInfoWorker extends AbstractCrawlWorker {
 		}
 		List<TableResult> results = JsoupUtils.paserTable(table);
 		for (TableResult result : results) {
-			String key=fieldMap.get(result.getKey());
-			if(null!=key){
-				String value=result.getValue();
-				if("projectName".equals(key)){
-					value=StringUtils.replace(value,"地图定位", "");
-					value=StringUtils.trim(value);
+			String key = fieldMap.get(result.getKey());
+			if (null != key) {
+				String value = result.getValue();
+				if ("projectName".equals(key)) {
+					value = StringUtils.replace(value, "地图定位", "");
+					value = StringUtils.trim(value);
 				}
-				doingPage.getMetaMap().computeIfAbsent(key,mapKey->new ArrayList<>()).add(value);
+				doingPage.getMetaMap().computeIfAbsent(key, mapKey -> new ArrayList<>()).add(value);
 			}
 		}
 	}
@@ -66,6 +64,7 @@ public class NbCnnbfdcProjectInfoWorker extends AbstractCrawlWorker {
 
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	protected void onComplete(Page doingPage, ResultContext resultContext) {
 		String tabaleCss = "td[valign=top]:eq(0)>table[bgcolor=#DDDDDD]:eq(3)";
@@ -79,28 +78,28 @@ public class NbCnnbfdcProjectInfoWorker extends AbstractCrawlWorker {
 		}
 		String headCssSelect = "table>tbody>tr:eq(0)>td";
 		String dataCssSelect = "table>tbody>tr:gt(0)";
-		
-		String projectId=doingPage.getFinalUrl().replace("http://newhouse.cnnbfdc.com/lpxxshow.aspx?projectid=","");
-		String projectNameCss="span[class=e_huangse]";
-		
-		String projectName=doingPage.getDoc().select(projectNameCss).first().ownText();
-		Map<String,List<String>> mp = new HashMap<String,List<String>>();
-		Map<String,List<String>> map = JsoupUtils.paserTable(table, headCssSelect, dataCssSelect);
+
+		String projectId = doingPage.getFinalUrl().replace("http://newhouse.cnnbfdc.com/lpxxshow.aspx?projectid=", "");
+		String projectNameCss = "span[class=e_huangse]";
+
+		String projectName = doingPage.getDoc().select(projectNameCss).first().ownText();
+		Map<String, List<String>> mp = new HashMap<String, List<String>>();
+		Map<String, List<String>> map = JsoupUtils.paserTable(table, headCssSelect, dataCssSelect);
 		for (String field : map.keySet()) {
-			String resultKey=fieldMap.get(field);
-			if(null!=resultKey) {
+			String resultKey = fieldMap.get(field);
+			if (null != resultKey) {
 				mp.put(resultKey, map.get(field));
 			}
 		}
 		List<String> unitNames = mp.get("unitName");
-		if(unitNames!=null && unitNames.size()>0){
+		if (unitNames != null && unitNames.size() > 0) {
 			List<String> projectIds = new ArrayList<String>();
-			List<String> projectNames=new ArrayList<String>();
+			List<String> projectNames = new ArrayList<String>();
 			for (int i = 0; i < unitNames.size(); i++) {
 				projectIds.add(projectId);
 				projectNames.add(projectName);
 			}
-			
+
 			List<String> unitUrls = resultContext.getExtractResult("unitUrl");
 			List<String> unitIds = resultContext.getExtractResult("unitId");
 			Page unitInfoPage = new Page(doingPage.getSiteCode(), 1, doingPage.getFirstUrl(), doingPage.getFinalUrl());
@@ -121,5 +120,5 @@ public class NbCnnbfdcProjectInfoWorker extends AbstractCrawlWorker {
 	public boolean insideOnError(Exception t, Page doingPage) {
 		return false;
 	}
-	
+
 }

@@ -16,7 +16,7 @@ import six.com.crawler.http.HttpMethod;
 import six.com.crawler.utils.ArrayListUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.extract.Extracter;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
 /**
  * @author 作者
@@ -30,8 +30,8 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 	int longitudeMin = 73;
 	int latitudeMax = 53;
 	int latitudeMix = 4;
-	RedisWorkSpace<Page> projectInfo1Queue;
-	RedisWorkSpace<Page> presellUrlQueue;
+	WorkSpace<Page> projectInfo1Queue;
+	WorkSpace<Page> presellUrlQueue;
 	String longitude_latitude_div_css = "div[id=boxid1]>div[class=border3 positionr]";
 	String mapDivCss = "div[id=boxid1]>div>div";
 	String projectNameCss = "div[class=lpxqtop]>div>div>span[class=buidname colordg]";
@@ -39,8 +39,8 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void insideInit() {
-		presellUrlQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tmsf_presell_url", Page.class);
-		projectInfo1Queue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tmsf_project_info_1", Page.class);
+		presellUrlQueue = getManager().getWorkSpaceManager().newWorkSpace("tmsf_presell_url", Page.class);
+		projectInfo1Queue = getManager().getWorkSpaceManager().newWorkSpace("tmsf_project_info_1", Page.class);
 	}
 
 	@Override
@@ -129,12 +129,12 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 					presellPage.getMetaMap().put("sid", ArrayListUtils.asList(sid));
 					presellPage.getMetaMap().put("projectId", ArrayListUtils.asList(projectId));
 					presellUrlQueue.push(presellPage);
-				}else{
+				} else {
 					throw new RuntimeException("did not get projectId");
 				}
 			}
-		}else{
-			log.warn("did not find presellUrl:"+doingPage.getFinalUrl());
+		} else {
+			log.warn("did not find presellUrl:" + doingPage.getFinalUrl());
 			log.warn(doingPage.getPageSrc());
 		}
 	}

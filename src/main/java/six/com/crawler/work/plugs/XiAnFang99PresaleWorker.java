@@ -19,7 +19,7 @@ import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.utils.WebDriverUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.WorkerLifecycleState;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
 /**
  * @author 作者
@@ -30,13 +30,13 @@ public class XiAnFang99PresaleWorker extends AbstractCrawlWorker {
 
 	private String openAllPath = "//table/tbody/tr/td/img[@class='cursor']";
 	private String nextPagePath = "//div[@id='pager_presale']/a[contains(text(),'>')]";
-	RedisWorkSpace<Page> projectInfoQueue;
-	RedisWorkSpace<Page> buildingInfoQueue;
+	WorkSpace<Page> projectInfoQueue;
+	WorkSpace<Page> buildingInfoQueue;
 
 	@Override
 	protected void insideInit() {
-		projectInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "xianfang99_project_info_1",Page.class);
-		buildingInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "xianfang99_house_info",Page.class);
+		projectInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("xianfang99_project_info_1", Page.class);
+		buildingInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("xianfang99_house_info", Page.class);
 	}
 
 	@Override
@@ -180,7 +180,7 @@ public class XiAnFang99PresaleWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	public void onComplete(Page p,ResultContext resultContext) {
+	public void onComplete(Page p, ResultContext resultContext) {
 
 	}
 

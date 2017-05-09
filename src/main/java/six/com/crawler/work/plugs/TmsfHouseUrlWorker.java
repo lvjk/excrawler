@@ -9,7 +9,7 @@ import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
 /**
  * @author 作者
@@ -18,7 +18,7 @@ import six.com.crawler.work.space.RedisWorkSpace;
  */
 public class TmsfHouseUrlWorker extends AbstractCrawlWorker {
 
-	RedisWorkSpace<Page> houseStatusQueue;
+	WorkSpace<Page> houseStatusQueue;
 	private String propertyidTemplate = "<<propertyid>>";
 	private String sidTemplate = "<<sid>>";
 	private String presellIdTemplate = "<<presellid>>";
@@ -40,7 +40,7 @@ public class TmsfHouseUrlWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void insideInit() {
-		houseStatusQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tmsf_house_status", Page.class);
+		houseStatusQueue = getManager().getWorkSpaceManager().newWorkSpace("tmsf_house_status", Page.class);
 	}
 
 	protected void beforeDown(Page doingPage) {

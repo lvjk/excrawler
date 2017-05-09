@@ -21,7 +21,7 @@ import six.com.crawler.utils.JsonUtils;
 import six.com.crawler.utils.JsoupUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
 /**
  * @author 作者
@@ -32,7 +32,7 @@ public class TmsfHouseStatus1Worker extends AbstractCrawlWorker {
 
 	final static Logger log = LoggerFactory.getLogger(TmsfHouseStatus1Worker.class);
 	private Map<String, String> jsonKeyMap;
-	private RedisWorkSpace<Page> houseInfoQueue;
+	private WorkSpace<Page> houseInfoQueue;
 	private String sidTemplate = "<<sid>>";
 	private String propertyIdTemplate = "<<propertyId>>";
 	private String presellIdTemplate = "<<presellid>>";
@@ -52,7 +52,7 @@ public class TmsfHouseStatus1Worker extends AbstractCrawlWorker {
 
 	@Override
 	protected void insideInit() {
-		houseInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "tmsf_house_info", Page.class);
+		houseInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("tmsf_house_info", Page.class);
 		jsonKeyMap = new HashMap<>();
 		jsonKeyMap.put("buildingName", "buildingname");
 		jsonKeyMap.put("unitName", "unitname");
@@ -85,7 +85,6 @@ public class TmsfHouseStatus1Worker extends AbstractCrawlWorker {
 		}
 
 		String propertyId = doingPage.getMetaMap().get("propertyId").get(0);
-
 
 		String presellidCss = "input[id=presellid]";
 		Element presellidElement = doingPage.getDoc().select(presellidCss).first();

@@ -20,7 +20,7 @@ import six.com.crawler.utils.ThreadUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.utils.WebDriverUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
 /**
  * @author 作者
@@ -30,7 +30,7 @@ import six.com.crawler.work.space.RedisWorkSpace;
 public class SzplGovSuiteStateWorker extends AbstractCrawlWorker {
 
 	final static Logger LOG = LoggerFactory.getLogger(SzplGovSuiteStateWorker.class);
-	RedisWorkSpace<Page> suiteInfoQueue;
+	WorkSpace<Page> suiteInfoQueue;
 	String suiteCodeXpath = "//div[@id='updatepanel1']/table[3]/tbody/tr[@class='a1']/td/div[contains(text(),'房号')]";
 	String suiteInfoXpath = "//div[@id='updatepanel1']/table[3]/tbody/tr[@class='a1']/td/div/a";
 	String suiteStateXpath = "//div[@id='updatepanel1']/table[3]/tbody/tr[@class='a1']/td/div/a/img";
@@ -42,10 +42,9 @@ public class SzplGovSuiteStateWorker extends AbstractCrawlWorker {
 	List<String> saleStateBtXpathList = new ArrayList<>();
 	Map<String, String> stateMap;
 
-
 	@Override
 	protected void insideInit() {
-		suiteInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "szpl_gov_suite_info_detail",Page.class);
+		suiteInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("szpl_gov_suite_info_detail", Page.class);
 		saleStateBtXpathList = new ArrayList<>();
 		saleStateBtXpathList.add(preSaleBtXpath);
 		saleStateBtXpathList.add(nowSaleBtXpath);
@@ -203,7 +202,7 @@ public class SzplGovSuiteStateWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	public void onComplete(Page p,ResultContext resultContext) {
+	public void onComplete(Page p, ResultContext resultContext) {
 
 	}
 

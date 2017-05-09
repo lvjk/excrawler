@@ -6,7 +6,7 @@ import six.com.crawler.entity.Page;
 import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
 /**
  * @author 作者
@@ -15,11 +15,11 @@ import six.com.crawler.work.space.RedisWorkSpace;
  */
 public class ShFangDiProjectInfoWorker extends AbstractCrawlWorker {
 
-	RedisWorkSpace<Page> preSaleInfoQueue;
+	WorkSpace<Page> preSaleInfoQueue;
 
 	@Override
 	protected void insideInit() {
-		preSaleInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "sh_fangdi_presale_info",Page.class);
+		preSaleInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("sh_fangdi_presale_info", Page.class);
 	}
 
 	@Override

@@ -37,7 +37,7 @@ public interface JobService extends DownloadAndUploadService {
 	 * @param list
 	 * @return
 	 */
-	public ResponseMsg<List<JobSnapshot>> getJobSnapshots(List<JobSnapshot> list);
+	public ResponseMsg<List<JobSnapshot>> getJobSnapshots(String[] jobNames,String[] workSpaceNames);
 
 	/**
 	 * 通过任务名查询任务运行的历史JobSnapshot

@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import six.com.crawler.dao.RedisManager;
+import six.com.crawler.node.ClusterManager;
+import six.com.crawler.node.lock.DistributedLock;
 
 /**
  * @author 作者
@@ -22,6 +24,11 @@ public class WorkSpaceManager {
 	@Autowired
 	private RedisManager redisManager;
 
+	@Autowired
+	private ClusterManager clusterManager;
+	
+	private static final String WORKSPACE_PRE="workspace_";
+
 	/**
 	 * 新建一个工作空间
 	 * 
@@ -33,7 +40,8 @@ public class WorkSpaceManager {
 	 */
 	public <T extends WorkSpaceData> WorkSpace<T> newWorkSpace(String workSpaceName, Class<T> clz) {
 		// TODO 需要引用集群名作为base前缀key
-		WorkSpace<T> workQueue = new RedisWorkSpace<>(redisManager, workSpaceName, clz);
+		DistributedLock distributedLock = clusterManager.getWriteLock(WORKSPACE_PRE+workSpaceName);
+		WorkSpace<T> workQueue = new RedisWorkSpace<>(redisManager, distributedLock, workSpaceName, clz);
 		return workQueue;
 	}
 
@@ -70,5 +78,13 @@ public class WorkSpaceManager {
 
 	public void setRedisManager(RedisManager redisManager) {
 		this.redisManager = redisManager;
+	}
+
+	public ClusterManager getClusterManager() {
+		return clusterManager;
+	}
+
+	public void setClusterManager(ClusterManager clusterManager) {
+		this.clusterManager = clusterManager;
 	}
 }

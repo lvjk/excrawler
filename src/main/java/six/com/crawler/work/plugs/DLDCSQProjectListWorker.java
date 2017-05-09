@@ -12,19 +12,19 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.WorkerLifecycleState;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
-public class DLDCSQProjectListWorker extends AbstractCrawlWorker{
+public class DLDCSQProjectListWorker extends AbstractCrawlWorker {
 
-final static Logger log = LoggerFactory.getLogger(DLDCJZProjectListWorker.class);
-	
-	RedisWorkSpace<Page> projectInfoQueue;
+	final static Logger log = LoggerFactory.getLogger(DLDCJZProjectListWorker.class);
+
+	WorkSpace<Page> projectInfoQueue;
 	String pageCountCss = "font[color='#0033FF']";
 	int pageIndex = 1;
-	int pageCount=-1;
+	int pageCount = -1;
 	String PROJECT_LIST_URL = "http://www.dlfd.gov.cn/fdc/D01XmxxAction.do?Control=select";
 	String refererUrl;
-	
+
 	private Page buildPage(int pageIndex, String refererUrl) {
 		Page page = new Page(getSite().getCode(), 1, PROJECT_LIST_URL, PROJECT_LIST_URL);
 		page.setReferer(refererUrl);
@@ -33,11 +33,11 @@ final static Logger log = LoggerFactory.getLogger(DLDCJZProjectListWorker.class)
 		page.getParameters().put("pageSize", 10);
 		return page;
 	}
-	
+
 	@Override
 	protected void insideInit() {
-		projectInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(),"dldc_sq_project_info", Page.class);
-		if(!(helper.isDownloadState() && helper.isUseRawData())){
+		projectInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("dldc_sq_project_info", Page.class);
+		if (!(helper.isDownloadState() && helper.isUseRawData())) {
 			Page firstPage = buildPage(pageIndex, refererUrl);// 初始化第一页
 			getWorkSpace().clearDoing();
 			getWorkSpace().push(firstPage);
@@ -47,7 +47,7 @@ final static Logger log = LoggerFactory.getLogger(DLDCJZProjectListWorker.class)
 	@Override
 	protected void beforeDown(Page doingPage) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
@@ -73,7 +73,7 @@ final static Logger log = LoggerFactory.getLogger(DLDCJZProjectListWorker.class)
 	@Override
 	protected void afterExtract(Page doingPage, ResultContext resultContext) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override

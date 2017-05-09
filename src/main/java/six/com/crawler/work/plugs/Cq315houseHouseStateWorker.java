@@ -17,7 +17,7 @@ import six.com.crawler.utils.JsonUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.extract.Extracter;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
 /**
  * @author 作者
@@ -26,11 +26,11 @@ import six.com.crawler.work.space.RedisWorkSpace;
  */
 public class Cq315houseHouseStateWorker extends AbstractCrawlWorker {
 
-	RedisWorkSpace<Page> houseInfoQueue;
+	private WorkSpace<Page> houseInfoQueue;
 
 	@Override
 	protected void insideInit() {
-		houseInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(),"cq315house_house_info", Page.class);
+		houseInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("cq315house_house_info", Page.class);
 	}
 
 	protected void beforeDown(Page page) {

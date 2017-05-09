@@ -5,26 +5,34 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import six.com.crawler.dao.RedisManager;
 import six.com.crawler.entity.Job;
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.WorkerSnapshot;
+import six.com.crawler.node.ClusterManager;
+import six.com.crawler.node.lock.DistributedLock;
 
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年4月14日 下午5:00:51
  */
-public class RedisScheduleCache implements ScheduleCache {
+@Component
+public class RedisScheduleCache implements ScheduleCache, InitializingBean {
 
+	@Autowired
 	private RedisManager redisManager;
+
+	@Autowired
+	private ClusterManager clusterManager;
 
 	private RedisCacheKeyHelper redisCacheKeyHelper;
 
-	public RedisScheduleCache(RedisManager redisManager, String basePreKey) {
-		this.redisManager = redisManager;
-		redisCacheKeyHelper = new RedisCacheKeyHelper(basePreKey);
-	}
+	private static final String CACHE_PATH_PRE = "schedule_cache_";
 
 	@Override
 	public Job getJob(String jobName) {
@@ -65,7 +73,8 @@ public class RedisScheduleCache implements ScheduleCache {
 		String jobSnapshotskey = redisCacheKeyHelper.getJobSnapshotsKey();
 		String workerkey = redisCacheKeyHelper.getWorkerSnapshotsKey(jobName);
 		String jobWorkerSerialNumberkey = redisCacheKeyHelper.getWorkerSerialNumbersKey(jobName);
-		getRedisManager().lock(jobSnapshotskey);
+		DistributedLock distributedLock = clusterManager.getWriteLock(CACHE_PATH_PRE + jobSnapshotskey);
+		distributedLock.lock();
 		try {
 			// 先删除 过期job信息
 			getRedisManager().hdel(jobSnapshotskey, jobName);
@@ -76,7 +85,7 @@ public class RedisScheduleCache implements ScheduleCache {
 			// 注册JobSnapshot
 			updateJobSnapshot(jobSnapshot);
 		} finally {
-			getRedisManager().unlock(jobSnapshotskey);
+			distributedLock.unLock();
 		}
 	}
 
@@ -131,7 +140,6 @@ public class RedisScheduleCache implements ScheduleCache {
 		getRedisManager().del(WorkerSnapshotkey);
 	}
 
-
 	@Override
 	public void clear() {
 		String patternKey = redisCacheKeyHelper.getResetPreKey() + "*";
@@ -143,5 +151,24 @@ public class RedisScheduleCache implements ScheduleCache {
 
 	public RedisManager getRedisManager() {
 		return redisManager;
+	}
+
+	public ClusterManager getClusterManager() {
+		return clusterManager;
+	}
+
+	public void setClusterManager(ClusterManager clusterManager) {
+		this.clusterManager = clusterManager;
+	}
+
+	public void setRedisManager(RedisManager redisManager) {
+		this.redisManager = redisManager;
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		String clusterName = clusterManager.getClusterName();
+		String basePreKey = clusterName + "_scheduler_cache";
+		redisCacheKeyHelper = new RedisCacheKeyHelper(basePreKey);
 	}
 }

@@ -25,6 +25,7 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.entity.Site;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.http.HttpProxyPool;
+import six.com.crawler.node.lock.DistributedLock;
 import six.com.crawler.schedule.consts.DownloadContants;
 import six.com.crawler.utils.ThreadUtils;
 import six.com.crawler.work.downer.Downer;
@@ -97,7 +98,9 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 		int httpProxyTypeInt = getJob().getParamInt(JobParamKeys.HTTP_PROXY_TYPE, 0);
 		HttpProxyType httpProxyType = HttpProxyType.valueOf(httpProxyTypeInt);
 
-		httpProxyPool = new HttpProxyPool(getManager().getRedisManager(), siteCode, httpProxyType,
+		String siteHttpProxyPoolLockPath = HttpProxyPool.REDIS_HTTP_PROXY_POOL + "_" + siteCode;
+		DistributedLock distributedLock = getManager().getNodeManager().getWriteLock(siteHttpProxyPoolLockPath);
+		httpProxyPool = new HttpProxyPool(getManager().getRedisManager(), distributedLock, siteCode, httpProxyType,
 				site.getVisitFrequency());
 		downer.setHttpProxy(httpProxyPool.getHttpProxy());
 

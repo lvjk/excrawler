@@ -1,9 +1,6 @@
 package six.com.crawler.dao;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,27 +38,6 @@ public class RedisManager implements InitializingBean {
 	private SpiderConfigure configure;
 
 	private EnhanceJedisCluster jedisCluster;
-	// redis lock time out 3分钟
-	private int lockTimeout;
-	// redis 锁 前缀
-	private final static String PRE_LOCK = "lock";
-
-	private final static String HOST_PID;
-
-	static {
-		String name = ManagementFactory.getRuntimeMXBean().getName();
-		String pid = name.split("@")[0];
-
-		String host = "";
-		InetAddress addr = null;
-		try {
-			addr = InetAddress.getLocalHost();
-			host = addr.getHostAddress().toString();// 获得本机IP
-			HOST_PID = host.concat("_").concat(pid);
-		} catch (UnknownHostException e) {
-			throw new RuntimeException(e);
-		}
-	}
 
 	/**
 	 * 
@@ -213,14 +189,15 @@ public class RedisManager implements InitializingBean {
 	}
 
 	/**
-	 * 扫描 hset 
-	 * @param hkey 
-	 * @param cursorStr 
-	 * @param list 
+	 * 扫描 hset
+	 * 
+	 * @param hkey
+	 * @param cursorStr
+	 * @param list
 	 * @param clz
 	 * @return
 	 */
-	public <T>String hscan(String hkey, String cursorStr,Map<String,T> map, Class<T> clz) {
+	public <T> String hscan(String hkey, String cursorStr, Map<String, T> map, Class<T> clz) {
 		byte[] hKeyByte = JavaSerializeUtils.serializeString(hkey);
 		byte[] cursorByte = JavaSerializeUtils.serializeString(cursorStr);
 		return RedisRetryHelper.execute(() -> {
@@ -230,24 +207,24 @@ public class RedisManager implements InitializingBean {
 				Map.Entry<byte[], byte[]> mapentry = scanResultltList.get(i);
 				byte[] keyBytes = mapentry.getKey();
 				byte[] valueBytes = mapentry.getValue();
-				String putKey= JavaSerializeUtils.unSerializeString(keyBytes);
+				String putKey = JavaSerializeUtils.unSerializeString(keyBytes);
 				T t = JavaSerializeUtils.unSerialize(valueBytes, clz);
 				map.put(putKey, t);
 			}
 			return scanResult.getStringCursor();
 		});
 	}
-	
 
 	/**
-	 * 扫描 hset 
-	 * @param hkey 
-	 * @param cursorStr 
-	 * @param list 
+	 * 扫描 hset
+	 * 
+	 * @param hkey
+	 * @param cursorStr
+	 * @param list
 	 * @param clz
 	 * @return
 	 */
-	public <T>String hscan(String hkey, String cursorStr,List<T> list, Class<T> clz) {
+	public <T> String hscan(String hkey, String cursorStr, List<T> list, Class<T> clz) {
 		byte[] hKeyByte = JavaSerializeUtils.serializeString(hkey);
 		byte[] cursorByte = JavaSerializeUtils.serializeString(cursorStr);
 		return RedisRetryHelper.execute(() -> {
@@ -369,73 +346,6 @@ public class RedisManager implements InitializingBean {
 		});
 	}
 
-	/**
-	 * 可重入锁:判断锁的host pid 线程id 是否是当前线程如果是那么放行 最终想法是 锁key存当前锁的时间(host pid 线程id),
-	 * 当其他第一个要获取锁的时候 判断key里的时间是否超时，如果超时那么它将会检查锁住此(host pid 线程id)key的线程是否还在正常运行，
-	 * 如果还在正常运行 那么继续等待，否则将获取此锁并日志记录锁住此key的线程已经挂掉导致此锁没有被unlike
-	 * 
-	 * @param key
-	 * @return
-	 */
-	public void lock(String key) {
-		final String lockKey = PRE_LOCK.concat(key);
-		final String lockValuePre = HOST_PID + "_" + Thread.currentThread().getId();
-		RedisRetryHelper.execute(() -> {
-			String redisLockValue = null;
-			long startTime = System.currentTimeMillis();
-			while (true) {
-				long nowTime = System.currentTimeMillis();
-				String lockValue = lockValuePre + "_" + nowTime;
-				// 1.如果set lockValue返回1 直接获取锁
-				if (jedisCluster.setnx(lockKey, lockValue) == 1) {
-					// 因為 checkLockIsErr 暫時沒有實現 所以這裡需要設置超時
-					jedisCluster.expire(lockKey, lockTimeout);
-					break;
-				}
-				// 2.獲取 已經被鎖的信息
-				redisLockValue = jedisCluster.get(lockKey);
-				if (null == redisLockValue)
-					continue;
-				// 3.获取lockKey 锁的 主机进程 线程
-				String user = getLockUser(redisLockValue);
-				// 4.判断当前主机进程 线程 与已经锁住的 主机进程 线程是否相等
-				if (lockValuePre.equals(user)) {
-					break;
-				}
-				// 5.判斷是否超時
-				if (nowTime - startTime >= lockTimeout * 1000) {
-					// 6. 如果超時了，檢查 鎖著 主机进程 线程 是否異常 如果異常
-					if (checkLockIsErr(user)) {
-						// 7. 刪除鎖
-						RedisRetryHelper.execute(() -> {
-							return jedisCluster.del(lockKey);
-						});
-						LOG.error("this redis lock key[" + key + "] err of " + redisLockValue);
-						continue;
-					}
-				}
-			}
-			return null;
-		});
-	}
-
-	private String getLockUser(String redisLockValue) {
-		int index = redisLockValue.lastIndexOf("_");
-		String urser = redisLockValue.substring(0, index);
-		return urser;
-	}
-
-	private boolean checkLockIsErr(String redisLockValue) {
-		return true;
-	}
-
-	public void unlock(String key) {
-		String lockKey = PRE_LOCK.concat(key);
-		RedisRetryHelper.execute(() -> {
-			return jedisCluster.del(lockKey);
-		});
-	}
-
 	public int llen(String key) {
 		byte[] keyByte = JavaSerializeUtils.serializeString(key);
 		return RedisRetryHelper.execute(() -> {
@@ -487,7 +397,6 @@ public class RedisManager implements InitializingBean {
 			set.add(new HostAndPort(temp[0], Integer.valueOf(temp[1])));
 		}
 		Integer timeout = configure.getConfig("redis.timeout", 200);
-		lockTimeout = configure.getConfig("redis.lock.timeout", 60);
 		jedisCluster = new EnhanceJedisCluster(set, timeout, config);
 	}
 

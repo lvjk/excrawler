@@ -14,8 +14,8 @@ public class WorkerPlugsManagerTest extends BaseTest {
 
 	@Test
 	public void test() {
-		Worker<?> worker = workerPlugsManager.newWorker("six.com.crawler.work.plugs.TestWorker");
-		log.info(null != worker ? worker.toString() : "did not find worker");
+//		Worker<?> worker = workerPlugsManager.newWorker("six.com.crawler.work.plugs.TestWorker");
+//		log.info(null != worker ? worker.toString() : "did not find worker");
 	}
 	
 	public static void main(String[] args){

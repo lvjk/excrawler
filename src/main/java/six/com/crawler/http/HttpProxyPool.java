@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import six.com.crawler.dao.RedisManager;
 import six.com.crawler.entity.HttpProxy;
 import six.com.crawler.entity.HttpProxyType;
+import six.com.crawler.node.lock.DistributedLock;
 
 /**
  * @author 作者
@@ -17,26 +18,30 @@ import six.com.crawler.entity.HttpProxyType;
 public class HttpProxyPool {
 	final static Logger LOG = LoggerFactory.getLogger(HttpProxyPool.class);
 
-	public static final String REDIS_HTTP_PROXY_INDEX = "http_proxy_index";
 	public static final String REDIS_HTTP_PROXY_POOL = "http_proxy_pool";
+	public static final String REDIS_HTTP_PROXY_INDEX = "http_proxy_index";
 	private HttpProxyType httpProxyType;
 	private String siteHttpProxyPoolKey;// 站点http代理池 key
 	private String siteHttpProxyIndexKey;// 站点http代理获取索引 key
 	private RedisManager redisManager;
+	private DistributedLock distributedLock;
 	private int poolSize;
 	private long restTime;
 
-	public HttpProxyPool(RedisManager redisManager, String siteCode, HttpProxyType httpProxyType, long restTime) {
+	public HttpProxyPool(RedisManager redisManager, DistributedLock distributedLock, String siteCode,
+			HttpProxyType httpProxyType, long restTime) {
 		this.redisManager = redisManager;
+		this.distributedLock = distributedLock;
 		this.httpProxyType = httpProxyType;
+		this.restTime = restTime;
 		this.siteHttpProxyPoolKey = REDIS_HTTP_PROXY_POOL + "_" + siteCode;
 		this.siteHttpProxyIndexKey = REDIS_HTTP_PROXY_INDEX + "_" + siteCode;
-		this.restTime = restTime;
+		initPool();
 	}
 
 	private int initPool() {
 		int poolSize = 0;
-		redisManager.lock(siteHttpProxyPoolKey);
+		distributedLock.lock();
 		try {
 			Map<String, HttpProxy> map = redisManager.hgetAll(HttpProxyPool.REDIS_HTTP_PROXY_POOL, HttpProxy.class);
 			if (null != map) {
@@ -47,7 +52,7 @@ public class HttpProxyPool {
 			}
 
 		} finally {
-			redisManager.unlock(siteHttpProxyPoolKey);
+			distributedLock.unLock();
 		}
 		return poolSize;
 
@@ -77,15 +82,16 @@ public class HttpProxyPool {
 				}
 				long nowTime = System.currentTimeMillis();
 				long alreadyRestTime = nowTime - httpProxy.getLastUseTime();
-				LOG.info(
-						siteHttpProxyPoolKey + "'s index["+index+"] [" + httpProxy.toString() + "] alreadyRestTime:" + alreadyRestTime);
+				LOG.info(siteHttpProxyPoolKey + "'s index[" + index + "] [" + httpProxy.toString()
+						+ "] alreadyRestTime:" + alreadyRestTime);
 				if (alreadyRestTime >= restTime) {
 					httpProxy.setLastUseTime(nowTime);
 					redisManager.lset(siteHttpProxyPoolKey, index, httpProxy);
 					break;
 				}
-			
-				if (index != -1) {} else {
+
+				if (index != -1) {
+				} else {
 					throw new RuntimeException("get getProxyIndex:-1");
 				}
 			}
@@ -94,15 +100,15 @@ public class HttpProxyPool {
 	}
 
 	private int getProxyIndex() {
-		int index =0;
+		int index = 0;
 		boolean flag = false;
 		try {
-			redisManager.lock(siteHttpProxyPoolKey);
+			distributedLock.lock();
 			do {
 				// 因为 incr 当key不存在时 先设置值=0，然后再自增，所以都是从1开始
 				Long tempIndex = redisManager.incr(siteHttpProxyIndexKey);
 				index = tempIndex.intValue() - 1;
-				if (index >= poolSize&&0!=poolSize) {
+				if (index >= poolSize && 0 != poolSize) {
 					redisManager.del(siteHttpProxyIndexKey);
 					flag = true;
 				} else {
@@ -110,18 +116,18 @@ public class HttpProxyPool {
 				}
 			} while (flag);
 		} finally {
-			redisManager.unlock(siteHttpProxyPoolKey);
+			distributedLock.unLock();
 		}
 		return index;
 	}
 
 	public void destroy() {
-		redisManager.lock(siteHttpProxyPoolKey);
+		distributedLock.lock();
 		try {
 			redisManager.del(siteHttpProxyIndexKey);
 			redisManager.del(siteHttpProxyPoolKey);
 		} finally {
-			redisManager.unlock(siteHttpProxyPoolKey);
+			distributedLock.unLock();
 		}
 	}
 }

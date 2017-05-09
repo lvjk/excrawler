@@ -1,6 +1,5 @@
 package six.com.crawler.work.store;
 
-
 import six.com.crawler.work.AbstractCrawlWorker;
 
 /**
@@ -18,7 +17,7 @@ public class StoreFactory {
 	 * @param extracterType
 	 * @return
 	 */
-	public static Store newStore(AbstractCrawlWorker worker,StoreType storeType) {
+	public static Store newStore(AbstractCrawlWorker worker, StoreType storeType) {
 		Store store = null;
 		if (StoreType.CONSOLE == storeType) {
 			store = new ConsoleStore(worker);
@@ -28,8 +27,6 @@ public class StoreFactory {
 			store = new HttpStore(worker);
 		} else if (StoreType.FILE == storeType) {
 			store = new FileStore(worker);
-		}  else if (StoreType.REDIS == storeType) {
-			store = new RedisStore(worker);
 		} else {
 			store = new ConsoleStore(worker);
 		}

@@ -7,8 +7,7 @@ import six.com.crawler.entity.Page;
 import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.space.RedisWorkSpace;
-
+import six.com.crawler.work.space.WorkSpace;
 
 /**
  * @author 作者
@@ -17,11 +16,11 @@ import six.com.crawler.work.space.RedisWorkSpace;
  */
 public class ShFangDiPresaleInfoWorker extends AbstractCrawlWorker {
 
-	RedisWorkSpace<Page> saleInfoQueue;
+	WorkSpace<Page> saleInfoQueue;
 
 	@Override
 	protected void insideInit() {
-		saleInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "sh_fangdi_sale_info",Page.class);
+		saleInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("sh_fangdi_sale_info", Page.class);
 	}
 
 	@Override
@@ -70,7 +69,7 @@ public class ShFangDiPresaleInfoWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	public void onComplete(Page p,ResultContext resultContext) {
+	public void onComplete(Page p, ResultContext resultContext) {
 	}
 
 	@Override

@@ -28,7 +28,6 @@ import six.com.crawler.http.HttpClient;
 import six.com.crawler.node.Node;
 import six.com.crawler.node.ClusterManager;
 import six.com.crawler.ocr.ImageDistinguish;
-import six.com.crawler.schedule.cache.RedisScheduleCache;
 import six.com.crawler.schedule.cache.ScheduleCache;
 import six.com.crawler.schedule.worker.AbstractWorkerPlugsManager;
 import six.com.crawler.work.WorkerLifecycleState;
@@ -99,6 +98,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	@Autowired
 	private WorkSpaceManager WorkSpaceManager;
 
+	@Autowired
 	private ScheduleCache scheduleCache;
 
 	private ScheduleDispatchTypeIntercept scheduleDispatchTypeIntercept;
@@ -112,9 +112,6 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	protected abstract void init();
 
 	public void afterPropertiesSet() {
-		String clusterName = getNodeManager().getClusterName();
-		String basePreKey = clusterName + "_scheduler_cache";
-		scheduleCache = new RedisScheduleCache(getRedisManager(), basePreKey);
 		scheduleDispatchTypeIntercept = new ScheduleDispatchTypeIntercept(getNodeManager());
 		init();
 	}
@@ -411,8 +408,8 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		return isTargetStatus(jobName, WorkerLifecycleState.FINISHED);
 	}
 
-	public JobSnapshot getLastEnd(String jobName,String excludeId) {
-		JobSnapshot lastJobSnapshot = getJobSnapshotDao().queryLastEnd(jobName,excludeId);
+	public JobSnapshot getLastEnd(String jobName, String excludeId) {
+		JobSnapshot lastJobSnapshot = getJobSnapshotDao().queryLastEnd(jobName, excludeId);
 		return lastJobSnapshot;
 	}
 

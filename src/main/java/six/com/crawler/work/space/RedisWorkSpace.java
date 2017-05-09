@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import six.com.crawler.dao.RedisManager;
+import six.com.crawler.node.lock.DistributedLock;
 
 /**
  * @author 作者
@@ -46,11 +47,15 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 
 	private RedisManager redisManager;
 
-	public RedisWorkSpace(RedisManager redisManager, String workSpaceName, Class<T> clz) {
+	private DistributedLock distributedLock;
+
+	public RedisWorkSpace(RedisManager redisManager, DistributedLock distributedLock, String workSpaceName,
+			Class<T> clz) {
 		Objects.requireNonNull(redisManager, "redisManager must not be null");
 		Objects.requireNonNull(workSpaceName, "workSpaceName must not be null");
 		Objects.requireNonNull(clz, "clz must not be null");
 		this.redisManager = redisManager;
+		this.distributedLock = distributedLock;
 		this.workSpaceName = workSpaceName;
 		this.proxyQueueKey = WORK_PROXY_QUEUE_KEY_PRE + workSpaceName;
 		this.queueKey = WORK_QUEUE_KEY_PRE + workSpaceName;
@@ -66,7 +71,7 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 	@Override
 	public boolean push(T data) {
 		Objects.requireNonNull(data, "data must not be null");
-		redisManager.lock(queueKey);
+		distributedLock.lock();
 		try {
 			T oldData = redisManager.hget(queueKey, data.getKey(), clz);
 			/**
@@ -85,14 +90,14 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 			log.error("push workSpace[" + queueKey + "] data err:" + data.toString(), e);
 			throw e;
 		} finally {
-			redisManager.unlock(queueKey);
+			distributedLock.unLock();
 		}
 	}
 
 	@Override
 	public boolean errRetryPush(T data) {
 		Objects.requireNonNull(data, "data must not be null");
-		redisManager.lock(queueKey);
+		distributedLock.lock();
 		try {
 			redisManager.rpush(proxyQueueKey, data.getKey());
 			redisManager.hset(queueKey, data.getKey(), data);
@@ -100,7 +105,7 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 		} catch (Exception e) {
 			throw e;
 		} finally {
-			redisManager.unlock(queueKey);
+			distributedLock.unLock();
 		}
 	}
 
@@ -108,8 +113,9 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 	public T pull() {
 		T data = null;
 		try {
-			redisManager.lock(queueKey);
+			distributedLock.lock();
 			// 先从代理队列里lpop数据key
+			
 			String dataKey = redisManager.lpop(proxyQueueKey, String.class);
 			// 如果dataKey！=null
 			if (null != dataKey) {
@@ -120,14 +126,14 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 			log.error("pull workSpace[" + queueKey + "] data err", e);
 			throw e;
 		} finally {
-			redisManager.unlock(queueKey);
+			distributedLock.unLock();
 		}
 		return data;
 	}
 
 	public void repair() {
 		try {
-			redisManager.lock(queueKey);
+			distributedLock.lock();
 			// 如果dataKey==null的话，并且queueKeyLlen>0的话,那么启动队列修复
 			int queueKeyLlen = redisManager.hllen(queueKey);
 			if (queueKeyLlen > 0) {
@@ -145,7 +151,7 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 			log.error("repair workSpace[" + queueKey + "] err", e);
 			throw e;
 		} finally {
-			redisManager.unlock(queueKey);
+			distributedLock.unLock();
 		}
 	}
 
@@ -189,13 +195,13 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 	public boolean isDone(String key) {
 		boolean isduplicate = false;
 		if (StringUtils.isNotBlank(key)) {
-			redisManager.lock(doneKey);
+			distributedLock.lock();
 			try {
 				isduplicate = redisManager.isExecuted(doneKey, key);
 			} catch (Exception e) {
 				throw e;
 			} finally {
-				redisManager.unlock(doneKey);
+				distributedLock.unLock();
 			}
 		}
 		return isduplicate;
@@ -203,25 +209,25 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 
 	@Override
 	public void addDone(T data) {
-		redisManager.lock(doneKey);
+		distributedLock.lock();
 		try {
 			redisManager.hset(doneKey, data.getKey(), "1");
 		} catch (Exception e) {
 			throw e;
 		} finally {
-			redisManager.unlock(doneKey);
+			distributedLock.unLock();
 		}
 	}
 
 	public void ack(T data) {
 		Objects.requireNonNull(data, "data must not be null");
-		redisManager.lock(queueKey);
+		distributedLock.lock();
 		try {
 			redisManager.hdel(queueKey, data.getKey());
 		} catch (Exception e) {
 			throw e;
 		} finally {
-			redisManager.unlock(queueKey);
+			distributedLock.unLock();
 		}
 
 	}
@@ -243,38 +249,38 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 
 	@Override
 	public void clearDoing() {
-		redisManager.lock(queueKey);
+		distributedLock.lock();
 		try {
 			redisManager.del(proxyQueueKey);
 			redisManager.del(queueKey);
 		} catch (Exception e) {
 			throw e;
 		} finally {
-			redisManager.unlock(queueKey);
+			distributedLock.unLock();
 		}
 	}
 
 	@Override
 	public void clearErr() {
-		redisManager.lock(queueKey);
+		distributedLock.lock();
 		try {
 			redisManager.del(errQueueKey);
 		} catch (Exception e) {
 			throw e;
 		} finally {
-			redisManager.unlock(queueKey);
+			distributedLock.unLock();
 		}
 	}
 
 	@Override
 	public void clearDone() {
-		redisManager.lock(queueKey);
+		distributedLock.lock();
 		try {
 			redisManager.del(doneKey);
 		} catch (Exception e) {
 			throw e;
 		} finally {
-			redisManager.unlock(queueKey);
+			distributedLock.unLock();
 		}
 	}
 }

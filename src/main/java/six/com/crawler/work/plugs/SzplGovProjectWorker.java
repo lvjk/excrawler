@@ -13,7 +13,7 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.WebDriverUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.WorkerLifecycleState;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
 /**
  * @author 作者
@@ -25,14 +25,13 @@ public class SzplGovProjectWorker extends AbstractCrawlWorker {
 	final static Logger LOG = LoggerFactory.getLogger(SzplGovProjectWorker.class);
 
 	String nextXpath = "//div[@id='AspNetPager1']/div[@class='mypaper']/a";
-	RedisWorkSpace<Page> preSaleQueue;
-	RedisWorkSpace<Page> projectQueue;
-
+	WorkSpace<Page> preSaleQueue;
+	WorkSpace<Page> projectQueue;
 
 	@Override
 	protected void insideInit() {
-		preSaleQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "szpl_gov_pre_sale",Page.class);
-		projectQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "szpl_gov_project_detail",Page.class);
+		preSaleQueue = getManager().getWorkSpaceManager().newWorkSpace("szpl_gov_pre_sale", Page.class);
+		projectQueue = getManager().getWorkSpaceManager().newWorkSpace("szpl_gov_project_detail", Page.class);
 	}
 
 	@Override
@@ -92,7 +91,7 @@ public class SzplGovProjectWorker extends AbstractCrawlWorker {
 	}
 
 	@Override
-	public void onComplete(Page p,ResultContext resultContext) {
+	public void onComplete(Page p, ResultContext resultContext) {
 
 	}
 

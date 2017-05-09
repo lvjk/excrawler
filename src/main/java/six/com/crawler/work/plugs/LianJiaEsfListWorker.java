@@ -7,7 +7,6 @@ import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.space.RedisWorkSpace;
 import six.com.crawler.work.space.WorkSpace;
 
 /**
@@ -23,7 +22,7 @@ public class LianJiaEsfListWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void insideInit() {
-		nextWorkQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(), "lianjia_erf_info",Page.class);
+		nextWorkQueue =getManager().getWorkSpaceManager().newWorkSpace("lianjia_erf_info", Page.class);
 	}
 
 	@Override

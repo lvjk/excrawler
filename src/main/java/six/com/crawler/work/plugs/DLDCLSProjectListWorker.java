@@ -9,24 +9,25 @@ import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
-public class DLDCLSProjectListWorker extends AbstractCrawlWorker{
-	
-	RedisWorkSpace<Page> projectInfoQueue;
-	
+public class DLDCLSProjectListWorker extends AbstractCrawlWorker {
+
+	WorkSpace<Page> projectInfoQueue;
+
 	String pageIndexTemplate = "<<pageIndex>>";
-	
+
 	int pageIndex = 1;
-	
+
 	int pageCount;
-	
-	String projectListUrlTemplate="http://218.25.171.244/InfoLayOut_LS/Config/LoadProcToXML.aspx?pid=Arty_YSXX&csnum=2&cn1=pageindex&cv1="+pageIndexTemplate+"&cn2=DefOrderfldName&cv2=xkzh";
+
+	String projectListUrlTemplate = "http://218.25.171.244/InfoLayOut_LS/Config/LoadProcToXML.aspx?pid=Arty_YSXX&csnum=2&cn1=pageindex&cv1="
+			+ pageIndexTemplate + "&cn2=DefOrderfldName&cv2=xkzh";
 
 	String refererUrl;
 
 	private Page buildPage(int pageIndex, String refererUrl) {
-		String url=StringUtils.replace(projectListUrlTemplate, pageIndexTemplate, String.valueOf(pageIndex));
+		String url = StringUtils.replace(projectListUrlTemplate, pageIndexTemplate, String.valueOf(pageIndex));
 		Page page = new Page(getSite().getCode(), 1, url, url);
 		page.setReferer(refererUrl);
 		page.setMethod(HttpMethod.POST);
@@ -39,27 +40,28 @@ public class DLDCLSProjectListWorker extends AbstractCrawlWorker{
 
 	@Override
 	protected void insideInit() {
-		projectInfoQueue = new RedisWorkSpace<Page>(getManager().getRedisManager(),"dldc_ls_project_info", Page.class);
+		projectInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("dldc_ls_project_info", Page.class);
 		Page firstPage = buildPage(pageIndex, refererUrl);// 初始化第一页
 		getWorkSpace().clearDoing();
 		getWorkSpace().push(firstPage);
 	}
+
 	@Override
 	protected void beforeDown(Page doingPage) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	protected void beforeExtract(Page doingPage) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	protected void afterExtract(Page doingPage, ResultContext resultContext) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
