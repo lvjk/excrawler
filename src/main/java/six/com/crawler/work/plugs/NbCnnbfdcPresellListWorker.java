@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
@@ -23,7 +24,7 @@ public class NbCnnbfdcPresellListWorker extends AbstractCrawlWorker {
 
 	int pageIndex = 1;
 
-	int pageCount;
+	int pageCount = -1;
 
 	String projectListUrlTemplate = "http://newhouse.cnnbfdc.com/tmgs_xkzgs.aspx?p=" + pageIndexTemplate;
 
@@ -47,6 +48,12 @@ public class NbCnnbfdcPresellListWorker extends AbstractCrawlWorker {
 	protected void beforeExtract(Page doingPage) {
 		if (pageCount == -1) {
 			Element pageCountElement = doingPage.getDoc().select(pageCountCss).first();
+			
+			if (null == pageCountElement) {
+				Elements pageElements = doingPage.getDoc().select("div[class='PagerCss']>a");
+				pageCountElement = pageElements.get(pageElements.size() - 2);
+			}
+			
 			if (null == pageCountElement) {
 				throw new RuntimeException("don't find pageCountElement:" + pageCountCss);
 			} else {
@@ -67,6 +74,7 @@ public class NbCnnbfdcPresellListWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void onComplete(Page doingPage, ResultContext resultContext) {
+		List<String> presellIds = resultContext.getExtractResult("presellId");
 		List<String> presellNames = resultContext.getExtractResult("presellCardName");
 		List<String> projectNames = resultContext.getExtractResult("projectName");
 		List<String> regions = resultContext.getExtractResult("region");
@@ -74,6 +82,7 @@ public class NbCnnbfdcPresellListWorker extends AbstractCrawlWorker {
 		List<String> presellUrls = resultContext.getExtractResult("presellUrl");
 		if (null != presellNames) {
 			for (int i = 0; i < presellUrls.size(); i++) {
+				String presellId = presellIds.get(i);
 				String presellUrl = presellUrls.get(i);
 				presellUrl = presellUrl.substring(presellUrl.indexOf("'") + 1, presellUrl.indexOf(",") - 1);
 				String presellName = presellNames.get(i);
@@ -82,6 +91,7 @@ public class NbCnnbfdcPresellListWorker extends AbstractCrawlWorker {
 				String developerName = developerNames.get(i);
 				Page projectInfoPage = new Page(doingPage.getSiteCode(), 1, presellUrl, presellUrl);
 				projectInfoPage.setReferer(doingPage.getFinalUrl());
+				projectInfoPage.getMetaMap().put("presellId", Arrays.asList(presellId));
 				projectInfoPage.getMetaMap().put("presellCardName", Arrays.asList(presellName));
 				projectInfoPage.getMetaMap().put("projectName", Arrays.asList(projectName));
 				projectInfoPage.getMetaMap().put("region", Arrays.asList(region));
