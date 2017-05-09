@@ -92,7 +92,6 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker {
 			roomState = roomState.replace(": ", "");
 			Elements elements = et.select("tbody>tr:eq(1)>td>a");
 			if (elements == null || elements.size() == 0) {
-				// 姝ゆ椂鍖归厤鐨勬槸鏈妗堢殑鎴块棿鍙�
 				elements = et.select("tbody>tr:eq(1)>td");
 				String contractNo = et.attr("title");
 				if (contractNo != null && contractNo.contains("鍚堝悓缂栧彿")) {
