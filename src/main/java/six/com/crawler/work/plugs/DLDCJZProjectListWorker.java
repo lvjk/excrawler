@@ -44,7 +44,7 @@ public class DLDCJZProjectListWorker extends AbstractCrawlWorker {
 	protected void insideInit() {
 		projectInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("dldc_jz_project_info", Page.class);
 		if (!(helper.isDownloadState() && helper.isUseRawData())) {
-			Page firstPage = buildPage(pageIndex, refererUrl);
+			Page firstPage = buildPage(pageIndex, refererUrl);// 初始化第一页
 			getWorkSpace().clearDoing();
 			getWorkSpace().push(firstPage);
 		}
@@ -65,7 +65,7 @@ public class DLDCJZProjectListWorker extends AbstractCrawlWorker {
 				log.error("did not find pageCount element:" + pageCountCss);
 			} else {
 				String onclick = pageCountElement.ownText();
-				String pageCountStr = StringUtils.substringBetween(onclick, "绗�1/", "椤�");
+				String pageCountStr = StringUtils.substringBetween(onclick, "第1/", "页");
 				try {
 					pageCount = Integer.valueOf(pageCountStr);
 				} catch (Exception e) {
@@ -96,9 +96,10 @@ public class DLDCJZProjectListWorker extends AbstractCrawlWorker {
 				projectInfoQueue.push(projectInfo);
 			}
 		}
+		// 判断是否还有下一页 有下一页生成下一页丢进当前队列 即可
 		pageIndex++;
 		if (pageIndex <= pageCount) {
-			Page page = buildPage(pageIndex, doingPage.getFinalUrl());
+			Page page = buildPage(pageIndex, doingPage.getFinalUrl());// 初始化第一页
 			getWorkSpace().push(page);
 		}
 	}

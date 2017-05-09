@@ -42,7 +42,7 @@ public class DLDCGXProjectListWorker extends AbstractCrawlWorker {
 	@Override
 	protected void insideInit() {
 		projectInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("dldc_gx_project_info", Page.class);
-		Page firstPage = buildPage(pageIndex, refererUrl);
+		Page firstPage = buildPage(pageIndex, refererUrl);// 初始化第一页
 		getWorkSpace().clearDoing();
 		getWorkSpace().push(firstPage);
 	}
@@ -82,9 +82,10 @@ public class DLDCGXProjectListWorker extends AbstractCrawlWorker {
 				projectInfoQueue.push(projectInfo);
 			}
 		}
+		// 判断是否还有下一页 有下一页生成下一页丢进当前队列 即可
 		pageIndex++;
 		if (pageIndex <= pageCount) {
-			Page page = buildPage(pageIndex, doingPage.getFinalUrl());
+			Page page = buildPage(pageIndex, doingPage.getFinalUrl());// 初始化第一页
 			getWorkSpace().push(page);
 		}
 	}

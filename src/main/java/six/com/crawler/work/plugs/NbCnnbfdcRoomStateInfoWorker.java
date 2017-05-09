@@ -16,6 +16,7 @@ import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.space.WorkSpace;
 
 /**
+ * 抓取宁波住宅与房地产网(楼层单元状态的信息)
  * 
  * @author 38342
  * @version v1.0 date:20170301
@@ -47,6 +48,7 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker {
 		iframePage.setReferer(doingPage.getFinalUrl());
 		getDowner().down(iframePage);
 		doingPage.setPageSrc(iframePage.getPageSrc());
+		// 获取所有状态信息
 		if (roomStates.isEmpty()) {
 			String allCssQuery = "table[width='600']>tbody>tr>td>font";
 			Elements elements2 = doingPage.getDoc().select(allCssQuery);
@@ -92,10 +94,11 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker {
 			roomState = roomState.replace(": ", "");
 			Elements elements = et.select("tbody>tr:eq(1)>td>a");
 			if (elements == null || elements.size() == 0) {
+				// 此时匹配的是未备案的房间号
 				elements = et.select("tbody>tr:eq(1)>td");
 				String contractNo = et.attr("title");
-				if (contractNo != null && contractNo.contains("鍚堝悓缂栧彿")) {
-					contractNo = contractNo.split("锛�")[1];
+				if (contractNo != null && contractNo.contains("合同编号")) {
+					contractNo = contractNo.split("：")[1];
 				} else {
 					contractNo = "";
 				}
