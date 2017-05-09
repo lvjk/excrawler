@@ -16,7 +16,7 @@ import six.com.crawler.work.space.WorkSpace;
 
 public class DLDCSQProjectListWorker extends AbstractCrawlWorker {
 
-	final static Logger log = LoggerFactory.getLogger(DLDCJZProjectListWorker.class);
+	final static Logger log = LoggerFactory.getLogger(DLDCSQProjectListWorker.class);
 
 	WorkSpace<Page> projectInfoQueue;
 	String pageCountCss = "font[color='#0033FF']";
