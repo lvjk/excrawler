@@ -1,6 +1,8 @@
 package six.com.crawler.work.plugs;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -25,7 +27,7 @@ public class DLDCGXProjectListWorker extends AbstractCrawlWorker {
 
 	int pageIndex = 1;
 
-	int pageCount;
+	int pageCount = -1;
 
 	String projectListUrlTemplate = "http://218.25.171.244/InfoLayOut_GX/Config/LoadProcToXML.aspx?pid=Arty_YSXX&csnum=2&cn1=pageindex&cv1="
 			+ pageIndexTemplate + "&cn2=DefOrderfldName&cv2=xkzh";
@@ -38,9 +40,12 @@ public class DLDCGXProjectListWorker extends AbstractCrawlWorker {
 		page.setReferer(refererUrl);
 		page.setMethod(HttpMethod.POST);
 		page.setType(PageType.XML.value());
-		page.getParameters().put("pid", "Arty_YSXX");
-		page.getParameters().put("cv1", pageIndex);
-		page.getParameters().put("cv2", "xkzh");
+		
+		Map<String,Object> param=new HashMap<String,Object>();
+		param.put("pid", "Arty_YSXX");
+		param.put("cv1", pageIndex);
+		param.put("cv2", "xkzh");
+		page.setParameters(param);
 		return page;
 	}
 
@@ -61,7 +66,7 @@ public class DLDCGXProjectListWorker extends AbstractCrawlWorker {
 	@Override
 	protected void beforeExtract(Page doingPage) {
 		if (pageCount == -1) {
-			pageCount = Integer.parseInt(doingPage.getDoc().select("NewDataSet>Table1>PageCount").first().ownText());
+			pageCount = Integer.parseInt(doingPage.getDoc().getElementsByTag("PageCount").first().ownText());
 		}
 	}
 
@@ -74,7 +79,7 @@ public class DLDCGXProjectListWorker extends AbstractCrawlWorker {
 	@Override
 	protected void onComplete(Page doingPage, ResultContext resultContext) {
 		String BASE_URL = "http://218.25.171.244/InfoLayOut_GX/Config/LoadProcToXML.aspx?pid=Arty_YSXX&csnum=1&cn1=ysxkid&cv1=";
-		List<String> projectIds = resultContext.getExtractResult("projectId");
+		List<String> projectIds=resultContext.getExtractResult("projectId");
 		if (null != projectIds) {
 			for (String projectId : projectIds) {
 				String URL = BASE_URL + projectId;
@@ -82,7 +87,6 @@ public class DLDCGXProjectListWorker extends AbstractCrawlWorker {
 				projectInfo.setReferer(doingPage.getFinalUrl());
 				projectInfo.setMethod(HttpMethod.GET);
 				projectInfo.setType(PageType.XML.value());
-
 				projectInfo.getMetaMap().put("projectId", ArrayListUtils.asList(projectId));
 				projectInfoQueue.push(projectInfo);
 			}
