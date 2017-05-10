@@ -30,25 +30,35 @@ public class ConnectionPool<T extends NettyConnection> {
 
 	public void put(T nettyConnection) {
 		if (null != nettyConnection) {
+			T oldNettyConnection = find(nettyConnection.getConnectionKey());
+			if (null != oldNettyConnection) {
+				oldNettyConnection.close();
+			}
 			connectionMap.put(nettyConnection.getConnectionKey(), nettyConnection);
 		}
 	}
 
 	public void remove(T nettyConnection) {
-		if(null!=nettyConnection){
+		if (null != nettyConnection) {
 			nettyConnection.close();
 			connectionMap.remove(nettyConnection.getConnectionKey());
 		}
 	}
 
-	public void destroy() {
-		Iterator<Map.Entry<String, T>> iterator = connectionMap.entrySet().iterator();
-		T connection = null;
-		while (iterator.hasNext()) {
-			Map.Entry<String, T> entry = iterator.next();
-			connection = entry.getValue();
-			connection.close();
-			iterator.remove();
+	public void closeExpire(long expireTime) {
+		Iterator<Map.Entry<String, T>> mapIterator = connectionMap.entrySet().iterator();
+		long now = System.currentTimeMillis();
+		while (mapIterator.hasNext()) {
+			Map.Entry<String, T> entry = mapIterator.next();
+			T connection = entry.getValue();
+			if (now - connection.getLastActivityTime() >= expireTime) {
+				connection.close();
+				mapIterator.remove();
+			}
 		}
+	}
+
+	public void destroy() {
+		closeExpire(0);
 	}
 }

@@ -14,7 +14,6 @@ import six.com.crawler.entity.Job;
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.WorkerSnapshot;
 import six.com.crawler.node.ClusterManager;
-import six.com.crawler.node.lock.DistributedLock;
 
 /**
  * @author 作者
@@ -31,8 +30,6 @@ public class RedisScheduleCache implements ScheduleCache, InitializingBean {
 	private ClusterManager clusterManager;
 
 	private RedisCacheKeyHelper redisCacheKeyHelper;
-
-	private static final String CACHE_PATH_PRE = "schedule_cache_";
 
 	@Override
 	public Job getJob(String jobName) {
@@ -68,28 +65,6 @@ public class RedisScheduleCache implements ScheduleCache, InitializingBean {
 	}
 
 	@Override
-	public void setJobSnapshot(JobSnapshot jobSnapshot) {
-		String jobName = jobSnapshot.getName();
-		String jobSnapshotskey = redisCacheKeyHelper.getJobSnapshotsKey();
-		String workerkey = redisCacheKeyHelper.getWorkerSnapshotsKey(jobName);
-		String jobWorkerSerialNumberkey = redisCacheKeyHelper.getWorkerSerialNumbersKey(jobName);
-		DistributedLock distributedLock = clusterManager.getWriteLock(CACHE_PATH_PRE + jobSnapshotskey);
-		distributedLock.lock();
-		try {
-			// 先删除 过期job信息
-			getRedisManager().hdel(jobSnapshotskey, jobName);
-			// 先删除 过期jobWorkerSerialNumberkey信息
-			getRedisManager().del(jobWorkerSerialNumberkey);
-			// 先删除 过期workerkey 信息
-			getRedisManager().del(workerkey);
-			// 注册JobSnapshot
-			updateJobSnapshot(jobSnapshot);
-		} finally {
-			distributedLock.unLock();
-		}
-	}
-
-	@Override
 	public void updateJobSnapshot(JobSnapshot jobSnapshot) {
 		String jobSnapshotskey = redisCacheKeyHelper.getJobSnapshotsKey();
 		getRedisManager().hset(jobSnapshotskey, jobSnapshot.getName(), jobSnapshot);
@@ -99,19 +74,6 @@ public class RedisScheduleCache implements ScheduleCache, InitializingBean {
 	public void delJobSnapshot(String jobName) {
 		String jobSnapshotskey = redisCacheKeyHelper.getJobSnapshotsKey();
 		getRedisManager().hdel(jobSnapshotskey, jobName);
-	}
-
-	@Override
-	public String newWorkerNameByJob(String jobName, String currentNodeName) {
-		String key = redisCacheKeyHelper.getWorkerSerialNumbersKey(jobName);
-		Long sernum = getRedisManager().incr(key);
-		int serialNumber = sernum.intValue();
-		StringBuilder sbd = new StringBuilder();
-		sbd.append(jobName).append("_");
-		sbd.append("worker_");
-		sbd.append(currentNodeName).append("_");
-		sbd.append(serialNumber);
-		return sbd.toString();
 	}
 
 	@Override

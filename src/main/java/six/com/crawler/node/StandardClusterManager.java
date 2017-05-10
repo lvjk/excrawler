@@ -24,6 +24,7 @@ import six.com.crawler.node.lock.DistributedReadLock;
 import six.com.crawler.node.lock.DistributedWriteLock;
 import six.com.crawler.node.register.NodeRegisterEvent;
 import six.com.crawler.node.register.NodeRegisterEventFactory;
+import six.com.crawler.rpc.AsyCallback;
 import six.com.crawler.rpc.NettyRpcCilent;
 import six.com.crawler.rpc.NettyRpcServer;
 import six.com.crawler.rpc.RpcService;
@@ -230,18 +231,13 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 		return freeNodes;
 	}
 
-	/**
-	 * 获取目标节点最新信息
-	 * 
-	 * @param targetNode
-	 * @return
-	 */
+
 	@Override
 	public Node getNewestNode(Node targetNode) {
 		ObjectCheckUtils.checkNotNull(targetNode, "targetNode");
 		Node newestNode = targetNode;
 		try {
-			ClusterManager findNodeManager = loolup(targetNode, ClusterManager.class);
+			ClusterManager findNodeManager = loolup(targetNode, ClusterManager.class, null);
 			newestNode = findNodeManager.getCurrentNode();
 		} catch (Exception e) {
 			log.error("get newest node:" + targetNode.getName(), e);
@@ -249,17 +245,9 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 		return newestNode;
 	}
 
-	/**
-	 * 调用节点服务
-	 * 
-	 * @param node
-	 * @param commandName
-	 * @param param
-	 * @return
-	 */
 	@Override
-	public <T> T loolup(Node node, Class<T> clz) {
-		return nettyRpcCilent.lookupService(node.getHost(), node.getTrafficPort(), clz, null);
+	public <T> T loolup(Node node, Class<T> clz, AsyCallback asyCallback) {
+		return nettyRpcCilent.lookupService(node.getHost(), node.getTrafficPort(), clz, asyCallback);
 	}
 
 	/**

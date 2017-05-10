@@ -51,13 +51,6 @@ public interface ScheduleCache {
 	public List<JobSnapshot> getJobSnapshots();
 
 	/**
-	 * 注解Job运行快照 JobSnapshot至缓存
-	 * 
-	 * @param jobSnapshot
-	 */
-	public void setJobSnapshot(JobSnapshot jobSnapshot);
-
-	/**
 	 * 更新job运行快照
 	 * 
 	 * @param jobSnapshot
@@ -72,16 +65,6 @@ public interface ScheduleCache {
 	public void delJobSnapshot(String jobName);
 
 	
-	/**
-	 * 通过job 获取一个worker name 名字统一有 前缀 : 节点+job 名字
-	 * +Job类型+WORKER_NAME_PREFIX+当前Job worker的序列号组成
-	 * 
-	 * @param job
-	 * @return
-	 */
-	public String newWorkerNameByJob(String jobName,String currentNodeName);
-	
-
 	/**
 	 * 通过任务名获取运行任务的所有 worker快照信息
 	 * 

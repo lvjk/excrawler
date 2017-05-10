@@ -276,17 +276,6 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		this.workerPlugsManager = workerPlugsManager;
 	}
 
-	/**
-	 * 判断job是否运行。 通过jobName 获取job运行快照JobSnapshot 如果存在并且状态是执行或者暂停那么 返回true否则false
-	 * 
-	 * @param jobName
-	 * @return
-	 */
-	public boolean isRunning(String jobName) {
-		JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(jobName);
-		return null != jobSnapshot && (jobSnapshot.getEnumStatus() == JobSnapshotState.EXECUTING
-				|| jobSnapshot.getEnumStatus() == JobSnapshotState.SUSPEND);
-	}
 
 	/**
 	 * 通过jobname获取 job运行的节点
@@ -395,9 +384,29 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		}
 		return resut;
 	}
+	
+	/**
+	 * 判断job是否运行。 通过jobName 获取job运行快照JobSnapshot 如果存在并且状态是执行或者暂停那么 返回true否则false
+	 * 
+	 * @param jobName
+	 * @return
+	 */
+	public boolean isRunning(String jobName) {
+		JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(jobName);
+		return null != jobSnapshot && (jobSnapshot.getEnumStatus() == JobSnapshotState.EXECUTING
+				|| jobSnapshot.getEnumStatus() == JobSnapshotState.SUSPEND);
+	}
 
+	public boolean isStart(String jobName){
+		return isTargetStatus(jobName, WorkerLifecycleState.STARTED);
+	}
+	
 	public boolean isWait(String jobName) {
 		return isTargetStatus(jobName, WorkerLifecycleState.WAITED);
+	}
+	
+	public boolean isSuspend(String jobName) {
+		return isTargetStatus(jobName, WorkerLifecycleState.SUSPEND);
 	}
 
 	public boolean isStop(String jobName) {

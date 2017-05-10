@@ -23,11 +23,6 @@ public interface Worker<T extends WorkSpaceData> extends WorkerLifecycle {
 	void bindWorkerSnapshot(WorkerSnapshot workerSnapshot);
 
 	/**
-	 * 初始化
-	 */
-	void init();
-
-	/**
 	 * 获取 worker name
 	 * 
 	 * @return

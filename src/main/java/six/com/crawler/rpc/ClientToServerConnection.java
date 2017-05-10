@@ -22,7 +22,7 @@ public class ClientToServerConnection extends NettyConnection {
 	final static Logger log = LoggerFactory.getLogger(ClientToServerConnection.class);
 
 	private RpcCilent rpcCilent;
-
+	
 	protected ClientToServerConnection(RpcCilent rpcCilent, String host, int port) {
 		super(host, port);
 		this.rpcCilent = rpcCilent;

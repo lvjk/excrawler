@@ -3,6 +3,7 @@ package six.com.crawler.node;
 import java.util.List;
 
 import six.com.crawler.node.lock.DistributedLock;
+import six.com.crawler.rpc.AsyCallback;
 
 /**
  * @author 作者
@@ -15,6 +16,7 @@ import six.com.crawler.node.lock.DistributedLock;
 public interface ClusterManager {
 
 	String getClusterName();
+
 	/**
 	 * 获取当前节点
 	 * 
@@ -67,7 +69,7 @@ public interface ClusterManager {
 	 * @param clz
 	 * @return
 	 */
-	public <T> T loolup(Node node, Class<T> clz);
+	public <T> T loolup(Node node, Class<T> clz, AsyCallback asyCallback);
 
 	/**
 	 * 基于Rpc Service注解注册

@@ -3,7 +3,6 @@ package six.com.crawler.schedule.master;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import six.com.crawler.entity.Job;
 import six.com.crawler.node.NodeType;
 import six.com.crawler.rpc.RpcService;
 import six.com.crawler.schedule.AbstractSchedulerManager;
@@ -19,9 +18,7 @@ public abstract class AbstractMasterSchedulerManager extends AbstractSchedulerMa
 	final static Logger log = LoggerFactory.getLogger(AbstractMasterSchedulerManager.class);
 
 	protected final void init() {
-
 		doInit();
-
 		/**
 		 * 如果当前节点是master那么需要修复
 		 */
@@ -50,29 +47,7 @@ public abstract class AbstractMasterSchedulerManager extends AbstractSchedulerMa
 
 	protected abstract void doInit();
 
-	/**
-	 * 结束执行job's worker
-	 * 
-	 * @param jobName
-	 * @param WorkName
-	 */
 	@RpcService(name = "endWorker")
-	public abstract void endWorker(DispatchType dispatchType,String jobName);
-
-	public abstract void repair();
-
-	/**
-	 * 向调度器 调度job
-	 * 
-	 * @param job
-	 */
-	public abstract void scheduled(Job job);
-
-	/**
-	 * 取消调度
-	 * 
-	 * @param job
-	 */
-	public abstract void cancelScheduled(String jobChainName);
+	public abstract void endWorker(DispatchType dispatchType, String jobName);
 
 }

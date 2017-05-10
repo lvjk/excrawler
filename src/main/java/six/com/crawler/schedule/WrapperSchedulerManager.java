@@ -87,23 +87,23 @@ public class WrapperSchedulerManager extends AbstractSchedulerManager {
 	}
 
 	@Override
-	public void execute(DispatchType dispatchType,String jobName) {
-		schedulerManager.execute(dispatchType,jobName);
+	public void execute(DispatchType dispatchType, String jobName) {
+		schedulerManager.execute(dispatchType, jobName);
 	}
 
 	@Override
-	public void suspend(DispatchType dispatchType,String jobName) {
-		schedulerManager.suspend(dispatchType,jobName);
+	public void suspend(DispatchType dispatchType, String jobName) {
+		schedulerManager.suspend(dispatchType, jobName);
 	}
 
 	@Override
-	public void goOn(DispatchType dispatchType,String jobName) {
-		schedulerManager.goOn(dispatchType,jobName);
+	public void goOn(DispatchType dispatchType, String jobName) {
+		schedulerManager.goOn(dispatchType, jobName);
 	}
 
 	@Override
-	public void stop(DispatchType dispatchType,String jobName) {
-		schedulerManager.stop(dispatchType,jobName);
+	public void stop(DispatchType dispatchType, String jobName) {
+		schedulerManager.stop(dispatchType, jobName);
 	}
 
 	@Override

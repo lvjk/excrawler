@@ -51,7 +51,6 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 	 * @param job
 	 */
 	public void execute(DispatchType dispatchType, String jobName) {
-
 		getScheduleDispatchTypeIntercept().intercept(dispatchType, Sets.newHashSet(DispatchType.DISPATCH_TYPE_MASTER),
 				getOperationJobLockPath(jobName), () -> {
 					Job job = getScheduleCache().getJob(jobName);
@@ -72,48 +71,11 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 						} else {
 							actualThreads = freeThreads;
 						}
+						Worker<?>[] workers = buildJobWorker(job, jobSnapshot, actualThreads);
 						log.info("get " + actualThreads + " worker to execute job[" + job.getName() + "]");
-						for (int i = 0; i < actualThreads; i++) {
-							Worker<?> worker = buildJobWorker(job, jobSnapshot);
-							localJobWorkersMap
-									.computeIfAbsent(worker.getJob().getName(),
-											mapKey -> new ConcurrentHashMap<String, Worker<?>>())
-									.put(worker.getName(), worker);
-							getNodeManager().getCurrentNode().incrAndGetRunningWorkerSize();
+						for (Worker<?> worker : workers) {
 							executor.execute(() -> {
-								log.info("start execute job[" + job.getName() + "]'s worker[" + worker.getName() + "]");
-								boolean initSuccesed = false;
-								try {
-									worker.init();
-									initSuccesed = true;
-								} catch (Exception e) {
-									log.error("init job[" + jobName + "]'s worker[" + worker.getName() + "] err", e);
-								}
-								if (initSuccesed) {
-									try {
-										worker.start();
-									} catch (Exception e) {
-										log.error("execute worker [" + worker.getName() + "] err", e);
-									} finally {
-										worker.destroy();
-										getNodeManager().getCurrentNode().decrAndGetRunningWorkerSize();
-										Map<String, Worker<?>> jobWorkerMap = localJobWorkersMap.get(jobName);
-										localJobWorkersMap.get(jobName).remove(worker.getName());
-										if (jobWorkerMap.size() == 0) {
-											localJobWorkersMap.remove(jobName);
-										}
-										try {
-											AbstractMasterSchedulerManager masterSchedulerManager = getNodeManager()
-													.loolup(getNodeManager().getMasterNode(),
-															AbstractMasterSchedulerManager.class);
-											masterSchedulerManager.endWorker(DispatchType.newDispatchTypeByWorker(),
-													jobName);
-										} catch (Exception e) {
-											log.error("notice master node job[" + jobName + "]'s worker["
-													+ worker.getName() + "] is end err", e);
-										}
-									}
-								}
+								doExecute(jobName, worker);
 							});
 							log.info("the job[" + job.getName() + "] is be executed by worker[" + worker.getName()
 									+ "]");
@@ -124,12 +86,48 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 
 	}
 
-	/**
-	 * 工作节点被动暂停任务
-	 * 
-	 * @param job
-	 * @return
-	 */
+	private void doExecute(String jobName, Worker<?> worker) {
+		executor.execute(() -> {
+			log.info("start execute job[" + jobName + "]'s worker[" + worker.getName() + "]");
+			localJobWorkersMap
+					.computeIfAbsent(worker.getJob().getName(), mapKey -> new ConcurrentHashMap<String, Worker<?>>())
+					.put(worker.getName(), worker);
+			getNodeManager().getCurrentNode().incrAndGetRunningWorkerSize();
+			final Thread workerThread = Thread.currentThread();
+			final String systemThreadName = workerThread.getName();
+			final String newThreadName = systemThreadName + "-" + worker.getName();
+			workerThread.setName(newThreadName);
+			try {
+				worker.start();
+			} catch (Exception e) {
+				log.error("execute worker [" + worker.getName() + "] err", e);
+			} finally {
+				workerThread.setName(systemThreadName);
+				worker.destroy();
+				getNodeManager().getCurrentNode().decrAndGetRunningWorkerSize();
+				Map<String, Worker<?>> jobWorkerMap = localJobWorkersMap.get(jobName);
+				localJobWorkersMap.get(jobName).remove(worker.getName());
+				if (jobWorkerMap.size() == 0) {
+					localJobWorkersMap.remove(jobName);
+				}
+				try {
+					AbstractMasterSchedulerManager masterSchedulerManager = getNodeManager().loolup(
+							getNodeManager().getMasterNode(), AbstractMasterSchedulerManager.class, result -> {
+
+							});
+					masterSchedulerManager.endWorker(DispatchType.newDispatchTypeByWorker(), jobName);
+				} catch (Exception e) {
+					log.error(
+							"notice master node job[" + jobName + "]'s worker[" + worker.getName() + "] is end err",
+							e);
+				}
+			}
+		
+		});
+		log.info("the job[" + jobName + "] is be executed by worker[" + worker.getName() + "]");
+	}
+
+	@Override
 	public void suspend(DispatchType dispatchType, String jobName) {
 		getScheduleDispatchTypeIntercept().intercept(dispatchType, Sets.newHashSet(DispatchType.DISPATCH_TYPE_MASTER),
 				getOperationJobLockPath(jobName), () -> {
@@ -211,26 +209,28 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 	 */
 
 	// 构建 job worker
-	protected Worker<?> buildJobWorker(Job job, JobSnapshot jobSnapshot) {
+	protected Worker<?>[] buildJobWorker(Job job, JobSnapshot jobSnapshot, int workerSize) {
+		Worker<?>[] workers = new Worker<?>[workerSize];
 		String workerClass = job.getWorkerClass();
-		Worker<?> newJobWorker = getWorkerPlugsManager().newWorker(workerClass);
-		if(null!=newJobWorker){
-			String workerName = getScheduleCache().newWorkerNameByJob(job.getName(),
-					getNodeManager().getCurrentNode().getName());
-			WorkerSnapshot workerSnapshot = new WorkerSnapshot();
-			workerSnapshot.setJobSnapshotId(jobSnapshot.getId());
-			workerSnapshot.setJobName(job.getName());
-			workerSnapshot.setLocalNode(getNodeManager().getCurrentNode().getName());
-			workerSnapshot.setName(workerName);
-			workerSnapshot.setWorkerErrMsgs(new ArrayList<WorkerErrMsg>());
-			newJobWorker.bindWorkerSnapshot(workerSnapshot);
-			newJobWorker.bindConfigure(getConfigure());
-			newJobWorker.bindManager(this);
-			newJobWorker.bindJob(job);
+		for (int i = 0; i < workerSize; i++) {
+			Worker<?> newJobWorker = getWorkerPlugsManager().newWorker(workerClass);
+			if (null != newJobWorker) {
+				String workerName = "job["+job.getName()+"]_node["+getNodeManager().getCurrentNode().getName() +"]_worker_"+ i;
+				WorkerSnapshot workerSnapshot = new WorkerSnapshot();
+				workerSnapshot.setJobSnapshotId(jobSnapshot.getId());
+				workerSnapshot.setJobName(job.getName());
+				workerSnapshot.setLocalNode(getNodeManager().getCurrentNode().getName());
+				workerSnapshot.setName(workerName);
+				workerSnapshot.setWorkerErrMsgs(new ArrayList<WorkerErrMsg>());
+				newJobWorker.bindWorkerSnapshot(workerSnapshot);
+				newJobWorker.bindConfigure(getConfigure());
+				newJobWorker.bindManager(this);
+				newJobWorker.bindJob(job);
+				workers[i] = newJobWorker;
+			}
 		}
-		return newJobWorker;
+		return workers;
 	}
-
 
 	public void shutdown() {
 		// 然后获取当前节点有关的job worker 然后调用stop
@@ -238,5 +238,4 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 		// 然后shut down worker线程池
 		executor.shutdown();
 	}
-
 }

@@ -169,7 +169,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 				getWorkerSnapshot().setTotalResultCount(getWorkerSnapshot().getTotalResultCount() + storeCount);
 				// 暴露给实现类的完成操作
 				onComplete(doingPage, resultContext);
-				// 流程走到这步，可以确认数据已经被完全处理,那么ack 数据，最终删除数据备份
+				// 流程走到这步，可以确认数据已经被完全处理,那么ack 数据，最终删除数据
 				getWorkSpace().ack(doingPage);
 				// 添加数据被处理记录
 				getWorkSpace().addDone(doingPage);
