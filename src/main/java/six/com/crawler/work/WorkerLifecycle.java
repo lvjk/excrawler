@@ -27,11 +27,6 @@ public interface WorkerLifecycle extends Lifecycle {
 	 * 开始方法 只有当 state== ready 时调用
 	 */
 	public void start();
-
-	/**
-	 * 停止方法在任何状态时候都可以调用
-	 */
-	public void stop();
 	
 	/**
 	 * 在运行状态下，没有处理数据事等待
@@ -48,6 +43,11 @@ public interface WorkerLifecycle extends Lifecycle {
 	 * 继续运行方法只有在state==suspend时调用
 	 */
 	public void goOn();
+	
+	/**
+	 * 停止方法在任何状态时候都可以调用
+	 */
+	public void stop();
 
 	/**
 	 * 销毁 方法 最后结束时候调用

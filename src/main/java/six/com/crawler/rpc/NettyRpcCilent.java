@@ -87,8 +87,7 @@ public class NettyRpcCilent extends AbstractRemote implements RpcCilent {
 	 * 用来存放服务，
 	 */
 	private Map<String, Object> serviceWeakHashMap;
-
-	// 请求超时时间  10秒
+	// 请求超时时间 10秒
 	private long callTimeout = 10000;
 	// 建立连接超时时间 60秒
 	private long connectionTimeout = 60000;
@@ -107,7 +106,6 @@ public class NettyRpcCilent extends AbstractRemote implements RpcCilent {
 		pool = new ConnectionPool<>();
 		serviceWeakHashMap = Collections.synchronizedMap(new java.util.WeakHashMap<>());
 	}
-
 
 	@SuppressWarnings("unchecked")
 	public <T> T lookupService(String targetHost, int targetPort, Class<?> clz, final AsyCallback asyCallback) {
@@ -129,9 +127,8 @@ public class NettyRpcCilent extends AbstractRemote implements RpcCilent {
 					rpcRequest.setCallHost(targetHost);
 					rpcRequest.setCallPort(targetPort);
 					rpcRequest.setParams(args);
-					RpcResponse rpcResponse = null;
 					if (null == asyCallback) {
-						rpcResponse = synExecute(rpcRequest);
+						RpcResponse rpcResponse = synExecute(rpcRequest);
 						return rpcResponse.getResult();
 					} else {
 						asyExecute(rpcRequest, asyCallback);
@@ -185,8 +182,13 @@ public class NettyRpcCilent extends AbstractRemote implements RpcCilent {
 	}
 
 	private WrapperFuture doExecute(RpcRequest rpcRequest, AsyCallback callback) {
+		WrapperFuture wrapperFuture = null;
 		ClientToServerConnection clientToServerConnection = findHealthyNettyConnection(rpcRequest);
-		WrapperFuture wrapperFuture = clientToServerConnection.send(rpcRequest, callback, callTimeout);
+		try {
+			wrapperFuture = clientToServerConnection.send(rpcRequest, callback, callTimeout);
+		} finally {
+			clientToServerConnection.release();
+		}
 		return wrapperFuture;
 	}
 
@@ -200,50 +202,50 @@ public class NettyRpcCilent extends AbstractRemote implements RpcCilent {
 		String callHost = rpcRequest.getCallHost();
 		int callPort = rpcRequest.getCallPort();
 		String findKey = NettyConnection.getNewConnectionKey(callHost, callPort);
-		ClientToServerConnection clientToServerConnection = null;
-		while (true) {
-			clientToServerConnection = pool.find(findKey);
-			if (null == clientToServerConnection) {
-				synchronized (pool) {
-					clientToServerConnection = pool.find(findKey);
-					if (null == clientToServerConnection) {
-						final ClientToServerConnection newClientToServerConnection = new ClientToServerConnection(
-								NettyRpcCilent.this, callHost, callPort);
-						Bootstrap bootstrap = new Bootstrap();
-						bootstrap.group(workerGroup);
-						bootstrap.channel(NioSocketChannel.class);
-						bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
-						bootstrap.handler(new ChannelInitializer<SocketChannel>() {
-							@Override
-							public void initChannel(SocketChannel ch) throws Exception {
-								ch.pipeline()
-										.addLast(new IdleStateHandler(0, NettyConstant.WRITER_IDLE_TIME_SECONDES, 0));
-								ch.pipeline().addLast(IdleStateTrigger);
-								ch.pipeline().addLast(new RpcEncoder(getRpcSerialize()));
-								ch.pipeline().addLast(new RpcDecoder(getRpcSerialize()));
-								ch.pipeline().addLast(newClientToServerConnection);
-							}
-						});
-						bootstrap.connect(callHost, callPort);
-						long startTime = System.currentTimeMillis();
-						// 判断是否可用，如果不可用等待可用直到超时
-						while (!newClientToServerConnection.available()) {
-							long spendTime = System.currentTimeMillis() - startTime;
-							if (spendTime > connectionTimeout) {
-								newClientToServerConnection.close();
-								throw new RpcTimeoutException(
-										"connected " + rpcRequest.toString() + " timeout:" + spendTime);
-							}
-						}
-						clientToServerConnection = newClientToServerConnection;
-					}
+		ClientToServerConnection clientToServerConnection = pool.find(findKey);
+		if (null == clientToServerConnection) {
+			synchronized (pool) {
+				clientToServerConnection = pool.find(findKey);
+				if (null == clientToServerConnection) {
+					clientToServerConnection = newNettyConnection(callHost, callPort);
 				}
 			}
-			if (null != clientToServerConnection && clientToServerConnection.available()) {
-				break;
-			}
+		}
+		synchronized (clientToServerConnection) {
+			clientToServerConnection.hold();
 		}
 		return clientToServerConnection;
+	}
+
+	private ClientToServerConnection newNettyConnection(String callHost, int callPort) {
+		final ClientToServerConnection newClientToServerConnection = new ClientToServerConnection(NettyRpcCilent.this,
+				callHost, callPort);
+		Bootstrap bootstrap = new Bootstrap();
+		bootstrap.group(workerGroup);
+		bootstrap.channel(NioSocketChannel.class);
+		bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
+		bootstrap.handler(new ChannelInitializer<SocketChannel>() {
+			@Override
+			public void initChannel(SocketChannel ch) throws Exception {
+				ch.pipeline().addLast(new IdleStateHandler(0, NettyConstant.WRITER_IDLE_TIME_SECONDES, 0));
+				ch.pipeline().addLast(IdleStateTrigger);
+				ch.pipeline().addLast(new RpcEncoder(getRpcSerialize()));
+				ch.pipeline().addLast(new RpcDecoder(getRpcSerialize()));
+				ch.pipeline().addLast(newClientToServerConnection);
+			}
+		});
+		bootstrap.connect(callHost, callPort);
+		long startTime = System.currentTimeMillis();
+		// 判断是否可用，如果不可用等待可用直到超时
+		while (!newClientToServerConnection.available()) {
+			long spendTime = System.currentTimeMillis() - startTime;
+			if (spendTime > connectionTimeout) {
+				newClientToServerConnection.close();
+				throw new RpcTimeoutException("connected " + callHost + ":" + callPort + " timeout:" + spendTime);
+			}
+		}
+		pool.put(newClientToServerConnection);
+		return newClientToServerConnection;
 	}
 
 	public long getCallTimeout() {

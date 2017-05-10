@@ -8,29 +8,16 @@ import six.com.crawler.entity.JobSnapshot;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年9月25日 下午2:04:20
  * 
- *       调度接口
+ *       调度接口 master SchedulerManager 和 worker SchedulerManager 接口
+ * 
+ *       master和worker 下面的操作:
+ * 
+ *       execute,suspend,goOn,stop
+ * 
+ *       都是双向的,master调用worker执行(execute)任务,worker执行任务后executeCallBack给master
  * 
  */
 public interface SchedulerManager {
-
-	/**
-	 * 调度器修复,当节点启动时会自动被调用
-	 */
-	public void repair();
-
-	/**
-	 * 向调度器 调度job
-	 * 
-	 * @param job
-	 */
-	public void scheduled(Job job);
-
-	/**
-	 * 取消调度
-	 * 
-	 * @param job
-	 */
-	public void cancelScheduled(String jobChainName);
 
 	/**
 	 * 执行任务
@@ -74,28 +61,35 @@ public interface SchedulerManager {
 	public boolean isNotRuning(String jobName);
 
 	/**
-	 * job下的worker是否全部Wait
-	 * 
-	 * @param jobName
-	 * @return
+	 * 调度器修复,当节点启动时会自动被调用
 	 */
-	public boolean isWait(String jobName);
+	public void repair();
 
 	/**
-	 * job下的worker是否全部stop
+	 * 向调度器 调度job
 	 * 
-	 * @param jobName
-	 * @return
+	 * @param job
 	 */
-	public boolean isStop(String jobName);
+	public void scheduled(Job job);
 
 	/**
-	 * job下的worker是否全部finish
+	 * 取消调度
 	 * 
-	 * @param jobName
-	 * @return
+	 * @param job
 	 */
-	public boolean isFinish(String jobName);
+	public void cancelScheduled(String jobChainName);
+
+	boolean isRunning(String jobName);
+
+	boolean isStart(String jobName);
+
+	boolean isWait(String jobName);
+
+	boolean isSuspend(String jobName);
+
+	boolean isStop(String jobName);
+
+	boolean isFinish(String jobName);
 
 	/**
 	 * 获取最后一个结束的任务
@@ -103,8 +97,8 @@ public interface SchedulerManager {
 	 * @param jobName
 	 * @return
 	 */
-	JobSnapshot getLastEnd(String jobName,String excludeId);
-	
+	JobSnapshot getLastEnd(String jobName, String excludeId);
+
 	void updateJobSnapshot(JobSnapshot jobSnapshot);
 
 	public void shutdown();

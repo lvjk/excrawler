@@ -1,6 +1,5 @@
 package six.com.crawler.rpc;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -104,7 +103,7 @@ public class NettyRpcServer extends AbstractRemote implements RpcServer {
 				registerMap.put(serviceName, paras -> {
 					try {
 						return map.get(serviceName).invoke(tagetOb, paras);
-					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+					} catch (Exception e) {
 						throw new RpcInvokeException(e);
 					}
 				});

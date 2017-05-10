@@ -69,5 +69,4 @@ public class MasterStandSchedulerManager extends AbstractMasterStandSchedulerMan
 		// TODO Auto-generated method stub
 		
 	}
-	
 }

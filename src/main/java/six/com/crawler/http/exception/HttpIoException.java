@@ -1,5 +1,6 @@
-package six.com.crawler.exception;
+package six.com.crawler.http.exception;
 
+import six.com.crawler.exception.AbstractHttpException;
 
 /**
  *@author six    

@@ -1,5 +1,7 @@
 package six.com.crawler.rpc;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,9 +24,13 @@ public abstract class NettyConnection extends SimpleChannelInboundHandler<RpcMsg
 
 	private int port;
 
+	private volatile long lastActivityTime;
+
 	private volatile ChannelHandlerContext ctx;
 	// netty Channel
 	private volatile Channel channel;
+
+	private volatile AtomicInteger isHold = new AtomicInteger(0);
 
 	NettyConnection(String host, int port) {
 		this.host = host;
@@ -54,6 +60,7 @@ public abstract class NettyConnection extends SimpleChannelInboundHandler<RpcMsg
 	}
 
 	protected ChannelFuture writeAndFlush(RpcMsg t) {
+		lastActivityTime = System.currentTimeMillis();
 		return channel.writeAndFlush(t);
 	}
 
@@ -72,6 +79,22 @@ public abstract class NettyConnection extends SimpleChannelInboundHandler<RpcMsg
 	 */
 	public boolean available() {
 		return null != channel && channel.isActive();
+	}
+
+	public long getLastActivityTime() {
+		return lastActivityTime;
+	}
+	
+	public boolean isHold() {
+		return isHold.get()==1;
+	}
+
+	public void hold() {
+		isHold.set(1);
+	}
+
+	public void release() {
+		isHold.set(0);
 	}
 
 	public void close() {

@@ -1,6 +1,6 @@
 package six.com.crawler.http;
 
-import six.com.crawler.exception.HttpReadDataMoreThanMaxException;
+import six.com.crawler.http.exception.HttpReadDataMoreThanMaxException;
 
 /**
  * @author six

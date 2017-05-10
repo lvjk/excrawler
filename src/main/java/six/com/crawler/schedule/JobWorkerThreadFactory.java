@@ -15,7 +15,7 @@ public class JobWorkerThreadFactory implements ThreadFactory {
 	public JobWorkerThreadFactory() {
 		SecurityManager s = System.getSecurityManager();
 		group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
-		namePrefix = "JobWorker-thread-";
+		namePrefix = "job-worker-thread-";
 	}
 
 	public Thread newThread(Runnable r) {
