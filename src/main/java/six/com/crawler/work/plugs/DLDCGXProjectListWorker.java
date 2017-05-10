@@ -12,6 +12,11 @@ import six.com.crawler.utils.ArrayListUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.space.WorkSpace;
 
+/**
+ * 
+ * @author weijiyong@tospur.com
+ *
+ */
 public class DLDCGXProjectListWorker extends AbstractCrawlWorker {
 
 	WorkSpace<Page> projectInfoQueue;
