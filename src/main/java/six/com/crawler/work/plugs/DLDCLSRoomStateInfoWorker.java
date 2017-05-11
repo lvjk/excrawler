@@ -28,7 +28,7 @@ public class DLDCLSRoomStateInfoWorker extends AbstractCrawlWorker{
 	@Override
 	protected void insideInit() {
 		// TODO Auto-generated method stub
-		roomInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("dldc_gx_room_info", Page.class);
+		roomInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("dldc_ls_room_info", Page.class);
 	}
 
 	@Override
