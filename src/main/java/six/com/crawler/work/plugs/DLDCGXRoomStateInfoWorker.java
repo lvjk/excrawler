@@ -1,5 +1,6 @@
 package six.com.crawler.work.plugs;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,18 +54,32 @@ public class DLDCGXRoomStateInfoWorker extends AbstractCrawlWorker{
 		Elements roomIds=doingPage.getDoc().select("ID");
 		Elements roomStates=doingPage.getDoc().select("BackColor");
 		Elements wlcElements=doingPage.getDoc().select("Wlc");
+		List<String> colors=new ArrayList<String>();
+		List<String> actualLayers=new ArrayList<String>();
+		List<String> houseIds=new ArrayList<String>();
+		List<String> projectIds=new ArrayList<String>();
+		List<String> unitIds=new ArrayList<String>();
+		String projectId=doingPage.getMeta("projectId").get(0);
+		String unitId=doingPage.getMeta("unitId").get(0);
+		
 		for (int i = 0; i < roomStates.size(); i++) {
 			String roomid=roomIds.get(i).ownText();
 			if(null!=roomid && !roomid.isEmpty()){
 				String color=roomStates.get(i).ownText();
 				if(roomStatesMap.containsKey(color)){
-					doingPage.getMetaMap().put("state", ArrayListUtils.asList(roomStatesMap.get(color)));
+					colors.add(roomStatesMap.get(color));
 				}
 				String actualLayer=wlcElements.get(i).ownText();
-				doingPage.getMetaMap().put("actualLayer", ArrayListUtils.asList(actualLayer));
-				doingPage.getMetaMap().put("houseId", ArrayListUtils.asList(roomid));
+				actualLayers.add(actualLayer);
+				houseIds.add(roomid);
 			}
+			projectIds.add(projectId);
+			unitIds.add(unitId);
 		}
+		
+		doingPage.getMetaMap().put("state", colors);
+		doingPage.getMetaMap().put("actualLayer",actualLayers);
+		doingPage.getMetaMap().put("houseId", houseIds);
 	}
 
 	@Override
