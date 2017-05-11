@@ -20,7 +20,7 @@ import six.com.crawler.work.space.WorkSpace;
  * @author weijiyong@tospur.com
  *
  */
-public class DLDCGXRoomStateInfoWorker extends AbstractCrawlWorker{
+public class DLDCLSRoomStateInfoWorker extends AbstractCrawlWorker{
 	
 	WorkSpace<Page> roomInfoQueue;
 	
@@ -29,7 +29,7 @@ public class DLDCGXRoomStateInfoWorker extends AbstractCrawlWorker{
 	@Override
 	protected void insideInit() {
 		// TODO Auto-generated method stub
-		roomInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("dldc_gx_room_info", Page.class);
+		roomInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("dldc_ls_room_info", Page.class);
 	}
 
 	@Override
@@ -62,6 +62,7 @@ public class DLDCGXRoomStateInfoWorker extends AbstractCrawlWorker{
 		String projectId=doingPage.getMeta("projectId").get(0);
 		String unitId=doingPage.getMeta("unitId").get(0);
 		
+		
 		for (int i = 0; i < roomStates.size(); i++) {
 			String roomid=roomIds.get(i).ownText();
 			if(null!=roomid && !roomid.isEmpty()){
@@ -76,7 +77,8 @@ public class DLDCGXRoomStateInfoWorker extends AbstractCrawlWorker{
 			projectIds.add(projectId);
 			unitIds.add(unitId);
 		}
-		
+		doingPage.getMetaMap().put("projectId", projectIds);
+		doingPage.getMetaMap().put("unitId", unitIds);
 		doingPage.getMetaMap().put("state", colors);
 		doingPage.getMetaMap().put("actualLayer",actualLayers);
 		doingPage.getMetaMap().put("houseId", houseIds);
@@ -90,10 +92,9 @@ public class DLDCGXRoomStateInfoWorker extends AbstractCrawlWorker{
 
 	@Override
 	protected void onComplete(Page doingPage, ResultContext resultContext) {
-		//http://218.25.171.244/InfoLayOut_GX/Config/LoadProcToXML.aspx?pid=Arty_ROOMINFO&csnum=1&cn1=fwid&cv1=c57260f21928478490ad12aef66bce88
 		List<String> roomIds=resultContext.getExtractResult("houseId");
 		for (String roomId:roomIds) {
-			String url="http://218.25.171.244/InfoLayOut_GX/Config/LoadProcToXML.aspx?pid=Arty_ROOMINFO&csnum=1&cn1=fwid&cv1="+roomId;
+			String url="http://218.25.171.244/InfoLayOut_LS/Config/LoadProcToXML.aspx?pid=Arty_ROOMINFO&csnum=1&cn1=fwid&cv1="+roomId;
 			
 			Page roomInfo = new Page(getSite().getCode(), 1, url, url);
 			roomInfo.setReferer(doingPage.getFinalUrl());

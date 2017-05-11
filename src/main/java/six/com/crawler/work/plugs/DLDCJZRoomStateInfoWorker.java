@@ -1,8 +1,11 @@
 package six.com.crawler.work.plugs;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
@@ -42,6 +45,18 @@ public class DLDCJZRoomStateInfoWorker extends AbstractCrawlWorker{
 		
 		Elements trElements = doingPage.getDoc().select("table[class=XkbTable]>tbody>tr:gt(0)");
 		
+		List<String> colors=new ArrayList<String>();
+		List<String> roomNos=new ArrayList<String>();
+		List<String> floorNumbers=new ArrayList<String>();
+		List<String> nominalLevels=new ArrayList<String>();
+		List<String> addrs=new ArrayList<String>();
+		List<String> areas=new ArrayList<String>();
+		
+		List<String> projectIds=new ArrayList<String>();
+		List<String> unitIds=new ArrayList<String>();
+		String projectId=doingPage.getMeta("projectId").get(0);
+		String unitId=doingPage.getMeta("unitId").get(0);
+		
 		for (Element trElement:trElements) {
 			String floorNumber=trElement.select("span[class=XkbWlc]").first().ownText();
 			String nominalLevel=trElement.select("span[class=XkbCeng]").first().ownText();
@@ -51,19 +66,30 @@ public class DLDCJZRoomStateInfoWorker extends AbstractCrawlWorker{
 				String color=roomState.attr("style");
 				
 				if(roomStates.containsKey(color)){
-					doingPage.getMetaMap().put("roomState", ArrayListUtils.asList(roomStates.get(color)));
+					colors.add(roomStates.get(color));
 				}
 				
 				String roomNo=roomState.ownText();
 				String detail=roomState.attr("title");
-				
-				doingPage.getMetaMap().put("roomNo", ArrayListUtils.asList(roomNo));
-				doingPage.getMetaMap().put("floorNumber", ArrayListUtils.asList(floorNumber));
-				doingPage.getMetaMap().put("nominalLevel", ArrayListUtils.asList(nominalLevel));
-				doingPage.getMetaMap().put("detail", ArrayListUtils.asList(detail));
-				
+				String area=StringUtils.substringBetween(detail, "面积：", "坐落：");
+				String address=StringUtils.substringAfter(detail, "坐落：");
+				addrs.add(address);
+				areas.add(area);
+				roomNos.add(roomNo);
+				floorNumbers.add(floorNumber);
+				nominalLevels.add(nominalLevel);
+				projectIds.add(projectId);
+				unitIds.add(unitId);
 			}
 		}
+		doingPage.getMetaMap().put("projectId", projectIds);
+		doingPage.getMetaMap().put("unitId", unitIds);
+		doingPage.getMetaMap().put("roomState", colors);
+		doingPage.getMetaMap().put("roomNo", roomNos);
+		doingPage.getMetaMap().put("floorNumber",floorNumbers);
+		doingPage.getMetaMap().put("nominalLevel",nominalLevels);
+		doingPage.getMetaMap().put("address", addrs);
+		doingPage.getMetaMap().put("area", areas);
 	}
 
 	@Override
