@@ -97,11 +97,13 @@ public class DLDCSQProjectListWorker extends AbstractCrawlWorker {
 			districts.add(district.ownText());
 		}
 		List<String> projectInfoUrls = resultContext.getExtractResult("projectUrl");
+		List<String> projectIds = resultContext.getExtractResult("projectId");
 		if (null != projectInfoUrls) {
 			for (int i = 0; i < projectInfoUrls.size(); i++) {
 				String projectInfoUrl="http://www.dlfd.gov.cn"+projectInfoUrls.get(i);
 				Page projectInfo = new Page(getSite().getCode(), 1, projectInfoUrl, projectInfoUrl);
 				projectInfo.setReferer(doingPage.getFinalUrl());
+				projectInfo.getMetaMap().put("projectId",ArrayListUtils.asList(projectIds.get(i)));
 				projectInfo.getMetaMap().put("district", ArrayListUtils.asList(districts.get(i)));
 				projectInfoQueue.push(projectInfo);
 			}
