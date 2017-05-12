@@ -112,9 +112,10 @@ public class DLDCSQProjectInfoWorker extends AbstractCrawlWorker{
 		//http://www.dlfd.gov.cn/fdc/D01XmxxAction.do?Control=detail&id=d0bf85fd635e4deebe402ff9baca5709&xmbh=48541
 		List<String> projectIds=resultContext.getExtractResult("projectId");
 		for (int i = 0; i < pageCount; i++) {
-			String url="http://www.dlfd.gov.cn/fdc/D01XmxxAction.do?Control=detail&id="+projectIds.get(i)+"&pageNo="+i;
+			String url="http://www.dlfd.gov.cn/fdc/D01XmxxAction.do?Control=detail&id="+projectIds.get(i)+"&pageNo="+(i+1);
 			Page unitListPage=new Page(doingPage.getSiteCode(), 1, url, url);
 			unitListPage.setMethod(HttpMethod.GET);
+			unitListPage.setReferer(doingPage.getFinalUrl());
 			unitListPage.getMetaMap().put("projectId", ArrayListUtils.asList(projectIds.get(i)));
 			
 			unitListQueue.push(unitListPage);

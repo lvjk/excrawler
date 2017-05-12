@@ -64,8 +64,8 @@ public class DLDCSQUnitInfoWorker extends AbstractCrawlWorker{
 			addrs.add(addr);
 			totalPloidys.add(totalPloidy);
 			totalAreas.add(totalArea);
-			roomStateUrl="http://www.dlfd.gov.cn"+roomStateUrl;
-			Page roomStateInfo=new Page(doingPage.getSiteCode(), 1, roomStateUrl, roomStateUrl);
+			String url="http://www.dlfd.gov.cn/fdc/D01XmxxAction.do?Control=lxxdetail_1&xmid="+projectId+"&lid="+unitId;
+			Page roomStateInfo=new Page(doingPage.getSiteCode(), 1, url, url);
 			roomStateInfo.setMethod(HttpMethod.GET);
 			roomStateInfo.setReferer(doingPage.getFinalUrl());
 			roomStateInfo.getMetaMap().put("projectId", doingPage.getMeta("projectId"));
