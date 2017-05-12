@@ -1,9 +1,7 @@
 package six.com.crawler.rpc;
 
 import java.lang.management.ManagementFactory;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.Collections;
@@ -23,6 +21,9 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
+import net.sf.cglib.proxy.Enhancer;
+import net.sf.cglib.proxy.MethodInterceptor;
+import net.sf.cglib.proxy.MethodProxy;
 import six.com.crawler.rpc.exception.RpcInvokeException;
 import six.com.crawler.rpc.exception.RpcNotFoundServiceException;
 import six.com.crawler.rpc.exception.RpcRejectServiceException;
@@ -151,9 +152,12 @@ public class NettyRpcCilent extends AbstractRemote implements RpcCilent {
 		ObjectCheckUtils.checkNotNull(clz, "clz");
 		String key = serviceKey(targetHost, targetPort, clz, asyCallback);
 		Object service = serviceWeakHashMap.computeIfAbsent(key, mapkey -> {
-			return (T) Proxy.newProxyInstance(clz.getClassLoader(), new Class<?>[] { clz }, new InvocationHandler() {
+			Enhancer enhancer = new Enhancer();
+			enhancer.setSuperclass(clz);
+			enhancer.setCallback(new MethodInterceptor() {
 				@Override
-				public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+				public Object intercept(Object targetOb, Method method, Object[] args, MethodProxy arg3)
+						throws Throwable {
 					String requestId = createRequestId(targetHost, targetPort, method.getName());
 					RpcRequest rpcRequest = new RpcRequest();
 					rpcRequest.setId(requestId);
@@ -161,8 +165,9 @@ public class NettyRpcCilent extends AbstractRemote implements RpcCilent {
 					rpcRequest.setCallHost(targetHost);
 					rpcRequest.setCallPort(targetPort);
 					rpcRequest.setParams(args);
+					RpcResponse rpcResponse = null;
 					if (null == asyCallback) {
-						RpcResponse rpcResponse = synExecute(rpcRequest);
+						rpcResponse = synExecute(rpcRequest);
 						return rpcResponse.getResult();
 					} else {
 						asyExecute(rpcRequest, asyCallback);
@@ -170,6 +175,7 @@ public class NettyRpcCilent extends AbstractRemote implements RpcCilent {
 					}
 				}
 			});
+			return enhancer.create();
 		});
 		return (T) service;
 	}
