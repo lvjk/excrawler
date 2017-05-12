@@ -42,10 +42,10 @@ function showDoingDataDiv(workSpaceName) {
 		var dataMap = result.data;
 		var cursor = dataMap.cursor;
 		var data = dataMap.list;
+		workSpaceDiv.find("[id='job_workSpace_name']").html("工作空间[<span style='color:#FF0000'>"+ workSpaceName+ "</span>]信息" +
+				"<a  href=\"javascript:clearDoing('"+ workSpaceName+ "')\">全部删除</a>&nbsp;");
 		if (null != data && data.length > 0) {
 			workSpaceDiv.find("input[id='doingDataCursor']").val(cursor);
-			workSpaceDiv.find("[id='job_workSpace_name']").html("工作空间[<span style='color:#FF0000'>" 
-							+ workSpaceName+ "</span>]信息");
 			workSpace_table.find("[name='data_page']").remove();
 			workSpace_table.find("[name='dataCursor']").remove();
 			for (var i = 0; i < data.length; i++) {
@@ -55,14 +55,13 @@ function showDoingDataDiv(workSpaceName) {
 						+ page.originalUrl + "</span></td>").appendTo(tr);
 				var operationTd = $("<td></td>");
 				var operation = "<a  href=\"javascript:clearDoing('"+ workSpaceName+ "')\">全部删除</a>&nbsp;";
-				//operation += "<a href=\"javascript:#\">处理</a>&nbsp;";
 				$(operation).appendTo(operationTd);
 				operationTd.appendTo(tr);
 				tr.appendTo(workSpace_table);
 			}
 			$("<input type='text' name='dataCursor' id='doingDataCursor_"+workSpaceName+"' value='"+cursor+"' style='display:none'/>").appendTo(workSpace_table);
-			showLayer(workSpaceDiv);
 		}
+		showLayer(workSpaceDiv);
 	});
 }
 
@@ -79,11 +78,12 @@ function showErrDataDiv(workSpaceName) {
 		var dataMap = result.data;
 		var cursor = dataMap.cursor;
 		var data = dataMap.list;
+		workSpaceDiv.find("[id='job_workSpace_name']").html(
+				"工作空间[<span style='color:#FF0000'>" + workSpaceName+ "</span>]信息"+
+				"<a  href=\"javascript:clearErr('"+workSpaceName+ "')\">全部删除</a>&nbsp;"+
+				"<a href=\"javascript:againDoErrQueue('"+workSpaceName+"')\">全部处理</a>&nbsp;");
 		if (null != data && data.length > 0) {
 			workSpaceDiv.find("input[id='errDataCursor']").val(cursor);
-			workSpaceDiv.find("[id='job_workSpace_name']").html(
-					"工作空间[<span style='color:#FF0000'>" + workSpaceName
-							+ "</span>]信息");
 			workSpace_table.find("[name='data_page']").remove();
 			workSpace_table.find("[name='dataCursor']").remove();
 			for (var i = 0; i < data.length; i++) {
@@ -99,8 +99,8 @@ function showErrDataDiv(workSpaceName) {
 				tr.appendTo(workSpace_table);
 			}
 			$("<input type='text' name='dataCursor' id='errDataCursor_"+workSpaceName+"' value='"+cursor+"' style='display:none'/>").appendTo(workSpace_table);
-			showLayer(workSpaceDiv);
 		}
+		showLayer(workSpaceDiv);
 	});
 }
 
