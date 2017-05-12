@@ -108,11 +108,11 @@ public class NettyRpcCilent extends AbstractRemote implements RpcCilent {
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T> T lookupService(String targetHost, int targetPort, Class<?> clz, final AsyCallback asyCallback) {
+	public <T> T lookupService(String targetHost, int targetPort, Class<?> clz, AsyCallback asyCallback) {
 		StringCheckUtils.checkStrBlank(targetHost, "targetHost");
 		ObjectCheckUtils.checkIntValid(targetPort, 1, 65535, "targetPort");
 		ObjectCheckUtils.checkNotNull(clz, "clz");
-		String key = serviceKey(targetHost, targetPort, clz);
+		String key = serviceKey(targetHost, targetPort, clz, asyCallback);
 		Object service = serviceWeakHashMap.computeIfAbsent(key, mapkey -> {
 			Enhancer enhancer = new Enhancer();
 			enhancer.setSuperclass(clz);
@@ -136,7 +136,8 @@ public class NettyRpcCilent extends AbstractRemote implements RpcCilent {
 					}
 				}
 			});
-			return enhancer.create();
+			Object callObject = enhancer.create();
+			return callObject;
 		});
 		return (T) service;
 	}
@@ -155,8 +156,13 @@ public class NettyRpcCilent extends AbstractRemote implements RpcCilent {
 	 * @param clz
 	 * @return
 	 */
-	private String serviceKey(String targetHost, int targetPort, Class<?> clz) {
-		String key = targetHost + ":" + targetPort + "/" + clz.getName();
+	private String serviceKey(String targetHost, int targetPort, Class<?> clz, AsyCallback asyCallback) {
+		String key = null;
+		if (null == asyCallback) {
+			key = targetHost + ":" + targetPort + "/" + clz.getName();
+		} else {
+			key = targetHost + ":" + targetPort + "/" + clz.getName()+ "/"+asyCallback.getClass();
+		}
 		return key;
 	}
 
