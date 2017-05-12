@@ -1,6 +1,8 @@
 package six.com.crawler.work.plugs;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.nodes.Element;
@@ -25,18 +27,19 @@ public class DLDCJZProjectListWorker extends AbstractCrawlWorker {
 	final static Logger log = LoggerFactory.getLogger(DLDCJZProjectListWorker.class);
 
 	WorkSpace<Page> projectInfoQueue;
-	String pageCountCss = "input[name='pageNo']";
+	String pageCountCss = "form[name=ysxkzForm]>table>tbody>tr>td[colspan='5']>table>tbody>tr>td";
 	int pageIndex = 1;
 	int pageCount = -1;
 	String PROJECT_LIST_URL = "http://www.fczw.cn/ysxkzList.xhtml?method=doQuery";
 	String refererUrl;
 
 	private Page buildPage(int pageIndex, String refererUrl) {
-		Page page = new Page(getSite().getCode(), 1, PROJECT_LIST_URL, PROJECT_LIST_URL);
+		Page page = new Page(getSite().getCode(), 1, refererUrl, refererUrl);
 		page.setReferer(refererUrl);
 		page.setMethod(HttpMethod.POST);
-		page.getParameters().put("currentPage", pageIndex);
-		page.getParameters().put("pageSize", 10);
+		Map<String,Object> params=new HashMap<String,Object>();
+		params.put("pageNo", pageIndex);
+		page.setParameters(params);
 		return page;
 	}
 
@@ -44,7 +47,7 @@ public class DLDCJZProjectListWorker extends AbstractCrawlWorker {
 	protected void insideInit() {
 		projectInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("dldc_jz_project_info", Page.class);
 		if (!(helper.isDownloadState() && helper.isUseRawData())) {
-			Page firstPage = buildPage(pageIndex, refererUrl);// 初始化第一页
+			Page firstPage = buildPage(pageIndex, PROJECT_LIST_URL);// 初始化第一页
 			getWorkSpace().clearDoing();
 			getWorkSpace().push(firstPage);
 		}
@@ -65,7 +68,7 @@ public class DLDCJZProjectListWorker extends AbstractCrawlWorker {
 				log.error("did not find pageCount element:" + pageCountCss);
 			} else {
 				String onclick = pageCountElement.ownText();
-				String pageCountStr = StringUtils.substringBetween(onclick, "第1/", "页");
+				String pageCountStr = StringUtils.substringBetween(onclick, "/", "页");
 				try {
 					pageCount = Integer.valueOf(pageCountStr);
 				} catch (Exception e) {
@@ -88,11 +91,12 @@ public class DLDCJZProjectListWorker extends AbstractCrawlWorker {
 		List<String> projectInfoUrls = resultContext.getExtractResult("projectUrl");
 		if (null != projectInfoUrls) {
 			for (String projectInfoUrl : projectInfoUrls) {
-				Page projectInfo = new Page(getSite().getCode(), 1, projectInfoUrl, projectInfoUrl);
+				String ulr="http://www.fczw.cn/"+projectInfoUrl;
+				Page projectInfo = new Page(getSite().getCode(), 1, ulr, ulr);
 				projectInfo.setReferer(doingPage.getFinalUrl());
 
-				String projId = projectInfoUrl.substring(projectInfoUrl.indexOf("ysxkid="), projectInfoUrl.length());
-				projectInfo.getMetaMap().put("projectId", ArrayListUtils.asList(projId));
+				String projId = StringUtils.substringAfter(projectInfoUrl, "ysxkid=");
+				projectInfo.getMetaMap().put("presellId", ArrayListUtils.asList(projId));
 				projectInfoQueue.push(projectInfo);
 			}
 		}
