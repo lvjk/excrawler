@@ -147,6 +147,14 @@ public class RedisManager implements InitializingBean {
 		});
 		return incr;
 	}
+	
+	public int incrInt(String key) {
+		byte[] keyBytes = JavaSerializeUtils.serializeString(key);
+		int incr = RedisRetryHelper.execute(() -> {
+			return jedisCluster.incr(keyBytes).intValue();
+		});
+		return incr;
+	}
 
 	public <T> T get(String key, Class<T> clz) {
 		byte[] keyBytes = JavaSerializeUtils.serializeString(key);
@@ -300,6 +308,14 @@ public class RedisManager implements InitializingBean {
 		byte[] fKeyBytes = JavaSerializeUtils.serializeString(fKey);
 		return RedisRetryHelper.execute(() -> {
 			byte[] result = jedisCluster.hget(hKeyBytes, fKeyBytes);
+			return result != null;
+		});
+	}
+	
+	public boolean isExecuted(String key) {
+		byte[] keyBytes = JavaSerializeUtils.serializeString(key);
+		return RedisRetryHelper.execute(() -> {
+			byte[] result = jedisCluster.get(keyBytes);
 			return result != null;
 		});
 	}

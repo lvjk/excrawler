@@ -90,7 +90,7 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 		executor.execute(() -> {
 			log.info("start execute job[" + jobName + "]'s worker[" + worker.getName() + "]");
 			localJobWorkersMap
-					.computeIfAbsent(worker.getJob().getName(), mapKey -> new ConcurrentHashMap<String, Worker<?>>())
+					.computeIfAbsent(jobName, mapKey -> new ConcurrentHashMap<String, Worker<?>>())
 					.put(worker.getName(), worker);
 			getNodeManager().getCurrentNode().incrAndGetRunningWorkerSize();
 			final Thread workerThread = Thread.currentThread();

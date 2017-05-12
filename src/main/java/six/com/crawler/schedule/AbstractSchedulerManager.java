@@ -1,7 +1,8 @@
 package six.com.crawler.schedule;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -276,15 +277,14 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		this.workerPlugsManager = workerPlugsManager;
 	}
 
-
 	/**
 	 * 通过jobname获取 job运行的节点
 	 * 
 	 * @param jobName
 	 * @return
 	 */
-	public List<Node> getWorkerNode(String jobName) {
-		List<Node> nodes = new ArrayList<>();
+	public Set<Node> getWorkerNode(String jobName) {
+		Set<Node> nodes = new HashSet<>();
 		List<WorkerSnapshot> workerSnapshots = getScheduleCache().getWorkerSnapshots(jobName);
 		if (null != workerSnapshots) {
 			String nodeName = null;
@@ -384,7 +384,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		}
 		return resut;
 	}
-	
+
 	/**
 	 * 判断job是否运行。 通过jobName 获取job运行快照JobSnapshot 如果存在并且状态是执行或者暂停那么 返回true否则false
 	 * 
@@ -397,14 +397,14 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 				|| jobSnapshot.getEnumStatus() == JobSnapshotState.SUSPEND);
 	}
 
-	public boolean isStart(String jobName){
+	public boolean isStart(String jobName) {
 		return isTargetStatus(jobName, WorkerLifecycleState.STARTED);
 	}
-	
+
 	public boolean isWait(String jobName) {
 		return isTargetStatus(jobName, WorkerLifecycleState.WAITED);
 	}
-	
+
 	public boolean isSuspend(String jobName) {
 		return isTargetStatus(jobName, WorkerLifecycleState.SUSPEND);
 	}

@@ -90,7 +90,7 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 
 	private void init() {
 		String jobName = getJob().getName();
-		String path = "job_" + getWorkerSnapshot().getJobSnapshotId() + "_worker";
+		String path = "job_" + jobName + "_" + getWorkerSnapshot().getJobSnapshotId() + "_worker";
 		distributedLock = getManager().getNodeManager().getWriteLock(path);
 		MDC.put("jobName", jobName);
 		try {
@@ -205,7 +205,8 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 	private void doWait() {
 		try {
 			distributedLock.lock();
-			if (getManager().isNotRuning(getJob().getName())) {// 判断是否全部处于非运行状态状态，只有最后一个worker处于非运行状态会进入 if
+			if (getManager().isNotRuning(getJob().getName())) {// 判断是否全部处于非运行状态状态，只有最后一个worker处于非运行状态会进入
+																// if
 				workSpace.repair();// 修复队列
 				if (workSpace.doingSize() > 0) {// 如果队列还有数据那么继续处理
 					compareAndSetState(WorkerLifecycleState.WAITED, WorkerLifecycleState.STARTED);

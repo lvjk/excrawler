@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
-
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -315,7 +315,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	public void suspend(DispatchType dispatchType, String jobName) {
 		getScheduleDispatchTypeIntercept().intercept(dispatchType, Sets.newHashSet(DispatchType.DISPATCH_TYPE_MANUAL),
 				getOperationJobLockPath(jobName), () -> {
-					List<Node> nodes = getWorkerNode(jobName);
+					Set<Node> nodes = getWorkerNode(jobName);
 					AbstractWorkerSchedulerManager workerSchedulerManager = null;
 					for (Node node : nodes) {
 						try {
@@ -342,7 +342,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	public void goOn(DispatchType dispatchType, String jobName) {
 		getScheduleDispatchTypeIntercept().intercept(dispatchType, Sets.newHashSet(DispatchType.DISPATCH_TYPE_MANUAL),
 				getOperationJobLockPath(jobName), () -> {
-					List<Node> nodes = getWorkerNode(jobName);
+					Set<Node> nodes = getWorkerNode(jobName);
 					AbstractWorkerSchedulerManager workerSchedulerManager = null;
 					for (Node node : nodes) {
 						try {
@@ -369,7 +369,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	public void stop(DispatchType dispatchType, String jobName) {
 		getScheduleDispatchTypeIntercept().intercept(dispatchType, Sets.newHashSet(DispatchType.DISPATCH_TYPE_MANUAL),
 				getOperationJobLockPath(jobName), () -> {
-					List<Node> nodes = getWorkerNode(jobName);
+					Set<Node> nodes = getWorkerNode(jobName);
 					AbstractWorkerSchedulerManager workerSchedulerManager = null;
 					for (Node node : nodes) {
 						try {
@@ -439,7 +439,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 					Node currentNode = getNodeManager().getCurrentNode();
 					for (JobSnapshot jobSnapshot : allJobs) {
 						Job job = getJobDao().query(jobSnapshot.getName());
-						List<Node> nodes = getWorkerNode(job.getName());
+						Set<Node> nodes = getWorkerNode(job.getName());
 						AbstractWorkerSchedulerManager workerSchedulerManager = null;
 						for (Node node : nodes) {
 							if (!currentNode.equals(node)) {

@@ -1,6 +1,11 @@
 package six.com.crawler.rpc;
 
+import java.lang.management.ManagementFactory;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.util.Collections;
 import java.util.Map;
 
@@ -18,9 +23,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
-import net.sf.cglib.proxy.Enhancer;
-import net.sf.cglib.proxy.MethodInterceptor;
-import net.sf.cglib.proxy.MethodProxy;
 import six.com.crawler.rpc.exception.RpcInvokeException;
 import six.com.crawler.rpc.exception.RpcNotFoundServiceException;
 import six.com.crawler.rpc.exception.RpcRejectServiceException;
@@ -71,6 +73,41 @@ public class NettyRpcCilent extends AbstractRemote implements RpcCilent {
 
 	final static Logger log = LoggerFactory.getLogger(NettyRpcCilent.class);
 
+	private static String MAC;
+	private static String PID;
+
+	static {
+		MAC = getLocalMac();
+		PID = getPid();
+	}
+
+	private static String getLocalMac() {
+		String mac = "";
+		try {
+			InetAddress ia = InetAddress.getLocalHost();
+			byte[] macBytes = NetworkInterface.getByInetAddress(ia).getHardwareAddress();
+			StringBuffer sb = new StringBuffer("");
+			for (int i = 0; i < macBytes.length; i++) {
+				int temp = macBytes[i] & 0xff;
+				String str = Integer.toHexString(temp);
+				if (str.length() == 1) {
+					sb.append("0" + str);
+				} else {
+					sb.append(str);
+				}
+			}
+			mac = sb.toString().toUpperCase();
+		} catch (Exception e) {
+		}
+		return mac;
+	}
+
+	private static String getPid() {
+		String name = ManagementFactory.getRuntimeMXBean().getName();
+		String pid = name.split("@")[0];
+		return pid;
+	}
+
 	private ClientAcceptorIdleStateTrigger IdleStateTrigger = new ClientAcceptorIdleStateTrigger();
 
 	private EventLoopGroup workerGroup;
@@ -114,12 +151,9 @@ public class NettyRpcCilent extends AbstractRemote implements RpcCilent {
 		ObjectCheckUtils.checkNotNull(clz, "clz");
 		String key = serviceKey(targetHost, targetPort, clz, asyCallback);
 		Object service = serviceWeakHashMap.computeIfAbsent(key, mapkey -> {
-			Enhancer enhancer = new Enhancer();
-			enhancer.setSuperclass(clz);
-			enhancer.setCallback(new MethodInterceptor() {
+			return (T) Proxy.newProxyInstance(clz.getClassLoader(), new Class<?>[] { clz }, new InvocationHandler() {
 				@Override
-				public Object intercept(Object targetOb, Method method, Object[] args, MethodProxy arg3)
-						throws Throwable {
+				public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 					String requestId = createRequestId(targetHost, targetPort, method.getName());
 					RpcRequest rpcRequest = new RpcRequest();
 					rpcRequest.setId(requestId);
@@ -136,16 +170,22 @@ public class NettyRpcCilent extends AbstractRemote implements RpcCilent {
 					}
 				}
 			});
-			Object callObject = enhancer.create();
-			return callObject;
 		});
 		return (T) service;
 	}
 
 	public String createRequestId(String targetHost, int targetPort, String serviceName) {
-		String requestId = "@" + targetHost + ":" + targetPort + "/" + serviceName + "/" + System.currentTimeMillis()
-				+ "/" + requestIndex.incrementAndGet();
-		return requestId;
+		long threadId = Thread.currentThread().getId();
+		StringBuilder requestId = new StringBuilder();
+		requestId.append(MAC).append("/");
+		requestId.append(PID).append("/");
+		requestId.append(threadId).append("@");
+		requestId.append(targetHost).append(":");
+		requestId.append(targetPort).append("/");
+		requestId.append(serviceName).append("/");
+		requestId.append(System.currentTimeMillis()).append("/");
+		requestId.append(requestIndex.incrementAndGet());
+		return requestId.toString();
 	}
 
 	/**
@@ -161,7 +201,7 @@ public class NettyRpcCilent extends AbstractRemote implements RpcCilent {
 		if (null == asyCallback) {
 			key = targetHost + ":" + targetPort + "/" + clz.getName();
 		} else {
-			key = targetHost + ":" + targetPort + "/" + clz.getName()+ "/"+asyCallback.getClass();
+			key = targetHost + ":" + targetPort + "/" + clz.getName() + "/" + asyCallback.getClass();
 		}
 		return key;
 	}

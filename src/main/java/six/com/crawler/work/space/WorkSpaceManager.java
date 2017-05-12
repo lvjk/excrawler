@@ -26,8 +26,8 @@ public class WorkSpaceManager {
 
 	@Autowired
 	private ClusterManager clusterManager;
-	
-	private static final String WORKSPACE_PRE="workspace_";
+
+	private static final String WORKSPACE_PRE = "workspace_";
 
 	/**
 	 * 新建一个工作空间
@@ -39,9 +39,8 @@ public class WorkSpaceManager {
 	 * @return
 	 */
 	public <T extends WorkSpaceData> WorkSpace<T> newWorkSpace(String workSpaceName, Class<T> clz) {
-		// TODO 需要引用集群名作为base前缀key
-		DistributedLock distributedLock = clusterManager.getWriteLock(WORKSPACE_PRE+workSpaceName);
-		WorkSpace<T> workQueue = new RedisWorkSpace<>(redisManager, distributedLock, workSpaceName, clz);
+		DistributedLock distributedLock = clusterManager.getWriteLock(WORKSPACE_PRE + workSpaceName);
+		WorkSpace<T> workQueue = new SegmentRedisWorkSpace<>(redisManager, distributedLock, workSpaceName, clz);
 		return workQueue;
 	}
 

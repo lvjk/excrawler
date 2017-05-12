@@ -35,6 +35,17 @@ public interface WorkSpace<T extends WorkSpaceData> {
 	 * @return
 	 */
 	String batchGetErrData(List<T> resutList, String cursorStr);
+	
+	
+	/**
+	 * 批量获取处理过的数据 当传入cursorStr为blank或者"0"的话，默认为新的查询,
+	 * 当返回cursorStr返回为"0"的话那么认为查询到末尾了
+	 * 
+	 * @param resutList
+	 * @param cursorStr
+	 * @return
+	 */
+	String batchGetDoneData(List<String> resutList, String cursorStr);
 
 	/**
 	 * 将数据 推到工作队列中
@@ -96,7 +107,7 @@ public interface WorkSpace<T extends WorkSpaceData> {
 	 * 
 	 * @param data
 	 */
-	void addDone(T data);
+	void addDone(String key);
 
 	/**
 	 * 获取工作队列size

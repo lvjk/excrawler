@@ -675,8 +675,8 @@ function updateIsScheduled(jobName) {
 						isScheduled);
 				isScheduledTd.html(scheduledOperation);
 				isScheduledInput.val(isScheduled);
+				updateVersion(responseMsg.data,jobTr);
 			}
-			updateJobVersion(jobName,responseMsg);
 			alert(responseMsg.msg);
 		});
 	}

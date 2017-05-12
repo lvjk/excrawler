@@ -53,12 +53,12 @@ public class RpcDecoder extends ByteToMessageDecoder implements RpcProtocol {
 				throw RpcSystenExceptions.ILLEGAL_MSG_ERR;
 			} else {
 				int dataLength = buffer.readInt();
-				// 如果dataLength过大，可能导致问题
 				if (buffer.readableBytes() < dataLength) {
 					buffer.resetReaderIndex();
 					return;
 				}
 				if (RpcProtocol.MAX_BODY_SIZE > 0 && dataLength > RpcProtocol.MAX_BODY_SIZE) {
+					buffer.resetReaderIndex();
 					throw RpcSystenExceptions.BODY_TOO_BIG_ERR;
 				}
 				byte[] data = new byte[dataLength];
@@ -78,6 +78,8 @@ public class RpcDecoder extends ByteToMessageDecoder implements RpcProtocol {
 						log.error("did not unSerialize rpcResponse from "+getRemoteAddress(ctx),e);
 					}
 				}else{
+					buffer.resetReaderIndex();
+					log.error("received illegal msg type[" + msgType + "] from" + getRemoteAddress(ctx));
 					throw RpcSystenExceptions.ILLEGAL_MSG_ERR;
 				}
 			}
