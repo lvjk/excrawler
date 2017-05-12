@@ -148,14 +148,7 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 	}
 
 	public String batchGetDoneData(List<String> resutList, String cursorStr) {
-		Objects.requireNonNull(resutList, "resutList must not be null");
-		if (StringUtils.isBlank(cursorStr)) {
-			cursorStr = "0";
-		}
-		Map<String, String> map = new HashMap<>();
-		cursorStr = redisManager.hscan(doneKey, cursorStr, map, String.class);
-		resutList.addAll(map.keySet());
-		return cursorStr;
+		return "";
 	}
 
 	private String batchGet(List<T> resutList, String cursorStr, String type) {

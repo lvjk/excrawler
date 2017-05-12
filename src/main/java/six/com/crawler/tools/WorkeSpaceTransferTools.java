@@ -62,6 +62,18 @@ public class WorkeSpaceTransferTools {
 
 	}
 
+	public static void del(String workSpaceName, String redisConnection, String keyPre) {
+		if (StringUtils.isNotBlank(workSpaceName) && StringUtils.isNotBlank(redisConnection)) {
+			EnhanceJedisCluster doRedis = newJedis(redisConnection);
+			RedisManager doRedisManager = new six.com.crawler.dao.RedisManager();
+			doRedisManager.setJedisCluster(doRedis);
+			Set<String> keys = doRedisManager.keys(keyPre + "*");
+			for (String key : keys) {
+				doRedisManager.del(key);
+			}
+		}
+	}
+
 	public static EnhanceJedisCluster newJedis(String connectionStr) {
 		GenericObjectPoolConfig config = new GenericObjectPoolConfig();
 		config.setMaxIdle(10);
