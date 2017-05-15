@@ -11,7 +11,6 @@ import org.jsoup.select.Elements;
 
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
-import six.com.crawler.utils.ArrayListUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 
 /**
@@ -36,6 +35,9 @@ public class DLDCJZRoomStateInfoWorker extends AbstractCrawlWorker{
 
 	@Override
 	protected void beforeExtract(Page doingPage) {
+		String html=StringUtils.remove(doingPage.getPageSrc(), "style=\"cursor:hand\"");
+		doingPage.setPageSrc(html);
+		
 		Elements status=doingPage.getDoc().select("span[class=XkbTl]");
 		
 		for (Element state:status) {
@@ -46,20 +48,22 @@ public class DLDCJZRoomStateInfoWorker extends AbstractCrawlWorker{
 		Elements trElements = doingPage.getDoc().select("table[class=XkbTable]>tbody>tr:gt(0)");
 		
 		List<String> colors=new ArrayList<String>();
-		List<String> roomNos=new ArrayList<String>();
+		List<String> roomNames=new ArrayList<String>();
 		List<String> floorNumbers=new ArrayList<String>();
 		List<String> nominalLevels=new ArrayList<String>();
 		List<String> addrs=new ArrayList<String>();
 		List<String> areas=new ArrayList<String>();
 		
+		List<String> presellIds=new ArrayList<String>();
 		List<String> projectIds=new ArrayList<String>();
 		List<String> unitIds=new ArrayList<String>();
+		String presellId=doingPage.getMeta("presellId").get(0);
 		String projectId=doingPage.getMeta("projectId").get(0);
 		String unitId=doingPage.getMeta("unitId").get(0);
-		
+	
 		for (Element trElement:trElements) {
-			String floorNumber=trElement.select("span[class=XkbWlc]").first().ownText();
-			String nominalLevel=trElement.select("span[class=XkbCeng]").first().ownText();
+			String floorNumber=trElement.select("td[class=XkbWlc]").first().ownText();
+			String nominalLevel=trElement.select("td[class=XkbCeng]").first().ownText();
 			
 			Elements roomStatus=trElement.select("span[class=XkbRoom]");
 			for (Element roomState:roomStatus) {
@@ -75,17 +79,19 @@ public class DLDCJZRoomStateInfoWorker extends AbstractCrawlWorker{
 				String address=StringUtils.substringAfter(detail, "坐落：");
 				addrs.add(address);
 				areas.add(area);
-				roomNos.add(roomNo);
+				roomNames.add(roomNo);
 				floorNumbers.add(floorNumber);
 				nominalLevels.add(nominalLevel);
+				presellIds.add(presellId);
 				projectIds.add(projectId);
 				unitIds.add(unitId);
 			}
 		}
+		doingPage.getMetaMap().put("presellId",presellIds);
 		doingPage.getMetaMap().put("projectId", projectIds);
 		doingPage.getMetaMap().put("unitId", unitIds);
 		doingPage.getMetaMap().put("roomState", colors);
-		doingPage.getMetaMap().put("roomNo", roomNos);
+		doingPage.getMetaMap().put("roomName", roomNames);
 		doingPage.getMetaMap().put("floorNumber",floorNumbers);
 		doingPage.getMetaMap().put("nominalLevel",nominalLevels);
 		doingPage.getMetaMap().put("address", addrs);
