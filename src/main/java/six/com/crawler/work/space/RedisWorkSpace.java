@@ -251,6 +251,11 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 	}
 	
 	@Override
+	public boolean doingIsEmpty(){
+		return 0==doingSize()&&0==redisManager.llen(proxyQueueKey);
+	}
+	
+	@Override
 	public int doingSize() {
 		return redisManager.hllen(queueKey);
 	}

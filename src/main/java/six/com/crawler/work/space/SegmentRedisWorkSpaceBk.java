@@ -242,6 +242,11 @@ public class SegmentRedisWorkSpaceBk<T extends WorkSpaceData> implements WorkSpa
 	}
 	
 	@Override
+	public boolean doingIsEmpty(){
+		return 0==doingSize()&&0==segmentQueue.size();
+	}
+	
+	@Override
 	public int doingSize() {
 		Set<String> dataSetKeys = getDoingKeys();
 		return null == dataSetKeys ? 0 : dataSetKeys.size();

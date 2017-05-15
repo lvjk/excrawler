@@ -209,7 +209,7 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 			if (getManager().isWait(getJob().getName())) {// 判断是否全部处于非运行状态状态，只有最后一个worker处于非运行状态会进入
 																// if
 				workSpace.repair();// 修复队列
-				if (workSpace.doingSize() > 0) {// 如果队列还有数据那么继续处理
+				if (!workSpace.doingIsEmpty()) {// 如果队列还有数据那么继续处理
 					compareAndSetState(WorkerLifecycleState.WAITED, WorkerLifecycleState.STARTED);
 				} else {
 					JobSnapshot jobSnapshot = getJobSnapshot();
@@ -261,7 +261,7 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 				}
 			} else {
 				signalWait(1000);
-				if (workSpace.doingSize() > 0) {
+				if (!workSpace.doingIsEmpty()) {
 					compareAndSetState(WorkerLifecycleState.WAITED, WorkerLifecycleState.STARTED);
 				}
 			}
