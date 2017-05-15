@@ -14,6 +14,8 @@ public class NbCnnbfdcUnitInfoWorker extends AbstractCrawlWorker {
 	Map<String, String> roomStates = new HashMap<String, String>();
 
 	WorkSpace<Page> roomStateInfoQueue;
+	
+	String BASE_URL="http://newhouse.cnnbfdc.com/GetHouseTable.aspx?qrykey=";
 
 	@Override
 	protected void insideInit() {
@@ -35,11 +37,11 @@ public class NbCnnbfdcUnitInfoWorker extends AbstractCrawlWorker {
 	@Override
 	protected void onComplete(Page doingPage, ResultContext resultContext) {
 		// 获取楼栋名称的详情链接地址
-		List<String> unitUrls = resultContext.getExtractResult("unitUrl");
 		List<String> unitName = resultContext.getExtractResult("unitName");
+		List<String> unitIds = resultContext.getExtractResult("unitId");
 		for (int i = 0; i < unitName.size(); i++) {
-			String roomInfoPageUrl = unitUrls.get(i);
-			Page roomStatePage = new Page(doingPage.getSiteCode(), 1, roomInfoPageUrl, roomInfoPageUrl);
+			String url=BASE_URL+unitIds.get(i);
+			Page roomStatePage = new Page(doingPage.getSiteCode(), 1, url, url);
 			roomStatePage.setReferer(doingPage.getFinalUrl());
 
 			roomStatePage.getMetaMap().put("projectId", doingPage.getMeta("projectId"));

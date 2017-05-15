@@ -39,15 +39,6 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void beforeExtract(Page doingPage) {
-		Element iframe = doingPage.getDoc().select(iframeCss).first();
-		if (null == iframe) {
-			throw new RuntimeException("don't find iframe:" + iframeCss);
-		}
-		String src = iframe.attr("src");
-		Page iframePage = new Page(doingPage.getSiteCode(), 1, src, src);
-		iframePage.setReferer(doingPage.getFinalUrl());
-		getDowner().down(iframePage);
-		doingPage.setPageSrc(iframePage.getPageSrc());
 		// 获取所有状态信息
 		if (roomStates.isEmpty()) {
 			String allCssQuery = "table[width='600']>tbody>tr>td>font";
