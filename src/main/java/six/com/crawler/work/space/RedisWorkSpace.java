@@ -296,4 +296,9 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 			distributedLock.unLock();
 		}
 	}
+	
+	@Override
+	public void close() {
+
+	}
 }

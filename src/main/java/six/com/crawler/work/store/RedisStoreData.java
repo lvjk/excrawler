@@ -2,6 +2,7 @@ package six.com.crawler.work.store;
 
 import java.util.Map;
 
+import six.com.crawler.work.space.Index;
 import six.com.crawler.work.space.WorkSpaceData;
 
 /**
@@ -30,5 +31,16 @@ public class RedisStoreData implements WorkSpaceData {
 
 	public void setKey(String key) {
 		this.key = key;
+	}
+
+	@Override
+	public Index getIndex() {
+		return null;
+	}
+
+	@Override
+	public void setIndex(Index index) {
+		// TODO Auto-generated method stub
+		
 	}
 }

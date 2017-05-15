@@ -15,6 +15,7 @@ import six.com.crawler.utils.JsonUtils;
 import six.com.crawler.utils.MD5Utils;
 import six.com.crawler.work.downer.DownerType;
 import six.com.crawler.work.downer.PostContentType;
+import six.com.crawler.work.space.Index;
 import six.com.crawler.work.space.WorkSpaceData;
 
 /**
@@ -79,6 +80,8 @@ public class Page implements WorkSpaceData, Serializable {
 	private Map<String, List<String>> metaMap = new HashMap<>();
 
 	private int noNeedDown;// 不需要下载:1 需要下载默认:0
+
+	private Index index;
 
 	public PostContentType getPostContentType() {
 		return postContentType;
@@ -333,7 +336,7 @@ public class Page implements WorkSpaceData, Serializable {
 	}
 
 	public String toString() {
-		String toString=null;
+		String toString = null;
 		if (getMethod().value.equals(HttpMethod.POST.value)) {
 			Map<String, Object> params = getParameters();
 			StringBuilder originUrlBf = new StringBuilder();
@@ -345,16 +348,26 @@ public class Page implements WorkSpaceData, Serializable {
 			}
 			originUrlBf.append("?post@");
 			originUrlBf.append(getFinalUrl());
-			toString=originUrlBf.toString();
+			toString = originUrlBf.toString();
 		} else {
-			toString="get@"+getFinalUrl();
+			toString = "get@" + getFinalUrl();
 		}
 		return toString;
 	}
-	
+
 	@Override
 	public String getKey() {
 		return getPageKey();
+	}
+
+	@Override
+	public void setIndex(Index index) {
+		this.index = index;
+	}
+
+	@Override
+	public Index getIndex() {
+		return index;
 	}
 
 }

@@ -375,8 +375,6 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		List<WorkerSnapshot> workers = getScheduleCache().getWorkerSnapshots(jobName);
 		boolean resut = true;
 		for (WorkerSnapshot worker : workers) {
-			// log.info("worker[" + worker.getName() + "] stauts:" +
-			// worker.getState());
 			if (worker.getState() == WorkerLifecycleState.READY || worker.getState() == WorkerLifecycleState.STARTED
 					|| worker.getState() == WorkerLifecycleState.SUSPEND) {
 				resut = false;

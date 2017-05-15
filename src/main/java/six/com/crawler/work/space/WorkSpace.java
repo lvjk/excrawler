@@ -145,4 +145,5 @@ public interface WorkSpace<T extends WorkSpaceData> {
 	 */
 	void clearDone();
 
+	void close();
 }

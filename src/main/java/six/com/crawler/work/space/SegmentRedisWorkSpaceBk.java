@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,36 +17,28 @@ import six.com.crawler.node.lock.DistributedLock;
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
- * @date 创建时间：2017年5月12日 下午4:48:45
+ * @date 创建时间：2017年5月10日 下午4:30:42
  */
-public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
+public class SegmentRedisWorkSpaceBk<T extends WorkSpaceData> implements WorkSpace<T> {
 
 	final static Logger log = LoggerFactory.getLogger(RedisWorkSpace.class);
 
-	/**
-	 * 默认处理队列分片大小
-	 */
-	private final static int DEFAULT_DOING_SEGMENT_MAX_SIZE = 2000;
-
-	/**
-	 * 默认处理完队列分片大小
-	 */
-	private final static int DEFAULT_DONE_SEGMENT_MAX_SIZE = 100000;
+	public final static String WORK_QUEUE_KEY_PRE = "workspace_doing_queue_";
 
 	public final static String WORK_ERR_QUEUE_KEY_PRE = "workspace_err_queue_";
 
-	private final static String SEGMENT_DOING_QUEUE_NAME_KEYS = "workspace_segment_doing_queue_keys_";
-	private final static String SEGMENT_DOING_QUEUE_NAME = "workspace_segment_doing_queue_";
+	public final static String WORK_DONE_QUEUE_KEY_PRE = "workspace_done_queue_";
 
-	private final static String SEGMENT_DOING_MAP_NAME_KEYS = "workspace_segment_doing_map_keys_";
-	private final static String SEGMENT_DOING_MAP_NAME = "workspace_segment_doing_map_";
-
-	private final static String SEGMENT_DONE_MAP_NAME_KEYS = "workspace_segment_done_map_keys_";
-	private final static String SEGMENT_DONE_MAP_NAME = "workspace_segment_done_map_";
+	private final static String SEGMENT_DOING_QUEUE_NAME_KEYS = "workspace_segment_queue_keys_";
+	private final static String SEGMENT_DOING_QUEUE_NAME = "workspace_segment_queue_";
 
 	public final static int batch = 10000;
 
 	private final String workSpaceName;
+
+	private final String queueKey;
+
+	private final String doneKey;
 
 	private final String errQueueKey;
 
@@ -54,45 +48,24 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 
 	private DistributedLock distributedLock;
 
-	private SegmentQueue<Index> doingSegmentQueue;
+	private SegmentQueue<String> segmentQueue;
 
-	private SegmentMap<T> doingSegmentMap;
-
-	private SegmentMap<String> doneSegmentMap;
-
-	public SegmentRedisWorkSpace(RedisManager redisManager, DistributedLock distributedLock, String workSpaceName,
+	public SegmentRedisWorkSpaceBk(RedisManager redisManager, DistributedLock distributedLock, String workSpaceName,
 			Class<T> clz) {
-		this(redisManager, distributedLock, workSpaceName, clz, DEFAULT_DOING_SEGMENT_MAX_SIZE,
-				DEFAULT_DONE_SEGMENT_MAX_SIZE);
-	}
-
-	public SegmentRedisWorkSpace(RedisManager redisManager, DistributedLock distributedLock, String workSpaceName,
-			Class<T> clz, int doingSemegtMaxSize, int doneSemegtMaxSize) {
-
 		Objects.requireNonNull(redisManager, "redisManager must not be null");
 		Objects.requireNonNull(workSpaceName, "workSpaceName must not be null");
 		Objects.requireNonNull(clz, "clz must not be null");
-
 		this.redisManager = redisManager;
 		this.distributedLock = distributedLock;
 		this.workSpaceName = workSpaceName;
+		this.queueKey = WORK_QUEUE_KEY_PRE + workSpaceName;
 		this.errQueueKey = WORK_ERR_QUEUE_KEY_PRE + workSpaceName;
+		this.doneKey = WORK_DONE_QUEUE_KEY_PRE + workSpaceName;
 		this.clz = clz;
 		String segmentDoingQueueNames = SEGMENT_DOING_QUEUE_NAME_KEYS + workSpaceName;
 		String segmentDoingQueueNamePre = SEGMENT_DOING_QUEUE_NAME + workSpaceName;
-		this.doingSegmentQueue = new SegmentQueue<Index>(segmentDoingQueueNames, segmentDoingQueueNamePre, redisManager,
-				doingSemegtMaxSize, Index.class);
-
-		String segmentDoingMapNames = SEGMENT_DOING_MAP_NAME_KEYS + workSpaceName;
-		String segmentDoingMapNamePre = SEGMENT_DOING_MAP_NAME + workSpaceName;
-		this.doingSegmentMap = new SegmentMap<>(segmentDoingMapNames, segmentDoingMapNamePre, redisManager,
-				doingSemegtMaxSize, clz);
-
-		String segmentDoneMapNames = SEGMENT_DONE_MAP_NAME_KEYS + workSpaceName;
-		String segmentDoneMapNamePre = SEGMENT_DONE_MAP_NAME + workSpaceName;
-		this.doneSegmentMap = new SegmentMap<>(segmentDoneMapNames, segmentDoneMapNamePre, redisManager,
-				doneSemegtMaxSize, String.class);
-
+		this.segmentQueue = new SegmentQueue<String>(segmentDoingQueueNames, segmentDoingQueueNamePre, redisManager,
+				2000, String.class);
 	}
 
 	public String getName() {
@@ -104,19 +77,17 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 		Objects.requireNonNull(data, "data must not be null");
 		distributedLock.lock();
 		try {
-			String dataKey = data.getKey();
-			String mapKey = doingSegmentMap.where(dataKey);
-			if (null == mapKey) {
-				Index index = doingSegmentMap.put(mapKey, dataKey, data);
-				doingSegmentQueue.push(index);
-				log.info("push workSpace[" + workSpaceName + "] data succeed:" + data.toString());
+			String doingKey = getDoingKey(data.getKey());
+			if (!redisManager.isExecuted(doingKey)) {
+				redisManager.set(doingKey, data);
+				segmentQueue.push(doingKey);
+				log.info("push workSpace[" + queueKey + "] data succeed:" + data.toString());
 			} else {
-				doingSegmentMap.put(mapKey, data.getKey(), data);
-				log.info("update workSpace[" + workSpaceName + "] data succeed:" + data.toString());
+				log.info("workSpace[" + queueKey + "] contained data:" + data.toString());
 			}
 			return true;
 		} catch (Exception e) {
-			log.error("push workSpace[" + workSpaceName + "] data err:" + data.toString(), e);
+			log.error("push workSpace[" + queueKey + "] data err:" + data.toString(), e);
 			throw e;
 		} finally {
 			distributedLock.unLock();
@@ -126,19 +97,16 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 	@Override
 	public boolean errRetryPush(T data) {
 		Objects.requireNonNull(data, "data must not be null");
-		Index index = data.getIndex();
-		if (null != index && null != index.getMapKey()) {
-			distributedLock.lock();
-			try {
-				doingSegmentMap.put(index.getMapKey(), index.getDataKey(), data);
-				return true;
-			} catch (Exception e) {
-				throw e;
-			} finally {
-				distributedLock.unLock();
-			}
+		distributedLock.lock();
+		String doingKey = getDoingKey(data.getKey());
+		try {
+			redisManager.set(doingKey, data);
+			return true;
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			distributedLock.unLock();
 		}
-		return false;
 	}
 
 	@Override
@@ -146,13 +114,12 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 		T data = null;
 		try {
 			distributedLock.lock();
-			Index index = doingSegmentQueue.poll();
-			if (null != index) {
-				data = doingSegmentMap.get(index);
-				data.setIndex(index);
+			String dataKey = segmentQueue.poll();
+			if (null != dataKey) {
+				data = redisManager.get(dataKey, clz);
 			}
 		} catch (Exception e) {
-			log.error("pull workSpace[" + workSpaceName + "] data err", e);
+			log.error("pull workSpace[" + queueKey + "] data err", e);
 			throw e;
 		} finally {
 			distributedLock.unLock();
@@ -163,17 +130,14 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 	public void repair() {
 		try {
 			distributedLock.lock();
-			List<String> mapKeys = doingSegmentMap.getMaps();
-			if (null != mapKeys) {
-				for (String mapKey : mapKeys) {
-					List<T> datas = doingSegmentMap.getData(mapKey);
-					for (T data : datas) {
-						doingSegmentQueue.push(doingSegmentMap.getIndex(mapKey, data.getKey()));
-					}
+			Set<String> dataKeys = getDoingKeys();
+			if (null != dataKeys) {
+				for (String dataKey : dataKeys) {
+					segmentQueue.push(dataKey);
 				}
 			}
 		} catch (Exception e) {
-			log.error("repair workSpace[" + workSpaceName + "] err", e);
+			log.error("repair workSpace[" + queueKey + "] err", e);
 			throw e;
 		} finally {
 			distributedLock.unLock();
@@ -190,7 +154,14 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 	}
 
 	public String batchGetDoneData(List<String> resutList, String cursorStr) {
-		return "";
+		Set<String> doneKeys = getDoneKeys();
+		if (null != doneKeys) {
+			for (String doneKey : doneKeys) {
+				doneKey = StringUtils.remove(doneKey, doneKey + "_");
+				resutList.add(doneKey);
+			}
+		}
+		return "0";
 	}
 
 	private String batchGet(List<T> resutList, String cursorStr, String type) {
@@ -227,7 +198,7 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 		if (StringUtils.isNotBlank(key)) {
 			distributedLock.lock();
 			try {
-				isduplicate = null != doneSegmentMap.where(key);
+				isduplicate = redisManager.isExecuted(getDoneKey(key));
 			} catch (Exception e) {
 				throw e;
 			} finally {
@@ -242,7 +213,7 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 		if (StringUtils.isNotBlank(key)) {
 			distributedLock.lock();
 			try {
-				doneSegmentMap.put(null, key, "1");
+				redisManager.set(getDoneKey(key), "1");
 			} catch (Exception e) {
 				throw e;
 			} finally {
@@ -254,18 +225,21 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 	public void ack(T data) {
 		Objects.requireNonNull(data, "data must not be null");
 		distributedLock.lock();
+		String doingKey = getDoingKey(data.getKey());
 		try {
-			doingSegmentMap.del(data.getIndex());
+			redisManager.del(doingKey);
 		} catch (Exception e) {
 			throw e;
 		} finally {
 			distributedLock.unLock();
 		}
+
 	}
 
 	@Override
 	public int doingSize() {
-		return doingSegmentMap.size();
+		Set<String> dataSetKeys = getDoingKeys();
+		return null == dataSetKeys ? 0 : dataSetKeys.size();
 	}
 
 	@Override
@@ -275,15 +249,21 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 
 	@Override
 	public int doneSize() {
-		return doneSegmentMap.size();
+		Set<String> dataSetKeys = getDoneKeys();
+		return null == dataSetKeys ? 0 : dataSetKeys.size();
 	}
 
 	@Override
 	public void clearDoing() {
 		distributedLock.lock();
 		try {
-			doingSegmentQueue.clear();
-			doingSegmentMap.clear();
+			segmentQueue.clear();
+			Set<String> list = getDoingKeys();
+			if (null != list) {
+				for (String dataKey : list) {
+					redisManager.del(dataKey);
+				}
+			}
 		} catch (Exception e) {
 			throw e;
 		} finally {
@@ -307,7 +287,12 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 	public void clearDone() {
 		distributedLock.lock();
 		try {
-			doneSegmentMap.clear();
+			Set<String> list = getDoneKeys();
+			if (null != list) {
+				for (String dataKey : list) {
+					redisManager.del(dataKey);
+				}
+			}
 		} catch (Exception e) {
 			throw e;
 		} finally {
@@ -315,16 +300,31 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 		}
 	}
 
+	private Set<String> getDoingKeys() {
+		String newDoingKey = queueKey + "_*";
+		Set<String> list = redisManager.keys(newDoingKey);
+		return list;
+	}
+
+	private String getDoingKey(String key) {
+		String newDoingKey = queueKey + "_" + key;
+		return newDoingKey;
+	}
+
+	private Set<String> getDoneKeys() {
+		String newDoneKey = doneKey + "_*";
+		Set<String> list = redisManager.keys(newDoneKey);
+		return list;
+	}
+
+	private String getDoneKey(String key) {
+		String newDoneKey = doneKey + "_" + key;
+		return newDoneKey;
+	}
+
 	@Override
 	public void close() {
-		distributedLock.lock();
-		try {
-			doingSegmentMap.cleanUp();
-		} catch (Exception e) {
-			throw e;
-		} finally {
-			distributedLock.unLock();
-		}
+
 	}
 
 }

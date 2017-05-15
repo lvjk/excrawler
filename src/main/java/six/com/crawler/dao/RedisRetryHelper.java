@@ -18,7 +18,7 @@ public class RedisRetryHelper {
 
 	private final static Logger LOG = LoggerFactory.getLogger(RedisRetryHelper.class);
 	// redis 每次尝试 睡眠时间 10s
-	private final static int interval = 10 * 1000;
+	private final static int interval = 3 * 1000;
 	// redis 最大尝试次数
 	private final static int retryMaxCount = 3;
 

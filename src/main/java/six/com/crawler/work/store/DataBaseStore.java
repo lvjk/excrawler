@@ -67,6 +67,8 @@ public class DataBaseStore extends AbstarctStore {
 		datasource.setUsername(dbUser);
 		datasource.setPassword(dbPasswd);
 		datasource.setMaxActive(1);
+		
+		
 		JobSnapshot jobSnapshot = getWorker().getManager().getScheduleCache()
 				.getJobSnapshot(getWorker().getJob().getName());
 		tableName = jobSnapshot.getParam(TABLE_KEY);

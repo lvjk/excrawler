@@ -9,5 +9,9 @@ package six.com.crawler.work.space;
  */
 public interface WorkSpaceData {
 
+	public void setIndex(Index index);
+	
+	public Index getIndex();
+	
 	public String getKey();
 }

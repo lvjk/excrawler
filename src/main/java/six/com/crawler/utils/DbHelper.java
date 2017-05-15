@@ -110,19 +110,18 @@ public class DbHelper {
 	 * 
 	 * @return
 	 */
-	public static Connection getConnection() {
-		String url = "jdbc:mysql://172.18.84.44:3306/test?"
-				+ "user=root&password=123456&useUnicode=true&characterEncoding=UTF8";
-		String user = "root";
-		String pwd = "123456";
+	public static Connection getConnection(String dbUrl,String user,String password) {
 		Connection conn = null;
 		try {
-			conn = DriverManager.getConnection(url, user, pwd);
+			conn = DriverManager.getConnection(dbUrl, user, password);
 		} catch (SQLException e) {
-			LOG.error("getConnection err:" + url, e);
+			LOG.error("getConnection err:" + dbUrl, e);
 		} // 获取连接
 		return conn;
 	}
+	
+	
+	
 
 	/**
 	 * 关闭链接

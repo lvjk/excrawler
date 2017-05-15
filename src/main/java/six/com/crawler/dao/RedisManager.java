@@ -147,7 +147,7 @@ public class RedisManager implements InitializingBean {
 		});
 		return incr;
 	}
-	
+
 	public int incrInt(String key) {
 		byte[] keyBytes = JavaSerializeUtils.serializeString(key);
 		int incr = RedisRetryHelper.execute(() -> {
@@ -286,6 +286,28 @@ public class RedisManager implements InitializingBean {
 		});
 	}
 
+	/**
+	 * 
+	 * @param listkey
+	 *            集合key
+	 * @param valuekey
+	 *            数据key
+	 * @param value
+	 *            数据
+	 */
+	public <T> List<T> hgetAllList(String hkey, Class<T> clz) {
+		byte[] hKeyBytes = JavaSerializeUtils.serializeString(hkey);
+		return RedisRetryHelper.execute(() -> {
+			Map<byte[], byte[]> map = jedisCluster.hgetAll(hKeyBytes);
+			List<T> result = new ArrayList<>(map.size());
+			map.forEach((mapKey, mapValue) -> {
+				T t = JavaSerializeUtils.unSerialize(mapValue, clz);
+				result.add(t);
+			});
+			return result;
+		});
+	}
+
 	public int hllen(String hkey) {
 		byte[] hKeyBytes = JavaSerializeUtils.serializeString(hkey);
 		return RedisRetryHelper.execute(() -> {
@@ -311,7 +333,7 @@ public class RedisManager implements InitializingBean {
 			return result != null;
 		});
 	}
-	
+
 	public boolean isExecuted(String key) {
 		byte[] keyBytes = JavaSerializeUtils.serializeString(key);
 		return RedisRetryHelper.execute(() -> {
