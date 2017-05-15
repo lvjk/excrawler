@@ -42,7 +42,7 @@ public class WorkeSpaceTransferTools {
 		// del(workSpaceName, redisConnection, "spider_redis_store");
 		// doMysql();
 		// nb_cnnbfdc_unit_info
-		WorkeSpaceTransferTools.del("workspace_done_queue");
+		WorkeSpaceTransferTools.del("*workers_sernum");
 	}
 
 	public static void transfer(String workSpaceName, String redisConnection) {
@@ -83,7 +83,7 @@ public class WorkeSpaceTransferTools {
 	}
 
 	public static void del(String keyPre) {
-		String redisConnection = "172.30.103.81:6379;172.30.103.82:6379;172.30.103.83:6379";
+		String redisConnection = "172.18.84.44:6379;172.18.84.45:6379;172.18.84.46:6379";
 		EnhanceJedisCluster doRedis = newJedis(redisConnection);
 		RedisManager doRedisManager = new six.com.crawler.dao.RedisManager();
 		doRedisManager.setJedisCluster(doRedis);

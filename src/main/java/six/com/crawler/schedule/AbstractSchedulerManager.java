@@ -378,6 +378,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 			if (worker.getState() == WorkerLifecycleState.READY || worker.getState() == WorkerLifecycleState.STARTED
 					|| worker.getState() == WorkerLifecycleState.SUSPEND) {
 				resut = false;
+				break;
 			}
 		}
 		return resut;
@@ -431,6 +432,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		for (WorkerSnapshot worker : workers) {
 			if (worker.getState() != status) {
 				resut = false;
+				break;
 			}
 		}
 		return resut;
