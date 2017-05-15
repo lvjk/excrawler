@@ -59,7 +59,6 @@ public class DLDCJZProjectInfoWorker extends AbstractCrawlWorker{
 		
 		Elements trElements=element.select("table>tbody>tr");
 		for (int i = 0; i < trElements.size(); i++) {
-			Page unitPage=new Page(doingPage.getSiteCode(), 1, doingPage.getFirstUrl(), doingPage.getFinalUrl());
 			if(i>0){
 				Elements attrElements=trElements.get(i).select("td");
 				String unitNo=attrElements.get(1).select("span>nobr").first().ownText();
@@ -68,7 +67,8 @@ public class DLDCJZProjectInfoWorker extends AbstractCrawlWorker{
 				String url="http://www.fczw.cn/"+attrElements.get(4).select("a").first().attr("href");
 				String lid=StringUtils.substringBetween(url, "&lid=", "&xmid");
 				String xmid=StringUtils.substringAfter(url, "&xmid=");
-				
+				Page unitPage=new Page(doingPage.getSiteCode(), 1,url,url);
+				unitPage.setReferer(doingPage.getFinalUrl());
 				unitPage.getMetaMap().put("presellId", doingPage.getMeta("presellId"));
 				unitPage.getMetaMap().put("unitId", ArrayListUtils.asList(lid));
 				unitPage.getMetaMap().put("projectId", ArrayListUtils.asList(xmid));
