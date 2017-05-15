@@ -1,8 +1,12 @@
 package six.com.crawler.work.space;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
+import java.util.Map;
+import java.util.Objects;
+
+import org.apache.commons.lang3.StringUtils;
 
 import six.com.crawler.dao.RedisManager;
 
@@ -11,74 +15,66 @@ import six.com.crawler.dao.RedisManager;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年5月12日 下午2:57:37
  */
-public class SegmentMap<T> {
-
-	private int segmentMaxSize;
-	private String segmentNames;
-	private String segmentNamePre;
-	private RedisManager redisManager;
-	private static Random random = new Random();
-	private final Class<T> clz;
+public class SegmentMap<T> extends AbstractSegment<T> {
 
 	SegmentMap(String segmentNames, String segmentNamePre, RedisManager redisManager, int segmentMaxSize,
 			Class<T> clz) {
-		this.segmentNames = segmentNames;
-		this.segmentNamePre = segmentNamePre;
-		this.redisManager = redisManager;
-		this.clz = clz;
-		this.segmentMaxSize = segmentMaxSize;
+		super(segmentNames, segmentNamePre, redisManager, segmentMaxSize, clz);
 	}
 
-	public Index put(String mapKey, String key, T data) {
-		if (null == mapKey) {
-			mapKey = getWriteIndex();
+	public Index put(String mapKey, String dataKey, T data) {
+		Index index = null;
+		if (null != data && StringUtils.isNotBlank(dataKey)) {
+			if (null == mapKey) {
+				mapKey = getWriteIndex();
+			}
+			getRedisManager().hset(mapKey, dataKey, data);
+			index = getIndex(mapKey, dataKey);
 		}
-		redisManager.hset(mapKey, key, data);
-		Index index = getIndex(mapKey, key);
 		return index;
 	}
 
 	public T get(Index index) {
 		T data = null;
 		if (null != index) {
-			data = redisManager.hget(index.getMapKey(), index.getDataKey(), clz);
+			data = getRedisManager().hget(index.getMapKey(), index.getDataKey(), getDataClass());
 		}
 		return data;
 	}
 
 	public String where(String key) {
 		String where = null;
-		List<String> mapKeys = getMaps();
-		if (null != mapKeys) {
-			for (String mapKey : mapKeys) {
-				if (redisManager.isExecuted(mapKey, key)) {
-					where = mapKey;
-					break;
+		if (StringUtils.isNotBlank(key)) {
+			List<String> mapKeys = getSegments();
+			if (null != mapKeys) {
+				for (String mapKey : mapKeys) {
+					if (getRedisManager().isExecuted(mapKey, key)) {
+						where = mapKey;
+						break;
+					}
 				}
 			}
 		}
 		return where;
 	}
 
-	public List<T> getData(String mapKey) {
+	public List<T> getData(String segmentMapKey) {
 		List<T> segmentNames = null;
-		if (null != mapKey) {
-			segmentNames = redisManager.hgetAllList(mapKey, clz);
+		if (StringUtils.isNotBlank(segmentMapKey)) {
+			segmentNames = getRedisManager().hgetAllList(segmentMapKey, getDataClass());
 		} else {
 			segmentNames = Collections.emptyList();
 		}
 		return segmentNames;
 	}
 
-	public List<String> getMaps() {
-		List<String> segmentNames = redisManager.lrange(this.segmentNames, 0, -1, String.class);
-		return segmentNames;
-	}
-
 	public Index getIndex(String mapKey, String dataKey) {
-		Index index = new Index();
-		index.setMapKey(mapKey);
-		index.setDataKey(dataKey);
+		Index index = null;
+		if (StringUtils.isNotBlank(mapKey) && StringUtils.isNotBlank(dataKey)) {
+			index = new Index();
+			index.setMapKey(mapKey);
+			index.setDataKey(dataKey);
+		}
 		return index;
 	}
 
@@ -87,66 +83,27 @@ public class SegmentMap<T> {
 	}
 
 	public void del(Index index) {
-		if (null != index && null != index.getMapKey() && null != index.getDataKey()) {
-			redisManager.hdel(index.getMapKey(), index.getDataKey());
+		if (null != index && StringUtils.isNotBlank(index.getMapKey()) && StringUtils.isNotBlank(index.getDataKey())) {
+			getRedisManager().hdel(index.getMapKey(), index.getDataKey());
 		}
 	}
 
-	private String getWriteIndex() {
-		String writeIndex = redisManager.lindex(this.segmentNames, 0, String.class);
-		if (null == writeIndex) {
-			writeIndex = getKey(0);
-			redisManager.lpush(this.segmentNames, writeIndex);
-			return writeIndex;
-		} else {
-			int llen = redisManager.hllen(writeIndex);
-			if (llen >= segmentMaxSize) {
-				int segmentNameSize = redisManager.llen(this.segmentNames);
-				String newWriteIndex = getKey(segmentNameSize);
-				redisManager.lpush(this.segmentNames, newWriteIndex);
-				writeIndex = newWriteIndex;
+	public String batchGet(String segmentMapKey, List<T> resutList, String cursorStr) {
+		if (StringUtils.isNotBlank(segmentMapKey)) {
+			Objects.requireNonNull(resutList, "resutList must not be null");
+			if (StringUtils.isBlank(cursorStr)) {
+				cursorStr = "0";
 			}
-			return writeIndex;
+			Map<String, T> map = new HashMap<>();
+			cursorStr = getRedisManager().hscan(segmentMapKey, cursorStr, map, getDataClass());
+			resutList.addAll(map.values());
 		}
+		return cursorStr;
 	}
 
-	private String getKey(int index) {
-		return segmentNamePre + "_" + index + "_" + SystemUtils.getMac() + "_" + SystemUtils.getPid() + "_"
-				+ random.nextLong() + "_" + System.currentTimeMillis();
-	}
-
-	public int size() {
-		int size = 0;
-		List<String> segmentNames = getMaps();
-		if (null != segmentNames) {
-			for (String segmentName : segmentNames) {
-				size += redisManager.hllen(segmentName);
-			}
-		}
+	@Override
+	public int getSegmentSize(String segmentName) {
+		int size = getRedisManager().hllen(segmentName);
 		return size;
 	}
-
-	public void clear() {
-		List<String> segmentNames = getMaps();
-		if (null != segmentNames) {
-			for (String segmentName : segmentNames) {
-				redisManager.del(segmentName);
-			}
-			redisManager.del(this.segmentNames);
-		}
-	}
-
-	public void cleanUp() {
-		List<String> segmentNames = getMaps();
-		if (null != segmentNames) {
-			for (String segmentName : segmentNames) {
-				int llen = redisManager.hllen(segmentName);
-				if (0 == llen) {
-					redisManager.del(segmentName);
-					redisManager.lrem(this.segmentNames, 1, segmentName);
-				}
-			}
-		}
-	}
-
 }

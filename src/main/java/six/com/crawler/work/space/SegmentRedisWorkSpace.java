@@ -1,6 +1,5 @@
 package six.com.crawler.work.space;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,16 +30,16 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 	 */
 	private final static int DEFAULT_DONE_SEGMENT_MAX_SIZE = 100000;
 
-	public final static String WORK_ERR_QUEUE_KEY_PRE = "workspace_err_queue_";
+	public final static String ERR_QUEUE_KEY_PRE = "workspace_err_queue_";
 
-	private final static String SEGMENT_DOING_QUEUE_NAME_KEYS = "workspace_segment_doing_queue_keys_";
-	private final static String SEGMENT_DOING_QUEUE_NAME = "workspace_segment_doing_queue_";
+	public final static String SEGMENT_DOING_QUEUE_NAME_KEYS = "workspace_segment_doing_queue_keys_";
+	public final static String SEGMENT_DOING_QUEUE_NAME = "workspace_segment_doing_queue_";
 
-	private final static String SEGMENT_DOING_MAP_NAME_KEYS = "workspace_segment_doing_map_keys_";
-	private final static String SEGMENT_DOING_MAP_NAME = "workspace_segment_doing_map_";
+	public final static String SEGMENT_DOING_MAP_NAME_KEYS = "workspace_segment_doing_map_keys_";
+	public final static String SEGMENT_DOING_MAP_NAME = "workspace_segment_doing_map_";
 
-	private final static String SEGMENT_DONE_MAP_NAME_KEYS = "workspace_segment_done_map_keys_";
-	private final static String SEGMENT_DONE_MAP_NAME = "workspace_segment_done_map_";
+	public final static String SEGMENT_DONE_MAP_NAME_KEYS = "workspace_segment_done_map_keys_";
+	public final static String SEGMENT_DONE_MAP_NAME = "workspace_segment_done_map_";
 
 	public final static int batch = 10000;
 
@@ -76,7 +75,7 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 		this.redisManager = redisManager;
 		this.distributedLock = distributedLock;
 		this.workSpaceName = workSpaceName;
-		this.errQueueKey = WORK_ERR_QUEUE_KEY_PRE + workSpaceName;
+		this.errQueueKey = ERR_QUEUE_KEY_PRE + workSpaceName;
 		this.clz = clz;
 		String segmentDoingQueueNames = SEGMENT_DOING_QUEUE_NAME_KEYS + workSpaceName;
 		String segmentDoingQueueNamePre = SEGMENT_DOING_QUEUE_NAME + workSpaceName;
@@ -163,7 +162,7 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 	public void repair() {
 		try {
 			distributedLock.lock();
-			List<String> mapKeys = doingSegmentMap.getMaps();
+			List<String> mapKeys = doingSegmentMap.getSegments();
 			if (null != mapKeys) {
 				for (String mapKey : mapKeys) {
 					List<T> datas = doingSegmentMap.getData(mapKey);
@@ -180,17 +179,20 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 		}
 	}
 
-	public String batchGetDoingData(List<T> resutList, String cursorStr) {
-		resutList = Collections.emptyList();
-		return "";
+	public String batchGetDoingData(List<T> resutList, int segmentIndex, String cursorStr) {
+		String segment = doingSegmentMap.getSegment(segmentIndex);
+		cursorStr = doingSegmentMap.batchGet(segment, resutList, cursorStr);
+		return cursorStr;
 	}
 
 	public String batchGetErrData(List<T> resutList, String cursorStr) {
 		return batchGet(resutList, cursorStr, errQueueKey);
 	}
 
-	public String batchGetDoneData(List<String> resutList, String cursorStr) {
-		return "";
+	public String batchGetDoneData(List<String> resutList, int segmentIndex, String cursorStr) {
+		String segment = doneSegmentMap.getSegment(segmentIndex);
+		cursorStr = doneSegmentMap.batchGet(segment, resutList, cursorStr);
+		return cursorStr;
 	}
 
 	private String batchGet(List<T> resutList, String cursorStr, String type) {
@@ -263,6 +265,11 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 		}
 	}
 
+	@Override
+	public int doingSegmentSize(){
+		return doingSegmentMap.segmentSize();
+	}
+	
 	@Override
 	public int doingSize() {
 		return doingSegmentMap.size();

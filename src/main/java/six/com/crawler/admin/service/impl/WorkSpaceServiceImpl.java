@@ -68,7 +68,7 @@ public class WorkSpaceServiceImpl extends BaseService implements WorkSpaceServic
 		ResponseMsg<Map<String, Object>> responseMsg = createResponseMsg();
 		Map<String, Object> resultMap = new HashMap<>();
 		List<Page> list = new ArrayList<>();
-		cursor = workSpaceManager.newWorkSpace(workSpaceName, Page.class).batchGetDoingData(list, cursor);
+		cursor = workSpaceManager.newWorkSpace(workSpaceName, Page.class).batchGetDoingData(list, 0, cursor);
 		resultMap.put("cursor", cursor);
 		resultMap.put("list", list);
 		responseMsg.setIsOk(1);

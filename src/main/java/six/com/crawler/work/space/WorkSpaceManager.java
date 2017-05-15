@@ -52,18 +52,27 @@ public class WorkSpaceManager {
 	public List<WorkSpace<WorkSpaceData>> getAllWorkSpaces() {
 		List<WorkSpace<WorkSpaceData>> allWorkSpace = new ArrayList<>();
 		Set<String> allWorkSpaceName = new HashSet<>();
-		Set<String> allWorkQueueKeys = redisManager.keys(RedisWorkSpace.WORK_QUEUE_KEY_PRE + "*");
+
+		Set<String> alldoingKeys = redisManager.keys(SegmentRedisWorkSpace.SEGMENT_DOING_MAP_NAME_KEYS + "*");
 		String findWorkSpaceName = null;
+		for (String fullWorkQueueName : alldoingKeys) {
+			findWorkSpaceName = StringUtils.remove(fullWorkQueueName,
+					SegmentRedisWorkSpace.SEGMENT_DOING_MAP_NAME_KEYS);
+			allWorkSpaceName.add(findWorkSpaceName);
+		}
+		Set<String> allDoneKeys = redisManager.keys(SegmentRedisWorkSpace.SEGMENT_DONE_MAP_NAME_KEYS + "*");
+		for (String fullDoneName : allDoneKeys) {
+			findWorkSpaceName = StringUtils.remove(fullDoneName, SegmentRedisWorkSpace.SEGMENT_DONE_MAP_NAME_KEYS);
+			allWorkSpaceName.add(findWorkSpaceName);
+		}
+
+		Set<String> allErrKeys = redisManager.keys(SegmentRedisWorkSpace.ERR_QUEUE_KEY_PRE + "*");
+		for (String fullDoneName : allErrKeys) {
+			findWorkSpaceName = StringUtils.remove(fullDoneName, SegmentRedisWorkSpace.ERR_QUEUE_KEY_PRE);
+			allWorkSpaceName.add(findWorkSpaceName);
+		}
+
 		WorkSpace<WorkSpaceData> redisWorkSpace = null;
-		for (String fullWorkQueueName : allWorkQueueKeys) {
-			findWorkSpaceName = StringUtils.remove(fullWorkQueueName, RedisWorkSpace.WORK_QUEUE_KEY_PRE);
-			allWorkSpaceName.add(findWorkSpaceName);
-		}
-		Set<String> allDoneQueueKeys = redisManager.keys(RedisWorkSpace.WORK_DONE_QUEUE_KEY_PRE + "*");
-		for (String fullDoneName : allDoneQueueKeys) {
-			findWorkSpaceName = StringUtils.remove(fullDoneName, RedisWorkSpace.WORK_DONE_QUEUE_KEY_PRE);
-			allWorkSpaceName.add(findWorkSpaceName);
-		}
 		for (String workSpaceName : allWorkSpaceName) {
 			redisWorkSpace = newWorkSpace(workSpaceName, WorkSpaceData.class);
 			allWorkSpace.add(redisWorkSpace);
