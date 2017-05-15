@@ -35,6 +35,9 @@ public class DLDCJZRoomStateInfoWorker extends AbstractCrawlWorker{
 
 	@Override
 	protected void beforeExtract(Page doingPage) {
+		String html=StringUtils.remove(doingPage.getPageSrc(), "style=\"cursor:hand\"");
+		doingPage.setPageSrc(html);
+		
 		Elements status=doingPage.getDoc().select("span[class=XkbTl]");
 		
 		for (Element state:status) {
@@ -57,10 +60,10 @@ public class DLDCJZRoomStateInfoWorker extends AbstractCrawlWorker{
 		String presellId=doingPage.getMeta("presellId").get(0);
 		String projectId=doingPage.getMeta("projectId").get(0);
 		String unitId=doingPage.getMeta("unitId").get(0);
-		
+	
 		for (Element trElement:trElements) {
-			String floorNumber=trElement.select("span[class=XkbWlc]").first().ownText();
-			String nominalLevel=trElement.select("span[class=XkbCeng]").first().ownText();
+			String floorNumber=trElement.select("td[class=XkbWlc]").first().ownText();
+			String nominalLevel=trElement.select("td[class=XkbCeng]").first().ownText();
 			
 			Elements roomStatus=trElement.select("span[class=XkbRoom]");
 			for (Element roomState:roomStatus) {
