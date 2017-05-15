@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import com.alibaba.druid.pool.DruidDataSource;
 
-import six.com.crawler.entity.JobParamKeys;
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.Page;
 
@@ -35,10 +34,10 @@ public abstract class DataBaseAbstractWorker extends AbstractWorker<Page> {
 	int batchSize = 100;
 
 	protected final void initWorker(JobSnapshot jobSnapshot) {
-		dbUrl = getJob().getParam(JobParamKeys.DB_URL);
-		dbUser = getJob().getParam(JobParamKeys.DB_USER);
-		dbPasswd = getJob().getParam(JobParamKeys.DB_PASSWD);
-		dbDriverClassName = getJob().getParam(JobParamKeys.DB_DRIVER_CLASS_NAME);
+		dbUrl = getJob().getParam(CrawlerJobParamKeys.DB_URL);
+		dbUser = getJob().getParam(CrawlerJobParamKeys.DB_USER);
+		dbPasswd = getJob().getParam(CrawlerJobParamKeys.DB_PASSWD);
+		dbDriverClassName = getJob().getParam(CrawlerJobParamKeys.DB_DRIVER_CLASS_NAME);
 		datasource = new DruidDataSource();
 		datasource.setUrl(dbUrl);
 		datasource.setDriverClassName(dbDriverClassName);

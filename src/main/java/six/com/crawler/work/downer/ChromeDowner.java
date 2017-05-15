@@ -23,6 +23,7 @@ import six.com.crawler.http.HttpResult;
 import six.com.crawler.utils.WebDriverUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.Constants;
+import six.com.crawler.work.downer.cache.DownerCache;
 import six.com.crawler.work.downer.exception.DownerException;
 
 /**
@@ -40,8 +41,9 @@ public class ChromeDowner extends AbstractDowner {
 	private static final long defaultWaitTimeOunt = 3000;
 
 
-	public ChromeDowner(AbstractCrawlWorker worker) {
-		super(worker);
+	public ChromeDowner(AbstractCrawlWorker worker, boolean openDownCache, boolean useDownCache,
+			DownerCache downerCache) {
+		super(worker, openDownCache, useDownCache, downerCache);
 		DesiredCapabilities cap = DesiredCapabilities.chrome();
 		HashMap<String, Object> settings = new HashMap<String, Object>();
 		String loadImages = worker.getJob().getParam("loadImages");

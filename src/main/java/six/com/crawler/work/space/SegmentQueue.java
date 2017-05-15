@@ -39,7 +39,7 @@ public class SegmentQueue<T> extends AbstractSegment<T> {
 	}
 
 	public void push(T index) {
-		String writeIndex = getWriteIndex();
+		String writeIndex = getWriteSegment();
 		getRedisManager().rpush(writeIndex, index);
 	}
 

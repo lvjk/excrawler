@@ -26,7 +26,7 @@ public class SegmentMap<T> extends AbstractSegment<T> {
 		Index index = null;
 		if (null != data && StringUtils.isNotBlank(dataKey)) {
 			if (null == mapKey) {
-				mapKey = getWriteIndex();
+				mapKey = getWriteSegment();
 			}
 			getRedisManager().hset(mapKey, dataKey, data);
 			index = getIndex(mapKey, dataKey);

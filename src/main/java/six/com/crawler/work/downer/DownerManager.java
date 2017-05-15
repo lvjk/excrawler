@@ -2,7 +2,10 @@ package six.com.crawler.work.downer;
 
 import java.util.concurrent.locks.StampedLock;
 
+import six.com.crawler.entity.Page;
 import six.com.crawler.work.AbstractCrawlWorker;
+import six.com.crawler.work.downer.cache.DbDownerCache;
+import six.com.crawler.work.downer.cache.DownerCache;
 
 /**
  * @author 作者
@@ -32,16 +35,35 @@ public class DownerManager {
 		static DownerManager DownerManager = new DownerManager();
 	}
 
-	public Downer buildDowner(DownerType downerType, AbstractCrawlWorker worker) {
+	public Downer buildDowner(DownerType downerType, String siteCode, AbstractCrawlWorker worker, boolean openDownCache,
+			boolean useDownCache) {
 		Downer downer = null;
-		if (downerType == DownerType.OKHTTP) {
-			downer = new OkHttpDowner(worker);
-		} else if (downerType == DownerType.HTTPCLIENT) {
-			downer = new ApacheHttpDowner(worker);
-		} else if (downerType == DownerType.CHROME) {
-			downer = new ChromeDowner(worker);
+		DownerCache downerCache = new DbDownerCache(siteCode);
+		if (openDownCache || useDownCache) {
+			downerCache = new DbDownerCache(siteCode);
 		} else {
-			downer = new OkHttpDowner(worker);
+			downerCache = new DownerCache() {
+				@Override
+				public void write(Page page) {
+				}
+
+				@Override
+				public void read(Page page) {
+				}
+
+				@Override
+				public void close() {
+				}
+			};
+		}
+		if (downerType == DownerType.OKHTTP) {
+			downer = new OkHttpDowner(worker, openDownCache, useDownCache, downerCache);
+		} else if (downerType == DownerType.HTTPCLIENT) {
+			downer = new ApacheHttpDowner(worker, openDownCache, useDownCache, downerCache);
+		} else if (downerType == DownerType.CHROME) {
+			downer = new ChromeDowner(worker, openDownCache, useDownCache, downerCache);
+		} else {
+			downer = new OkHttpDowner(worker, openDownCache, useDownCache, downerCache);
 		}
 		return downer;
 	}

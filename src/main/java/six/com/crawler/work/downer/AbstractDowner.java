@@ -12,6 +12,7 @@ import six.com.crawler.entity.HttpProxy;
 import six.com.crawler.entity.Page;
 import six.com.crawler.http.HttpResult;
 import six.com.crawler.work.AbstractCrawlWorker;
+import six.com.crawler.work.downer.cache.DownerCache;
 import six.com.crawler.work.downer.exception.DownerException;
 
 /**
@@ -20,16 +21,28 @@ import six.com.crawler.work.downer.exception.DownerException;
  */
 public abstract class AbstractDowner implements Downer, AutoCloseable {
 
-	protected final static Logger LOG = LoggerFactory.getLogger(AbstractDowner.class);
+	protected final static Logger log = LoggerFactory.getLogger(AbstractDowner.class);
 
 	protected AbstractCrawlWorker worker;
+	/**
+	 * 打开下载缓冲
+	 */
+	private boolean openDownCache;
+	/**
+	 * 使用下载缓冲
+	 */
+	private boolean useDownCache;
 	private HttpProxy httpProxy;
 	private String pageKey;
 	private String lastRequestUrl;
 	private HttpResult lastHttpResult;
+	private DownerCache downerCache;
 
-	public AbstractDowner(AbstractCrawlWorker worker) {
+	public AbstractDowner(AbstractCrawlWorker worker,boolean openDownCache,boolean useDownCache,DownerCache downerCache) {
 		this.worker = worker;
+		this.openDownCache=openDownCache;
+		this.useDownCache=useDownCache;
+		this.downerCache=downerCache;
 	}
 
 	protected abstract HttpResult insideDown(Page page) throws DownerException;
@@ -37,22 +50,28 @@ public abstract class AbstractDowner implements Downer, AutoCloseable {
 	/**
 	 * 记录上一次请求的url ，如果跟上一次请求url一样的话那么不下载
 	 */
-	public HttpResult down(Page page) throws DownerException {
+	public void down(Page page) throws DownerException {
 		if (null == page || StringUtils.isBlank(page.getOriginalUrl())) {
 			throw new DownerException("page is null or page's url is blank");
 		}
-		if (1 != page.getNoNeedDown()) {
-			if (!(StringUtils.equals(page.getPageKey(), pageKey)
-					&& StringUtils.equals(page.getOriginalUrl(), lastRequestUrl))) {
-				lastHttpResult = insideDown(page);
-				pageKey = page.getPageKey();
-				lastRequestUrl = page.getOriginalUrl();
-				lastHttpResult.setHtml(page.getPageSrc());
-			} else {
-				page.setPageSrc(lastHttpResult.getHtml());
+		if (!useDownCache) {
+			if (1 != page.getNoNeedDown()) {
+				if (!(StringUtils.equals(page.getPageKey(), pageKey)
+						&& StringUtils.equals(page.getOriginalUrl(), lastRequestUrl))) {
+					lastHttpResult = insideDown(page);
+					pageKey = page.getPageKey();
+					lastRequestUrl = page.getOriginalUrl();
+					lastHttpResult.setHtml(page.getPageSrc());
+					if (openDownCache) {
+						downerCache.write(page);
+					}
+				} else {
+					page.setPageSrc(lastHttpResult.getHtml());
+				}
 			}
+		} else {
+			downerCache.read(page);
 		}
-		return lastHttpResult;
 	}
 
 	public AbstractCrawlWorker getHtmlCommonWorker() {
@@ -94,6 +113,11 @@ public abstract class AbstractDowner implements Downer, AutoCloseable {
 
 	@Override
 	public final void close() {
-		insideColose();
+		try {
+			insideColose();
+		} catch (Exception e) {
+			log.error("", e);
+		}
+		downerCache.close();
 	}
 }

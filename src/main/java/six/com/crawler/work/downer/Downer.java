@@ -7,7 +7,6 @@ import org.openqa.selenium.WebElement;
 
 import six.com.crawler.entity.HttpProxy;
 import six.com.crawler.entity.Page;
-import six.com.crawler.http.HttpResult;
 import six.com.crawler.work.downer.exception.DownerException;
 
 /**
@@ -28,7 +27,7 @@ public interface Downer {
 	
 	public void click(WebElement webElement,String xpath);
 	
-	public HttpResult down(Page page) throws DownerException;
+	public void down(Page page) throws DownerException;
 	
 	public byte[] downBytes(Page page) throws DownerException;
 	

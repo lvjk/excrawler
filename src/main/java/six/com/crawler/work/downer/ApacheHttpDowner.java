@@ -18,6 +18,7 @@ import six.com.crawler.http.HttpResult;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.utils.AutoCharsetDetectorUtils.ContentType;
 import six.com.crawler.work.AbstractCrawlWorker;
+import six.com.crawler.work.downer.cache.DownerCache;
 import six.com.crawler.work.downer.exception.DownerException;
 import six.com.crawler.work.downer.exception.ManyRedirectDownException;
 
@@ -32,8 +33,9 @@ public class ApacheHttpDowner extends AbstractDowner {
 
 	private HttpClient httpClient;
 
-	public ApacheHttpDowner(AbstractCrawlWorker worker) {
-		super(worker);
+	public ApacheHttpDowner(AbstractCrawlWorker worker, boolean openDownCache, boolean useDownCache,
+			DownerCache downerCache) {
+		super(worker, openDownCache, useDownCache, downerCache);
 		httpClient = worker.getManager().getHttpClient();
 	}
 
@@ -65,8 +67,7 @@ public class ApacheHttpDowner extends AbstractDowner {
 				result = httpClient.executeHttpUriRequest(httpUriRequest);
 			} catch (AbstractHttpException e) {
 				// request execute 异常处理
-				throw new ManyRedirectDownException(
-						"execute request[" + httpUriRequest.getURI() + "] err", e);
+				throw new ManyRedirectDownException("execute request[" + httpUriRequest.getURI() + "] err", e);
 			}
 			if (StringUtils.isNotBlank(result.getRedirectedUrl())) {
 				requestUrl = result.getRedirectedUrl();
@@ -89,7 +90,6 @@ public class ApacheHttpDowner extends AbstractDowner {
 		HttpResult result = executeDown(page);
 		return result.getData();
 	}
-	
 
 	@Override
 	protected void insideColose() {

@@ -35,7 +35,6 @@ import com.google.common.collect.Sets;
 import six.com.crawler.common.DateFormats;
 import six.com.crawler.entity.Job;
 import six.com.crawler.entity.JobParam;
-import six.com.crawler.entity.JobParamKeys;
 import six.com.crawler.entity.JobRelationship;
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.JobSnapshotState;
@@ -47,6 +46,7 @@ import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.schedule.DispatchType;
 import six.com.crawler.schedule.consts.DownloadContants;
 import six.com.crawler.schedule.worker.AbstractWorkerSchedulerManager;
+import six.com.crawler.work.CrawlerJobParamKeys;
 
 /**
  * @author sixliu E-mail:359852326@qq.com
@@ -255,7 +255,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 				}
 				if (null != freeNodes && freeNodes.size() > 0) {
 					JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(job.getName());
-					jobSnapshot.setSaveRawData(job.getParamBoolean(JobParamKeys.IS_SAVE_RAW_DATA, false));
+					jobSnapshot.setSaveRawData(job.getParamBoolean(CrawlerJobParamKeys.IS_SAVE_RAW_DATA, false));
 					// 任务开始时候 开始时间和结束时间默认是一样的
 					jobSnapshot.setStartTime(
 							DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
