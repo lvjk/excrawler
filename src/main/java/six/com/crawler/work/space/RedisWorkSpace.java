@@ -155,7 +155,7 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 		}
 	}
 
-	public String batchGetDoingData(List<T> resutList, String cursorStr) {
+	public String batchGetDoingData(List<T> resutList,int segmentIndex, String cursorStr) {
 		return batchGet(resutList, cursorStr, queueKey);
 	}
 
@@ -163,7 +163,7 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 		return batchGet(resutList, cursorStr, errQueueKey);
 	}
 
-	public String batchGetDoneData(List<String> resutList, String cursorStr) {
+	public String batchGetDoneData(List<String> resutList,int segmentIndex, String cursorStr) {
 		Objects.requireNonNull(resutList, "resutList must not be null");
 		if (StringUtils.isBlank(cursorStr)) {
 			cursorStr = "0";
@@ -244,7 +244,12 @@ public class RedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 		}
 
 	}
-
+	
+	@Override
+	public int doingSegmentSize(){
+		return 0;
+	}
+	
 	@Override
 	public int doingSize() {
 		return redisManager.hllen(queueKey);

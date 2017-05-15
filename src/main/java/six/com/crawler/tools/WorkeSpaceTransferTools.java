@@ -68,15 +68,18 @@ public class WorkeSpaceTransferTools {
 			List<String> doneList = new ArrayList<>();
 			String cursorStr = "0";
 			int count = 0;
-			do {
-				cursorStr = doWorkQueue.batchGetDoneData(doneList, cursorStr);
-				count += doneList.size();
-				for (String dataKey : doneList) {
-					targetWorkQueue.addDone(dataKey);
-				}
-				doneList.clear();
-				System.out.println("do data size:" + count);
-			} while (!"0".equals(cursorStr));
+			int size = doWorkQueue.doingSegmentSize();
+			for (int segmentIndex = 0; segmentIndex < size;segmentIndex++) {
+				do {
+					cursorStr = doWorkQueue.batchGetDoneData(doneList, segmentIndex, cursorStr);
+					count += doneList.size();
+					for (String dataKey : doneList) {
+						targetWorkQueue.addDone(dataKey);
+					}
+					doneList.clear();
+					System.out.println("do data size:" + count);
+				} while (!"0".equals(cursorStr));
+			}
 			doWorkQueue.clearDone();
 		}
 

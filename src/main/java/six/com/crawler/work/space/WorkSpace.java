@@ -24,7 +24,7 @@ public interface WorkSpace<T extends WorkSpaceData> {
 	 * @param cursorStr
 	 * @return
 	 */
-	String batchGetDoingData(List<T> resutList, String cursorStr);
+	String batchGetDoingData(List<T> resutList,int segmentIndex, String cursorStr);
 
 	/**
 	 * 批量获取异常数据 当传入cursorStr为blank或者"0"的话，默认为新的查询,
@@ -45,7 +45,7 @@ public interface WorkSpace<T extends WorkSpaceData> {
 	 * @param cursorStr
 	 * @return
 	 */
-	String batchGetDoneData(List<String> resutList, String cursorStr);
+	String batchGetDoneData(List<String> resutList, int segmentIndex,String cursorStr);
 
 	/**
 	 * 将数据 推到工作队列中
@@ -116,6 +116,7 @@ public interface WorkSpace<T extends WorkSpaceData> {
 	 */
 	int doingSize();
 
+	int doingSegmentSize();
 	/**
 	 * 获取工作异常队列size
 	 * 
