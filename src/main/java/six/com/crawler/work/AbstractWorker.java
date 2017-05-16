@@ -33,7 +33,7 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 
 	private final static Logger log = LoggerFactory.getLogger(AbstractWorker.class);
 
-	private final static long REST_TIME = 2000;
+	private final static long DEFAULT_REST_TIME = 2000;
 	// 用来lock 读写 状态
 	private final StampedLock setStateLock = new StampedLock();
 	// 用来lock Condition.await() 和condition.signalAll();
@@ -133,27 +133,29 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 					try {
 						workData = getWorkSpace().pull();
 					} catch (Exception e) {
-						log.error("get data from workSpace err", e);
+						log.error("get data from workSpace", e);
 					}
 					if (null != workData) {
 						doStart(workData);
 					} else {
+						// wait状态只有worker自身获取不到数据时设置
 						compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.WAITED);
 					}
-					// 休息状态时会从队列里获取数据然后进行处理，如果获取到数据那么状态改为start,否则休息默认时间
+					// 休息状态时会检查工作队列是否为空，如果不为空那么状态改为start,否则休息默认时间
 				} else if (getState() == WorkerLifecycleState.REST) {
 					if (!getWorkSpace().doingIsEmpty()) {
-						compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.STARTED);
+						compareAndSetState(WorkerLifecycleState.REST, WorkerLifecycleState.STARTED);
+					} else {
+						signalWait(DEFAULT_REST_TIME);
 					}
-					signalWait(REST_TIME);
-					// wait状态时会询问管理者是否end，然后休息默认时间
+					// wait状态时会询问管理者是否end，然后休息
 				} else if (getState() == WorkerLifecycleState.WAITED) {
 					try {
 						manager.askEnd(getJob().getName(), getName());
+						signalWait(0);
 					} catch (Exception e) {
 						log.error("worker[" + getName() + "] ask manager is end", e);
 					}
-					signalWait(REST_TIME);
 					// suspend状态时会直接休息
 				} else if (getState() == WorkerLifecycleState.SUSPEND) {
 					signalWait(0);
@@ -240,7 +242,6 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 
 	@Override
 	public final void start() {
-		// 只有设置状态前 state=WorkerLifecycleState.READY 才会调用 work 方法
 		if (compareAndSetState(WorkerLifecycleState.READY, WorkerLifecycleState.STARTED)) {
 			work();
 		}
@@ -248,25 +249,23 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 
 	@Override
 	public final void rest() {
-		// 只有设置状态前 state=WorkerLifecycleState.STARTED 才会设置 WAITED
-		compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.WAITED);
+		compareAndSetState(WorkerLifecycleState.WAITED, WorkerLifecycleState.REST);
+		log.info("worker will rest:" + getName());
 	}
 
 	@Override
 	public final void suspend() {
-		// 只有设置状态前 state=WorkerLifecycleState.STARTED 才会设置 SUSPEND
 		if (compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.SUSPEND)) {
-			log.info("suspend worker:" + getName());
+			log.info("worker will suspend:" + getName());
 		}
 	}
 
 	@Override
 	public final void goOn() {
-		// 只有设置状态前 state=WorkerLifecycleState.SUSPEND 才会调用 waitLock.notify() 方法
 		if (compareAndSetState(WorkerLifecycleState.SUSPEND, WorkerLifecycleState.STARTED)
 				|| compareAndSetState(WorkerLifecycleState.WAITED, WorkerLifecycleState.STARTED)) {
 			signalRun();
-			log.info("goOn worker:" + getName());
+			log.info("worker will goOn:" + getName());
 		}
 	}
 
@@ -276,7 +275,7 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 		if (snapshot == WorkerLifecycleState.SUSPEND || snapshot == WorkerLifecycleState.WAITED) {
 			signalRun();
 		}
-		log.info("stop worker:" + getName());
+		log.info("worker will stop:" + getName());
 	}
 
 	@Override
@@ -285,14 +284,16 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 		if (snapshot == WorkerLifecycleState.SUSPEND || snapshot == WorkerLifecycleState.WAITED) {
 			signalRun();
 		}
-		log.info("finished worker:" + getName());
+		log.info("worker will finish:" + getName());
 	}
 
 	private void signalWait(long restTime) {
-		if ((getState() == WorkerLifecycleState.SUSPEND || getState() == WorkerLifecycleState.WAITED)) {
+		if ((getState() == WorkerLifecycleState.SUSPEND || getState() == WorkerLifecycleState.REST
+				|| getState() == WorkerLifecycleState.WAITED)) {
 			reentrantLock.lock();
 			try {
-				if ((getState() == WorkerLifecycleState.SUSPEND || getState() == WorkerLifecycleState.WAITED)) {
+				if ((getState() == WorkerLifecycleState.SUSPEND || getState() == WorkerLifecycleState.REST
+						|| getState() == WorkerLifecycleState.WAITED)) {
 					if (restTime > 0) {
 						condition.await(restTime, TimeUnit.MILLISECONDS);
 					} else {

@@ -140,11 +140,16 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 		T data = null;
 		try {
 			distributedLock.lock();
-			Index index = doingSegmentQueue.poll();
-			if (null != index) {
-				data = doingSegmentMap.get(index);
-				if (null != data) {
-					data.setIndex(index);
+			while (true) {
+				Index index = doingSegmentQueue.poll();
+				if (null != index) {
+					data = doingSegmentMap.get(index);
+					if (null != data) {
+						data.setIndex(index);
+						break;
+					}
+				} else {
+					break;
 				}
 			}
 		} catch (Exception e) {

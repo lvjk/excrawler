@@ -51,6 +51,9 @@ public interface WorkerLifecycle extends Lifecycle {
 	public void stop();
 	
 	
+	/**
+	 * 完成方法由管理者调用
+	 */
 	public void finish();
 
 	/**
