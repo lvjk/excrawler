@@ -6,14 +6,19 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import six.com.crawler.entity.Page;
+import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.space.WorkSpace;
 
+/**
+ * 
+ * @author weijiyong@tospur.com
+ *
+ */
 public class NbCnnbfdcPresellListWorker extends AbstractCrawlWorker {
 
 	WorkSpace<Page> presellInfoQueue;
@@ -28,15 +33,44 @@ public class NbCnnbfdcPresellListWorker extends AbstractCrawlWorker {
 
 	String projectListUrlTemplate = "http://newhouse.cnnbfdc.com/tmgs_xkzgs.aspx?p=" + pageIndexTemplate;
 
+	private Page buildPage(int pageIndex, String refererUrl) {
+		String pageUrl = StringUtils.replace(projectListUrlTemplate, pageIndexTemplate, String.valueOf(pageIndex));
+		Page page = new Page(getSite().getCode(), 1, pageUrl, pageUrl);
+		page.setReferer(refererUrl);
+		page.setMethod(HttpMethod.GET);
+		page.setType(PageType.LISTING.value());
+		return page;
+	}
+	
 	@Override
 	protected void insideInit() {
-		String firstUrl = StringUtils.replace(projectListUrlTemplate, pageIndexTemplate, String.valueOf(pageIndex));
 		presellInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("nb_cnnbfdc_presell_info", Page.class);
-		if (!(helper.isDownloadState() && helper.isUseRawData())) {
-			Page firstPage = new Page(getSite().getCode(), 1, firstUrl, firstUrl);
-			firstPage.setMethod(HttpMethod.GET);
-			getWorkSpace().clearDoing();
-			getWorkSpace().push(firstPage);
+		
+		int pageIndex = 1;
+		Page firstPage = buildPage(pageIndex,null);// 初始化第一页
+		
+		getDowner().down(firstPage);
+		
+		Element pageCountElement = firstPage.getDoc().select(pageCountCss).first();
+		
+		String endPageUrl = pageCountElement.attr("href");
+		String pageCountStr = StringUtils.remove(endPageUrl, "http://newhouse.cnnbfdc.com/tmgs_xkzgs.aspx?p=");
+		if (NumberUtils.isNumber(pageCountStr)) {
+			pageCount = Integer.valueOf(pageCountStr);
+		} else {
+			throw new RuntimeException("pageCount isn't num:" + pageCountStr);
+		}
+		
+		getWorkSpace().clearDoing();
+		
+		getWorkSpace().push(firstPage);
+		
+		Page lastPage = firstPage;
+		while (pageIndex <= pageCount) {
+			Page nextPage = buildPage(pageIndex, lastPage.getFinalUrl());// 初始化第一页
+			getWorkSpace().push(nextPage);
+			lastPage = nextPage;
+			pageIndex++;
 		}
 	}
 
@@ -46,26 +80,6 @@ public class NbCnnbfdcPresellListWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected void beforeExtract(Page doingPage) {
-		if (pageCount == -1) {
-			Element pageCountElement = doingPage.getDoc().select(pageCountCss).first();
-			
-			if (null == pageCountElement) {
-				Elements pageElements = doingPage.getDoc().select("div[class='PagerCss']>a");
-				pageCountElement = pageElements.get(pageElements.size() - 2);
-			}
-			
-			if (null == pageCountElement) {
-				throw new RuntimeException("don't find pageCountElement:" + pageCountCss);
-			} else {
-				String endPageUrl = pageCountElement.attr("href");
-				String pageCountStr = StringUtils.remove(endPageUrl, "http://newhouse.cnnbfdc.com/tmgs_xkzgs.aspx?p=");
-				if (NumberUtils.isNumber(pageCountStr)) {
-					pageCount = Integer.valueOf(pageCountStr);
-				} else {
-					throw new RuntimeException("pageCount isn't num:" + pageCountStr);
-				}
-			}
-		}
 	}
 
 	@Override
@@ -97,18 +111,6 @@ public class NbCnnbfdcPresellListWorker extends AbstractCrawlWorker {
 				projectInfoPage.getMetaMap().put("region", Arrays.asList(region));
 				projectInfoPage.getMetaMap().put("developerName", Arrays.asList(developerName));
 				presellInfoQueue.push(projectInfoPage);
-			}
-		}
-
-		if (!(helper.isDownloadState() && helper.isUseRawData())) {
-			pageIndex++;
-			if (pageIndex <= pageCount) {
-				String firstUrl = StringUtils.replace(projectListUrlTemplate, pageIndexTemplate,
-						String.valueOf(pageIndex));
-				Page nextgPage = new Page(getSite().getCode(), 1, firstUrl, firstUrl);
-				nextgPage.setReferer(doingPage.getFinalUrl());
-				nextgPage.setMethod(HttpMethod.GET);
-				getWorkSpace().push(nextgPage);
 			}
 		}
 	}
