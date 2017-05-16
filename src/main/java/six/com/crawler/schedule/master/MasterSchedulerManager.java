@@ -445,13 +445,18 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 		if (null != dispatchType && DispatchType.DISPATCH_TYPE_WORKER.equals(dispatchType.getName())) {
 			synchronized (keyLock.intern(jobName)) {
 				if (isWait(jobName)) {
+					log.info("check job[" + jobName + "]'s worker is all wait");
 					JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(jobName);
 					WorkSpace<WorkSpaceData> workSpace = getWorkSpaceManager()
 							.newWorkSpace(jobSnapshot.getWorkSpaceName(), WorkSpaceData.class);
+					log.info("start to repair workSpace[" + jobSnapshot.getWorkSpaceName() + "]");
 					workSpace.repair();
+					log.info("end to repair workSpace[" + jobSnapshot.getWorkSpaceName() + "]");
 					if (!workSpace.doingIsEmpty()) {
+						log.info("check workSpace is not empty after repaired workSpace[" + jobSnapshot.getWorkSpaceName() + "]");
 						goOn(DispatchType.newDispatchTypeByManual(), jobName);
 					} else {
+						log.info("check workSpace is empty after repaired workSpace[" + jobSnapshot.getWorkSpaceName() + "]");
 						// 判断当前worker's job是被什么类型调度的 1.MANUAL手动触发
 						// 2.SCHEDULER调度器触发
 						if (DispatchType.DISPATCH_TYPE_MANUAL.equals(jobSnapshot.getDispatchType().getName())
@@ -491,16 +496,18 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 								// 时，那么应该休眠1000毫秒，否则保持跟触发它的jobSnapshot状态一样
 								if (JobSnapshotState.EXECUTING == lastJobSnapshot.getEnumStatus()
 										|| JobSnapshotState.SUSPEND == lastJobSnapshot.getEnumStatus()) {
-									stop(DispatchType.newDispatchTypeByManual(), jobName);
+									rest(DispatchType.newDispatchTypeByMaster(), jobName);
 								} else if (JobSnapshotState.FINISHED == lastJobSnapshot.getEnumStatus()) {
 									finish(DispatchType.newDispatchTypeByMaster(), jobName);
 								} else if (JobSnapshotState.STOP == lastJobSnapshot.getEnumStatus()) {
-									stop(DispatchType.newDispatchTypeByManual(), jobName);
+									stop(DispatchType.newDispatchTypeByMaster(), jobName);
 								}
 							}
 						}
 
 					}
+				} else {
+					log.info("check job[" + jobName + "]'s worker is not all wait");
 				}
 			}
 		}
@@ -551,7 +558,6 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 
 	@Override
 	public synchronized void stopAll(DispatchType dispatchType) {
-
 		List<JobSnapshot> allJobs = getScheduleCache().getJobSnapshots();
 		Node currentNode = getNodeManager().getCurrentNode();
 		for (JobSnapshot jobSnapshot : allJobs) {

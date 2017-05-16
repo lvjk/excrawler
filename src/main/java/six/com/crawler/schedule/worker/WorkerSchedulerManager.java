@@ -208,7 +208,7 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 					});
 			masterSchedulerManager.askEnd(DispatchType.newDispatchTypeByWorker(), jobName);
 		} catch (Exception e) {
-			log.error("notice master node job[" + jobName + "]'s worker[" + workerName + "] is end err", e);
+			log.error("ask master job[" + jobName + "]'s worker[" + workerName + "] is end", e);
 		}
 	}
 
