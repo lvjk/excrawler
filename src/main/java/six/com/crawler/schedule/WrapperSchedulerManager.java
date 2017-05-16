@@ -123,4 +123,14 @@ public class WrapperSchedulerManager extends AbstractSchedulerManager {
 	public void destroy() {
 		shutdown();
 	}
+
+	@Override
+	public void rest(DispatchType dispatchType, String jobName) {
+		
+	}
+
+	@Override
+	public void finish(DispatchType dispatchType, String jobName) {
+		
+	}
 }

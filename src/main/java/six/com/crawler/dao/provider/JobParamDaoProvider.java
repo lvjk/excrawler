@@ -7,7 +7,7 @@ import org.apache.ibatis.jdbc.SQL;
 
 import six.com.crawler.dao.BaseDao;
 
-import six.com.crawler.dao.JobParamDao;
+import six.com.crawler.dao.TableNames;
 import six.com.crawler.entity.JobParam;
 
 /**
@@ -25,7 +25,7 @@ public class JobParamDaoProvider extends BaseProvider{
 				+ "#{list["+INDEX_FLAG+"].name},"
 				+ "#{list["+INDEX_FLAG+"].value})";
 		StringBuilder sbd = new StringBuilder();  
-		sbd.append("insert into ").append(JobParamDao.TABLE_NAME);  
+		sbd.append("insert into ").append(TableNames.JOB_PARAM_TABLE_NAME);  
 		sbd.append("(").append(columns).append(") ");  
 		sbd.append("values");  
 		sbd.append(setBatchSaveSql(values,extractPaths));
@@ -34,7 +34,7 @@ public class JobParamDaoProvider extends BaseProvider{
 	
 	public String update(Map<String, Object> map) {
 		SQL sql=new SQL();
-		sql.UPDATE(JobParamDao.TABLE_NAME);
+		sql.UPDATE(TableNames.JOB_PARAM_TABLE_NAME);
 		sql.SET("`version` = #{newVersion}");
 		sql.SET("`name` = #{name}");
 		sql.SET("`value` = #{value}");

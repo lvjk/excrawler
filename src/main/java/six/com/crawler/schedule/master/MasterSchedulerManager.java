@@ -30,7 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.google.common.collect.Sets;
+import com.google.common.collect.Interner;
+import com.google.common.collect.Interners;
 
 import six.com.crawler.common.DateFormats;
 import six.com.crawler.entity.Job;
@@ -47,6 +48,8 @@ import six.com.crawler.schedule.DispatchType;
 import six.com.crawler.schedule.consts.DownloadContants;
 import six.com.crawler.schedule.worker.AbstractWorkerSchedulerManager;
 import six.com.crawler.work.CrawlerJobParamKeys;
+import six.com.crawler.work.space.WorkSpace;
+import six.com.crawler.work.space.WorkSpaceData;
 
 /**
  * @author sixliu E-mail:359852326@qq.com
@@ -92,6 +95,8 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	private final static String schedulerGroup = "exCrawler";
 
 	private ExecutorService executor;
+
+	private Interner<String> keyLock = Interners.<String>newWeakInterner();
 
 	protected void doInit() {
 		initScheduler();
@@ -194,7 +199,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	 * @param job
 	 */
 	public void execute(DispatchType dispatchType, String jobName) {
-		getScheduleDispatchTypeIntercept().intercept(dispatchType, null, null, () -> {
+		synchronized (keyLock.intern(jobName)) {
 			if (!isRunning(jobName)) {
 				Job job = getJobDao().query(jobName);
 				if (null != job) {
@@ -220,8 +225,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 					log.info("ready to execute job[" + jobName + "] is null");
 				}
 			}
-			return null;
-		});
+		}
 	}
 
 	/**
@@ -313,168 +317,279 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 
 	@Override
 	public void suspend(DispatchType dispatchType, String jobName) {
-		getScheduleDispatchTypeIntercept().intercept(dispatchType, Sets.newHashSet(DispatchType.DISPATCH_TYPE_MANUAL),
-				getOperationJobLockPath(jobName), () -> {
-					Set<Node> nodes = getWorkerNode(jobName);
-					AbstractWorkerSchedulerManager workerSchedulerManager = null;
-					for (Node node : nodes) {
-						try {
-							workerSchedulerManager = getNodeManager().loolup(node, AbstractWorkerSchedulerManager.class,
-									result -> {
-										if (isSuspend(jobName)) {
-											JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(jobName);
-											jobSnapshot.setStatus(JobSnapshotState.SUSPEND.value());
-											getScheduleCache().updateJobSnapshot(jobSnapshot);
-										}
-									});
-							workerSchedulerManager.suspend(DispatchType.newDispatchTypeByMaster(), jobName);
-							log.info("already request worker node[" + node.getName() + "] to suspend the job[" + jobName
-									+ "]");
-						} catch (Exception e) {
-							log.error("get node[" + node.getName() + "]'s workerSchedulerManager err", e);
-						}
+		if (null != dispatchType && DispatchType.DISPATCH_TYPE_MANUAL.equals(dispatchType.getName())) {
+			synchronized (keyLock.intern(jobName)) {
+				Set<Node> nodes = getWorkerNode(jobName);
+				AbstractWorkerSchedulerManager workerSchedulerManager = null;
+				for (Node node : nodes) {
+					try {
+						workerSchedulerManager = getNodeManager().loolup(node, AbstractWorkerSchedulerManager.class,
+								result -> {
+									if (isSuspend(jobName)) {
+										JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(jobName);
+										jobSnapshot.setStatus(JobSnapshotState.SUSPEND.value());
+										getScheduleCache().updateJobSnapshot(jobSnapshot);
+									}
+								});
+						workerSchedulerManager.suspend(DispatchType.newDispatchTypeByMaster(), jobName);
+						log.info("already request worker node[" + node.getName() + "] to suspend the job[" + jobName
+								+ "]");
+					} catch (Exception e) {
+						log.error("get node[" + node.getName() + "]'s workerSchedulerManager err", e);
 					}
-					return null;
-				});
+				}
+			}
+		}
 	}
 
 	@Override
 	public void goOn(DispatchType dispatchType, String jobName) {
-		getScheduleDispatchTypeIntercept().intercept(dispatchType, Sets.newHashSet(DispatchType.DISPATCH_TYPE_MANUAL),
-				getOperationJobLockPath(jobName), () -> {
-					Set<Node> nodes = getWorkerNode(jobName);
-					AbstractWorkerSchedulerManager workerSchedulerManager = null;
-					for (Node node : nodes) {
-						try {
-							workerSchedulerManager = getNodeManager().loolup(node, AbstractWorkerSchedulerManager.class,
-									result -> {
-										if (isRunning(jobName)) {
-											JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(jobName);
-											jobSnapshot.setStatus(JobSnapshotState.EXECUTING.value());
-											getScheduleCache().updateJobSnapshot(jobSnapshot);
-										}
-									});
-							workerSchedulerManager.goOn(DispatchType.newDispatchTypeByMaster(), jobName);
-							log.info("already request worker node[" + node.getName() + "] to goOn the job[" + jobName
-									+ "]");
-						} catch (Exception e) {
-							log.error("get node[" + node.getName() + "]'s workerSchedulerManager err", e);
-						}
+		if (null != dispatchType && (DispatchType.DISPATCH_TYPE_MANUAL.equals(dispatchType.getName())
+				|| DispatchType.DISPATCH_TYPE_MASTER.equals(dispatchType.getName()))) {
+			synchronized (keyLock.intern(jobName)) {
+				Set<Node> nodes = getWorkerNode(jobName);
+				AbstractWorkerSchedulerManager workerSchedulerManager = null;
+				for (Node node : nodes) {
+					try {
+						workerSchedulerManager = getNodeManager().loolup(node, AbstractWorkerSchedulerManager.class,
+								result -> {
+									if (isRunning(jobName)) {
+										JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(jobName);
+										jobSnapshot.setStatus(JobSnapshotState.EXECUTING.value());
+										getScheduleCache().updateJobSnapshot(jobSnapshot);
+									}
+								});
+						workerSchedulerManager.goOn(DispatchType.newDispatchTypeByMaster(), jobName);
+						log.info(
+								"already request worker node[" + node.getName() + "] to goOn the job[" + jobName + "]");
+					} catch (Exception e) {
+						log.error("get node[" + node.getName() + "]'s workerSchedulerManager err", e);
 					}
-					return null;
-				});
+				}
+			}
+		}
 	}
 
 	@Override
 	public void stop(DispatchType dispatchType, String jobName) {
-		getScheduleDispatchTypeIntercept().intercept(dispatchType, Sets.newHashSet(DispatchType.DISPATCH_TYPE_MANUAL),
-				getOperationJobLockPath(jobName), () -> {
-					Set<Node> nodes = getWorkerNode(jobName);
-					AbstractWorkerSchedulerManager workerSchedulerManager = null;
-					for (Node node : nodes) {
-						try {
-							workerSchedulerManager = getNodeManager().loolup(node, AbstractWorkerSchedulerManager.class,
-									result -> {
+		if (null != dispatchType && (DispatchType.DISPATCH_TYPE_MANUAL.equals(dispatchType.getName())
+				|| DispatchType.DISPATCH_TYPE_MASTER.equals(dispatchType.getName()))) {
+			synchronized (keyLock.intern(jobName)) {
+				Set<Node> nodes = getWorkerNode(jobName);
+				AbstractWorkerSchedulerManager workerSchedulerManager = null;
+				for (Node node : nodes) {
+					try {
+						workerSchedulerManager = getNodeManager().loolup(node, AbstractWorkerSchedulerManager.class,
+								result -> {
 
-									});
-							workerSchedulerManager.stop(DispatchType.newDispatchTypeByMaster(), jobName);
-							log.info("already request worker node[" + node.getName() + "] to stop the job[" + jobName
-									+ "]");
-						} catch (Exception e) {
-							log.error("get node[" + node.getName() + "]'s workerSchedulerManager err", e);
-						}
+								});
+						workerSchedulerManager.stop(DispatchType.newDispatchTypeByMaster(), jobName);
+						log.info(
+								"already request worker node[" + node.getName() + "] to stop the job[" + jobName + "]");
+					} catch (Exception e) {
+						log.error("get node[" + node.getName() + "]'s workerSchedulerManager err", e);
 					}
-					return null;
-				});
+				}
+			}
+		}
+	}
+
+	@Override
+	public void rest(DispatchType dispatchType, String jobName) {
+		if (null != dispatchType && DispatchType.DISPATCH_TYPE_MASTER.equals(dispatchType.getName())) {
+			synchronized (keyLock.intern(jobName)) {
+				Set<Node> nodes = getWorkerNode(jobName);
+				AbstractWorkerSchedulerManager workerSchedulerManager = null;
+				for (Node node : nodes) {
+					try {
+						workerSchedulerManager = getNodeManager().loolup(node, AbstractWorkerSchedulerManager.class,
+								result -> {
+
+								});
+						workerSchedulerManager.rest(DispatchType.newDispatchTypeByMaster(), jobName);
+						log.info(
+								"already request worker node[" + node.getName() + "] to wait the job[" + jobName + "]");
+					} catch (Exception e) {
+						log.error("get node[" + node.getName() + "]'s workerSchedulerManager err", e);
+					}
+				}
+			}
+		}
+	}
+
+	@Override
+	public void finish(DispatchType dispatchType, String jobName) {
+		if (null != dispatchType && DispatchType.DISPATCH_TYPE_MASTER.equals(dispatchType.getName())) {
+			synchronized (keyLock.intern(jobName)) {
+				Set<Node> nodes = getWorkerNode(jobName);
+				AbstractWorkerSchedulerManager workerSchedulerManager = null;
+				for (Node node : nodes) {
+					try {
+						workerSchedulerManager = getNodeManager().loolup(node, AbstractWorkerSchedulerManager.class,
+								result -> {
+
+								});
+						workerSchedulerManager.finish(DispatchType.newDispatchTypeByMaster(), jobName);
+						log.info("already request worker node[" + node.getName() + "] to finish the job[" + jobName
+								+ "]");
+					} catch (Exception e) {
+						log.error("get node[" + node.getName() + "]'s workerSchedulerManager err", e);
+					}
+				}
+			}
+		}
+	}
+
+	@Override
+	public void askEnd(DispatchType dispatchType, String jobName) {
+		if (null != dispatchType && DispatchType.DISPATCH_TYPE_WORKER.equals(dispatchType.getName())) {
+			synchronized (keyLock.intern(jobName)) {
+				if (isWait(jobName)) {
+					JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(jobName);
+					WorkSpace<WorkSpaceData> workSpace = getWorkSpaceManager()
+							.newWorkSpace(jobSnapshot.getWorkSpaceName(), WorkSpaceData.class);
+					workSpace.repair();
+					if (!workSpace.doingIsEmpty()) {
+						goOn(DispatchType.newDispatchTypeByManual(), jobName);
+					} else {
+						// 判断当前worker's job是被什么类型调度的 1.MANUAL手动触发
+						// 2.SCHEDULER调度器触发
+						if (DispatchType.DISPATCH_TYPE_MANUAL.equals(jobSnapshot.getDispatchType().getName())
+								|| DispatchType.DISPATCH_TYPE_SCHEDULER
+										.equals(jobSnapshot.getDispatchType().getName())) {
+							finish(DispatchType.newDispatchTypeByMaster(), jobName);
+						} else {
+							// 通过当job的触发获取它触发的它的job快照
+							JobSnapshot lastJobSnapshot = getScheduleCache()
+									.getJobSnapshot(jobSnapshot.getDispatchType().getName());
+							// 如果触发的它的job快照==null,那么触发的它的job已经停止运行
+							if (null == lastJobSnapshot) {
+								// 从历史记录中获取触发它的 JobSnapshot
+								lastJobSnapshot = getJobSnapshotDao().query(
+										jobSnapshot.getDispatchType().getCurrentTimeMillis(),
+										jobSnapshot.getDispatchType().getName());
+								// 如果没获取到历史记录那么，我们将stop.然后打印日志非法被执行
+								if (null == lastJobSnapshot) {
+									stop(DispatchType.newDispatchTypeByManual(), jobName);
+									log.error("the job[" + jobName + "]'s jobSnapshot[" + jobSnapshot.getId()
+											+ "] is illegal execution");
+								} else {
+									// 如果触发它的jobSnapshot状态等于finishedstop
+									// 时， 当前状态保持一致
+									if (JobSnapshotState.FINISHED == lastJobSnapshot.getEnumStatus()) {
+										finish(DispatchType.newDispatchTypeByMaster(), jobName);
+									} else if (JobSnapshotState.STOP == lastJobSnapshot.getEnumStatus()) {
+										stop(DispatchType.newDispatchTypeByManual(), jobName);
+									}
+									// 如果触发它的jobSnapshot状态等于EXECUTING时，那么触发它的job没有被正常stop,但是当前状态应该设置为stop
+									else if (JobSnapshotState.EXECUTING == lastJobSnapshot.getEnumStatus()) {
+										stop(DispatchType.newDispatchTypeByManual(), jobName);
+									}
+								}
+							} else {
+								// 如果触发它的jobSnapshot状态等于EXECUTING或者SUSPEND
+								// 时，那么应该休眠1000毫秒，否则保持跟触发它的jobSnapshot状态一样
+								if (JobSnapshotState.EXECUTING == lastJobSnapshot.getEnumStatus()
+										|| JobSnapshotState.SUSPEND == lastJobSnapshot.getEnumStatus()) {
+									stop(DispatchType.newDispatchTypeByManual(), jobName);
+								} else if (JobSnapshotState.FINISHED == lastJobSnapshot.getEnumStatus()) {
+									finish(DispatchType.newDispatchTypeByMaster(), jobName);
+								} else if (JobSnapshotState.STOP == lastJobSnapshot.getEnumStatus()) {
+									stop(DispatchType.newDispatchTypeByManual(), jobName);
+								}
+							}
+						}
+
+					}
+				}
+			}
+		}
 	}
 
 	@Override
 	public void endWorker(DispatchType dispatchType, String jobName) {
-		getScheduleDispatchTypeIntercept().intercept(dispatchType, Sets.newHashSet(DispatchType.DISPATCH_TYPE_WORKER),
-				getOperationJobLockPath(jobName), () -> {
-					boolean isFinish = isFinish(jobName);
-					boolean isStop = isStop(jobName);
-					if (isFinish || isStop) {
-						JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(jobName);
-						if (null != jobSnapshot) {
-							JobSnapshotState state = null;
-							if (isFinish) {
-								state = JobSnapshotState.FINISHED;
-							} else {
-								state = JobSnapshotState.STOP;
+		if (null != dispatchType && DispatchType.DISPATCH_TYPE_WORKER.equals(dispatchType.getName())) {
+			synchronized (keyLock.intern(jobName)) {
+				boolean isFinish = isFinish(jobName);
+				boolean isStop = isStop(jobName);
+				if (isFinish || isStop) {
+					JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(jobName);
+					if (null != jobSnapshot) {
+						JobSnapshotState state = null;
+						if (isFinish) {
+							state = JobSnapshotState.FINISHED;
+						} else {
+							state = JobSnapshotState.STOP;
+						}
+						jobSnapshot.setStatus(state.value());
+						jobSnapshot.setEndTime(DateFormatUtils.format(new Date(), DateFormats.DATE_FORMAT_1));
+
+						List<WorkerSnapshot> workerSnapshots = getScheduleCache().getWorkerSnapshots(jobName);
+						totalWorkerSnapshot(jobSnapshot, workerSnapshots);
+
+						reportJobSnapshot(jobSnapshot);
+
+						getScheduleCache().delJob(jobName);
+						getScheduleCache().delWorkerSnapshots(jobName);
+						getScheduleCache().delJobSnapshot(jobName);
+
+						// 当任务正常完成时 判断是否有当前任务是否有下个执行任务，如果有的话那么直接执行
+						if (JobSnapshotState.FINISHED == state) {
+							// 更新downloadState。
+							if (jobSnapshot.isSaveRawData()) {
+								getJobSnapshotDao().updateDownloadStatus(jobSnapshot.getVersion(),
+										jobSnapshot.getVersion() + 1, jobSnapshot.getId(),
+										DownloadContants.DOWN_LOAD_FINISHED);
 							}
-							jobSnapshot.setStatus(state.value());
-							jobSnapshot.setEndTime(DateFormatUtils.format(new Date(), DateFormats.DATE_FORMAT_1));
-
-							List<WorkerSnapshot> workerSnapshots = getScheduleCache().getWorkerSnapshots(jobName);
-							totalWorkerSnapshot(jobSnapshot, workerSnapshots);
-
-							reportJobSnapshot(jobSnapshot);
-
-							getScheduleCache().delJob(jobName);
-							getScheduleCache().delWorkerSnapshots(jobName);
-							getScheduleCache().delJobSnapshot(jobName);
-
-							// 当任务正常完成时 判断是否有当前任务是否有下个执行任务，如果有的话那么直接执行
-							if (JobSnapshotState.FINISHED == state) {
-								// 更新downloadState。
-								if (jobSnapshot.isSaveRawData()) {
-									getJobSnapshotDao().updateDownloadStatus(jobSnapshot.getVersion(),
-											jobSnapshot.getVersion() + 1, jobSnapshot.getId(),
-											DownloadContants.DOWN_LOAD_FINISHED);
-								}
-								doJobRelationship(jobSnapshot, JobRelationship.TRIGGER_TYPE_SERIAL);
-							}
+							doJobRelationship(jobSnapshot, JobRelationship.TRIGGER_TYPE_SERIAL);
 						}
 					}
-					return null;
-				});
+				}
+			}
+		}
 	}
 
 	@Override
 	public synchronized void stopAll(DispatchType dispatchType) {
-		getScheduleDispatchTypeIntercept().intercept(dispatchType, Sets.newHashSet(DispatchType.DISPATCH_TYPE_MANUAL),
-				null, () -> {
-					List<JobSnapshot> allJobs = getScheduleCache().getJobSnapshots();
-					Node currentNode = getNodeManager().getCurrentNode();
-					for (JobSnapshot jobSnapshot : allJobs) {
-						Job job = getJobDao().query(jobSnapshot.getName());
-						Set<Node> nodes = getWorkerNode(job.getName());
-						AbstractWorkerSchedulerManager workerSchedulerManager = null;
-						for (Node node : nodes) {
-							if (!currentNode.equals(node)) {
-								try {
-									workerSchedulerManager = getNodeManager().loolup(node,
-											AbstractWorkerSchedulerManager.class, result -> {
 
-											});
-									workerSchedulerManager.stop(DispatchType.newDispatchTypeByMaster(), job.getName());
-									log.info("Already request worker node[" + node.getName() + "] to stop the job["
-											+ job.getName() + "]");
-								} catch (Exception e) {
-									log.error("get node[" + node.getName() + "]'s workerSchedulerManager err", e);
-								}
-							}
-						}
-					}
-					List<Node> nodes = getNodeManager().getWorkerNodes();
-					AbstractWorkerSchedulerManager workerSchedulerManager = null;
-					for (Node node : nodes) {
-						if (!currentNode.equals(node)) {
-							try {
-								workerSchedulerManager = getNodeManager().loolup(node,
-										AbstractWorkerSchedulerManager.class, result -> {
+		List<JobSnapshot> allJobs = getScheduleCache().getJobSnapshots();
+		Node currentNode = getNodeManager().getCurrentNode();
+		for (JobSnapshot jobSnapshot : allJobs) {
+			Job job = getJobDao().query(jobSnapshot.getName());
+			Set<Node> nodes = getWorkerNode(job.getName());
+			AbstractWorkerSchedulerManager workerSchedulerManager = null;
+			for (Node node : nodes) {
+				if (!currentNode.equals(node)) {
+					try {
+						workerSchedulerManager = getNodeManager().loolup(node, AbstractWorkerSchedulerManager.class,
+								result -> {
 
-										});
-								workerSchedulerManager.stopAll(DispatchType.newDispatchTypeByMaster());
-								log.info("Already request worker node[" + node.getName() + "] to stop all");
-							} catch (Exception e) {
-								log.error("get node[" + node.getName() + "]'s workerSchedulerManager err", e);
-							}
-						}
+								});
+						workerSchedulerManager.stop(DispatchType.newDispatchTypeByMaster(), job.getName());
+						log.info("Already request worker node[" + node.getName() + "] to stop the job[" + job.getName()
+								+ "]");
+					} catch (Exception e) {
+						log.error("get node[" + node.getName() + "]'s workerSchedulerManager err", e);
 					}
-					return null;
-				});
+				}
+			}
+		}
+		List<Node> nodes = getNodeManager().getWorkerNodes();
+		AbstractWorkerSchedulerManager workerSchedulerManager = null;
+		for (Node node : nodes) {
+			if (!currentNode.equals(node)) {
+				try {
+					workerSchedulerManager = getNodeManager().loolup(node, AbstractWorkerSchedulerManager.class,
+							result -> {
+
+							});
+					workerSchedulerManager.stopAll(DispatchType.newDispatchTypeByMaster());
+					log.info("Already request worker node[" + node.getName() + "] to stop all");
+				} catch (Exception e) {
+					log.error("get node[" + node.getName() + "]'s workerSchedulerManager err", e);
+				}
+			}
+		}
 	}
 
 	@Transactional
@@ -593,5 +708,4 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 			executor.shutdown();
 		}
 	}
-
 }

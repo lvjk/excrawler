@@ -16,6 +16,11 @@ public enum WorkerLifecycleState  implements Serializable{
 	 * 等待
 	 */
 	WAITED(WorkerLifecycle.WAITED),
+	
+	/**
+	 * 等待
+	 */
+	REST(WorkerLifecycle.REST),
 	/**
 	 * 暂停
 	 */

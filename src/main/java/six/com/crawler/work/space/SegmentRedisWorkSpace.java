@@ -104,15 +104,9 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 		distributedLock.lock();
 		try {
 			String dataKey = data.getKey();
-			String mapKey = doingSegmentMap.where(dataKey);
-			if (null == mapKey) {
-				Index index = doingSegmentMap.put(mapKey, dataKey, data);
-				doingSegmentQueue.push(index);
-				log.info("push workSpace[" + workSpaceName + "] data succeed:" + data.toString());
-			} else {
-				doingSegmentMap.put(mapKey, data.getKey(), data);
-				log.info("update workSpace[" + workSpaceName + "] data succeed:" + data.toString());
-			}
+			Index index = doingSegmentMap.put(null, dataKey, data);
+			doingSegmentQueue.push(index);
+			log.info("push workSpace[" + workSpaceName + "] data succeed:" + data.toString());
 			return true;
 		} catch (Exception e) {
 			log.error("push workSpace[" + workSpaceName + "] data err:" + data.toString(), e);
@@ -130,6 +124,7 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 			distributedLock.lock();
 			try {
 				doingSegmentMap.put(index.getMapKey(), index.getDataKey(), data);
+				doingSegmentQueue.push(index);
 				return true;
 			} catch (Exception e) {
 				throw e;
@@ -148,7 +143,9 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 			Index index = doingSegmentQueue.poll();
 			if (null != index) {
 				data = doingSegmentMap.get(index);
-				data.setIndex(index);
+				if (null != data) {
+					data.setIndex(index);
+				}
 			}
 		} catch (Exception e) {
 			log.error("pull workSpace[" + workSpaceName + "] data err", e);
@@ -266,15 +263,15 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 	}
 
 	@Override
-	public int doingSegmentSize(){
+	public int doingSegmentSize() {
 		return doingSegmentMap.segmentSize();
 	}
-	
+
 	@Override
-	public boolean doingIsEmpty(){
-		return 0==doingSegmentMap.size()&&0==doingSegmentQueue.size();
+	public boolean doingIsEmpty() {
+		return 0 == doingSegmentMap.size() && 0 == doingSegmentQueue.size();
 	}
-	
+
 	@Override
 	public int doingSize() {
 		return doingSegmentMap.size();

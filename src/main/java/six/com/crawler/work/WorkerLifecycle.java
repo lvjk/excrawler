@@ -13,6 +13,8 @@ public interface WorkerLifecycle extends Lifecycle {
 	public static final String STARTED = "started";// 运行
 	
 	public static final String WAITED = "waited";// 等待
+	
+	public static final String REST = "rest";// 休息下
 
 	public static final String SUSPEND = "suspend";// 暂停
 	
@@ -31,8 +33,7 @@ public interface WorkerLifecycle extends Lifecycle {
 	/**
 	 * 在运行状态下，没有处理数据事等待
 	 */
-	public void waited();
-
+	public void rest();
 
 	/**
 	 * 暂停方法 只有在state==stared时候调用
@@ -48,6 +49,9 @@ public interface WorkerLifecycle extends Lifecycle {
 	 * 停止方法在任何状态时候都可以调用
 	 */
 	public void stop();
+	
+	
+	public void finish();
 
 	/**
 	 * 销毁 方法 最后结束时候调用

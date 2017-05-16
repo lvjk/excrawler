@@ -17,15 +17,14 @@ import six.com.crawler.work.extract.ExtractItem;
  */
 public interface ExtractItemDao extends BaseDao {
 
-	public static String TABLE_NAME = "ex_crawler_platform_extract_item";
 
 	@Select("select jobName,serialNub,pathName,`primary`,type,outputType,outputKey,mustHaveResult,`describe` from "
-			+ TABLE_NAME + " where jobName=#{jobName} order by serialNub asc")
+			+ TableNames.JOB_EXTRACT_ITEM_TABLE_NAME + " where jobName=#{jobName} order by serialNub asc")
 	public List<ExtractItem> query(String jobName);
 
 	@InsertProvider(type = ExtractItemDaoProvider.class, method = "batchSave")
 	public int batchSave(@Param(BATCH_SAVE_PARAM) List<ExtractItem> paserResults);
 	
-	@Delete("delete from "+TABLE_NAME+" where jobName = #{jobName}")
+	@Delete("delete from "+TableNames.JOB_EXTRACT_ITEM_TABLE_NAME+" where jobName = #{jobName}")
 	public int del(String jobName);
 }

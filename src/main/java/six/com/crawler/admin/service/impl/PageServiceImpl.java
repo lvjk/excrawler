@@ -22,7 +22,7 @@ public class PageServiceImpl implements PageService{
 	
 	@Override
 	public List<Page> query(String sitecode,List<String> urlMd5s) {
-		List<Page> result=pageDao.query(sitecode, urlMd5s);
+		List<Page> result=pageDao.queryByPageKeys(sitecode, urlMd5s);
 		return result;
 	}
 

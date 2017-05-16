@@ -17,8 +17,7 @@ import six.com.crawler.work.extract.ExtractPath;
  */
 public interface ExtractPathDao extends BaseDao{
 
-	String TABLE_NAME="ex_crawler_platform_extract_path";
-	
+
 	String PARAM_PATH_NAME="pathName";
 	
 	String PARAM_SITE_CODE="siteCode";

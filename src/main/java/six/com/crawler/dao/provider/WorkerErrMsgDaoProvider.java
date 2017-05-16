@@ -7,6 +7,7 @@ import java.util.Map;
 import org.apache.ibatis.jdbc.SQL;
 
 import six.com.crawler.dao.BaseDao;
+import six.com.crawler.dao.TableNames;
 import six.com.crawler.dao.WorkerErrMsgDao;
 import six.com.crawler.entity.WorkerErrMsg;
 
@@ -28,7 +29,7 @@ public class WorkerErrMsgDaoProvider extends BaseProvider{
 	public String query(Map<String, Object> map) {
 		SQL sql=new SQL();
 		sql.SELECT(queryColumns);
-		sql.FROM(WorkerErrMsgDao.TABLE_NAME);
+		sql.FROM(TableNames.JOB_WORKER_SNAPSHOT_ERRMSG_TABLE_NAME);
 		Object ob=map.get(WorkerErrMsgDao.QUERY_PARAM_JOBSNAPSHOTID);
 		if(null!=ob){
 			sql.WHERE(WorkerErrMsgDao.QUERY_PARAM_JOBSNAPSHOTID+"=#{"+WorkerErrMsgDao.QUERY_PARAM_JOBSNAPSHOTID+"}");
@@ -49,7 +50,7 @@ public class WorkerErrMsgDaoProvider extends BaseProvider{
 				+ " from("
 				+ "		select "
 				+queryColumns
-				+ "       from "+WorkerErrMsgDao.TABLE_NAME
+				+ "       from "+TableNames.JOB_WORKER_SNAPSHOT_ERRMSG_TABLE_NAME
 				+ "      where `jobName` =#{jobName} and `jobSnapshotId` =#{jobSnapshotId}"
 				+ "      order by `startTime` desc) a,"
 				+ "   (select FOUND_ROWS() totalSize)b limit #{start},#{end}";
@@ -63,7 +64,7 @@ public class WorkerErrMsgDaoProvider extends BaseProvider{
 				+ "#{startTime},"
 				+ "#{msg}";
 		SQL sql=new SQL();
-		sql.INSERT_INTO(WorkerErrMsgDao.TABLE_NAME);
+		sql.INSERT_INTO(TableNames.JOB_WORKER_SNAPSHOT_ERRMSG_TABLE_NAME);
 		sql.VALUES(saveColumns, values);
 		return sql.toString();
 	}
@@ -77,7 +78,7 @@ public class WorkerErrMsgDaoProvider extends BaseProvider{
 				+ "#{list["+INDEX_FLAG+"].startTime},"
 				+ "#{list["+INDEX_FLAG+"].msg})";
 		StringBuilder sbd = new StringBuilder();  
-		sbd.append("insert into ").append(WorkerErrMsgDao.TABLE_NAME);  
+		sbd.append("insert into ").append(TableNames.JOB_WORKER_SNAPSHOT_ERRMSG_TABLE_NAME);  
 		sbd.append("(").append(saveColumns).append(") ");  
 		sbd.append("values");  
 		sbd.append(setBatchSaveSql(values,workerErrMsgs));

@@ -4,7 +4,7 @@ import java.util.Map;
 
 import org.apache.ibatis.jdbc.SQL;
 
-import six.com.crawler.dao.JobDao;
+import six.com.crawler.dao.TableNames;
 import six.com.crawler.entity.Job;
 
 /**
@@ -30,7 +30,7 @@ public class JobDaoProvider extends BaseProvider {
 				+ "`user`,"
 				+ "`describe`,"
 				+ "`version`");
-		sql.append(" from "+JobDao.TABLE_NAME);
+		sql.append(" from "+TableNames.JOB_TABLE_NAME);
 		buildParameter(sql, parameters);
 		sql.append(" order by `level` asc,`name`");
 		return sql.toString();
@@ -53,7 +53,7 @@ public class JobDaoProvider extends BaseProvider {
 				+ "              user,"
 				+ "         `describe`,"
 				+ "			`version` "
-				+ "       from "+JobDao.TABLE_NAME
+				+ "       from "+TableNames.JOB_TABLE_NAME
 				+ "      where `name` like concat(#{name},'%')"
 				+ "      order by `name` asc ) a,"
 				+ "   (select FOUND_ROWS() totalSize)b limit #{start},#{end}";
@@ -75,7 +75,7 @@ public class JobDaoProvider extends BaseProvider {
 				+ "`user`,"
 				+ "`describe`,"
 				+ "`version`");
-		sql.append(" from "+JobDao.TABLE_NAME);
+		sql.append(" from "+TableNames.JOB_TABLE_NAME);
 		sql.append(" where isScheduled=1");
 		return sql.toString();
 	
@@ -108,7 +108,7 @@ public class JobDaoProvider extends BaseProvider {
 				+ "#{user},"
 				+ "#{describe}";
 		SQL sql = new SQL();
-		sql.INSERT_INTO(JobDao.TABLE_NAME);
+		sql.INSERT_INTO(TableNames.JOB_TABLE_NAME);
 		sql.VALUES(columns, values);
 		return sql.toString();
 	}
@@ -116,7 +116,7 @@ public class JobDaoProvider extends BaseProvider {
 
 	public String updateIsScheduled(Map<String, Object> queryParams) {
 		SQL sql=new SQL();
-		sql.UPDATE(JobDao.TABLE_NAME);
+		sql.UPDATE(TableNames.JOB_TABLE_NAME);
 		sql.SET("`version` = #{newVersion}");
 		sql.SET("isScheduled = #{isScheduled}");
 		sql.WHERE("name = #{name} and version = #{version}");
@@ -125,7 +125,7 @@ public class JobDaoProvider extends BaseProvider {
 	
 	public String updateCronTrigger(Map<String, Object> queryParams) {
 		SQL sql=new SQL();
-		sql.UPDATE(JobDao.TABLE_NAME);
+		sql.UPDATE(TableNames.JOB_TABLE_NAME);
 		sql.SET("`version` = #{newVersion}");
 		sql.SET("cronTrigger = #{cronTrigger}");
 		sql.WHERE("name = #{name} and version = #{version}");

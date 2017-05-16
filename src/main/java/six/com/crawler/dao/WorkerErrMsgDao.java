@@ -16,8 +16,6 @@ import six.com.crawler.entity.WorkerErrMsg;
 */
 public interface WorkerErrMsgDao extends BaseDao{
 
-	String TABLE_NAME="ex_crawler_platform_job_worker_err";
-	
 	String QUERY_PARAM_JOBSNAPSHOTID="jobSnapshotId";
 	String QUERY_PARAM_JOBNAME="jobName";
 	String QUERY_PARAM_WORKERNAME="workerName";

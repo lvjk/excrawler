@@ -70,4 +70,16 @@ public class MasterAndWorkerSchedulerManager extends AbstractSchedulerManager {
 	protected void init() {
 	}
 
+	@Override
+	public void rest(DispatchType dispatchType, String jobName) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void finish(DispatchType dispatchType, String jobName) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

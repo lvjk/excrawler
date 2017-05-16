@@ -6,7 +6,7 @@ import java.util.Map;
 import org.apache.ibatis.jdbc.SQL;
 
 import six.com.crawler.dao.BaseDao;
-import six.com.crawler.dao.JobSnapshotDao;
+import six.com.crawler.dao.TableNames;
 import six.com.crawler.entity.JobSnapshot;
 
 /**
@@ -34,7 +34,7 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 	public String query(Map<String, Object> map) {
 		SQL sql = new SQL();
 		sql.SELECT(selectColumns);
-		sql.FROM(JobSnapshotDao.TABLE_NAME);
+		sql.FROM(TableNames.JOB_SNAPSHOT_TABLE_NAME);
 		sql.WHERE("id=#{id} and name=#{name}");
 		return sql.toString();
 	}
@@ -42,7 +42,7 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 	public String queryByJob(String jobName) {
 		SQL sql = new SQL();
 		sql.SELECT(selectColumns);
-		sql.FROM(JobSnapshotDao.TABLE_NAME);
+		sql.FROM(TableNames.JOB_SNAPSHOT_TABLE_NAME);
 		sql.WHERE("name=#{jobName}");
 		sql.ORDER_BY("startTime desc");
 		return sql.toString();
@@ -51,7 +51,7 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 	public String queryLastEnd(Map<String, Object> map) {
 		SQL sql = new SQL();
 		sql.SELECT(selectColumns);
-		sql.FROM(JobSnapshotDao.TABLE_NAME);
+		sql.FROM(TableNames.JOB_SNAPSHOT_TABLE_NAME);
 		sql.WHERE("`name`=#{jobName} and `id`!=#{excludeId}");
 		sql.ORDER_BY("startTime desc limit 0,1");
 		return sql.toString();
@@ -60,7 +60,7 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 	public String queryCurrentJob(Map<String, Object> map){
 		SQL sql = new SQL();
 		sql.SELECT(selectColumns);
-		sql.FROM(JobSnapshotDao.TABLE_NAME);
+		sql.FROM(TableNames.JOB_SNAPSHOT_TABLE_NAME);
 		sql.WHERE("`name`=#{jobName} and date_format(startTime, '%Y%m%d') = date_format(NOW(), '%Y%m%d') and downloadState = 1 ");
 		sql.ORDER_BY("startTime desc limit 0,1");
 		return sql.toString();
@@ -94,7 +94,7 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 				+ "#{errCount},"
 				+ "#{runtimeParams}";
 		SQL sql = new SQL();
-		sql.INSERT_INTO(JobSnapshotDao.TABLE_NAME);
+		sql.INSERT_INTO(TableNames.JOB_SNAPSHOT_TABLE_NAME);
 		sql.VALUES(columns, values);
 		return sql.toString();
 	}
@@ -129,7 +129,7 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 				+ "#{list[" + INDEX_FLAG + "].errCount},"
 				+ "#{list[" + INDEX_FLAG + "].runtimeParams})";
 		StringBuilder sbd = new StringBuilder();
-		sbd.append("insert into ").append(JobSnapshotDao.TABLE_NAME);
+		sbd.append("insert into ").append(TableNames.JOB_SNAPSHOT_TABLE_NAME);
 		sbd.append("(").append(columns).append(") ");
 		sbd.append("values");
 		sbd.append(setBatchSaveSql(values, jobSnapshots));
@@ -138,7 +138,7 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 	
 	public String update(JobSnapshot jobSnapshot) {
 		SQL sql = new SQL();
-		sql.UPDATE(JobSnapshotDao.TABLE_NAME);
+		sql.UPDATE(TableNames.JOB_SNAPSHOT_TABLE_NAME);
 		sql.SET("`name`=#{name}");
 		sql.SET("`startTime`=#{startTime}");
 		sql.SET("`endTime`=#{endTime}");
@@ -157,7 +157,7 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 	
 	public String updateStatus(Map<String, Object> map) {
 		SQL sql = new SQL();
-		sql.UPDATE(JobSnapshotDao.TABLE_NAME);
+		sql.UPDATE(TableNames.JOB_SNAPSHOT_TABLE_NAME);
 		sql.SET("`version` = #{newVersion}");
 		sql.SET("`status`=#{status}");
 		sql.WHERE("`id` = #{id} and version = #{version}");
@@ -166,7 +166,7 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 	
 	public String updateDownloadStatus(Map<String, Object> map) {
 		SQL sql = new SQL();
-		sql.UPDATE(JobSnapshotDao.TABLE_NAME);
+		sql.UPDATE(TableNames.JOB_SNAPSHOT_TABLE_NAME);
 		sql.SET("`version` = #{newVersion}");
 		sql.SET("`downloadState`=#{downloadState}");
 		sql.WHERE("`id` = #{id} and version = #{version}");

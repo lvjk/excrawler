@@ -16,7 +16,6 @@ import six.com.crawler.entity.JobSnapshot;
  */
 public interface JobSnapshotDao extends BaseDao {
 
-	String TABLE_NAME = "ex_crawler_platform_job_snapshot";
 
 	/**
 	 * 通过 jobSnapshotId 和 jobName 查询

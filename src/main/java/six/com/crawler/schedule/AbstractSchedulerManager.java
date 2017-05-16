@@ -16,6 +16,7 @@ import six.com.crawler.dao.HttpProxyDao;
 import six.com.crawler.dao.JobDao;
 import six.com.crawler.dao.JobParamDao;
 import six.com.crawler.dao.JobSnapshotDao;
+import six.com.crawler.dao.PageDao;
 import six.com.crawler.dao.RedisManager;
 import six.com.crawler.dao.SiteDao;
 import six.com.crawler.dao.WorkerErrMsgDao;
@@ -59,6 +60,9 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 
 	@Autowired
 	private ExtractPathDao extractPathDao;
+	
+	@Autowired
+	private PageDao pageDao;
 
 	@Autowired
 	private JobDao jobDao;
@@ -147,6 +151,14 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 
 	public void setExtractPathDao(ExtractPathDao extractPathDao) {
 		this.extractPathDao = extractPathDao;
+	}
+	
+	public PageDao getPageDao() {
+		return pageDao;
+	}
+
+	public void setPageDao(PageDao pageDao) {
+		this.pageDao = pageDao;
 	}
 
 	public JobDao getJobDao() {
@@ -375,7 +387,8 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 		List<WorkerSnapshot> workers = getScheduleCache().getWorkerSnapshots(jobName);
 		boolean resut = true;
 		for (WorkerSnapshot worker : workers) {
-			if (worker.getState() == WorkerLifecycleState.READY || worker.getState() == WorkerLifecycleState.STARTED
+			if (worker.getState() == WorkerLifecycleState.READY 
+					|| worker.getState() == WorkerLifecycleState.STARTED
 					|| worker.getState() == WorkerLifecycleState.SUSPEND) {
 				resut = false;
 				break;

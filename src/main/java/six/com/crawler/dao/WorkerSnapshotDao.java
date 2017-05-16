@@ -16,9 +16,6 @@ import six.com.crawler.entity.WorkerSnapshot;
 */
 public interface WorkerSnapshotDao extends BaseDao{
 
-
-	String TABLE_NAME="ex_crawler_platform_job_worker_snapshot";
-	
 	@SelectProvider(type = WorkerSnapshotDaoProvider.class, method = "query")
 	public List<WorkerSnapshot> query(String jobSnapshotId);
 	

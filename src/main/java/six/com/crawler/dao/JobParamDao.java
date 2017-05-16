@@ -18,9 +18,8 @@ import six.com.crawler.entity.JobParam;
 */
 public interface JobParamDao extends BaseDao{
 
-	String TABLE_NAME="ex_crawler_platform_job_param";
 
-	@Select("select id,jobName,name,value,`version` from "+TABLE_NAME+" where jobName = #{jobName}")
+	@Select("select id,jobName,name,value,`version` from "+TableNames.JOB_PARAM_TABLE_NAME+" where jobName = #{jobName}")
 	public List<JobParam> queryJobParams(String jobName);
 	
 	@InsertProvider(type = JobParamDaoProvider.class, method = "batchSave")
@@ -35,10 +34,10 @@ public interface JobParamDao extends BaseDao{
 			@Param("name")String name,
 			@Param("value")String value);
 	
-	@Delete("delete from "+TABLE_NAME+" where `id` = #{id}")
+	@Delete("delete from "+TableNames.JOB_PARAM_TABLE_NAME+" where `id` = #{id}")
 	public int del(@Param("id")String id);
 	
-	@Delete("delete from "+TABLE_NAME+" where jobName = #{jobName}")
+	@Delete("delete from "+TableNames.JOB_PARAM_TABLE_NAME+" where jobName = #{jobName}")
 	public int delJobParams(String jobName);
 	
 

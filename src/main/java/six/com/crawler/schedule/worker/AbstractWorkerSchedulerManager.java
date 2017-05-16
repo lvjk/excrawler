@@ -49,13 +49,21 @@ public abstract class AbstractWorkerSchedulerManager extends AbstractSchedulerMa
 	@RpcService(name = "suspend")
 	public abstract void suspend(DispatchType dispatchType, String jobName);
 
+	@RpcService(name = "rest")
+	public abstract void rest(DispatchType dispatchType, String jobName);
+	
 	@RpcService(name = "goOn")
 	public abstract void goOn(DispatchType dispatchType, String jobName);
 
 	@RpcService(name = "stop")
 	public abstract void stop(DispatchType dispatchType, String jobName);
+	
+	@RpcService(name = "finish")
+	public abstract void finish(DispatchType dispatchType, String jobName);
 
 	@RpcService(name = "stopAll")
 	public abstract void stopAll(DispatchType dispatchType);
+	
+	public abstract void askEnd(String jobName,String workerName);
 
 }

@@ -17,12 +17,10 @@ import six.com.crawler.entity.Site;
  */
 public interface SiteDao extends BaseDao {
 
-	String TABLE_NAME = "ex_crawler_platform_site";
-
 	@SelectProvider(type = SiteDaoProvider.class, method = "querySites")
 	public List<Site> querySites(int pageIndex, int pageSize);
 
-	@Select("select code,mainurl,visitFrequency,`describe` from " + TABLE_NAME + " where code=#{sitecode}")
+	@Select("select code,mainurl,visitFrequency,`describe` from " + TableNames.SITE_TABLE_NAME + " where code=#{sitecode}")
 	public Site query(String sitecode);
 
 	@InsertProvider(type = SiteDaoProvider.class, method = "save")

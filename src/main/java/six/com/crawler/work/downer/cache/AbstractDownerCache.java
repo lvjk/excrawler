@@ -18,9 +18,9 @@ public abstract class AbstractDownerCache implements DownerCache {
 	protected final static Logger log = LoggerFactory.getLogger(AbstractDownerCache.class);
 
 	private String siteCode;
-	private AtomicBoolean writeCacheEnd;
+	private AtomicBoolean writeCacheEnd = new AtomicBoolean(false);
+	private LinkedBlockingQueue<Page> writeCacheQueue = new LinkedBlockingQueue<Page>();
 	private Thread cacheThread;
-	private LinkedBlockingQueue<Page> writeCacheQueue;
 
 	public AbstractDownerCache(String siteCode) {
 		this.siteCode = siteCode;
@@ -36,8 +36,8 @@ public abstract class AbstractDownerCache implements DownerCache {
 	}
 
 	@Override
-	public final void read(Page page) {
-		doRead(page);
+	public final Page read(Page page) {
+		return doRead(page);
 	}
 
 	private void loopDoWirte() {
@@ -56,7 +56,7 @@ public abstract class AbstractDownerCache implements DownerCache {
 
 	protected abstract void doWirte(Page page);
 
-	protected abstract void doRead(Page page);
+	protected abstract Page doRead(Page page);
 
 	public String getSiteCode() {
 		return siteCode;

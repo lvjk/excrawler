@@ -11,7 +11,7 @@ public interface DownerCache {
 
 	void write(Page page);
 
-	void read(Page page);
+	Page read(Page page);
 	
 	void close();
 }

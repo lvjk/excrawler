@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import six.com.crawler.dao.BaseDao;
-import six.com.crawler.dao.ExtractItemDao;
+import six.com.crawler.dao.TableNames;
 import six.com.crawler.work.extract.ExtractItem;
 
 /**
@@ -37,7 +37,7 @@ public class ExtractItemDaoProvider extends BaseProvider{
 				+ "#{list["+INDEX_FLAG+"].mustHaveResult},"
 				+ "#{list["+INDEX_FLAG+"].describe})";
 		StringBuilder sbd = new StringBuilder();  
-		sbd.append("insert into ").append(ExtractItemDao.TABLE_NAME);  
+		sbd.append("insert into ").append(TableNames.JOB_EXTRACT_ITEM_TABLE_NAME);  
 		sbd.append("(").append(saveColumns).append(") ");  
 		sbd.append("values");  
 		sbd.append(setBatchSaveSql(values,extractItems));

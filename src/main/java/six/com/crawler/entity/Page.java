@@ -70,8 +70,7 @@ public class Page implements WorkSpaceData, Serializable {
 	private transient Document doc;// page Document
 
 	private String waitJsLoadElement;// 等待js加载 元素
-	// transient 标记字段不会被序列化
-	private transient String nextUrl;// 下一页
+
 	// transient 标记字段不会被序列化
 	private transient List<String> newListingUrl;// 新的列表页面
 
@@ -279,14 +278,6 @@ public class Page implements WorkSpaceData, Serializable {
 
 	public void setWaitJsLoadElement(String waitJsLoadElement) {
 		this.waitJsLoadElement = waitJsLoadElement;
-	}
-
-	public String getNextUrl() {
-		return nextUrl;
-	}
-
-	public void setNextUrl(String nextUrl) {
-		this.nextUrl = nextUrl;
 	}
 
 	public int getNoNeedDown() {

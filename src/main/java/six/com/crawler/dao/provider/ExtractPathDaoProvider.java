@@ -6,7 +6,7 @@ import java.util.Map;
 import org.apache.ibatis.jdbc.SQL;
 
 import six.com.crawler.dao.BaseDao;
-import six.com.crawler.dao.ExtractPathDao;
+import six.com.crawler.dao.TableNames;
 import six.com.crawler.work.extract.ExtractPath;
 
 /**
@@ -58,7 +58,7 @@ public class ExtractPathDaoProvider extends BaseProvider{
 	public String queryBySite(String siteCode) {
 		SQL sql = new SQL();
 		sql.SELECT(queryColumns);
-		sql.FROM(ExtractPathDao.TABLE_NAME);
+		sql.FROM(TableNames.SITE_EXTRACT_PATH_TABLE_NAME);
 		sql.WHERE("siteCode=#{siteCode}");
 		sql.ORDER_BY("ranking asc");
 		return sql.toString();
@@ -67,7 +67,7 @@ public class ExtractPathDaoProvider extends BaseProvider{
 	public String query(Map<String,Object> param) {
 		SQL sql = new SQL();
 		sql.SELECT(queryColumns);
-		sql.FROM(ExtractPathDao.TABLE_NAME);
+		sql.FROM(TableNames.SITE_EXTRACT_PATH_TABLE_NAME);
 		sql.WHERE("`name`=#{name}");
 		sql.AND().WHERE("siteCode=#{siteCode}");
 		sql.ORDER_BY("ranking asc");
@@ -77,7 +77,7 @@ public class ExtractPathDaoProvider extends BaseProvider{
 	public String fuzzyQuery(Map<String,Object> params) {
 		String sql="		select "
 				+queryColumns
-				+ "       from "+ExtractPathDao.TABLE_NAME
+				+ "       from "+TableNames.SITE_EXTRACT_PATH_TABLE_NAME
 				+ "      where `siteCode` like concat(#{siteCode},'%')"
 				+ "      or `name` like concat(#{name},'%')"
 				+ "      order by ranking asc ";
@@ -107,7 +107,7 @@ public class ExtractPathDaoProvider extends BaseProvider{
 				+ "#{list["+INDEX_FLAG+"].extractEmptyCount},"
 				+ "#{list["+INDEX_FLAG+"].describe})";
 		StringBuilder sbd = new StringBuilder();  
-		sbd.append("insert into ").append(ExtractPathDao.TABLE_NAME);  
+		sbd.append("insert into ").append(TableNames.SITE_EXTRACT_PATH_TABLE_NAME);  
 		sbd.append("(").append(insertColumns).append(") ");  
 		sbd.append("values");  
 		sbd.append(setBatchSaveSql(values,extractPaths));
@@ -116,14 +116,14 @@ public class ExtractPathDaoProvider extends BaseProvider{
 	
 	public String delByName(String name) {
 		SQL sql = new SQL();
-		sql.DELETE_FROM(ExtractPathDao.TABLE_NAME);
+		sql.DELETE_FROM(TableNames.SITE_EXTRACT_PATH_TABLE_NAME);
 		sql.WHERE("name = #{name}");
 		return sql.toString();
 	}
 	
 	public String delBySiteCode(String siteCode) {
 		SQL sql = new SQL();
-		sql.DELETE_FROM(ExtractPathDao.TABLE_NAME);
+		sql.DELETE_FROM(TableNames.SITE_EXTRACT_PATH_TABLE_NAME);
 		sql.WHERE("siteCode = #{siteCode}");
 		return sql.toString();
 	}

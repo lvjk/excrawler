@@ -6,7 +6,7 @@ import java.util.Map;
 import org.apache.ibatis.jdbc.SQL;
 
 import six.com.crawler.dao.BaseDao;
-import six.com.crawler.dao.WorkerSnapshotDao;
+import six.com.crawler.dao.TableNames;
 import six.com.crawler.entity.WorkerSnapshot;
 
 /** 
@@ -45,7 +45,7 @@ public class WorkerSnapshotDaoProvider extends BaseProvider{
 				+ "minProcessTime,"
 				+ "errCount";
 		sql.SELECT(columns);
-		sql.FROM(WorkerSnapshotDao.TABLE_NAME);
+		sql.FROM(TableNames.JOB_WORKER_SNAPSHOT_TABLE_NAME);
 		sql.WHERE("jobSnapshotId=#{jobSnapshotId}");
 		return sql.toString();
 	}
@@ -64,7 +64,7 @@ public class WorkerSnapshotDaoProvider extends BaseProvider{
 				+ "#{minProcessTime},"
 				+ "#{errCount}";
 		SQL sql=new SQL();
-		sql.INSERT_INTO(WorkerSnapshotDao.TABLE_NAME);
+		sql.INSERT_INTO(TableNames.JOB_WORKER_SNAPSHOT_TABLE_NAME);
 		sql.VALUES(saveColumns, values);
 		return sql.toString();
 	}
@@ -86,7 +86,7 @@ public class WorkerSnapshotDaoProvider extends BaseProvider{
 				+ "#{list["+INDEX_FLAG+"].minProcessTime},"
 				+ "#{list["+INDEX_FLAG+"].errCount})";
 		StringBuilder sbd = new StringBuilder();  
-		sbd.append("insert into ").append(WorkerSnapshotDao.TABLE_NAME);  
+		sbd.append("insert into ").append(TableNames.JOB_WORKER_SNAPSHOT_TABLE_NAME);  
 		sbd.append("(").append(saveColumns).append(") ");  
 		sbd.append("values");  
 		sbd.append(setBatchSaveSql(values,workerSnapshots));

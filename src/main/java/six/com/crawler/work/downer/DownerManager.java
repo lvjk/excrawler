@@ -38,9 +38,9 @@ public class DownerManager {
 	public Downer buildDowner(DownerType downerType, String siteCode, AbstractCrawlWorker worker, boolean openDownCache,
 			boolean useDownCache) {
 		Downer downer = null;
-		DownerCache downerCache = new DbDownerCache(siteCode);
+		DownerCache downerCache = null;
 		if (openDownCache || useDownCache) {
-			downerCache = new DbDownerCache(siteCode);
+			downerCache = new DbDownerCache(siteCode, worker.getManager().getPageDao());
 		} else {
 			downerCache = new DownerCache() {
 				@Override
@@ -48,7 +48,8 @@ public class DownerManager {
 				}
 
 				@Override
-				public void read(Page page) {
+				public Page read(Page page) {
+					return page;
 				}
 
 				@Override

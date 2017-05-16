@@ -4,7 +4,7 @@ import java.util.Map;
 
 import org.apache.ibatis.jdbc.SQL;
 
-import six.com.crawler.dao.SiteDao;
+import six.com.crawler.dao.TableNames;
 import six.com.crawler.entity.Site;
 
 /** 
@@ -18,7 +18,7 @@ public class SiteDaoProvider extends BaseProvider{
 		String sql = " select `code`,"
 				+ " mainUrl,"
 				+ " visitFrequency,"
-				+ "`describe` from "+SiteDao.TABLE_NAME;
+				+ "`describe` from "+TableNames.SITE_TABLE_NAME;
 		return sql;
 	}
 	
@@ -33,7 +33,7 @@ public class SiteDaoProvider extends BaseProvider{
 				+ "#{visitFrequency},"
 				+ "#{describe}";
 		SQL sql = new SQL();
-		sql.INSERT_INTO(SiteDao.TABLE_NAME);
+		sql.INSERT_INTO(TableNames.SITE_TABLE_NAME);
 		sql.VALUES(columns, values);
 		return sql.toString();
 	}
@@ -41,7 +41,7 @@ public class SiteDaoProvider extends BaseProvider{
 	
 	public String del(String siteCode) {
 		SQL sql = new SQL();
-		sql.DELETE_FROM(SiteDao.TABLE_NAME);
+		sql.DELETE_FROM(TableNames.SITE_TABLE_NAME);
 		sql.WHERE("code = #{siteCode}");
 		return sql.toString();
 	}

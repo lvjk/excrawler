@@ -34,6 +34,8 @@ public interface SchedulerManager {
 	 */
 	public void suspend(DispatchType dispatchType, String jobName);
 
+	
+	public void rest(DispatchType dispatchType, String jobName);
 	/**
 	 * 继续任务
 	 * 
@@ -49,6 +51,9 @@ public interface SchedulerManager {
 	 * @return
 	 */
 	public void stop(DispatchType dispatchType, String jobName);
+	
+	
+	public void finish(DispatchType dispatchType, String jobName);
 
 	/**
 	 * 停止所有任务

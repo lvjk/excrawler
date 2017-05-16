@@ -69,4 +69,16 @@ public class MasterStandSchedulerManager extends AbstractMasterStandSchedulerMan
 		// TODO Auto-generated method stub
 		
 	}
+
+	@Override
+	public void rest(DispatchType dispatchType, String jobName) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void finish(DispatchType dispatchType, String jobName) {
+		// TODO Auto-generated method stub
+		
+	}
 }

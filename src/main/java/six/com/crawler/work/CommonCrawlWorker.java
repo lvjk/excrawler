@@ -39,5 +39,4 @@ public class CommonCrawlWorker extends AbstractCrawlWorker {
 	protected boolean insideOnError(Exception e, Page doingPage) {
 		return false;
 	}
-
 }

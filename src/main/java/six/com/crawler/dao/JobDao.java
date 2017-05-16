@@ -20,8 +20,6 @@ import six.com.crawler.entity.Job;
 public interface JobDao extends BaseDao{
 
 	
-	String TABLE_NAME="ex_crawler_platform_job";
-	
 	
 	/**
 	 * 通过id查询
@@ -40,7 +38,7 @@ public interface JobDao extends BaseDao{
 			+ "workerClass,"
 			+ "workSpaceName,"
 			+ "`user`,"
-			+ "`describe`,`version` from "+TABLE_NAME+" where name = #{name}")
+			+ "`describe`,`version` from "+TableNames.JOB_TABLE_NAME+" where name = #{name}")
 	public Job query(String name);
 	
 
@@ -79,7 +77,7 @@ public interface JobDao extends BaseDao{
 	 * @param id
 	 * @return
 	 */
-	@Delete("delete from "+TABLE_NAME+" where name = #{jobName}")
+	@Delete("delete from "+TableNames.JOB_TABLE_NAME+" where name = #{jobName}")
 	public int del(String jobName);
 
 	/**
