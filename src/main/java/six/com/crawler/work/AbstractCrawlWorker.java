@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import com.alibaba.druid.support.json.JSONUtils;
 
 import six.com.crawler.entity.HttpProxyType;
-import six.com.crawler.entity.JobParamKeys;
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
@@ -79,7 +78,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 	@Override
 	protected final void initWorker(JobSnapshot jobSnapshot) {
 		// 初始化 站点code
-		String siteCode = getJob().getParam(JobParamKeys.SITE_CODE);
+		String siteCode = getJob().getParam(CrawlerJobParamKeys.SITE_CODE);
 		if (StringUtils.isBlank(siteCode)) {
 			throw new NullPointerException("please set siteCode");
 		}
@@ -91,11 +90,14 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 		initDownerHelper(siteCode, jobSnapshot);
 
 		// 初始化下载器
-		int downerTypeInt = getJob().getParamInt(JobParamKeys.DOWNER_TYPE, 1);
+		int downerTypeInt = getJob().getParamInt(CrawlerJobParamKeys.DOWNER_TYPE, 1);
 		DownerType downerType = DownerType.valueOf(downerTypeInt);
-		downer = DownerManager.getInstance().buildDowner(downerType, this);
 
-		int httpProxyTypeInt = getJob().getParamInt(JobParamKeys.HTTP_PROXY_TYPE, 0);
+		boolean openDownCache = getJob().getParamBoolean(CrawlerJobParamKeys.OPEN_DOWN_CACHE, false);
+		boolean useDownCache = getJob().getParamBoolean(CrawlerJobParamKeys.USE_DOWN_CACHE, false);
+		downer = DownerManager.getInstance().buildDowner(downerType, siteCode, this, openDownCache, useDownCache);
+
+		int httpProxyTypeInt = getJob().getParamInt(CrawlerJobParamKeys.HTTP_PROXY_TYPE, 0);
 		HttpProxyType httpProxyType = HttpProxyType.valueOf(httpProxyTypeInt);
 
 		String siteHttpProxyPoolLockPath = HttpProxyPool.REDIS_HTTP_PROXY_POOL + "_" + siteCode;
@@ -107,15 +109,15 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 		// 初始化内容抽取
 		extractItems = getManager().getExtractItemDao().query(getJob().getName());
 		extracter = ExtracterFactory.newExtracter(this, extractItems,
-				ExtracterType.valueOf(getJob().getParamInt(JobParamKeys.EXTRACTER_TYPE, 0)));
+				ExtracterType.valueOf(getJob().getParamInt(CrawlerJobParamKeys.EXTRACTER_TYPE, 0)));
 		// 初始化数据存储
 		int storeTypeInt = 0;
 		// 兼容之前设置的store class模式
-		String resultStoreClass = getJob().getParam(JobParamKeys.RESULT_STORE_CLASS);
+		String resultStoreClass = getJob().getParam(CrawlerJobParamKeys.RESULT_STORE_CLASS);
 		if (StringUtils.equals("six.com.crawler.work.store.DataBaseStore", resultStoreClass)) {
 			storeTypeInt = 1;
 		} else {
-			storeTypeInt = getJob().getParamInt(JobParamKeys.RESULT_STORE_TYPE, 0);
+			storeTypeInt = getJob().getParamInt(CrawlerJobParamKeys.RESULT_STORE_TYPE, 0);
 		}
 		this.store = StoreFactory.newStore(this, StoreType.valueOf(storeTypeInt));
 
@@ -307,8 +309,8 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 	 * @return
 	 */
 	public DownerHelper initDownerHelper(String siteCode, JobSnapshot jobSnapshot) {
-		boolean isSaveRawData = getJob().getParamInt(JobParamKeys.IS_SAVE_RAW_DATA,
-				JobParamKeys.DEFAULT_IS_SAVE_RAW_DATA) == 1 ? true : false;
+		boolean isSaveRawData = getJob().getParamInt(CrawlerJobParamKeys.IS_SAVE_RAW_DATA,
+				CrawlerJobParamKeys.DEFAULT_IS_SAVE_RAW_DATA) == 1 ? true : false;
 		helper = new DownerHelper();
 		String rawdataBasePath = getConfigure().getConfig("rawdata.path", "/home/excrawler/rawdata");
 		helper.setRawdataBasePath(rawdataBasePath);
@@ -318,8 +320,8 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 
 		jobSnapshot.setSaveRawData(isSaveRawData);
 
-		boolean isUseRawData = getJob().getParamInt(JobParamKeys.IS_USE_RAW_DATA,
-				JobParamKeys.DEFAULT_IS_USE_RAW_DATA) == 1 ? true : false;
+		boolean isUseRawData = getJob().getParamInt(CrawlerJobParamKeys.IS_USE_RAW_DATA,
+				CrawlerJobParamKeys.DEFAULT_IS_USE_RAW_DATA) == 1 ? true : false;
 		helper.setUseRawData(isUseRawData);
 
 		JobSnapshot current = getManager().getJobSnapshotDao().queryCurrentJob(jobSnapshot.getName());

@@ -115,6 +115,8 @@ public interface WorkSpace<T extends WorkSpaceData> {
 	 * @return
 	 */
 	int doingSize();
+	
+	boolean doingIsEmpty();
 
 	int doingSegmentSize();
 	/**

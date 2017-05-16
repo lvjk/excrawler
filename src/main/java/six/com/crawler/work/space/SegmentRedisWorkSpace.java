@@ -271,6 +271,11 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 	}
 	
 	@Override
+	public boolean doingIsEmpty(){
+		return 0==doingSegmentMap.size()&&0==doingSegmentQueue.size();
+	}
+	
+	@Override
 	public int doingSize() {
 		return doingSegmentMap.size();
 	}

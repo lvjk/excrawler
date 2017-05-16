@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import okhttp3.Request;
-import six.com.crawler.entity.JobParamKeys;
 import six.com.crawler.entity.Page;
 import six.com.crawler.exception.AbstractHttpException;
 import six.com.crawler.http.HttpConstant;
@@ -23,6 +22,7 @@ import six.com.crawler.http.HttpResult;
 import six.com.crawler.utils.DbHelper;
 import six.com.crawler.utils.JobTableUtils;
 import six.com.crawler.work.DataBaseAbstractWorker;
+import six.com.crawler.work.CrawlerJobParamKeys;
 import six.com.crawler.work.WorkerLifecycleState;
 import six.com.crawler.work.downer.PostContentType;
 
@@ -46,13 +46,13 @@ public class QichachaSynchronousDataWorker extends DataBaseAbstractWorker{
 
 
 	public final void insideInit() {
-		fixedTableName =getJob().getParam(JobParamKeys.FIXED_TABLE_NAME);
-		selectSqlTemplate = getJob().getParam(JobParamKeys.SELECT_SQL_TEMPLATE);
-		updateSqlTemplate = getJob().getParam(JobParamKeys.UPDATE_SQL_TEMPLATE);
-		sendHttpUlr = getJob().getParam(JobParamKeys.SEND_HTTP_URL);
+		fixedTableName =getJob().getParam(CrawlerJobParamKeys.FIXED_TABLE_NAME);
+		selectSqlTemplate = getJob().getParam(CrawlerJobParamKeys.SELECT_SQL_TEMPLATE);
+		updateSqlTemplate = getJob().getParam(CrawlerJobParamKeys.UPDATE_SQL_TEMPLATE);
+		sendHttpUlr = getJob().getParam(CrawlerJobParamKeys.SEND_HTTP_URL);
 		selectSql=JobTableUtils.buildSelectSql(selectSqlTemplate, fixedTableName);
 		updateSql=JobTableUtils.buildUpdateSql(updateSqlTemplate, fixedTableName);
-		String httpMethod = getJob().getParam(JobParamKeys.SEND_HTTP_METHOD);
+		String httpMethod = getJob().getParam(CrawlerJobParamKeys.SEND_HTTP_METHOD);
 		method = "post".equalsIgnoreCase(httpMethod) ? HttpMethod.POST : HttpMethod.GET;
 	}
 	

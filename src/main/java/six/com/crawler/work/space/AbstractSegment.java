@@ -40,28 +40,59 @@ public abstract class AbstractSegment<T> {
 		this.segmentMaxSize = segmentMaxSize;
 	}
 
+	/**
+	 * 获取所有分段名集合的name
+	 * 
+	 * @return
+	 */
 	public String getSegmentsName() {
 		return segmentsName;
 	}
 
+	/**
+	 * 获取所有分段名集合
+	 * 
+	 * @return
+	 */
 	public List<String> getSegments() {
 		List<String> segmentNames = redisManager.lrange(getSegmentsName(), 0, -1, String.class);
 		return segmentNames;
 	}
 
+	/**
+	 * 通过索引获取一个分段名
+	 * 
+	 * @param segmentIndex
+	 * @return
+	 */
 	public String getSegment(int segmentIndex) {
 		String segmentName = redisManager.lindex(getSegmentsName(), segmentIndex, String.class);
 		return segmentName;
 	}
 
+	/**
+	 * 获取分段名前缀
+	 * 
+	 * @return
+	 */
 	public String getSegmentPre() {
 		return segmentNamePre;
 	}
 
+	/**
+	 * 获取分段最大数量
+	 * 
+	 * @return
+	 */
 	public int getSementMaxSize() {
 		return segmentMaxSize;
 	}
 
+	/**
+	 * 获取数据class
+	 * 
+	 * @return
+	 */
 	public Class<T> getDataClass() {
 		return clz;
 	}
@@ -70,17 +101,22 @@ public abstract class AbstractSegment<T> {
 		return redisManager;
 	}
 
-	protected String getWriteIndex() {
+	/**
+	 * 获取可写入数据的分段名
+	 * 
+	 * @return
+	 */
+	protected String getWriteSegment() {
 		String writeSegment = getRedisManager().lindex(getSegmentsName(), 0, String.class);
 		if (null == writeSegment) {
-			writeSegment = getKey(0);
+			writeSegment = newSegmentName(0);
 			getRedisManager().lpush(getSegmentsName(), writeSegment);
 			return writeSegment;
 		} else {
 			int llen = getSegmentSize(writeSegment);
 			if (llen >= getSementMaxSize()) {
 				int segmentNameSize = getRedisManager().llen(getSegmentsName());
-				String newWriteIndex = getKey(segmentNameSize);
+				String newWriteIndex = newSegmentName(segmentNameSize);
 				getRedisManager().lpush(getSegmentsName(), newWriteIndex);
 				writeSegment = newWriteIndex;
 			}
@@ -88,7 +124,13 @@ public abstract class AbstractSegment<T> {
 		}
 	}
 
-	protected String getKey(int index) {
+	/**
+	 * 生成一个分段名称
+	 * 
+	 * @param index
+	 * @return
+	 */
+	protected String newSegmentName(int index) {
 		StringBuilder segmentName = new StringBuilder(getSegmentPre());
 		segmentName.append(Separate);
 		segmentName.append(index);
@@ -103,8 +145,17 @@ public abstract class AbstractSegment<T> {
 		return segmentName.toString();
 	}
 
+	/**
+	 * 获取指定分段数量
+	 * 
+	 * @param segmentName
+	 * @return
+	 */
 	public abstract int getSegmentSize(String segmentName);
 
+	/**
+	 * 整理分段
+	 */
 	public void cleanUp() {
 		List<String> segmentNames = getSegments();
 		if (null != segmentNames) {
@@ -118,6 +169,11 @@ public abstract class AbstractSegment<T> {
 		}
 	}
 
+	/**
+	 * 获取分段数量
+	 * 
+	 * @return
+	 */
 	public int segmentSize() {
 		int segmentSize = 0;
 		List<String> segmentNames = getSegments();
@@ -127,6 +183,11 @@ public abstract class AbstractSegment<T> {
 		return segmentSize;
 	}
 
+	/**
+	 * 总数据量
+	 * 
+	 * @return
+	 */
 	public int size() {
 		int size = 0;
 		List<String> segmentNames = getSegments();
@@ -138,6 +199,9 @@ public abstract class AbstractSegment<T> {
 		return size;
 	}
 
+	/**
+	 * clear 所有数据
+	 */
 	public void clear() {
 		List<String> segmentNames = getSegments();
 		if (null != segmentNames) {

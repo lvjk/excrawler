@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import six.com.crawler.entity.JobParamKeys;
 import six.com.crawler.entity.Page;
 import six.com.crawler.utils.DbHelper;
 import six.com.crawler.utils.JobTableUtils;
@@ -200,11 +199,11 @@ public class DataBaseMergeTableWorker extends DataBaseAbstractWorker {
 
 	@Override
 	protected void insideInit() {
-		fixedTableName = getJob().getParam(JobParamKeys.FIXED_TABLE_NAME);
-		selectSqlTemplate = getJob().getParam(JobParamKeys.SELECT_SQL_TEMPLATE);
-		inserSqlTemplate = getJob().getParam(JobParamKeys.INSERT_SQL_TEMPLATE);
-		updateSqlTemplate = getJob().getParam(JobParamKeys.UPDATE_SQL_TEMPLATE);
-		delSqlTemplate = getJob().getParam(JobParamKeys.DEL_SQL_TEMPLATE);
+		fixedTableName = getJob().getParam(CrawlerJobParamKeys.FIXED_TABLE_NAME);
+		selectSqlTemplate = getJob().getParam(CrawlerJobParamKeys.SELECT_SQL_TEMPLATE);
+		inserSqlTemplate = getJob().getParam(CrawlerJobParamKeys.INSERT_SQL_TEMPLATE);
+		updateSqlTemplate = getJob().getParam(CrawlerJobParamKeys.UPDATE_SQL_TEMPLATE);
+		delSqlTemplate = getJob().getParam(CrawlerJobParamKeys.DEL_SQL_TEMPLATE);
 		selectSqlTemplate = "";
 		Connection connection = null;
 		List<String> queryTables = null;

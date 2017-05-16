@@ -12,7 +12,6 @@ import okhttp3.Dispatcher;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import six.com.crawler.entity.HttpProxy;
-import six.com.crawler.entity.JobParamKeys;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.PageType;
 import six.com.crawler.exception.AbstractHttpException;
@@ -23,6 +22,8 @@ import six.com.crawler.http.HttpResult;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.utils.AutoCharsetDetectorUtils.ContentType;
 import six.com.crawler.work.AbstractCrawlWorker;
+import six.com.crawler.work.CrawlerJobParamKeys;
+import six.com.crawler.work.downer.cache.DownerCache;
 import six.com.crawler.work.downer.exception.DownerException;
 import six.com.crawler.work.downer.exception.ManyRedirectDownException;
 
@@ -35,14 +36,19 @@ public class OkHttpDowner extends AbstractDowner {
 	protected final static Logger LOG = LoggerFactory.getLogger(OkHttpDowner.class);
 
 	private HttpClient httpClient;
-	public OkHttpDowner(AbstractCrawlWorker worker) {
-		super(worker);
+
+	public OkHttpDowner(AbstractCrawlWorker worker, boolean openDownCache, boolean useDownCache,
+			DownerCache downerCache) {
+		super(worker, openDownCache, useDownCache, downerCache);
 		httpClient = worker.getManager().getHttpClient();
-		
-		int httpTimeout=worker.getJob().getParamInt(JobParamKeys.HTTP_CONNECT_TIMEOUT,JobParamKeys.DEFAULT_HTTP_CONNECT_TIMEOUT);
-		int writeTimeout=worker.getJob().getParamInt(JobParamKeys.HTTP_WRITE_TIMEOUT,JobParamKeys.DEFAULT_HTTP_WRITE_TIMEOUT);
-		int readTimeout=worker.getJob().getParamInt(JobParamKeys.HTTP_READ_TIMEOUT,JobParamKeys.DEFAULT_HTTP_READ_TIMEOUT);
-		
+
+		int httpTimeout = worker.getJob().getParamInt(CrawlerJobParamKeys.HTTP_CONNECT_TIMEOUT,
+				CrawlerJobParamKeys.DEFAULT_HTTP_CONNECT_TIMEOUT);
+		int writeTimeout = worker.getJob().getParamInt(CrawlerJobParamKeys.HTTP_WRITE_TIMEOUT,
+				CrawlerJobParamKeys.DEFAULT_HTTP_WRITE_TIMEOUT);
+		int readTimeout = worker.getJob().getParamInt(CrawlerJobParamKeys.HTTP_READ_TIMEOUT,
+				CrawlerJobParamKeys.DEFAULT_HTTP_READ_TIMEOUT);
+
 		OkHttpClient.Builder okHttpClientBuilder = new OkHttpClient.Builder();
 		okHttpClientBuilder.sslSocketFactory(MX509TrustManager.getSSLSocketFactory(),
 				MX509TrustManager.myX509TrustManager);
@@ -53,9 +59,9 @@ public class OkHttpDowner extends AbstractDowner {
 		okHttpClientBuilder.followRedirects(true);
 		okHttpClientBuilder.followSslRedirects(true);
 		String cookirDir = httpClient.getConfigure().getSpiderHome() + File.separator + "cookies";
-		httpClient.setCookiesStore(new CookiesStore(cookirDir)) ;
+		httpClient.setCookiesStore(new CookiesStore(cookirDir));
 		okHttpClientBuilder.cookieJar(httpClient.getCookiesStore());
-		
+
 		httpClient.setOkClient(okHttpClientBuilder.build());
 	}
 
@@ -109,7 +115,7 @@ public class OkHttpDowner extends AbstractDowner {
 		HttpResult result = executeDown(page);
 		return result.getData();
 	}
-	
+
 	@Override
 	protected void insideColose() {
 		String domain = UrlUtils.getDomain(getHtmlCommonWorker().getSite().getMainUrl());

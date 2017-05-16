@@ -13,12 +13,12 @@ import org.slf4j.LoggerFactory;
 
 import com.alibaba.druid.pool.DruidDataSource;
 
-import six.com.crawler.entity.JobParamKeys;
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.JobSnapshotState;
 import six.com.crawler.utils.DbHelper;
 import six.com.crawler.utils.JobTableUtils;
 import six.com.crawler.work.AbstractWorker;
+import six.com.crawler.work.CrawlerJobParamKeys;
 import six.com.crawler.work.store.exception.StoreException;
 
 /**
@@ -48,7 +48,7 @@ public class DataBaseStore extends AbstarctStore {
 
 	public DataBaseStore(AbstractWorker<?> worker) {
 		super(worker);
-		String everySendSizeStr = worker.getJob().getParam(JobParamKeys.BATCH_SIZE);
+		String everySendSizeStr = worker.getJob().getParam(CrawlerJobParamKeys.BATCH_SIZE);
 		if (null != everySendSizeStr) {
 			try {
 				batchSize = Integer.valueOf(everySendSizeStr);
@@ -57,10 +57,10 @@ public class DataBaseStore extends AbstarctStore {
 			}
 
 		}
-		dbUrl = worker.getJob().getParam(JobParamKeys.DB_URL);
-		dbUser = worker.getJob().getParam(JobParamKeys.DB_USER);
-		dbPasswd = worker.getJob().getParam(JobParamKeys.DB_PASSWD);
-		dbDriverClassName = worker.getJob().getParam(JobParamKeys.DB_DRIVER_CLASS_NAME);
+		dbUrl = worker.getJob().getParam(CrawlerJobParamKeys.DB_URL);
+		dbUser = worker.getJob().getParam(CrawlerJobParamKeys.DB_USER);
+		dbPasswd = worker.getJob().getParam(CrawlerJobParamKeys.DB_PASSWD);
+		dbDriverClassName = worker.getJob().getParam(CrawlerJobParamKeys.DB_DRIVER_CLASS_NAME);
 		datasource = new DruidDataSource();
 		datasource.setUrl(dbUrl);
 		datasource.setDriverClassName(dbDriverClassName);
@@ -73,8 +73,8 @@ public class DataBaseStore extends AbstarctStore {
 				.getJobSnapshot(getWorker().getJob().getName());
 		tableName = jobSnapshot.getParam(TABLE_KEY);
 		if (StringUtils.isBlank(tableName)) {
-			String fixedTableName = getWorker().getJob().getParam(JobParamKeys.FIXED_TABLE_NAME);
-			String isSnapshotTable = getWorker().getJob().getParam(JobParamKeys.IS_SNAPSHOT_TABLE);
+			String fixedTableName = getWorker().getJob().getParam(CrawlerJobParamKeys.FIXED_TABLE_NAME);
+			String isSnapshotTable = getWorker().getJob().getParam(CrawlerJobParamKeys.IS_SNAPSHOT_TABLE);
 			if ("1".equals(isSnapshotTable)) {
 				JobSnapshot lastJobSnapshot = getWorker().getManager().getLastEnd(getWorker().getJob().getName(),jobSnapshot.getId());
 				if (null != lastJobSnapshot && JobSnapshotState.FINISHED != lastJobSnapshot.getEnumStatus()) {
@@ -90,7 +90,7 @@ public class DataBaseStore extends AbstarctStore {
 			jobSnapshot.putParam(TABLE_KEY, tableName);
 			getWorker().getManager().updateJobSnapshot(jobSnapshot);
 		}
-		insertSqlTemplate = worker.getJob().getParam(JobParamKeys.INSERT_SQL_TEMPLATE);
+		insertSqlTemplate = worker.getJob().getParam(CrawlerJobParamKeys.INSERT_SQL_TEMPLATE);
 		insertSql = JobTableUtils.buildInsertSql(insertSqlTemplate, tableName);
 		String fieldsStr = StringUtils.substringBetween(insertSql, "(", ")");
 		fields = StringUtils.split(fieldsStr, ",");
@@ -101,7 +101,7 @@ public class DataBaseStore extends AbstarctStore {
 			field = StringUtils.remove(field, "`");
 			fields[i] = StringUtils.trim(field);
 		}
-		createTableSqlTemplate = worker.getJob().getParam(JobParamKeys.CREATE_TABLE_SQL_TEMPLATE);
+		createTableSqlTemplate = worker.getJob().getParam(CrawlerJobParamKeys.CREATE_TABLE_SQL_TEMPLATE);
 		initTable();
 	}
 
