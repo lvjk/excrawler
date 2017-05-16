@@ -40,13 +40,15 @@ public class NbCnnbfdcUnitInfoWorker extends AbstractCrawlWorker {
 		// 获取楼栋名称的详情链接地址
 		List<String> unitNames = resultContext.getExtractResult("unitName");
 		List<String> unitIds = resultContext.getExtractResult("unitId");
+		List<String> projectIds = resultContext.getExtractResult("projectId");
+		List<String> projectNames = resultContext.getExtractResult("projectName");
 		for (int i = 0; i < unitNames.size(); i++) {
 			String url=BASE_URL+unitIds.get(i);
 			Page roomStatePage = new Page(doingPage.getSiteCode(), 1, url, url);
 			roomStatePage.setReferer(doingPage.getFinalUrl());
 
-			roomStatePage.getMetaMap().put("projectId", doingPage.getMeta("projectId"));
-			roomStatePage.getMetaMap().put("projectName", doingPage.getMeta("projectName"));
+			roomStatePage.getMetaMap().put("projectId", ArrayListUtils.asList(projectIds.get(i)));
+			roomStatePage.getMetaMap().put("projectName", ArrayListUtils.asList(projectNames.get(i)));
 			roomStatePage.getMetaMap().put("unitName", ArrayListUtils.asList(unitNames.get(i)));
 			roomStatePage.getMetaMap().put("unitId", ArrayListUtils.asList(unitIds.get(i)));
 			roomStateInfoQueue.push(roomStatePage);
