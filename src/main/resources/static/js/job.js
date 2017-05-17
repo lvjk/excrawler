@@ -276,6 +276,7 @@ function getWorkSpaceHtml(workSpaceName,totalProcessCount,doingSize,errSize){
 
 /**
  * 动态显示job 运行信息
+ * 
  * @param jobSnapshots
  * @returns
  */
@@ -287,7 +288,7 @@ function showJobSnapshots(jobSnapshots) {
 			var jobTr=$("tr[name='"+jobName+"']");
 			var oldStatus=jobTr.find("[name='state']").text();
 			var newStatus=getState(jobSnapshot.status);
-			//只有当状态发生改变时才更新一下内容
+			// 只有当状态发生改变时才更新一下内容
 			if(oldStatus!=newStatus){
 				var color=getStateColor(newStatus);
 				if(jobSnapshot.status==3||jobSnapshot.status==4){
@@ -313,7 +314,7 @@ function showJobSnapshots(jobSnapshots) {
 					jobSnapshot.workSpaceDoingSize,
 					jobSnapshot.workSpaceErrSize);
 			$("#" + job_queue_count + jobName).html(workSpaceShowStr);
-			var errCountHtml=getErrCountHtml(jobSnapshot.name,jobSnapshot.id,jobSnapshot.errCount);
+			var errCountHtml=getErrCountHtml(jobSnapshot.name,jobSnapshot.workSpaceName,jobSnapshot.id,jobSnapshot.errCount);
 			$("#" + job_exception_count + jobName).html(errCountHtml);	
 		}
 	}
@@ -356,7 +357,7 @@ function showErrMsg(jobName,workSpaceName,jobSnapshotId){
 						+ page.originalUrl + "</span></td>").appendTo(tr);
 				var operationTd = $("<td></td>");
 				var operation = "<a  href=\"javascript:clearDoing('"+ workSpaceName+ "')\">全部删除</a>&nbsp;";
-				//operation += "<a href=\"javascript:#\">处理</a>&nbsp;";
+				// operation += "<a href=\"javascript:#\">处理</a>&nbsp;";
 				$(operation).appendTo(operationTd);
 				operationTd.appendTo(tr);
 				tr.appendTo(workSpace_table);
@@ -429,7 +430,7 @@ function showJobParams(jobName) {
 				$("<input name='update_name'  flag='"+jobParam.id+"' size='20'  style='display:none' type='text' value='"+jobParam.name+"' />").appendTo(jobParamNameTd);
 				$("<a     name='name'  style='color:#FF0000;text-decoration:none;' href=\"javascript:editJobParams('input','"+jobParam.id+"','name')\">"+jobParam.name+"</a>").appendTo(jobParamNameTd);
 				jobParamNameTd.appendTo(tr);
-				//contenteditable="true"
+				// contenteditable="true"
 				var jobParamValueTd=$("<td></td");
 				$("<input name='value'  flag='"+jobParam.id+"' style='display:none' type='text' value='"+jobParam.value+"' />").appendTo(jobParamValueTd);
 				var textarea=$("<textarea name='update_value'  flag='"+jobParam.id+"'  cols='145' style='display:none'></textarea>");
@@ -855,7 +856,7 @@ function showExtractItemTable(jobName){
 						"href=\"javascript:editExtractItem('"+jobName+"','"+extractItem.serialNub+"','mustHaveResult')\">"+extractItem.mustHaveResult+"</a>").appendTo(mustHaveResultTd);
 				mustHaveResultTd.appendTo(tr);
 				
-				//contenteditable="true"
+				// contenteditable="true"
 				$("<td><a href=\"javascript:delExtractItem('"+jobName+"','"+extractItem.serialNub+"')\">删除</a>&nbsp;&nbsp;" +
 						"<a href=\"javascript:upExtractItem('"+jobName+"','"+extractItem.serialNub+"')\">up</a>&nbsp;&nbsp;" +
 						"<a href=\"javascript:downExtractItem('"+jobName+"','"+extractItem.serialNub+"')\">down</a></td>").appendTo(tr);
