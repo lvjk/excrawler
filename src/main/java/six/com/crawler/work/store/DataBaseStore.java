@@ -31,6 +31,8 @@ public class DataBaseStore extends AbstarctStore {
 	final static String checkTableIsCreateSql = "select table_name  " + " from INFORMATION_SCHEMA.tables  "
 			+ " where TABLE_NAME=?";
 	final static Logger LOG = LoggerFactory.getLogger(DataBaseStore.class);
+
+	private final static long getConnctionTimeOut = 6000;
 	private String insertSqlTemplate;
 	private String insertSql;
 	private String createTableSqlTemplate;
@@ -67,8 +69,7 @@ public class DataBaseStore extends AbstarctStore {
 		datasource.setUsername(dbUser);
 		datasource.setPassword(dbPasswd);
 		datasource.setMaxActive(1);
-		
-		
+
 		JobSnapshot jobSnapshot = getWorker().getManager().getScheduleCache()
 				.getJobSnapshot(getWorker().getJob().getName());
 		tableName = jobSnapshot.getParam(TABLE_KEY);
@@ -76,11 +77,12 @@ public class DataBaseStore extends AbstarctStore {
 			String fixedTableName = getWorker().getJob().getParam(CrawlerJobParamKeys.FIXED_TABLE_NAME);
 			String isSnapshotTable = getWorker().getJob().getParam(CrawlerJobParamKeys.IS_SNAPSHOT_TABLE);
 			if ("1".equals(isSnapshotTable)) {
-				JobSnapshot lastJobSnapshot = getWorker().getManager().getLastEnd(getWorker().getJob().getName(),jobSnapshot.getId());
+				JobSnapshot lastJobSnapshot = getWorker().getManager().getLastEnd(getWorker().getJob().getName(),
+						jobSnapshot.getId());
 				if (null != lastJobSnapshot && JobSnapshotState.FINISHED != lastJobSnapshot.getEnumStatus()) {
 					tableName = lastJobSnapshot.getParam(TABLE_KEY);
 				}
-				if (StringUtils.isBlank(tableName)||!checkIsCreated(tableName)) {
+				if (StringUtils.isBlank(tableName) || !checkIsCreated(tableName)) {
 					tableName = JobTableUtils.buildJobTableName(fixedTableName,
 							getWorker().getWorkerSnapshot().getJobSnapshotId());
 				}
@@ -158,7 +160,7 @@ public class DataBaseStore extends AbstarctStore {
 		Connection connection = null;
 		PreparedStatement ps = null;
 		try {
-			connection = datasource.getConnection();
+			connection = datasource.getConnection(getConnctionTimeOut);
 			ps = connection.prepareStatement(sql);
 			DbHelper.setPreparedStatement(ps, parameter);
 			storeCount = ps.executeUpdate();
