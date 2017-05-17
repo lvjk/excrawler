@@ -54,7 +54,7 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker {
 				roomStates.put(key, value);
 			}
 		}
-		String unitId = doingPage.getMeta("unitId").get(0);
+		String unitId = StringUtils.substringAfter(doingPage.getFinalUrl(), "GetHouseTable.aspx?qrykey=");
 		String unitName=doingPage.getMeta("unitName").get(0);
 		String projectId = doingPage.getMeta("projectId").get(0);
 		String projectName = doingPage.getMeta("projectName").get(0);
