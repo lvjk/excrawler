@@ -6,6 +6,7 @@ import java.util.Map;
 
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
+import six.com.crawler.utils.ArrayListUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.space.WorkSpace;
 
@@ -37,17 +38,19 @@ public class NbCnnbfdcUnitInfoWorker extends AbstractCrawlWorker {
 	@Override
 	protected void onComplete(Page doingPage, ResultContext resultContext) {
 		// 获取楼栋名称的详情链接地址
-		List<String> unitName = resultContext.getExtractResult("unitName");
+		List<String> unitNames = resultContext.getExtractResult("unitName");
 		List<String> unitIds = resultContext.getExtractResult("unitId");
-		for (int i = 0; i < unitName.size(); i++) {
+		List<String> projectIds = resultContext.getExtractResult("projectId");
+		List<String> projectNames = resultContext.getExtractResult("projectName");
+		for (int i = 0; i < unitNames.size(); i++) {
 			String url=BASE_URL+unitIds.get(i);
 			Page roomStatePage = new Page(doingPage.getSiteCode(), 1, url, url);
 			roomStatePage.setReferer(doingPage.getFinalUrl());
 
-			roomStatePage.getMetaMap().put("projectId", doingPage.getMeta("projectId"));
-			roomStatePage.getMetaMap().put("projectName", doingPage.getMeta("projectName"));
-			roomStatePage.getMetaMap().put("unitName", doingPage.getMeta("unitName"));
-			roomStatePage.getMetaMap().put("unitId", doingPage.getMeta("unitId"));
+			roomStatePage.getMetaMap().put("projectId", ArrayListUtils.asList(projectIds.get(i)));
+			roomStatePage.getMetaMap().put("projectName", ArrayListUtils.asList(projectNames.get(i)));
+			roomStatePage.getMetaMap().put("unitName", ArrayListUtils.asList(unitNames.get(i)));
+			roomStatePage.getMetaMap().put("unitId", ArrayListUtils.asList(unitIds.get(i)));
 			roomStateInfoQueue.push(roomStatePage);
 		}
 	}

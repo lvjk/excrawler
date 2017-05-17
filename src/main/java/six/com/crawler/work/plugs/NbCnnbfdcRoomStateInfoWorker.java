@@ -55,6 +55,9 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker {
 			}
 		}
 		String unitId = doingPage.getMeta("unitId").get(0);
+		String unitName=doingPage.getMeta("unitName").get(0);
+		String projectId = doingPage.getMeta("projectId").get(0);
+		String projectName = doingPage.getMeta("projectName").get(0);
 		List<String> unitIds = new ArrayList<String>();
 		List<String> roomNos = new ArrayList<String>();
 		String styleCssQuery = "table[id]>tbody>tr>td>table";
@@ -62,6 +65,9 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker {
 		List<String> roomStateList = new ArrayList<String>();
 		List<String> roomIds = new ArrayList<String>();
 		List<String> contractNos = new ArrayList<String>();
+		List<String> unitNames = new ArrayList<String>();
+		List<String> projectIds = new ArrayList<String>();
+		List<String> projectNames = new ArrayList<String>();
 
 		Elements rooms = doingPage.getDoc().select("table[id]");
 		for (Element room : rooms) {
@@ -101,10 +107,16 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker {
 			roomNos.add(s);
 			roomStateList.add(roomState);
 			unitIds.add(unitId);
+			unitNames.add(unitName);
+			projectIds.add(projectId);
+			projectNames.add(projectName);
 		}
 
+		doingPage.getMetaMap().put("projectId", projectIds);
+		doingPage.getMetaMap().put("projectName", projectNames);
 		doingPage.getMetaMap().put("roomState", roomStateList);
 		doingPage.getMetaMap().put("unitId", unitIds);
+		doingPage.getMetaMap().put("unitName", unitNames);
 		doingPage.getMetaMap().put("roomNo", roomNos);
 		doingPage.getMetaMap().put("roomId", roomIds);
 		doingPage.getMetaMap().put("contractNo", contractNos);
