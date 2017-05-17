@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.druid.pool.DruidDataSource;
+import com.esotericsoftware.minlog.Log;
 
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.JobSnapshotState;
@@ -124,7 +125,7 @@ public class DataBaseStore extends AbstarctStore {
 	private boolean checkIsCreated(String table) {
 		Connection connection = null;
 		try {
-			connection = datasource.getConnection();
+			connection = getConnection();
 			List<String> tables = DbHelper.queryTableNames(connection, table);
 			if (tables.size() > 0) {
 				return true;
@@ -160,7 +161,7 @@ public class DataBaseStore extends AbstarctStore {
 		Connection connection = null;
 		PreparedStatement ps = null;
 		try {
-			connection = datasource.getConnection(getConnctionTimeOut);
+			connection = getConnection();
 			ps = connection.prepareStatement(sql);
 			DbHelper.setPreparedStatement(ps, parameter);
 			storeCount = ps.executeUpdate();
@@ -175,6 +176,16 @@ public class DataBaseStore extends AbstarctStore {
 		}
 		return storeCount;
 
+	}
+
+	private Connection getConnection() {
+		Connection connection = null;
+		try {
+			connection = datasource.getConnection(getConnctionTimeOut);
+		} catch (SQLException e) {
+			Log.error("get connection", e);
+		}
+		return connection;
 	}
 
 	@Override
