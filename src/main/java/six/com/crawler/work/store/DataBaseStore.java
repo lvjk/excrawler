@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.druid.pool.DruidDataSource;
-import com.esotericsoftware.minlog.Log;
 
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.JobSnapshotState;
@@ -31,7 +30,7 @@ public class DataBaseStore extends AbstarctStore {
 
 	final static String checkTableIsCreateSql = "select table_name  " + " from INFORMATION_SCHEMA.tables  "
 			+ " where TABLE_NAME=?";
-	final static Logger LOG = LoggerFactory.getLogger(DataBaseStore.class);
+	final static Logger log = LoggerFactory.getLogger(DataBaseStore.class);
 
 	private final static long getConnctionTimeOut = 6000;
 	private String insertSqlTemplate;
@@ -183,7 +182,7 @@ public class DataBaseStore extends AbstarctStore {
 		try {
 			connection = datasource.getConnection(getConnctionTimeOut);
 		} catch (SQLException e) {
-			Log.error("get connection", e);
+			log.error("get connection", e);
 		}
 		return connection;
 	}
