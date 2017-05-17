@@ -32,7 +32,7 @@ public class DataBaseStore extends AbstarctStore {
 			+ " where TABLE_NAME=?";
 	final static Logger log = LoggerFactory.getLogger(DataBaseStore.class);
 
-	private final static long getConnctionTimeOut = 6000;
+	private final static long getConnctionTimeOut = 60000;
 	private String insertSqlTemplate;
 	private String insertSql;
 	private String createTableSqlTemplate;
