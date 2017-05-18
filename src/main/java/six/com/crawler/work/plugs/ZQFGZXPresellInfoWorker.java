@@ -40,7 +40,6 @@ public class ZQFGZXPresellInfoWorker extends AbstractCrawlWorker{
 	
 	@Override
 	protected void insideInit() {
-		
 		unitInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("zqfgzx_unit_info", Page.class);
 		int pageIndex = 1;
 		Page firstPage = buildPage(pageIndex,null);// 初始化第一页
@@ -90,7 +89,7 @@ public class ZQFGZXPresellInfoWorker extends AbstractCrawlWorker{
 			String url=BASE_URL+unitUrls.get(i);
 			Page unitPage=new Page(doingPage.getSiteCode(), 1, url, url);
 			unitPage.setMethod(HttpMethod.GET);
-			unitPage.setReferer(doingPage.getReferer());
+			unitPage.setReferer(doingPage.getFinalUrl());
 			unitPage.getMetaMap().put("unitId", ArrayListUtils.asList(unitIds.get(i)));
 			
 			unitInfoQueue.push(unitPage);
