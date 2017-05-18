@@ -51,65 +51,74 @@ public class ZQFGZXRoomStateInfoWorker extends AbstractCrawlWorker{
 		List<String> developers=new ArrayList<String>();
 		List<String> roomStates=new ArrayList<String>();
 		
-		String unitId=doingPage.getMeta("unitId").get(0);
-		
-		Elements floors=doingPage.getDoc().select("ul[class=RoomState]");
-		for (Element floor:floors) {
-			Elements rooms=floor.select("li:gt(0)");
-			for (Element room:rooms) {
-				Elements attrs=room.select("dl[class='loupan-info']>dd");
-				String realEstate=attrs.get(0).select("a").first().ownText();
-				String roomNo=attrs.get(1).ownText();
-				String roomType=attrs.get(2).ownText();
-				String roomProperty=attrs.get(8).ownText();
-				String layer=attrs.get(7).ownText();
-				
-				String realEstateName=attrs.get(6).select("a").first().ownText();
-				String preBuildArea=attrs.get(3).ownText();
-				String preShareArea=attrs.get(4).ownText();
-				String preInnerArea=attrs.get(5).ownText();
-				
-				String state=attrs.get(9).ownText();
-				String actBuildArea=attrs.get(10).ownText();
-				String actShareArea=attrs.get(11).ownText();
-				String actInnerArea=attrs.get(12).ownText();
-				String developer=attrs.get(13).ownText();
-				
-				preBuildAreas.add(preBuildArea);
-				preShareAreas.add(preShareArea);
-				preInnerAreas.add(preInnerArea);
-				
-				actBuildAreas.add(actBuildArea);
-				actShareAreas.add(actShareArea);
-				actInnerAreas.add(actInnerArea);
-				developers.add(developer);
-				roomProperties.add(roomProperty);
-				roomTypes.add(roomType);
-				realEstateNames.add(realEstateName);
-				realEstates.add(realEstate);
-				roomStates.add(state);
-				roomNos.add(roomNo);
-				layers.add(layer);
-				unitIds.add(unitId);
-			}
+		String unitId=null;
+		if(doingPage.getMeta("unitId")!=null&&doingPage.getMeta("unitId").size()>0){
+			unitId=doingPage.getMeta("unitId").get(0);
+		}else{
+			throw new RuntimeException("don't find unitId,meta is :"+doingPage.getMetaMap().toString());
 		}
 		
-		doingPage.getMetaMap().put("unitId", unitIds);
-		doingPage.getMetaMap().put("layer", layers);
-		doingPage.getMetaMap().put("preBuildArea", preBuildAreas);
-		doingPage.getMetaMap().put("preShareArea", preShareAreas);
-		doingPage.getMetaMap().put("preInnerArea", preInnerAreas);
-		doingPage.getMetaMap().put("actBuildArea", actBuildAreas);
-		doingPage.getMetaMap().put("actShareArea", actShareAreas);
-		doingPage.getMetaMap().put("actInnerArea", actInnerAreas);
-		
-		doingPage.getMetaMap().put("roomNo", roomNos);
-		doingPage.getMetaMap().put("state", roomStates);
-		doingPage.getMetaMap().put("realEstateName", realEstates);
-		doingPage.getMetaMap().put("unitName", realEstateNames);
-		doingPage.getMetaMap().put("developer", developers);
-		doingPage.getMetaMap().put("roomType", roomTypes);
-		doingPage.getMetaMap().put("roomProperty", roomProperties);
+		Elements floors=doingPage.getDoc().select("ul[class=RoomState]");
+		if(null!=floors&&floors.size()>0){
+			for (Element floor:floors) {
+				Elements rooms=floor.select("li:gt(0)");
+				for (Element room:rooms) {
+					Elements attrs=room.select("dl[class='loupan-info']>dd");
+					String realEstate=attrs.get(0).select("a").first().ownText();
+					String roomNo=attrs.get(1).ownText();
+					String roomType=attrs.get(2).ownText();
+					String roomProperty=attrs.get(8).ownText();
+					String layer=attrs.get(7).ownText();
+					
+					String realEstateName=attrs.get(6).select("a").first().ownText();
+					String preBuildArea=attrs.get(3).ownText();
+					String preShareArea=attrs.get(4).ownText();
+					String preInnerArea=attrs.get(5).ownText();
+					
+					String state=attrs.get(9).ownText();
+					String actBuildArea=attrs.get(10).ownText();
+					String actShareArea=attrs.get(11).ownText();
+					String actInnerArea=attrs.get(12).ownText();
+					String developer=attrs.get(13).ownText();
+					
+					preBuildAreas.add(preBuildArea);
+					preShareAreas.add(preShareArea);
+					preInnerAreas.add(preInnerArea);
+					
+					actBuildAreas.add(actBuildArea);
+					actShareAreas.add(actShareArea);
+					actInnerAreas.add(actInnerArea);
+					developers.add(developer);
+					roomProperties.add(roomProperty);
+					roomTypes.add(roomType);
+					realEstateNames.add(realEstateName);
+					realEstates.add(realEstate);
+					roomStates.add(state);
+					roomNos.add(roomNo);
+					layers.add(layer);
+					unitIds.add(unitId);
+				}
+			}
+			
+			doingPage.getMetaMap().put("unitId", unitIds);
+			doingPage.getMetaMap().put("layer", layers);
+			doingPage.getMetaMap().put("preBuildArea", preBuildAreas);
+			doingPage.getMetaMap().put("preShareArea", preShareAreas);
+			doingPage.getMetaMap().put("preInnerArea", preInnerAreas);
+			doingPage.getMetaMap().put("actBuildArea", actBuildAreas);
+			doingPage.getMetaMap().put("actShareArea", actShareAreas);
+			doingPage.getMetaMap().put("actInnerArea", actInnerAreas);
+			
+			doingPage.getMetaMap().put("roomNo", roomNos);
+			doingPage.getMetaMap().put("state", roomStates);
+			doingPage.getMetaMap().put("realEstateName", realEstates);
+			doingPage.getMetaMap().put("unitName", realEstateNames);
+			doingPage.getMetaMap().put("developer", developers);
+			doingPage.getMetaMap().put("roomType", roomTypes);
+			doingPage.getMetaMap().put("roomProperty", roomProperties);
+		}else{
+			throw new RuntimeException("don't find state node: ul[class=RoomState]; pageSrc is :" +doingPage.getPageSrc());
+		}
 	}
 
 	@Override

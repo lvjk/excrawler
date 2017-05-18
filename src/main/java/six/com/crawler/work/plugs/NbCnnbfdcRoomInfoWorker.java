@@ -44,7 +44,7 @@ public class NbCnnbfdcRoomInfoWorker extends AbstractCrawlWorker{
 	protected void beforeExtract(Page doingPage) {
 		Element table = doingPage.getDoc().select(tableCss).first();
 		if (null == table) {
-			throw new RuntimeException("don't find table:" + tableCss);
+			throw new RuntimeException("don't find table:" + tableCss +",pageSrc is :"+doingPage.getPageSrc());
 		}
 		List<TableResult> results = JsoupUtils.paserTable(table);
 		for (TableResult result : results) {

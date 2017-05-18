@@ -166,7 +166,7 @@ public class DataBaseStore extends AbstarctStore {
 			storeCount = ps.executeUpdate();
 		} catch (SQLException e) {
 			if (!e.getMessage().contains("Duplicate entry")) {
-				throw new StoreException("execute sql err:" + sql, e);
+				throw new StoreException("execute sql err:" + sql  +",params :"+parameter , e);
 			} else {
 				LOG.info("duplicate entry:" + parameter);
 			}
