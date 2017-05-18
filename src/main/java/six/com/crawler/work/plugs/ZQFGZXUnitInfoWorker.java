@@ -32,14 +32,18 @@ public class ZQFGZXUnitInfoWorker extends AbstractCrawlWorker{
 
 	@Override
 	protected void beforeExtract(Page doingPage) {
-		Elements attrs=doingPage.getDoc().select("dl[class=dl-horizontal buildinginfo]:eq(0)>dd");
-		Element developer=attrs.get(2);
-		doingPage.getMetaMap().put("developer", ArrayListUtils.asList(developer.ownText()));
+		String attrCss="dl[class=dl-horizontal buildinginfo]:eq(0)>dd";
+		Elements attrs=doingPage.getDoc().select(attrCss);
+		if(attrs.size()<2){
+			throw new RuntimeException("don't find state node:" + attrCss+",pageSrc is :"+doingPage.getPageSrc());
+		}else{
+			Element developer=attrs.get(2);
+			doingPage.getMetaMap().put("developer", ArrayListUtils.asList(developer.ownText()));
+		}
 	}
 
 	@Override
 	protected void afterExtract(Page doingPage, ResultContext resultContext) {
-		// TODO Auto-generated method stub
 		
 	}
 
