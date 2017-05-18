@@ -62,7 +62,7 @@ public class Page implements WorkSpaceData, Serializable {
 
 	private int depth = 1;// 页面深度
 
-	private String pageSrc;// 页面源码
+	private transient String pageSrc;// 页面源码
 
 	private transient Document doc;// page Document
 

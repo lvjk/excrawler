@@ -2,7 +2,6 @@ package six.com.crawler.admin.api;
 
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ResponseEntity;
@@ -53,19 +52,6 @@ public class JobApi extends BaseApi {
 	@ResponseBody
 	public ResponseMsg<List<JobSnapshot>> getHistoryJobSnapshot(@PathVariable("jobName") String jobName) {
 		return jobService.queryJobSnapshotsFromHistory(jobName);
-	}
-
-	/**
-	 * 获取job运行信息
-	 * 
-	 * @param jobNameList
-	 * @return
-	 */
-	@RequestMapping(value = "/crawler/job/getJobSnapshots", method = RequestMethod.POST)
-	@ResponseBody
-	public ResponseMsg<List<JobSnapshot>> getJobSnapshots(@RequestParam("jobNames")String jobNames, @RequestParam("workSpaceNames")String workSpaceNames) {
-		ResponseMsg<List<JobSnapshot>> msg = jobService.getJobSnapshots(StringUtils.split(jobNames, ","),StringUtils.split(workSpaceNames, ","));
-		return msg;
 	}
 
 	@RequestMapping(value = "/crawler/job/updateIsScheduled", method = RequestMethod.POST)
