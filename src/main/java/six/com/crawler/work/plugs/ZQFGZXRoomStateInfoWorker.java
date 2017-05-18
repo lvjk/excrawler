@@ -51,7 +51,13 @@ public class ZQFGZXRoomStateInfoWorker extends AbstractCrawlWorker{
 		List<String> developers=new ArrayList<String>();
 		List<String> roomStates=new ArrayList<String>();
 		
-		String unitId=doingPage.getMeta("unitId").get(0);
+		String unitId=null;
+		if(doingPage.getMeta("unitId")==null||doingPage.getMeta("unitId").size()>0){
+			unitId=doingPage.getMeta("unitId").get(0);
+		}else{
+			throw new RuntimeException("don't find unitId,meta is :"+doingPage.getMetaMap().toString());
+		}
+				
 		
 		Elements floors=doingPage.getDoc().select("ul[class=RoomState]");
 		for (Element floor:floors) {
