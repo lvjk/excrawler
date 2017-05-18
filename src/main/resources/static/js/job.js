@@ -1,6 +1,7 @@
+var stompClient = null;
 var connected = false;
-var connectDelayTime = 1000;
-var updateJobDelayTime =1000;
+var connectDelayTime = 2000;
+var refreshJobSnapshotDelayTime =1000;
 var job_state = "job_state_";
 var job_start_time = "job_start_time_";
 var job_end_time = "job_end_time_";
@@ -33,9 +34,96 @@ $(function() {
 		  searchJob();
 	  }  
 	});  
+	connect();
 	// 加载数据
 	searchJob();
 });
+
+function connect() {
+	if(!connected){
+		var socket = new SockJS('/crawler_websocket');
+	    stompClient = Stomp.over(socket);
+	    stompClient.connect({}, function (frame) {
+	    	connected=true;
+	        stompClient.subscribe('/topic/job/jobSnapshot', function (responseMsg) {
+	        	var msg=JSON.parse(responseMsg.body);
+	        	if (msg.isOk == 1) {
+	        		refreshJobSnapshots(msg.data);
+	    		}
+	        });
+	    });
+	    window.setTimeout(connect, connectDelayTime);
+	}else{
+		window.setTimeout(requestRefreshJobSnapshot,refreshJobSnapshotDelayTime);
+	}
+}
+
+function requestRefreshJobSnapshot() {
+	var jobTrs = $('#jobs').find("tr");
+	var jobNames="";
+	var workSpaceNames="";
+	var requestMsg=new Object();
+	for (var i = 0; i < jobTrs.length; i++) {
+		var jobTr=$(jobTrs[i]);
+		var jobSnapshot = new Object();
+		jobNames+=jobTr.find("[name='name']").val()+",";
+		workSpaceNames+=jobTr.find("[name='workSpaceName']").val()+",";
+	}
+	requestMsg.jobNames=jobNames;
+	requestMsg.workSpaceNames=workSpaceNames;
+    stompClient.send("/crawler/refreshJobSnapshot", {}, JSON.stringify(requestMsg));
+    window.setTimeout(requestRefreshJobSnapshot,refreshJobSnapshotDelayTime);
+}
+
+/**
+ * 动态显示job 运行信息
+ * 
+ * @param jobSnapshots
+ * @returns
+ */
+function refreshJobSnapshots(jobSnapshots) {
+	if(null!=jobSnapshots){
+		for (var i = 0; i < jobSnapshots.length; i++) {
+			var jobSnapshot = jobSnapshots[i];
+			var jobName = jobSnapshot.name;
+			var jobTr=$("tr[name='"+jobName+"']");
+			if(null!=jobTr&&undefined!=jobTr){
+				var oldStatus=jobTr.find("[name='state']").text();
+				var newStatus=getState(jobSnapshot.status);
+				// 只有当状态发生改变时才更新一下内容
+				if(oldStatus!=newStatus){
+					var color=getStateColor(newStatus);
+					if(jobSnapshot.status==3||jobSnapshot.status==4){
+						newStatus="<a  style='color:"+color+"' href=\"javascript:masterScheduled.showWorkerInfo('" + jobName+ "')\">"+newStatus+"</a>";	
+					}
+					jobTr.find("[name='state']").css("color",color).html(newStatus);
+					var startTime=jobSnapshot.startTime;
+					var startTimeTd =jobTr.find("[name='startTime']");
+					var oldStartTime=startTimeTd.html();
+					if(""==oldStartTime&&startTime!=null&&startTime!="null"&&startTime!=""){
+						startTime=startTime.substring(5,startTime.length);
+						startTimeTd.html(startTime);
+					}
+					if(""!=oldStartTime&&(startTime==null||startTime=="null"||startTime=="")){
+						startTimeTd.html("");
+					}
+					
+					var opetationHtml=masterScheduled.getOperation(jobSnapshot.name,jobSnapshot.status);
+					$("#" + job_operation + jobName).html(opetationHtml);
+				}
+				var workSpaceShowStr=getWorkSpaceHtml(jobSnapshot.workSpaceName,
+						jobSnapshot.totalProcessCount,
+						jobSnapshot.workSpaceDoingSize,
+						jobSnapshot.workSpaceErrSize);
+				$("#" + job_queue_count + jobName).html(workSpaceShowStr);
+				var errCountHtml=getErrCountHtml(jobSnapshot.name,jobSnapshot.workSpaceName,jobSnapshot.id,jobSnapshot.errCount);
+				$("#" + job_exception_count + jobName).html(errCountHtml);	
+			}
+		}
+	}
+}
+
+
 
 function uploadJobProfile(url,file) {
 	var url="/crawler/job/upload/profile";
@@ -159,7 +247,6 @@ function showJobTable(result) {
 			  }  
 		}); 
 		$('#pageInfo').html(pageInfo(totalPage,totalSize));
-		window.setTimeout(updateJobInfo, updateJobDelayTime);
 	}
 }
 
@@ -273,53 +360,6 @@ function getWorkSpaceHtml(workSpaceName,totalProcessCount,doingSize,errSize){
 	return queueShowStr;
 }
 
-
-/**
- * 动态显示job 运行信息
- * 
- * @param jobSnapshots
- * @returns
- */
-function showJobSnapshots(jobSnapshots) {
-	if(null!=jobSnapshots){
-		for (var i = 0; i < jobSnapshots.length; i++) {
-			var jobSnapshot = jobSnapshots[i];
-			var jobName = jobSnapshot.name;
-			var jobTr=$("tr[name='"+jobName+"']");
-			var oldStatus=jobTr.find("[name='state']").text();
-			var newStatus=getState(jobSnapshot.status);
-			// 只有当状态发生改变时才更新一下内容
-			if(oldStatus!=newStatus){
-				var color=getStateColor(newStatus);
-				if(jobSnapshot.status==3||jobSnapshot.status==4){
-					newStatus="<a  style='color:"+color+"' href=\"javascript:masterScheduled.showWorkerInfo('" + jobName+ "')\">"+newStatus+"</a>";	
-				}
-				jobTr.find("[name='state']").css("color",color).html(newStatus);
-				var startTime=jobSnapshot.startTime;
-				var startTimeTd =jobTr.find("[name='startTime']");
-				var oldStartTime=startTimeTd.html();
-				if(""==oldStartTime&&startTime!=null&&startTime!="null"&&startTime!=""){
-					startTime=startTime.substring(5,startTime.length);
-					startTimeTd.html(startTime);
-				}
-				if(""!=oldStartTime&&(startTime==null||startTime=="null"||startTime=="")){
-					startTimeTd.html("");
-				}
-				
-				var opetationHtml=masterScheduled.getOperation(jobSnapshot.name,jobSnapshot.status);
-				$("#" + job_operation + jobName).html(opetationHtml);
-			}
-			var workSpaceShowStr=getWorkSpaceHtml(jobSnapshot.workSpaceName,
-					jobSnapshot.totalProcessCount,
-					jobSnapshot.workSpaceDoingSize,
-					jobSnapshot.workSpaceErrSize);
-			$("#" + job_queue_count + jobName).html(workSpaceShowStr);
-			var errCountHtml=getErrCountHtml(jobSnapshot.name,jobSnapshot.workSpaceName,jobSnapshot.id,jobSnapshot.errCount);
-			$("#" + job_exception_count + jobName).html(errCountHtml);	
-		}
-	}
-}
-
 function getErrCountHtml(jobName,workSpaceName,jobSnapshotId,errCount){
 	var errCountHtml;
 	if(errCount>0){
@@ -366,28 +406,6 @@ function showErrMsg(jobName,workSpaceName,jobSnapshotId){
 			showLayer(workSpaceDiv);
 		}
 	});
-}
-
-function updateJobInfo() {
-	var jobTrs = $('#jobs').find("tr");
-	var jobNames="";
-	var workSpaceNames="";
-	for (var i = 0; i < jobTrs.length; i++) {
-		var jobTr=$(jobTrs[i]);
-		var jobSnapshot = new Object();
-		jobNames+=jobTr.find("[name='name']").val()+",";
-		workSpaceNames+=jobTr.find("[name='workSpaceName']").val()+",";
-	}
-	var url = "/crawler/job/getJobSnapshots";
-	$.post(url, {
-		jobNames:jobNames,
-		workSpaceNames:workSpaceNames
-	}, function(responseMsg) {
-		if (responseMsg.isOk == 1) {
-			showJobSnapshots(responseMsg.data);
-		}
-	});
-	window.setTimeout(updateJobInfo, updateJobDelayTime);
 }
 
 
