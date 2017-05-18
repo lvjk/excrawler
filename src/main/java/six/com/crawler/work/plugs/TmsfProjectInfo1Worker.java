@@ -114,8 +114,7 @@ public class TmsfProjectInfo1Worker extends AbstractCrawlWorker {
 			sellControlPage.getMetaMap().putAll(doingPage.getMetaMap());
 			sellControlUrlQueue.push(sellControlPage);
 		} else {
-			log.warn("did not find presellUrl:" + doingPage.getFinalUrl());
-			log.warn(doingPage.getPageSrc());
+			log.error("did not find presellUrl:" + doingPage.getFinalUrl());
 		}
 
 	}

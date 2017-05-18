@@ -134,8 +134,7 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 				}
 			}
 		} else {
-			log.warn("did not find presellUrl:" + doingPage.getFinalUrl());
-			log.warn(doingPage.getPageSrc());
+			log.error("did not find presellUrl:" + doingPage.getFinalUrl());
 		}
 	}
 
