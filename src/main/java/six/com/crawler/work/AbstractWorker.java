@@ -28,44 +28,75 @@ import six.com.crawler.work.space.WorkSpaceData;
 /**
  * @author sixliu E-mail:359852326@qq.com
  * @version 创建时间：2016年8月29日 下午8:16:06 类说明
+ * 
+ *          job's worker 抽象基础类，实现了基本了的流程控制
  */
 public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<T> {
 
 	private final static Logger log = LoggerFactory.getLogger(AbstractWorker.class);
 
-	private final static long DEFAULT_REST_TIME = 2000;
+	// 工作默认rest状态下 休息时间
+	private final static int DEFAULT_REST_TIME = 2000;
 	// 用来lock 读写 状态
 	private final StampedLock setStateLock = new StampedLock();
 	// 用来lock Condition.await() 和condition.signalAll();
 	private final ReentrantLock reentrantLock = new ReentrantLock();
 	// 用来Condition.await() 和condition.signalAll();
 	private final Condition condition = reentrantLock.newCondition();
-
+	// 环境配置类
 	private SpiderConfigure configure;
-
+	// 集群分布式锁
 	private DistributedLock distributedLock;
-
+	// worker的上级调度管理者
 	private WorkerSchedulerManager manager;
-
+	// worker的上级job
 	private Job job;
-
+	// worker的工作空间
 	private WorkSpace<T> workSpace;
-
+	// worker处理的数据class
 	private Class<T> workSpaceDataClz;
-
+	// worker状态
 	private volatile WorkerLifecycleState state = WorkerLifecycleState.READY;// 状态
-
+	// worker快照
 	private volatile WorkerSnapshot workerSnapshot;
-
+	// 休息状态下休眠指定时间
+	private long restWaitTime;
 	// 最小延迟处理数据频率
 	protected long minWorkFrequency;
 	// 最大延迟处理数据频率
 	protected long maxWorkFrequency;
-
+	// 工作线程上次活动时间记录
 	private long lastActivityTime;
-
 	// 随机对象 产生随机控制时间
 	private static Random randomDownSleep = new Random();
+
+	/**
+	 * 内部初始化方法，用于实现业务相关初始化工作
+	 * 
+	 * @param jobSnapshot
+	 */
+	protected abstract void initWorker(JobSnapshot jobSnapshot);
+
+	/**
+	 * 内部工作方法,用于实现相关业务
+	 * 
+	 * @param workerData
+	 * @throws Exception
+	 */
+	protected abstract void insideWork(T workerData) throws Exception;
+
+	/**
+	 * 内部异常处理方法，用来处理业务相关异常
+	 * 
+	 * @param t
+	 * @param workerData
+	 */
+	protected abstract void onError(Exception t, T workerData);
+
+	/**
+	 * 内部业务销毁方法，在工作结束后调用
+	 */
+	protected abstract void insideDestroy();
 
 	public AbstractWorker(Class<T> workSpaceDataClz) {
 		this.workSpaceDataClz = workSpaceDataClz;
@@ -89,11 +120,12 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 
 	private void init() {
 		String jobName = getJob().getName();
+		MDC.put("jobName", jobName);
 		String path = "job_" + jobName + "_" + getWorkerSnapshot().getJobSnapshotId() + "_worker";
 		distributedLock = getManager().getNodeManager().getWriteLock(path);
-		MDC.put("jobName", jobName);
 		try {
 			distributedLock.lock();
+			restWaitTime = (long) job.getParamInt(CrawlerJobParamKeys.REST_WAIT_TIME, DEFAULT_REST_TIME);
 			JobSnapshot jobSnapshot = getJobSnapshot();
 			this.minWorkFrequency = job.getWorkFrequency();
 			this.maxWorkFrequency = 2 * minWorkFrequency;
@@ -109,8 +141,6 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 		}
 	}
 
-	protected abstract void initWorker(JobSnapshot jobSnapshot);
-
 	private final void work() {
 		workerSnapshot.setStartTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
 		log.info("start init:" + getName());
@@ -119,7 +149,7 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 		} catch (Exception e) {
 			compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.STOPED);
 			log.error("init worker err:" + getName(), e);
-			throw new RuntimeException(e);
+			doErr(e);
 		}
 		log.info("end init:" + getName());
 		log.info("start work:" + getName());
@@ -146,7 +176,7 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 					if (!getWorkSpace().doingIsEmpty()) {
 						compareAndSetState(WorkerLifecycleState.REST, WorkerLifecycleState.STARTED);
 					} else {
-						signalWait(DEFAULT_REST_TIME);
+						signalWait(restWaitTime);
 					}
 					// wait状态时会询问管理者是否end，然后休息
 				} else if (getState() == WorkerLifecycleState.WAITED) {
@@ -188,19 +218,7 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 			insideWork(workData);
 		} catch (Exception e) {
 			log.error("worker process err", e);
-			// 记录异常信息
-			String msg = ExceptionUtils.getExceptionMsg(e);
-			workerSnapshot.setErrCount(workerSnapshot.getErrCount() + 1);
-			WorkerErrMsg errMsg = new WorkerErrMsg();
-			errMsg.setJobSnapshotId(workerSnapshot.getJobSnapshotId());
-			errMsg.setJobName(job.getName());
-			errMsg.setWorkerName(getName());
-			errMsg.setStartTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
-			errMsg.setMsg(msg);
-			// 添加异常信息至缓存
-			workerSnapshot.getWorkerErrMsgs().add(errMsg);
-			// 通知管理员异常
-			getManager().getEmailClient().sendMailToAdmin("worker err", msg);
+			doErr(e);
 			onError(e, workData);
 		}
 		// 统计次数加1
@@ -218,14 +236,18 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 
 	}
 
-	/**
-	 * 内部工作方法
-	 * 
-	 * @return 如果没有处理数据 那么返回false 否则返回true
-	 */
-	protected abstract void insideWork(T workerData) throws Exception;
-
-	protected abstract void onError(Exception t, T workerData);
+	private void doErr(Exception e) {
+		String msg = ExceptionUtils.getExceptionMsg(e);
+		workerSnapshot.setErrCount(workerSnapshot.getErrCount() + 1);
+		WorkerErrMsg errMsg = new WorkerErrMsg();
+		errMsg.setJobSnapshotId(workerSnapshot.getJobSnapshotId());
+		errMsg.setJobName(job.getName());
+		errMsg.setWorkerName(getName());
+		errMsg.setStartTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
+		errMsg.setMsg(msg);
+		workerSnapshot.getWorkerErrMsgs().add(errMsg);
+		getManager().getEmailClient().sendMailToAdmin("worker err", msg);
+	}
 
 	/**
 	 * 频率控制
@@ -287,6 +309,11 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 		log.info("worker will finish:" + getName());
 	}
 
+	/**
+	 * 控制工作线程wait,restTime=0时为一直等待直到被唤醒,大于0为等待指定时间后恢复运行
+	 * 
+	 * @param restTime
+	 */
 	private void signalWait(long restTime) {
 		if ((getState() == WorkerLifecycleState.SUSPEND || getState() == WorkerLifecycleState.REST
 				|| getState() == WorkerLifecycleState.WAITED)) {
@@ -308,6 +335,9 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 		}
 	}
 
+	/**
+	 * 通知工作线程恢复运行
+	 */
 	private void signalRun() {
 		if (getState() == WorkerLifecycleState.STARTED || getState() == WorkerLifecycleState.STOPED
 				|| getState() == WorkerLifecycleState.FINISHED) {
@@ -323,11 +353,6 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 		}
 	}
 
-	/**
-	 * 获取 worker name
-	 * 
-	 * @return
-	 */
 	@Override
 	public String getName() {
 		return workerSnapshot.getName();
@@ -366,6 +391,13 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 		return snapshot;
 	}
 
+	/**
+	 * 比较是否等于预期状态，然后继续update
+	 * 
+	 * @param expectState
+	 * @param updateState
+	 * @return
+	 */
 	protected boolean compareAndSetState(WorkerLifecycleState expectState, WorkerLifecycleState updateState) {
 		boolean result = false;
 		if (this.getState() == expectState) {
@@ -418,6 +450,14 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 		return lastActivityTime;
 	}
 
+	@Override
+	public int hashCode() {
+		String name = getName();
+		int hash = name.hashCode();
+		return hash;
+	}
+
+	@Override
 	public boolean equals(Object anObject) {
 		if (null != anObject && anObject instanceof Worker) {
 			Worker<?> worker = (Worker<?>) anObject;
@@ -426,12 +466,6 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 			}
 		}
 		return false;
-	}
-
-	public int hashCode() {
-		String name = getName();
-		int hash = name.hashCode();
-		return hash;
 	}
 
 	@Override
@@ -451,7 +485,4 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 		}
 		MDC.remove("jobName");
 	}
-
-	protected abstract void insideDestroy();
-
 }

@@ -5,12 +5,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
@@ -42,7 +39,6 @@ import six.com.crawler.entity.JobSnapshotState;
 import six.com.crawler.entity.WorkerSnapshot;
 import six.com.crawler.node.Node;
 import six.com.crawler.node.NodeType;
-import six.com.crawler.node.lock.DistributedLock;
 import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.schedule.DispatchType;
 import six.com.crawler.schedule.consts.DownloadContants;
@@ -84,11 +80,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 
 	public static final String SCHEDULER_MANAGER_KEY = "scheduleManager";
 
-	private ConcurrentLinkedQueue<Job> pendingExecuteQueue = new ConcurrentLinkedQueue<>();
-
-	private final static Lock waitQueueLock = new ReentrantLock();
-
-	private final static Condition waitQueueCondition = waitQueueLock.newCondition();
+	private LinkedBlockingQueue<Job> pendingExecuteQueue = new LinkedBlockingQueue<>();
 
 	private Scheduler scheduler;
 
@@ -116,22 +108,14 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	private void loopReadWaitingJob() {
 		Job job = null;
 		while (true) {
-			job = pendingExecuteQueue.poll();
+			try {
+				job = pendingExecuteQueue.take();
+			} catch (InterruptedException e1) {
+			}
 			// 如果获取到Job的那么 那么execute
 			if (null != job) {
 				log.info("master node read job[" + job.getName() + "] from queue of pending execute to ready execute");
 				doExecute(job);
-			} else {// 如果队列里没有Job的话那么 wait 1000 毫秒
-				waitQueueLock.lock();
-				try {
-					try {
-						waitQueueCondition.await();
-					} catch (InterruptedException e) {
-						log.error("queue of pending execute await err", e);
-					}
-				} finally {
-					waitQueueLock.unlock();
-				}
 			}
 		}
 
@@ -179,17 +163,8 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	 * @param job
 	 */
 	private void submitWaitQueue(Job job) {
-		if (null != job) {
-			waitQueueLock.lock();
-			try {
-				// 如果队里里面没有这个job 才会继续下一步操作
-				if (!pendingExecuteQueue.contains(job)) {
-					pendingExecuteQueue.add(job);
-					waitQueueCondition.signalAll();
-				}
-			} finally {
-				waitQueueLock.unlock();
-			}
+		if (null != job && !pendingExecuteQueue.contains(job)) {
+			pendingExecuteQueue.add(job);
 		}
 	}
 
@@ -200,30 +175,28 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	 */
 	public void execute(DispatchType dispatchType, String jobName) {
 		synchronized (keyLock.intern(jobName)) {
-			if (!isRunning(jobName)) {
-				Job job = getJobDao().query(jobName);
-				if (null != job) {
-					getScheduleCache().delJob(jobName);
-					getScheduleCache().delJobSnapshot(jobName);
-					getScheduleCache().delWorkerSnapshots(jobName);
+			Job job = getJobDao().query(jobName);
+			if (null != job) {
+				getScheduleCache().delJob(jobName);
+				getScheduleCache().delJobSnapshot(jobName);
+				getScheduleCache().delWorkerSnapshots(jobName);
 
-					List<JobParam> jobParams = getJobParamDao().queryJobParams(job.getName());
-					job.setParamList(jobParams);
+				List<JobParam> jobParams = getJobParamDao().queryJobParams(job.getName());
+				job.setParamList(jobParams);
 
-					String id = dispatchType.getCurrentTimeMillis();
-					JobSnapshot jobSnapshot = new JobSnapshot();
-					jobSnapshot.setId(id);
-					jobSnapshot.setName(job.getName());
-					jobSnapshot.setDispatchType(dispatchType);
-					jobSnapshot.setWorkSpaceName(job.getWorkSpaceName());
-					jobSnapshot.setDesignatedNodeName(job.getDesignatedNodeName());
-					jobSnapshot.setStatus(JobSnapshotState.WAITING_EXECUTED.value());
-					getScheduleCache().updateJobSnapshot(jobSnapshot);
-					submitWaitQueue(job);
-					log.info("already submit job[" + jobName + "] to queue and it[" + id + "] will to be executed");
-				} else {
-					log.info("ready to execute job[" + jobName + "] is null");
-				}
+				String id = dispatchType.getCurrentTimeMillis();
+				JobSnapshot jobSnapshot = new JobSnapshot();
+				jobSnapshot.setId(id);
+				jobSnapshot.setName(job.getName());
+				jobSnapshot.setDispatchType(dispatchType);
+				jobSnapshot.setWorkSpaceName(job.getWorkSpaceName());
+				jobSnapshot.setDesignatedNodeName(job.getDesignatedNodeName());
+				jobSnapshot.setStatus(JobSnapshotState.WAITING_EXECUTED.value());
+				getScheduleCache().updateJobSnapshot(jobSnapshot);
+				submitWaitQueue(job);
+				log.info("already submit job[" + jobName + "] to queue and it[" + id + "] will to be executed");
+			} else {
+				log.info("ready to execute job[" + jobName + "] is null");
 			}
 		}
 	}
@@ -237,71 +210,85 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	 *            任务name
 	 */
 	private void doExecute(Job job) {
-		// 判断任务是否在运行
 		if (!isRunning(job.getName())) {
-			log.info("master node execute job[" + job.getName() + "]");
-			List<Node> freeNodes = null;
-			String path = getOperationJobLockPath(job.getName());
-			DistributedLock distributedLock = getNodeManager().getWriteLock(path);
-			try {
-				distributedLock.lock();
-				// 先查看任务是否有指定节点名执行
-				String designatedNodeName = job.getDesignatedNodeName();
-				if (StringUtils.isNotBlank(designatedNodeName)) {
-					Node designatedNode = getNodeManager().getWorkerNode(designatedNodeName);
-					freeNodes = Arrays.asList(designatedNode);
-					log.info("get designated node[" + designatedNodeName + "] to execute job[" + job.getName() + "]");
-				} else {
-					int needFreeNodeSize = job.getNeedNodes();
-					freeNodes = getNodeManager().getFreeWorkerNodes(needFreeNodeSize);
-					// 需要运行节点数量减去本地运行节点1
-					log.info("get many nodes[" + freeNodes.size() + "] to execute job[" + job.getName() + "]");
-				}
-				if (null != freeNodes && freeNodes.size() > 0) {
-					JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(job.getName());
-					jobSnapshot.setSaveRawData(job.getParamBoolean(CrawlerJobParamKeys.IS_SAVE_RAW_DATA, false));
-					// 任务开始时候 开始时间和结束时间默认是一样的
-					jobSnapshot.setStartTime(
-							DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
-					jobSnapshot
-							.setEndTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
-					jobSnapshot.setStatus(JobSnapshotState.EXECUTING.value());
-					// 缓存将被执行的job,提供给workerSchedule那边使用。
-					getScheduleCache().setJob(job);
-					// 更新将被执行的job's jobSnapshot
-					getScheduleCache().updateJobSnapshot(jobSnapshot);
-					// 保存将被执行的job's jobSnapshot
-					getJobSnapshotDao().save(jobSnapshot);
-					AbstractWorkerSchedulerManager workerSchedulerManager = null;
-					for (Node freeNode : freeNodes) {
-						try {
-							workerSchedulerManager = getNodeManager().loolup(freeNode,
-									AbstractWorkerSchedulerManager.class, result -> {
-										List<WorkerSnapshot> workers = getScheduleCache()
-												.getWorkerSnapshots(job.getName());
-										if (null != workers && workers.size() > 0) {
-											doJobRelationship(jobSnapshot, JobRelationship.TRIGGER_TYPE_PARALLEL);
-										}
-									});
-							workerSchedulerManager.execute(DispatchType.newDispatchTypeByMaster(), job.getName());
-							log.info("already request worker node[" + freeNode.getName() + "] to execut the job["
-									+ job.getName() + "]");
-						} catch (Exception e) {
-							log.error("call worker node[" + freeNode.getName() + "] to execut the job[" + job.getName()
-									+ "] err", e);
-						}
+			synchronized (keyLock.intern(job.getName())) {
+				// 判断任务是否在运行
+				if (!isRunning(job.getName())) {
+					log.info("master node execute job[" + job.getName() + "]");
+					List<Node> freeNodes = getFreeNodes(job);
+					if (null != freeNodes && freeNodes.size() > 0) {
+						doExecute(job, freeNodes);
+					} else {
+						log.error("there is no node to execute job[" + job.getName() + "]");
 					}
 				} else {
-					log.error("there is no node to execute job[" + job.getName() + "]");
+					log.error("the job[" + job.getName() + "] is running");
 				}
-			} catch (Exception e) {
-				log.error("master node execute job[" + job.getName() + "] err", e);
-			} finally {
-				distributedLock.unLock();
 			}
 		} else {
 			log.error("the job[" + job.getName() + "] is running");
 		}
+	}
+
+	/**
+	 * 通知freeNodes 执行job
+	 * 
+	 * @param job
+	 * @param freeNodes
+	 */
+	private void doExecute(Job job, List<Node> freeNodes) {
+		JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(job.getName());
+		jobSnapshot.setSaveRawData(job.getParamBoolean(CrawlerJobParamKeys.IS_SAVE_RAW_DATA, false));
+		// 任务开始时候 开始时间和结束时间默认是一样的
+		jobSnapshot.setStartTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
+		jobSnapshot.setEndTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
+		jobSnapshot.setStatus(JobSnapshotState.EXECUTING.value());
+		// 缓存将被执行的job,提供给workerSchedule那边使用。
+		getScheduleCache().setJob(job);
+		// 更新将被执行的job's jobSnapshot
+		getScheduleCache().updateJobSnapshot(jobSnapshot);
+		// 保存将被执行的job's jobSnapshot
+		getJobSnapshotDao().save(jobSnapshot);
+		AbstractWorkerSchedulerManager workerSchedulerManager = null;
+		for (Node freeNode : freeNodes) {
+			try {
+				workerSchedulerManager = getNodeManager().loolup(freeNode, AbstractWorkerSchedulerManager.class,
+						result -> {
+							List<WorkerSnapshot> workers = getScheduleCache().getWorkerSnapshots(job.getName());
+							if (null != workers && workers.size() > 0) {
+								doJobRelationship(jobSnapshot, JobRelationship.TRIGGER_TYPE_PARALLEL);
+							}
+						});
+				workerSchedulerManager.execute(DispatchType.newDispatchTypeByMaster(), job.getName());
+				log.info("already request worker node[" + freeNode.getName() + "] to execut the job[" + job.getName()
+						+ "]");
+			} catch (Exception e) {
+				log.error("this master node calls worker node[" + freeNode.getName() + "] to execut the job["
+						+ job.getName() + "]", e);
+			}
+		}
+	}
+
+	/**
+	 * 获取可执行job的空闲节点
+	 * 
+	 * @param job
+	 * @return
+	 */
+	private List<Node> getFreeNodes(Job job) {
+		List<Node> freeNodes = null;
+		String designatedNodeName = job.getDesignatedNodeName();
+		if (StringUtils.isNotBlank(designatedNodeName)) {
+			Node designatedNode = getNodeManager().getWorkerNode(designatedNodeName);
+			freeNodes = Arrays.asList(designatedNode);
+			log.info("get designated node[" + designatedNodeName + "] to execute job[" + job.getName() + "]");
+		} else {
+			int needFreeNodeSize = job.getNeedNodes();
+			freeNodes = getNodeManager().getFreeWorkerNodes(needFreeNodeSize);
+			// 需要运行节点数量减去本地运行节点1
+			log.info("get many nodes[" + freeNodes.size() + "] to execute job[" + job.getName() + "]");
+		}
+		return freeNodes;
 	}
 
 	private void doJobRelationship(JobSnapshot jobSnapshot, int triggerType) {
@@ -453,10 +440,12 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 					workSpace.repair();
 					log.info("end to repair workSpace[" + jobSnapshot.getWorkSpaceName() + "]");
 					if (!workSpace.doingIsEmpty()) {
-						log.info("check workSpace is not empty after repaired workSpace[" + jobSnapshot.getWorkSpaceName() + "]");
+						log.info("check workSpace is not empty after repaired workSpace["
+								+ jobSnapshot.getWorkSpaceName() + "]");
 						goOn(DispatchType.newDispatchTypeByManual(), jobName);
 					} else {
-						log.info("check workSpace is empty after repaired workSpace[" + jobSnapshot.getWorkSpaceName() + "]");
+						log.info("check workSpace is empty after repaired workSpace[" + jobSnapshot.getWorkSpaceName()
+								+ "]");
 						// 判断当前worker's job是被什么类型调度的 1.MANUAL手动触发
 						// 2.SCHEDULER调度器触发
 						if (DispatchType.DISPATCH_TYPE_MANUAL.equals(jobSnapshot.getDispatchType().getName())
@@ -622,9 +611,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 			AbstractSchedulerManager scheduleManager = (AbstractSchedulerManager) context.getJobDetail().getJobDataMap()
 					.get(SCHEDULER_MANAGER_KEY);
 			String jobName = (String) context.getJobDetail().getJobDataMap().get(JOB_NAME_KEY);
-			if (!scheduleManager.isRunning(jobName)) {
-				scheduleManager.execute(DispatchType.newDispatchTypeByScheduler(), jobName);
-			}
+			scheduleManager.execute(DispatchType.newDispatchTypeByScheduler(), jobName);
 		}
 	}
 
@@ -633,6 +620,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	 * 
 	 * @param job
 	 */
+	@Override
 	public void scheduled(Job job) {
 		if (null != job) {
 			synchronized (scheduler) {
@@ -676,11 +664,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 		}
 	}
 
-	/**
-	 * 从调度任务中删除 指定job
-	 * 
-	 * @param job
-	 */
+	@Override
 	public void cancelScheduled(String jobName) {
 		if (StringUtils.isNotBlank(jobName)) {
 			synchronized (scheduler) {
@@ -696,12 +680,11 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 
 	@Override
 	public void repair() {
+		stopAll(null);
 		getScheduleCache().clear();
 	}
 
-	/**
-	 * 容器结束时调用此销毁方法
-	 */
+	@Override
 	public void shutdown() {
 		if (null != scheduler) {
 			try {

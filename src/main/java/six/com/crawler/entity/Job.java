@@ -266,6 +266,7 @@ public class Job extends BaseVo implements Serializable {
 		return resultParams;
 	}
 
+	@Override
 	public int hashCode() {
 		if (null != name) {
 			return name.hashCode();
@@ -273,6 +274,7 @@ public class Job extends BaseVo implements Serializable {
 		return 0;
 	}
 
+	@Override
 	public boolean equals(Object o) {
 		if (null != o) {
 			if (o instanceof Job) {

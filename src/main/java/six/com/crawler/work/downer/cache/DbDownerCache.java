@@ -4,7 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import six.com.crawler.dao.PageDao;
+import six.com.crawler.dao.po.PagePo;
 import six.com.crawler.entity.Page;
+import six.com.crawler.utils.JavaSerializeUtils;
 
 /**
  * @author 作者
@@ -24,15 +26,24 @@ public class DbDownerCache extends AbstractDownerCache {
 
 	@Override
 	protected void doWirte(Page page) {
-		pageDao.save(page);
+		PagePo pagePo = new PagePo();
+		pagePo.setSiteCode(page.getSiteCode());
+		pagePo.setPageKey(page.getKey());
+		byte[] data = JavaSerializeUtils.serialize(page);
+		pagePo.setData(data);
+		pageDao.save(pagePo);
 	}
 
 	@Override
 	protected Page doRead(Page page) {
+		Page cachePage = null;
 		String siteCode = page.getSiteCode();
 		String pageKey = page.getPageKey();
-		page = pageDao.queryByPageKey(siteCode, pageKey);
-		return page;
+		PagePo pagePo = pageDao.queryByPageKey(siteCode, pageKey);
+		if (null != pagePo && null != pagePo.getData()) {
+			cachePage = JavaSerializeUtils.unSerialize(pagePo.getData(), Page.class);
+		}
+		return cachePage;
 	}
 
 }

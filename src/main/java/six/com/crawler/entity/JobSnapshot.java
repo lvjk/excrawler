@@ -26,7 +26,7 @@ public class JobSnapshot extends BaseVo implements Serializable {
 	private DispatchType dispatchType;// 触发任务的类型
 	private String workSpaceName;// 任务工作空间名
 	private String startTime;// 开始时间
-	private String endTime;
+	private String endTime;//结束时间
 	private int downloadState;// 下载状态
 	private boolean isSaveRawData;
 	private int isScheduled;//

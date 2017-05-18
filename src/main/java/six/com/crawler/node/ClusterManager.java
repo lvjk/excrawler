@@ -22,21 +22,28 @@ public interface ClusterManager {
 	 * 
 	 * @return 当前节点
 	 */
-	public Node getCurrentNode();
+	Node getCurrentNode();
 
 	/**
 	 * 获取主节点
 	 * 
 	 * @return 主节点
 	 */
-	public Node getMasterNode();
+	Node getMasterNode();
+
+	/**
+	 * 获取所有节点
+	 * 
+	 * @return
+	 */
+	List<Node> getAllNodes();
 
 	/**
 	 * 获取所有工作节点
 	 * 
 	 * @return
 	 */
-	public List<Node> getWorkerNodes();
+	List<Node> getWorkerNodes();
 
 	/**
 	 * 通过节点名获取节点
@@ -44,7 +51,7 @@ public interface ClusterManager {
 	 * @param nodeName
 	 * @return
 	 */
-	public Node getWorkerNode(String nodeName);
+	Node getWorkerNode(String nodeName);
 
 	/**
 	 * 获取空闲可用节点
@@ -52,7 +59,7 @@ public interface ClusterManager {
 	 * @param needFresNodes
 	 * @return
 	 */
-	public List<Node> getFreeWorkerNodes(int needFresNodes);
+	List<Node> getFreeWorkerNodes(int needFresNodes);
 
 	/**
 	 * 获取目标节点最新信息
@@ -60,7 +67,7 @@ public interface ClusterManager {
 	 * @param targetNode
 	 * @return
 	 */
-	public Node getNewestNode(Node targetNode);
+	Node getNewestNode(Node targetNode);
 
 	/**
 	 * 寻找节点服务
@@ -69,21 +76,21 @@ public interface ClusterManager {
 	 * @param clz
 	 * @return
 	 */
-	public <T> T loolup(Node node, Class<T> clz, AsyCallback asyCallback);
+	<T> T loolup(Node node, Class<T> clz, AsyCallback asyCallback);
 
 	/**
 	 * 基于Rpc Service注解注册
 	 * 
 	 * @param tagetOb
 	 */
-	public void register(Object tagetOb);
+	void register(Object tagetOb);
 
 	/**
 	 * 移除节点服务
 	 * 
 	 * @param commandName
 	 */
-	public void remove(String commandName);
+	void remove(String commandName);
 
 	/**
 	 * 根据path 获取一个 分布式读锁
@@ -91,7 +98,7 @@ public interface ClusterManager {
 	 * @param path
 	 * @return
 	 */
-	public DistributedLock getReadLock(String path);
+	DistributedLock getReadLock(String path);
 
 	/**
 	 * 根据path获取一个分布式写锁
@@ -99,6 +106,6 @@ public interface ClusterManager {
 	 * @param path
 	 * @return
 	 */
-	public DistributedLock getWriteLock(String path);
+	DistributedLock getWriteLock(String path);
 
 }

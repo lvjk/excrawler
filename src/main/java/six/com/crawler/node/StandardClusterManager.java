@@ -1,6 +1,7 @@
 package six.com.crawler.node;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.annotation.PreDestroy;
@@ -14,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Component;
 
 import six.com.crawler.common.MyOperatingSystemMXBean;
@@ -42,6 +44,9 @@ import six.com.crawler.utils.StringCheckUtils;
 public class StandardClusterManager implements ClusterManager, InitializingBean {
 
 	final static Logger log = LoggerFactory.getLogger(StandardClusterManager.class);
+
+	@Autowired
+	private ConfigurableApplicationContext applicationContext;
 
 	@Autowired
 	private SpiderConfigure configure;
@@ -157,6 +162,11 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 		return masterNode;
 	}
 
+	@Override
+	public List<Node> getAllNodes() {
+		return Collections.emptyList();
+	}
+
 	/**
 	 * 获取所有工作节点
 	 * 
@@ -230,7 +240,6 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 		}
 		return freeNodes;
 	}
-
 
 	@Override
 	public Node getNewestNode(Node targetNode) {
@@ -323,6 +332,14 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 	private void exit(int status) {
 		destroy();
 		System.exit(status);
+	}
+
+	public ConfigurableApplicationContext getApplicationContext() {
+		return applicationContext;
+	}
+
+	public void setApplicationContext(ConfigurableApplicationContext applicationContext) {
+		this.applicationContext = applicationContext;
 	}
 
 	public SpiderConfigure getConfigure() {

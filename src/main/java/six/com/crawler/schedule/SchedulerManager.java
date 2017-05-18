@@ -34,8 +34,14 @@ public interface SchedulerManager {
 	 */
 	public void suspend(DispatchType dispatchType, String jobName);
 
-	
+	/**
+	 * 让job[jobName] worker 休息默认时间
+	 * 
+	 * @param dispatchType
+	 * @param jobName
+	 */
 	public void rest(DispatchType dispatchType, String jobName);
+
 	/**
 	 * 继续任务
 	 * 
@@ -51,8 +57,13 @@ public interface SchedulerManager {
 	 * @return
 	 */
 	public void stop(DispatchType dispatchType, String jobName);
-	
-	
+
+	/**
+	 * 完成任务
+	 * 
+	 * @param dispatchType
+	 * @param jobName
+	 */
 	public void finish(DispatchType dispatchType, String jobName);
 
 	/**
@@ -62,8 +73,6 @@ public interface SchedulerManager {
 	 * @return
 	 */
 	public void stopAll(DispatchType dispatchType);
-
-	public boolean isNotRuning(String jobName);
 
 	/**
 	 * 调度器修复,当节点启动时会自动被调用
@@ -84,27 +93,77 @@ public interface SchedulerManager {
 	 */
 	public void cancelScheduled(String jobChainName);
 
-	boolean isRunning(String jobName);
-
-	boolean isStart(String jobName);
-
-	boolean isWait(String jobName);
-
-	boolean isSuspend(String jobName);
-
-	boolean isStop(String jobName);
-
-	boolean isFinish(String jobName);
+	/** job 下所有worker的状态判断方法 **/
 
 	/**
-	 * 获取最后一个结束的任务
+	 * 判断job下worker是否都为非运行状态
 	 * 
 	 * @param jobName
 	 * @return
 	 */
+	boolean isNotRuning(String jobName);
+
+	/**
+	 * 判断job下worker是否都为运行状态
+	 * 
+	 * @param jobName
+	 * @return
+	 */
+	boolean isRunning(String jobName);
+
+	/**
+	 * 判断job下worker是否都为开始状态
+	 * 
+	 * @param jobName
+	 * @return
+	 */
+	boolean isStart(String jobName);
+
+	/**
+	 * 判断job下worker是否都为等待状态
+	 * 
+	 * @param jobName
+	 * @return
+	 */
+	boolean isWait(String jobName);
+
+	/**
+	 * 判断job下worker是否都为暂停状态
+	 * 
+	 * @param jobName
+	 * @return
+	 */
+	boolean isSuspend(String jobName);
+
+	/**
+	 * 判断job下worker是否都为停止状态
+	 * 
+	 * @param jobName
+	 * @return
+	 */
+	boolean isStop(String jobName);
+
+	/**
+	 * 判断job下worker是否都为完成状态
+	 * 
+	 * @param jobName
+	 * @return
+	 */
+	boolean isFinish(String jobName);
+
+	/** job 下所有worker的状态判断方法 **/
+
+	/**
+	 * 获取指定任务下最后一个结束的任务快照
+	 * 
+	 * @param jobName
+	 * @param excludeId
+	 * @return
+	 */
 	JobSnapshot getLastEnd(String jobName, String excludeId);
 
-	void updateJobSnapshot(JobSnapshot jobSnapshot);
-
-	public void shutdown();
+	/**
+	 * 调度器shutdown
+	 */
+	void shutdown();
 }

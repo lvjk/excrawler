@@ -63,6 +63,8 @@ public interface RpcCilent {
 	 * @return
 	 */
 	public <T> T lookupService(String targetHost, int targetPort, Class<?> clz, AsyCallback callback);
+	
+	public <T> T lookupService(String targetHost, int targetPort, Class<?> clz);
 
 	/**
 	 * 将执行的request 的 WrapperFuture 存放 缓存

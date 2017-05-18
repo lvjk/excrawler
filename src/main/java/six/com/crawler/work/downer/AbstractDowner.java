@@ -38,11 +38,12 @@ public abstract class AbstractDowner implements Downer, AutoCloseable {
 	private HttpResult lastHttpResult;
 	private DownerCache downerCache;
 
-	public AbstractDowner(AbstractCrawlWorker worker,boolean openDownCache,boolean useDownCache,DownerCache downerCache) {
+	public AbstractDowner(AbstractCrawlWorker worker, boolean openDownCache, boolean useDownCache,
+			DownerCache downerCache) {
 		this.worker = worker;
-		this.openDownCache=openDownCache;
-		this.useDownCache=useDownCache;
-		this.downerCache=downerCache;
+		this.openDownCache = openDownCache;
+		this.useDownCache = useDownCache;
+		this.downerCache = downerCache;
 	}
 
 	protected abstract HttpResult insideDown(Page page) throws DownerException;
@@ -50,28 +51,49 @@ public abstract class AbstractDowner implements Downer, AutoCloseable {
 	/**
 	 * 记录上一次请求的url ，如果跟上一次请求url一样的话那么不下载
 	 */
-	public void down(Page page) throws DownerException {
+	public Page down(Page page) throws DownerException {
 		if (null == page || StringUtils.isBlank(page.getOriginalUrl())) {
 			throw new DownerException("page is null or page's url is blank");
 		}
-		if (!useDownCache) {
-			if (1 != page.getNoNeedDown()) {
-				if (!(StringUtils.equals(page.getPageKey(), pageKey)
-						&& StringUtils.equals(page.getOriginalUrl(), lastRequestUrl))) {
-					lastHttpResult = insideDown(page);
-					pageKey = page.getPageKey();
-					lastRequestUrl = page.getOriginalUrl();
-					lastHttpResult.setHtml(page.getPageSrc());
-					if (openDownCache) {
-						downerCache.write(page);
-					}
-				} else {
-					page.setPageSrc(lastHttpResult.getHtml());
-				}
+		if (useDownCache && !openDownCache) {
+			Page cachePage = doCache(page);
+			if (null == cachePage) {
+				doDown(page);
+			}else{
+				page=cachePage;
 			}
 		} else {
-			downerCache.read(page);
+			doDown(page);
+			if (openDownCache) {
+				downerCache.write(page);
+			}
 		}
+		return page;
+	}
+
+	private void doDown(Page page) throws DownerException {
+		if (1 != page.getNoNeedDown()) {
+			if (!(StringUtils.equals(page.getPageKey(), pageKey)
+					&& StringUtils.equals(page.getOriginalUrl(), lastRequestUrl))) {
+				lastHttpResult = insideDown(page);
+				pageKey = page.getPageKey();
+				lastRequestUrl = page.getOriginalUrl();
+				lastHttpResult.setHtml(page.getPageSrc());
+			} else {
+				page.setPageSrc(lastHttpResult.getHtml());
+			}
+		}
+	}
+
+	private Page doCache(Page page) {
+		Page cachePage = null;
+		try {
+			cachePage = downerCache.read(page);
+		} catch (Exception e) {
+			log.error("read page from cache", e);
+		}
+		return cachePage;
+
 	}
 
 	public AbstractCrawlWorker getHtmlCommonWorker() {

@@ -55,7 +55,7 @@ public class TmsfProjectListWorker extends AbstractCrawlWorker {
 		int pageIndex = 1;
 		Page firstPage = buildPage(pageIndex,null);// 初始化第一页
 		
-		getDowner().down(firstPage);
+		firstPage=getDowner().down(firstPage);
 		
 		Element pageCountElement = firstPage.getDoc().select(pageCountCss).first();
 		String pageCountElementText = pageCountElement.text();

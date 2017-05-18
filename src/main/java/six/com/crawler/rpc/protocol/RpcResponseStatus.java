@@ -18,11 +18,6 @@ public interface RpcResponseStatus {
 	int reject = 2;
 
 	/**
-	 * 超时
-	 */
-	int timeout = 3;
-
-	/**
 	 * 执行异常
 	 */
 	int invokeErr = 4;

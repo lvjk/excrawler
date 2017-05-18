@@ -16,24 +16,23 @@ import six.com.crawler.work.downer.exception.DownerException;
  */
 public interface Downer {
 
-	
-	public WebDriver getWebDriver();
-	
-	public String getWindowHandle();
-	
-	public WebElement findWebElement(String xpath);
-	
-	public List<WebElement> findWebElements(String xpath);
-	
-	public void click(WebElement webElement,String xpath);
-	
-	public void down(Page page) throws DownerException;
-	
-	public byte[] downBytes(Page page) throws DownerException;
-	
-	public void setHttpProxy(HttpProxy httpProxy);
-	
-	public HttpProxy getHttpProxy();
-	
-	public void close();
+	WebDriver getWebDriver();
+
+	String getWindowHandle();
+
+	WebElement findWebElement(String xpath);
+
+	List<WebElement> findWebElements(String xpath);
+
+	void click(WebElement webElement, String xpath);
+
+	Page down(Page page) throws DownerException;
+
+	byte[] downBytes(Page page) throws DownerException;
+
+	void setHttpProxy(HttpProxy httpProxy);
+
+	HttpProxy getHttpProxy();
+
+	void close();
 }

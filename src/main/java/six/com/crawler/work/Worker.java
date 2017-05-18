@@ -11,24 +11,45 @@ import six.com.crawler.work.space.WorkSpaceData;
 /**
  * @author six
  * @date 2016年1月15日 下午6:20:00
+ * 
+ *       运行job的worker接口定义
+ * 
  */
 public interface Worker<T extends WorkSpaceData> extends WorkerLifecycle {
 
+	/**
+	 * 绑定环境配置
+	 * 
+	 * @param configure
+	 */
 	void bindConfigure(SpiderConfigure configure);
 
+	/**
+	 * 绑定worker管理者
+	 * 
+	 * @param manager
+	 */
 	void bindManager(WorkerSchedulerManager manager);
 
+	/**
+	 * 绑定worker job
+	 * 
+	 * @param job
+	 */
 	void bindJob(Job job);
 
+	/**
+	 * 绑定worker 运行快照
+	 * 
+	 * @param workerSnapshot
+	 */
 	void bindWorkerSnapshot(WorkerSnapshot workerSnapshot);
 
 	/**
-	 * 获取 worker name
+	 * 获取环境配置
 	 * 
 	 * @return
 	 */
-	String getName();
-
 	SpiderConfigure getConfigure();
 
 	/**
@@ -37,6 +58,34 @@ public interface Worker<T extends WorkSpaceData> extends WorkerLifecycle {
 	 * @return
 	 */
 	WorkerSchedulerManager getManager();
+
+	/**
+	 * 获取job运行快照
+	 * 
+	 * @return
+	 */
+	JobSnapshot getJobSnapshot();
+
+	/**
+	 * 获取work Job
+	 * 
+	 * @return
+	 */
+	Job getJob();
+
+	/**
+	 * 获取工作空间
+	 * 
+	 * @return
+	 */
+	WorkSpace<T> getWorkSpace();
+
+	/**
+	 * 获取 worker name
+	 * 
+	 * @return
+	 */
+	String getName();
 
 	/**
 	 * 获取worker 快照
@@ -59,14 +108,4 @@ public interface Worker<T extends WorkSpaceData> extends WorkerLifecycle {
 	 */
 	long getLastActivityTime();
 
-	JobSnapshot getJobSnapshot();
-
-	/**
-	 * 获取work Job
-	 * 
-	 * @return
-	 */
-	Job getJob();
-
-	WorkSpace<T> getWorkSpace();
 }

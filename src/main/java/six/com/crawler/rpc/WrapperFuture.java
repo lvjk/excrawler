@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 
 import six.com.crawler.rpc.protocol.RpcRequest;
 import six.com.crawler.rpc.protocol.RpcResponse;
-import six.com.crawler.rpc.protocol.RpcResponseStatus;
 
 /**
  * @author 作者
@@ -16,7 +15,7 @@ public class WrapperFuture {
 
 	final static Logger log = LoggerFactory.getLogger(WrapperFuture.class);
 
-	private volatile FutureState state = FutureState.DOING;
+	private volatile long createTime;
 
 	private volatile long sendTime;
 
@@ -28,14 +27,13 @@ public class WrapperFuture {
 
 	private AsyCallback asyCallback;
 
-	private final long createTime;
+	private long timeout;
 
-	private Object lock = new Object();
-
-	public WrapperFuture(RpcRequest rpcRequest, AsyCallback asyCallback) {
+	public WrapperFuture(RpcRequest rpcRequest, AsyCallback asyCallback, long timeout) {
+		this.createTime = System.currentTimeMillis();
 		this.rpcRequest = rpcRequest;
 		this.asyCallback = asyCallback;
-		createTime = System.currentTimeMillis();
+		this.timeout = timeout;
 	}
 
 	public long getSendTime() {
@@ -54,63 +52,52 @@ public class WrapperFuture {
 		return rpcRequest;
 	}
 
-	public void onComplete(RpcResponse response, long receiveTime) {
+	public long getTimeout() {
+		return timeout;
+	}
+
+	public boolean isDone() {
+		return null != rpcResponse;
+	}
+
+	public synchronized void onComplete(RpcResponse response, long receiveTime) {
 		this.rpcResponse = response;
 		this.receiveTime = receiveTime;
-		if (null == asyCallback) {
-			done();
-		} else {
+		notifyAll();
+		if (null != asyCallback) {
 			asyCallback.execute(response.getResult());
 		}
 	}
 
-	private boolean done() {
-		synchronized (lock) {
-			if (!isDoing()) {
-				return false;
-			}
-
-			state = FutureState.DONE;
-			lock.notifyAll();
-		}
-		return true;
-	}
-
-	private boolean isDoing() {
-		return state.isDoingState();
-	}
-
-	public RpcResponse getResult(long timeout) {
-
-		synchronized (lock) {
-			if (!isDoing()) {
-				return rpcResponse;
-			}
-			long waitTime = timeout - (System.currentTimeMillis() - createTime);
-			if (waitTime > 0) {
-				for (;;) {
-					try {
-						lock.wait(waitTime);
-					} catch (InterruptedException e) {
-					}
-
-					if (!isDoing()) {
-						break;
+	public RpcResponse getResult() {
+		if (null == rpcResponse) {
+			synchronized (this) {
+				if (null == rpcResponse) {
+					long waitTime = timeout - (System.currentTimeMillis() - createTime);
+					if (waitTime > 0) {
+						while (true) {
+							try {
+								wait(waitTime);
+							} catch (InterruptedException e) {
+							}
+							if (null != rpcResponse) {
+								break;
+							} else {
+								waitTime = timeout - (System.currentTimeMillis() - createTime);
+								if (waitTime <= 0) {
+									break;
+								}
+							}
+						}
 					} else {
-						waitTime = timeout - (System.currentTimeMillis() - createTime);
-						if (waitTime <= 0) {
-							break;
+						try {
+							wait();
+						} catch (InterruptedException e) {
 						}
 					}
 				}
 			}
-			if (null == rpcResponse) {
-				rpcResponse = new RpcResponse();
-				rpcResponse.setId(rpcRequest.getId());
-				rpcResponse.setStatus(RpcResponseStatus.timeout);
-			}
-			return rpcResponse;
 		}
-	
+		return rpcResponse;
 	}
 }

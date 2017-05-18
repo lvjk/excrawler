@@ -22,7 +22,7 @@ public class ClientToServerConnection extends NettyConnection {
 	final static Logger log = LoggerFactory.getLogger(ClientToServerConnection.class);
 
 	private RpcCilent rpcCilent;
-	
+
 	protected ClientToServerConnection(RpcCilent rpcCilent, String host, int port) {
 		super(host, port);
 		this.rpcCilent = rpcCilent;
@@ -52,7 +52,7 @@ public class ClientToServerConnection extends NettyConnection {
 	 * @return
 	 */
 	public WrapperFuture send(RpcRequest rpcRequest, AsyCallback callback, long timeout) {
-		WrapperFuture wrapperFuture = new WrapperFuture(rpcRequest, callback);
+		WrapperFuture wrapperFuture = new WrapperFuture(rpcRequest, callback, timeout);
 		wrapperFuture.setSendTime(System.currentTimeMillis());
 		rpcCilent.putWrapperFuture(rpcRequest.getId(), wrapperFuture);
 		ChannelFuture channelFuture = super.writeAndFlush(rpcRequest);

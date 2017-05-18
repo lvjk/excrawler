@@ -109,6 +109,7 @@ public class DispatchType implements Serializable {
 		return currentTimeMillis;
 	}
 
+	@Override
 	public int hashCode() {
 		if (null != name) {
 			return name.hashCode();
@@ -116,6 +117,7 @@ public class DispatchType implements Serializable {
 		return 0;
 	}
 
+	@Override
 	public boolean equals(Object o) {
 		if (null != o) {
 			if (o instanceof DispatchType) {

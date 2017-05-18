@@ -13,7 +13,6 @@ import org.jsoup.nodes.Document;
 import six.com.crawler.http.HttpMethod;
 import six.com.crawler.utils.JsonUtils;
 import six.com.crawler.utils.MD5Utils;
-import six.com.crawler.work.downer.DownerType;
 import six.com.crawler.work.downer.PostContentType;
 import six.com.crawler.work.space.Index;
 import six.com.crawler.work.space.WorkSpaceData;
@@ -31,21 +30,21 @@ public class Page implements WorkSpaceData, Serializable {
 
 	private String siteCode;// 页面所属站点
 
-	private String pageKey;
-
-	private int pageNum;// 分页时 第几页
-
 	private String baseUrl;// base url
 
 	private String ancestorUrl;// 从哪个page 获取到此页面link
 
-	private String referer;// 请求从哪个网页过来的
+	private String pageKey;// 页面唯一key
 
 	private String originalUrl;// 原始link 避免跳转
 
 	private String finalUrl;// 最终link 避免跳转
 
 	private String firstUrl;// 页面第一页link
+
+	private String referer;// 请求从哪个网页过来的
+
+	private int pageNum;// 分页时 第几页
 
 	private HttpMethod method = HttpMethod.GET;;// 默认为get
 
@@ -57,30 +56,23 @@ public class Page implements WorkSpaceData, Serializable {
 
 	private int fztRetryProcess;// 502尝试重试次数
 
-	private DownerType downerType;// 下载器类型
-
 	private Map<String, Object> parameters;// 请求页面所需参数
 
 	private PostContentType postContentType;// post type
 
 	private int depth = 1;// 页面深度
 
-	private transient String pageSrc;// 页面源码
-	// transient 标记字段不会被序列化
+	private String pageSrc;// 页面源码
+
 	private transient Document doc;// page Document
 
 	private String waitJsLoadElement;// 等待js加载 元素
-
-	// transient 标记字段不会被序列化
-	private transient List<String> newListingUrl;// 新的列表页面
-
-	private transient List<String> newDataUrl;// 新的数据页面
 
 	private Map<String, List<String>> metaMap = new HashMap<>();
 
 	private int noNeedDown;// 不需要下载:1 需要下载默认:0
 
-	private Index index;
+	private Index index;// 工作空间index
 
 	public PostContentType getPostContentType() {
 		return postContentType;
@@ -222,27 +214,6 @@ public class Page implements WorkSpaceData, Serializable {
 		this.parameters = parameters;
 	}
 
-	public DownerType getDownerType() {
-		return downerType;
-	}
-
-	public void setDownerType(int downerType) {
-		this.downerType = DownerType.valueOf(downerType);
-	}
-
-	/**
-	 * 浏览器最终处理的url
-	 * 
-	 * @return finalUrl
-	 */
-	public String getFinalUrl() {
-		if (null == finalUrl) {
-			return originalUrl;
-		} else {
-			return finalUrl;
-		}
-	}
-
 	public void setPageNum(int pageNum) {
 		this.pageNum = pageNum;
 	}
@@ -256,7 +227,20 @@ public class Page implements WorkSpaceData, Serializable {
 	}
 
 	/**
-	 * 设置 浏览器最终处理的url
+	 * 获取下载后最后跳转后的url
+	 * 
+	 * @return finalUrl
+	 */
+	public String getFinalUrl() {
+		if (null == finalUrl) {
+			return originalUrl;
+		} else {
+			return finalUrl;
+		}
+	}
+
+	/**
+	 * 设置 下载后最后跳转后的url
 	 * 
 	 * @param finalUrl
 	 */
@@ -286,20 +270,6 @@ public class Page implements WorkSpaceData, Serializable {
 
 	public void setNoNeedDown(int noNeedDown) {
 		this.noNeedDown = noNeedDown;
-	}
-
-	public List<String> getNewListingUrl() {
-		if (null != newListingUrl) {
-			newListingUrl = new ArrayList<>();
-		}
-		return newListingUrl;
-	}
-
-	public List<String> getNewDataUrl() {
-		if (null != newDataUrl) {
-			newDataUrl = new ArrayList<>();
-		}
-		return newDataUrl;
 	}
 
 	public String getPageKey() {

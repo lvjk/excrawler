@@ -53,5 +53,5 @@ public abstract class AbstractMasterSchedulerManager extends AbstractSchedulerMa
 	
 	@RpcService(name = "askEnd")
 	public abstract void askEnd(DispatchType dispatchType, String jobName);
-
+	
 }

@@ -141,7 +141,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 
 				if (!helper.isDownloadState() || !helper.isUseRawData()) {// 当下载状态不为true的时候才需要下载
 					// 下载数据
-					downer.down(doingPage);
+					doingPage=downer.down(doingPage);
 
 					if (helper.isSaveRawData()) {
 						// 保存源数据

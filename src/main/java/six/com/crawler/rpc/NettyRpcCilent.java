@@ -150,7 +150,37 @@ public class NettyRpcCilent extends AbstractRemote implements RpcCilent {
 		StringCheckUtils.checkStrBlank(targetHost, "targetHost");
 		ObjectCheckUtils.checkIntValid(targetPort, 1, 65535, "targetPort");
 		ObjectCheckUtils.checkNotNull(clz, "clz");
-		String key = serviceKey(targetHost, targetPort, clz, asyCallback);
+		Enhancer enhancer = new Enhancer();
+		enhancer.setSuperclass(clz);
+		enhancer.setCallback(new MethodInterceptor() {
+			@Override
+			public Object intercept(Object targetOb, Method method, Object[] args, MethodProxy arg3) throws Throwable {
+				String requestId = createRequestId(targetHost, targetPort, method.getName());
+				RpcRequest rpcRequest = new RpcRequest();
+				rpcRequest.setId(requestId);
+				rpcRequest.setCommand(method.getName());
+				rpcRequest.setCallHost(targetHost);
+				rpcRequest.setCallPort(targetPort);
+				rpcRequest.setParams(args);
+				RpcResponse rpcResponse = null;
+				if (null == asyCallback) {
+					rpcResponse = synExecute(rpcRequest);
+					return rpcResponse.getResult();
+				} else {
+					asyExecute(rpcRequest, asyCallback);
+					return null;
+				}
+			}
+		});
+		return (T) enhancer.create();
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> T lookupService(String targetHost, int targetPort, Class<?> clz) {
+		StringCheckUtils.checkStrBlank(targetHost, "targetHost");
+		ObjectCheckUtils.checkIntValid(targetPort, 1, 65535, "targetPort");
+		ObjectCheckUtils.checkNotNull(clz, "clz");
+		String key = serviceKey(targetHost, targetPort, clz);
 		Object service = serviceWeakHashMap.computeIfAbsent(key, mapkey -> {
 			Enhancer enhancer = new Enhancer();
 			enhancer.setSuperclass(clz);
@@ -166,13 +196,8 @@ public class NettyRpcCilent extends AbstractRemote implements RpcCilent {
 					rpcRequest.setCallPort(targetPort);
 					rpcRequest.setParams(args);
 					RpcResponse rpcResponse = null;
-					if (null == asyCallback) {
-						rpcResponse = synExecute(rpcRequest);
-						return rpcResponse.getResult();
-					} else {
-						asyExecute(rpcRequest, asyCallback);
-						return null;
-					}
+					rpcResponse = synExecute(rpcRequest);
+					return rpcResponse.getResult();
 				}
 			});
 			return enhancer.create();
@@ -202,22 +227,18 @@ public class NettyRpcCilent extends AbstractRemote implements RpcCilent {
 	 * @param clz
 	 * @return
 	 */
-	private String serviceKey(String targetHost, int targetPort, Class<?> clz, AsyCallback asyCallback) {
-		String key = null;
-		if (null == asyCallback) {
-			key = targetHost + ":" + targetPort + "/" + clz.getName();
-		} else {
-			key = targetHost + ":" + targetPort + "/" + clz.getName() + "/" + asyCallback.getClass();
-		}
+	private String serviceKey(String targetHost, int targetPort, Class<?> clz) {
+		String key = targetHost + ":" + targetPort + "/" + clz.getName();
 		return key;
 	}
 
 	@Override
 	public RpcResponse synExecute(RpcRequest rpcRequest) {
 		WrapperFuture wrapperFuture = doExecute(rpcRequest, null);
-		RpcResponse rpcResponse = wrapperFuture.getResult(callTimeout);
-		if (rpcResponse.getStatus() == RpcResponseStatus.timeout) {
-			throw new RpcTimeoutException("execute rpcRequest[" + rpcRequest.toString() + "] timeout");
+		RpcResponse rpcResponse = wrapperFuture.getResult();
+		if (null == rpcResponse) {
+			throw new RpcTimeoutException(
+					"execute rpcRequest[" + rpcRequest.toString() + "] timeout[" + wrapperFuture.getTimeout() + "]");
 		} else if (rpcResponse.getStatus() == RpcResponseStatus.notFoundService) {
 			throw new RpcNotFoundServiceException(rpcResponse.getMsg());
 		} else if (rpcResponse.getStatus() == RpcResponseStatus.reject) {

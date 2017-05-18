@@ -8,14 +8,19 @@ package six.com.crawler.work;
  *       爬虫job 参数key
  */
 public interface CrawlerJobParamKeys {
-	
-	// 网站站点参数start-------------------------------------------
+
+	/** worker 参数 **/
+	String REST_WAIT_TIME = "restWaitTime";
+
+	/** worker 参数 **/
+
+	/** 网站站点参数 **/
+
 	String SITE_CODE = "siteCode";
-	// 网站站点参数end-------------------------------------------
 
-	// 下载器参数start-------------------------------------------
+	/** 网站站点参数 **/
 
-	// 站点 code key
+	/** 下载器参数 **/
 	// 下载器类型
 	String DOWNER_TYPE = "downerType";
 	// 代理类型
@@ -39,15 +44,15 @@ public interface CrawlerJobParamKeys {
 
 	int DEFAULT_HTTP_READ_TIMEOUT = 60;
 
-	// 下载器参数end-------------------------------------------
-
 	// 是否保留源数据
 	String IS_SAVE_RAW_DATA = "isSaveRawData";
 
-	int DEFAULT_IS_SAVE_RAW_DATA = 0;
-
 	// 是否使用源数据
 	String IS_USE_RAW_DATA = "isUseRawdata";
+
+	/** 下载器参数 **/
+
+	int DEFAULT_IS_SAVE_RAW_DATA = 0;
 
 	int DEFAULT_IS_USE_RAW_DATA = 0;
 
@@ -66,8 +71,6 @@ public interface CrawlerJobParamKeys {
 
 	String FIXED_TABLE_NAME = "fixedTableName";
 
-	// 主要的结果key
-	String MAIN_RESULT_KEY = "mainResultKey";
 	// 结果存储sql
 	String DB_URL = "dbUrl";
 	String DB_DRIVER_CLASS_NAME = "dbDriverClassName";

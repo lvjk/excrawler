@@ -2,7 +2,13 @@ package six.com.crawler.work;
 
 import java.io.Serializable;
 
-public enum WorkerLifecycleState  implements Serializable{
+/**
+ * job's worker状态 枚举
+ * 
+ * @author six
+ * @email 359852326@qq.com
+ */
+public enum WorkerLifecycleState implements Serializable {
 	/**
 	 * 准备
 	 */
@@ -11,12 +17,12 @@ public enum WorkerLifecycleState  implements Serializable{
 	 * 开始
 	 */
 	STARTED(WorkerLifecycle.STARTED),
-	
+
 	/**
 	 * 等待
 	 */
 	WAITED(WorkerLifecycle.WAITED),
-	
+
 	/**
 	 * 等待
 	 */
@@ -30,8 +36,7 @@ public enum WorkerLifecycleState  implements Serializable{
 	 * 停止
 	 */
 	STOPED(WorkerLifecycle.STOPED),
-	
-	
+
 	/**
 	 * 完成
 	 */

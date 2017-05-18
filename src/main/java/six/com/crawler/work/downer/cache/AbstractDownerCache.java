@@ -1,7 +1,6 @@
 package six.com.crawler.work.downer.cache;
 
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,8 +16,9 @@ public abstract class AbstractDownerCache implements DownerCache {
 
 	protected final static Logger log = LoggerFactory.getLogger(AbstractDownerCache.class);
 
+	/** 结束标志对象 **/
+	private static Page endFlag = new Page();
 	private String siteCode;
-	private AtomicBoolean writeCacheEnd = new AtomicBoolean(false);
 	private LinkedBlockingQueue<Page> writeCacheQueue = new LinkedBlockingQueue<Page>();
 	private Thread cacheThread;
 
@@ -41,14 +41,21 @@ public abstract class AbstractDownerCache implements DownerCache {
 	}
 
 	private void loopDoWirte() {
-		while (!writeCacheEnd.get()) {
-			Page page = null;
-			while (null != (page = writeCacheQueue.poll())) {
-				try {
-					doWirte(page);
-				} catch (Exception e) {
-					log.error("donwer cache write page:" + page.toString(), e);
-					writeCacheQueue.add(page);
+		Page page = null;
+		while (true) {
+			try {
+				page = writeCacheQueue.take();
+			} catch (InterruptedException e1) {
+			}
+			if (null != page) {
+				if (page == endFlag) {
+					break;
+				} else {
+					try {
+						doWirte(page);
+					} catch (Exception e) {
+						log.error("donwer cache write page:" + page.toString(), e);
+					}
 				}
 			}
 		}
@@ -64,7 +71,7 @@ public abstract class AbstractDownerCache implements DownerCache {
 
 	@Override
 	public void close() {
-		writeCacheEnd.set(true);
+		write(endFlag);
 	}
 
 }
