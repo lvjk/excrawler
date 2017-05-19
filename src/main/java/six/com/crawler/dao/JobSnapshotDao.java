@@ -35,6 +35,14 @@ public interface JobSnapshotDao extends BaseDao {
 	 */
 	@SelectProvider(type = JobSnapshotDaoProvider.class, method = "queryByJob")
 	public List<JobSnapshot> queryByJob(String jobName);
+	
+	
+
+	@SelectProvider(type = JobSnapshotDaoProvider.class, method = "pageQuery")
+	public List<JobSnapshot> pageQuery(
+			@Param("jobName")String jobName,
+			@Param("start")int pageIndex, 
+			@Param("end")int pageSize);
 
 	/**
 	 * 通过任务名称查询 任务的最后一条运行记录

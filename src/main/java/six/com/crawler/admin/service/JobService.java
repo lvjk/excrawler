@@ -29,7 +29,7 @@ public interface JobService extends DownloadAndUploadService {
 	 *            分页大小
 	 * @return
 	 */
-	public ResponseMsg<PageQuery<Job>> queryJobs(String jobName, int pageIndex, int pageSize);
+	public ResponseMsg<PageQuery<Job>> queryJobs(String jobName, int pageIndex);
 
 	/**
 	 * 获取任务运行状态
@@ -45,7 +45,7 @@ public interface JobService extends DownloadAndUploadService {
 	 * @param jobName
 	 * @return
 	 */
-	public ResponseMsg<List<JobSnapshot>> queryJobSnapshotsFromHistory(String jobName);
+	public ResponseMsg<PageQuery<JobSnapshot>> queryJobSnapshotsFromHistory(String jobName,int pageIndex);
 
 	/**
 	 * 根据任务名查询job参数

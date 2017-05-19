@@ -31,15 +31,15 @@ public class WorkerErrMsgServiceImpl extends BaseService implements WorkerErrMsg
 		PageQuery<WorkerErrMsg> pageQuery = new PageQuery<>();
 		int totalSize = 0;
 		int pageSize = Constants.DEFAULT_PAGE_SIZE;
-		pageIndex = pageIndex * pageSize;
-		List<WorkerErrMsg> workerErrMsgs = workerErrMsgDao.pageQuery(jobName, jobSnapshotId, pageIndex, pageSize);
+		int startIndex= pageIndex * pageSize;
+		List<WorkerErrMsg> workerErrMsgs = workerErrMsgDao.pageQuery(jobName, jobSnapshotId, startIndex, pageSize);
 		if (null != workerErrMsgs && workerErrMsgs.size() > 0) {
 			totalSize = workerErrMsgs.get(0).getTotalSize();
 			pageQuery.setTotalSize(totalSize);
 			pageQuery.setTotalPage(totalSize % pageSize == 0 ? totalSize / pageSize : totalSize / pageSize + 1);
 			pageQuery.setList(workerErrMsgs);
-			pageQuery.setPageIndex(pageIndex);
 		}
+		pageQuery.setPageIndex(pageIndex);
 		pageQuery.setPageSize(pageSize);
 		responseMsg.setIsOk(1);
 		responseMsg.setData(pageQuery);

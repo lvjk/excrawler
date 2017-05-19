@@ -15,7 +15,6 @@ import six.com.crawler.utils.ArrayListUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.downer.HttpMethod;
 import six.com.crawler.work.exception.ProcessWorkerCrawlerException;
-import six.com.crawler.work.exception.WorkerCrawlerException;
 import six.com.crawler.work.extract.Extracter;
 import six.com.crawler.work.space.WorkSpace;
 
@@ -49,24 +48,13 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 
 	}
 
-	public static class DifferentPages extends WorkerCrawlerException {
-
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = -8769450490734642014L;
-
-		public DifferentPages(String message) {
-			super("DifferentPages", message);
-		}
-	}
-
 	@Override
 	protected void beforeExtract(Page doingPage) {
 		String projectNameCss = "div[id=head]>ul>li";
 		Elements projectNameElements = doingPage.getDoc().select(projectNameCss);
 		if (null != projectNameElements && !projectNameElements.isEmpty()) {
-			throw new DifferentPages("different pages");
+			projectInfo1Queue.push(doingPage);
+			throw new ProcessWorkerCrawlerException("different pages:" + doingPage.getFinalUrl());
 		} else {
 			Elements mapDivs = doingPage.getDoc().select(mapDivCss);
 			if (null != mapDivs && !mapDivs.isEmpty()) {
@@ -106,10 +94,6 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected boolean insideOnError(Exception t, Page doingPage) {
-		if (null != t.getCause() && t.getCause() instanceof DifferentPages) {
-			projectInfo1Queue.push(doingPage);
-			return true;
-		}
 		return false;
 	}
 

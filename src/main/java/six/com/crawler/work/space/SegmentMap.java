@@ -14,6 +14,8 @@ import six.com.crawler.dao.RedisManager;
  * @author 作者
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年5月12日 下午2:57:37
+ * 
+ *       redis分段 map ,根据index 保存和ack数据
  */
 public class SegmentMap<T> extends AbstractSegment<T> {
 

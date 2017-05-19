@@ -16,7 +16,6 @@ import org.springframework.web.multipart.MultipartFile;
 import six.com.crawler.admin.service.JobService;
 import six.com.crawler.entity.Job;
 import six.com.crawler.entity.JobParam;
-import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.PageQuery;
 
 /**
@@ -31,9 +30,9 @@ public class JobApi extends BaseApi {
 
 	@RequestMapping(value = "/crawler/job/query", method = RequestMethod.POST)
 	@ResponseBody
-	public ResponseMsg<PageQuery<Job>> queryJobs(@RequestParam("pageIndex") int pageIndex,
-			@RequestParam("pageSize") int pageSize, @RequestParam("jobName") String jobName) {
-		return jobService.queryJobs(jobName, pageIndex, pageSize);
+	public ResponseMsg<PageQuery<Job>> queryJobs(@RequestParam("jobName") String jobName,
+			@RequestParam("pageIndex") int pageIndex) {
+		return jobService.queryJobs(jobName, pageIndex);
 	}
 
 	@RequestMapping(value = "/crawler/job/save", method = RequestMethod.POST)
@@ -46,12 +45,6 @@ public class JobApi extends BaseApi {
 	@ResponseBody
 	public ResponseMsg<List<JobParam>> queryJobParams(@PathVariable("jobName") String jobName) {
 		return jobService.queryJobParams(jobName);
-	}
-
-	@RequestMapping(value = "/crawler/job/getHistoryJobSnapshot/{jobName}", method = RequestMethod.GET)
-	@ResponseBody
-	public ResponseMsg<List<JobSnapshot>> getHistoryJobSnapshot(@PathVariable("jobName") String jobName) {
-		return jobService.queryJobSnapshotsFromHistory(jobName);
 	}
 
 	@RequestMapping(value = "/crawler/job/updateIsScheduled", method = RequestMethod.POST)

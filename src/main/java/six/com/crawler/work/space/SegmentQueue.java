@@ -6,6 +6,9 @@ import six.com.crawler.dao.RedisManager;
  * @author 作者
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年5月11日 上午8:42:58
+ * 
+ *       redis分段 queue ,用来lpop和rpush数据index
+ * 
  */
 public class SegmentQueue<T> extends AbstractSegment<T> {
 

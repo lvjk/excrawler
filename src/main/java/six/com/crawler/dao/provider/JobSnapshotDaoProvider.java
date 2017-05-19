@@ -48,6 +48,18 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 		return sql.toString();
 	}
 	
+	public String pageQuery(Map<String, Object> map) {
+		String sql="select b.totalSize,a.* "
+				+ " from("
+				+ "		select "
+				+selectColumns
+				+ "       from "+TableNames.JOB_SNAPSHOT_TABLE_NAME
+				+ "      where `name` =#{jobName} "
+				+ "      order by `startTime` desc) a,"
+				+ "   (select FOUND_ROWS() totalSize)b limit #{start},#{end}";
+		return sql;
+	}
+	
 	public String queryLastEnd(Map<String, Object> map) {
 		SQL sql = new SQL();
 		sql.SELECT(selectColumns);

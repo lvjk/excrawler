@@ -42,6 +42,14 @@ public class JobSnapshotApi {
 		return msg;
 	}
 
+	@RequestMapping(value = "/crawler/job/jobSnapshot/getHistoryJobSnapshot", method = RequestMethod.POST)
+	@ResponseBody
+	public ResponseMsg<PageQuery<JobSnapshot>> getHistoryJobSnapshot(
+			@RequestParam("jobName") String jobName,
+			@RequestParam("pageIndex") int pageIndex) {
+		return jobService.queryJobSnapshotsFromHistory(jobName,pageIndex);
+	}
+	
 	@RequestMapping(value = "/crawler/job/jobSnapshot/queryErrMsg", method = RequestMethod.POST)
 	@ResponseBody
 	public ResponseMsg<PageQuery<WorkerErrMsg>> queryErrMsg(@RequestParam("jobName") String jobName,

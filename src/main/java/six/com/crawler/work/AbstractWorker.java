@@ -249,7 +249,6 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 		errMsg.setType(e.getType());
 		errMsg.setMsg(msg);
 		workerSnapshot.getWorkerErrMsgs().add(errMsg);
-		getManager().getEmailClient().sendMailToAdmin("worker err", msg);
 	}
 
 	/**

@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import six.com.crawler.admin.Constants;
 import six.com.crawler.admin.api.ResponseMsg;
 import six.com.crawler.admin.service.BaseService;
 import six.com.crawler.admin.service.JobService;
@@ -74,24 +75,24 @@ public class JobServiceImpl extends BaseService implements JobService {
 	@Autowired
 	private WorkSpaceService workSpaceService;
 
-	public ResponseMsg<PageQuery<Job>> queryJobs(String jobName, int pageIndex, int pageSize) {
+	public ResponseMsg<PageQuery<Job>> queryJobs(String jobName, int pageIndex) {
 		ResponseMsg<PageQuery<Job>> responseMsg = createResponseMsg();
-		pageSize = pageSize <= 0 || pageSize > 50 ? 15 : pageSize;
+		int pageSize = Constants.DEFAULT_PAGE_SIZE;
 		PageQuery<Job> pageQuery = new PageQuery<>();
 		List<Job> jobs = null;
 		int totalSize = 0;
-		pageIndex = pageIndex * pageSize;
+		int startIndex = pageIndex * pageSize;
 		// 如果查询jobName==Blank 那么默认查询 执行任务
 		if (StringUtils.isBlank(jobName)) {
 			jobs = new ArrayList<>();
 			// 优先获取运行中的任务
 			List<JobSnapshot> jobSnapshots = scheduleManager.getScheduleCache().getJobSnapshots();
-			int end = pageIndex + pageSize;
+			int end = startIndex + pageSize;
 			if (jobSnapshots.size() > 0) {
 				if (jobSnapshots.size() > end) {
-					jobSnapshots = jobSnapshots.subList(pageIndex, end);
-				} else if (jobSnapshots.size() > pageIndex && jobSnapshots.size() < end) {
-					jobSnapshots = jobSnapshots.subList(pageIndex, jobSnapshots.size());
+					jobSnapshots = jobSnapshots.subList(startIndex, end);
+				} else if (jobSnapshots.size() > startIndex && jobSnapshots.size() < end) {
+					jobSnapshots = jobSnapshots.subList(startIndex, jobSnapshots.size());
 				} else {
 					jobSnapshots = Collections.emptyList();
 				}
@@ -107,7 +108,7 @@ public class JobServiceImpl extends BaseService implements JobService {
 			// 如果查询的运行job小于分页数量那么 再查询数据库补充 pageSize
 			if (jobs.size() < pageSize) {
 				jobName = "";
-				List<Job> queryJobs = jobDao.pageQuery(jobName, pageIndex, pageSize);
+				List<Job> queryJobs = jobDao.pageQuery(jobName, startIndex, pageSize);
 				if (queryJobs.size() > 0) {
 					totalSize = queryJobs.get(0).getTotalSize();
 				}
@@ -121,7 +122,7 @@ public class JobServiceImpl extends BaseService implements JobService {
 				}
 			}
 		} else {
-			jobs = jobDao.pageQuery(jobName, pageIndex, pageSize);
+			jobs = jobDao.pageQuery(jobName, startIndex, pageSize);
 			if (jobs.size() > 0) {
 				totalSize = jobs.get(0).getTotalSize();
 			}
@@ -158,11 +159,23 @@ public class JobServiceImpl extends BaseService implements JobService {
 	}
 
 	@Override
-	public ResponseMsg<List<JobSnapshot>> queryJobSnapshotsFromHistory(String jobName) {
-		ResponseMsg<List<JobSnapshot>> responseMsg = createResponseMsg();
-		List<JobSnapshot> result = jobSnapshotDao.queryByJob(jobName);
+	public ResponseMsg<PageQuery<JobSnapshot>> queryJobSnapshotsFromHistory(String jobName,int pageIndex) {
+		ResponseMsg<PageQuery<JobSnapshot>> responseMsg = createResponseMsg();
+		PageQuery<JobSnapshot> pageQuery = new PageQuery<>();
+		int totalSize = 0;
+		int pageSize = Constants.DEFAULT_PAGE_SIZE;
+		int startIndex= pageIndex * pageSize;
+		List<JobSnapshot> workerErrMsgs = jobSnapshotDao.pageQuery(jobName, startIndex, pageSize);
+		if (null != workerErrMsgs && workerErrMsgs.size() > 0) {
+			totalSize = workerErrMsgs.get(0).getTotalSize();
+			pageQuery.setTotalSize(totalSize);
+			pageQuery.setTotalPage(totalSize % pageSize == 0 ? totalSize / pageSize : totalSize / pageSize + 1);
+			pageQuery.setList(workerErrMsgs);
+			pageQuery.setPageIndex(pageIndex);
+		}
+		pageQuery.setPageSize(pageSize);
 		responseMsg.setIsOk(1);
-		responseMsg.setData(result);
+		responseMsg.setData(pageQuery);
 		return responseMsg;
 	}
 
