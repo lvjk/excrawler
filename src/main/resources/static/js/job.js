@@ -47,16 +47,32 @@ function showDiv(showDivID){
 		var lastShowDivId=showDiv.attr("id");
 		if(showDivID!=lastShowDivId&&("inline"==display||"inline-block"==display||"block"==display)){
 			showDiv.css("display","none");
-			$("#returnLastShowDivId").val(lastShowDivId);
+			var showDivIdRecordInput=$("<input type='text' name='showDivIdRecordInput' value='"+lastShowDivId+"' style='display: none' />");
+			showDivIdRecordInput.appendTo($("#showDivIdRecordDiv"));
 		}else if(showDivID==showDiv.attr("id")){
 			showDiv.css("display","block");	
+		}else{
+			showDiv.css("display","none");
 		}
 	}	
 }
 
 function returnLastShowDiv(){
-	var lastShowDivId=$("#returnLastShowDivId").val();
-	showDiv(lastShowDivId);
+	var showDivIdRecordInputs=$("#showDivIdRecordDiv").find("input[name='showDivIdRecordInput']");
+	if(showDivIdRecordInputs.length>0){
+		var lastShowDivInput=$(showDivIdRecordInputs[showDivIdRecordInputs.length-1]);
+		var lastShowDivId=lastShowDivInput.val();
+		var showDivs=$("div[class='showDiv']");
+		for (var i = 0; i < showDivs.length; i++) {
+			var showDiv=$(showDivs[i]);
+			if(lastShowDivId==showDiv.attr("id")){
+				showDiv.css("display","block");	
+			}else{
+				showDiv.css("display","none");
+			}
+		}	
+		lastShowDivInput.remove();
+	}
 }
 /**
  * 与后台建立websocket连接
@@ -180,7 +196,7 @@ function showErrMsg(jobName,jobSnapshotId){
 			if (null != data && data.length > 0) {
 				workerErrMsgDiv.find("input[id='pageIndex']").val(pageIndex);
 				var table=workerErrMsgDiv.find("table");
-				table.find("tr[class=jobWorkerErrMsgDiv]").remove();
+				table.find("tr[name='jobWorkerErrMsgDiv']").remove();
 				for (var i = 0; i < data.length; i++) {
 					var workerErrMsg = data[i];
 					var tr = $("<tr name='jobWorkerErrMsgDiv'></tr>");
@@ -236,11 +252,9 @@ function searchJob() {
 	var jobName = $('#search_job_name').val();
 	var jobSearch=$('#job_search');
 	var pageIndex=jobSearch.find('#pageIndex').val();
-	var pageSize=jobSearch.find('#pageSize').val();
 	var url="/crawler/job/query";
 	$.post(url, {
 		pageIndex:pageIndex,
-		pageSize : pageSize,
 		jobName : jobName
 	}, function(responseMsg) {
 		if (responseMsg.isOk == 1) {
@@ -352,10 +366,10 @@ function pageInfo(showDivId,responseMsg,lastSearch,nextSearch){
 	var totalPage=responseMsg.data.totalPage;
 	var totalSize=responseMsg.data.totalSize;
 	var showDivId=$(showDivId);
-	var pageIndex=showDivId.find('#pageIndex').val();
+	showDivId.find('#pageIndex').val(pageIndex);
 	showDivId.find('#totalPage').val(totalPage);
 	showDivId.find('#totalSize').val(totalSize);
-	var pageInfoHtml="<span>";
+	var pageInfoHtml="<div><span>";
 	pageInfoHtml+="总共<span style='color:#FF0000;font-weight:bold'>"+totalSize+"</span>条记录";
 	pageInfoHtml+="每页<span style='color:#FF0000;font-weight:bold'>"+pageSize+"</span>条";
 	pageInfoHtml+="总页数:<span style='color:#FF0000;font-weight:bold'>"+totalPage+"</span>";
@@ -371,7 +385,10 @@ function pageInfo(showDivId,responseMsg,lastSearch,nextSearch){
 			pageInfoHtml+="<a class='pull-right' style='color:#FF0000;font-weight:bold' href='javascript:"+lastSearch+"()'>上一页&nbsp;&nbsp;&nbsp;&nbsp;</a>";
 		}
 	}
-	showDivId.find('#pageInfo').html(pageInfoHtml);
+	pageInfoHtml+="</div>";
+	var pageInfoDiv=showDivId.find('#pageInfo');
+	pageInfoDiv.find("div").remove();
+	$(pageInfoHtml).appendTo(pageInfoDiv);
 }
 
 /**
@@ -756,12 +773,16 @@ function updateIsScheduled(jobName) {
 
 
 function showHistoryJobSnapshot(jobName) {
-	var url = "/crawler/job/getHistoryJobSnapshot/" + jobName;
+	var url = "/crawler/job/jobSnapshot/getHistoryJobSnapshot";
 	var jobSnapshotDiv = $("#job_jobSnapshot_div");
 	var table=jobSnapshotDiv.find("table");
-	table.find("tr[class='jobSnapshot']").remove();
-	$.get(url, function(result) {
-		var jobSnapshots=result.data;
+	var pageIndex=jobSnapshotDiv.find('#pageIndex').val();
+	$.post(url, {
+		jobName:jobName,
+		pageIndex : pageIndex
+	}, function(responseMsg) {
+		var jobSnapshots=responseMsg.data.list;
+		table.find("tr[class='jobSnapshot']").remove();
 		jobSnapshotDiv.find("span[id='jobName']").html("任务[<span style='color:#FF0000'>"+jobName+"</span>]运行历史记录");
 		for (var i = 0; i < jobSnapshots.length; i++) {
 			var jobSnapshot=jobSnapshots[i];
@@ -793,6 +814,7 @@ function showHistoryJobSnapshot(jobName) {
 				  updateJobSnapshotStatus(jobSnapshotId);  
 			  }  
 		}); 
+		pageInfo("#job_jobSnapshot_div",responseMsg,"lastSearchJob","nextSearchJob");
 		showDiv("job_jobSnapshot_div");
 	});
 }
