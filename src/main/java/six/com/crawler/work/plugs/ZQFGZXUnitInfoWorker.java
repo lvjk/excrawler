@@ -8,6 +8,7 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.ArrayListUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.downer.HttpMethod;
+import six.com.crawler.work.exception.ProcessWorkerCrawlerException;
 import six.com.crawler.work.space.WorkSpace;
 
 /**
@@ -35,7 +36,7 @@ public class ZQFGZXUnitInfoWorker extends AbstractCrawlWorker{
 		String attrCss="dl[class=dl-horizontal buildinginfo]:eq(0)>dd";
 		Elements attrs=doingPage.getDoc().select(attrCss);
 		if(attrs.size()<2){
-			throw new RuntimeException("don't find state node:" + attrCss+",pageSrc is :"+doingPage.getPageSrc());
+			throw new ProcessWorkerCrawlerException("don't find state node:" + attrCss+",pageSrc is :"+doingPage.getPageSrc());
 		}else{
 			Element developer=attrs.get(2);
 			doingPage.getMetaMap().put("developer", ArrayListUtils.asList(developer.ownText()));

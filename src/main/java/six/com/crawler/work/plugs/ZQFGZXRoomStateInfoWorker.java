@@ -11,6 +11,7 @@ import org.jsoup.select.Elements;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.work.AbstractCrawlWorker;
+import six.com.crawler.work.exception.ProcessWorkerCrawlerException;
 
 /**
  * 
@@ -55,7 +56,7 @@ public class ZQFGZXRoomStateInfoWorker extends AbstractCrawlWorker{
 		if(doingPage.getMeta("unitId")!=null&&doingPage.getMeta("unitId").size()>0){
 			unitId=doingPage.getMeta("unitId").get(0);
 		}else{
-			throw new RuntimeException("don't find unitId,meta is :"+doingPage.getMetaMap().toString());
+			throw new ProcessWorkerCrawlerException("don't find unitId,meta is :"+doingPage.getMetaMap().toString());
 		}
 		
 		Elements floors=doingPage.getDoc().select("ul[class=RoomState]");
