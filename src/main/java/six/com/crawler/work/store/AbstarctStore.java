@@ -16,7 +16,8 @@ import six.com.crawler.work.store.exception.StoreException;
  */
 public abstract class AbstarctStore implements Store{
 
-	final static Logger LOG = LoggerFactory.getLogger(AbstarctStore.class);
+	final static Logger log = LoggerFactory.getLogger(AbstarctStore.class);
+	
 	private AbstractWorker<?> worker;
 	
 	public AbstarctStore(AbstractWorker<?> worker) {

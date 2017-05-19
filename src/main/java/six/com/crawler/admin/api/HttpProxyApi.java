@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -30,39 +31,27 @@ public class HttpProxyApi extends BaseApi {
 		this.httpPorxyService = httpPorxyService;
 	}
 
-	@RequestMapping(value = "/crawler/httpPorxy/list", method = RequestMethod.GET)
+	@RequestMapping(value = "/crawler/httpPorxy/getAll", method = RequestMethod.GET)
 	@ResponseBody
-	public ResponseMsg<List<HttpProxy>> getHttpPorxys() {
-		ResponseMsg<List<HttpProxy>> msg =createResponseMsg();
-		List<HttpProxy> result = httpPorxyService.getHttpProxys();
-		msg.setData(result);
-		return msg;
+	public ResponseMsg<List<HttpProxy>> getAll() {
+		return httpPorxyService.getAll();
 	}
 
-	@RequestMapping(value = "/crawler/httpPorxy/add", method = RequestMethod.POST)
+	@RequestMapping(value = "/crawler/httpPorxy/save", method = RequestMethod.POST)
 	@ResponseBody
-	public ResponseMsg<String> addHttpPorxys(HttpProxy httpProxy) {
-		ResponseMsg<String> msg = createResponseMsg();
-		String result = httpPorxyService.addHttpProxy(httpProxy);
-		msg.setMsg(result);
-		return msg;
+	public ResponseMsg<String> save(HttpProxy httpProxy) {
+		return httpPorxyService.save(httpProxy);
 	}
 
 	@RequestMapping(value = "/crawler/httpPorxy/test", method = RequestMethod.POST)
 	@ResponseBody
-	public ResponseMsg<String> testHttpPorxys(HttpProxy httpProxy) {
-		ResponseMsg<String> msg = createResponseMsg();
-		String result = httpPorxyService.testHttpProxy(httpProxy);
-		msg.setMsg(result);
-		return msg;
+	public ResponseMsg<String> test(HttpProxy httpProxy) {
+		return httpPorxyService.test(httpProxy);
 	}
 
 	@RequestMapping(value = "/crawler/httpPorxy/del", method = RequestMethod.POST)
 	@ResponseBody
-	public ResponseMsg<String> delHttpPorxys(HttpProxy httpProxy) {
-		ResponseMsg<String> msg = createResponseMsg();
-		String result = httpPorxyService.delHttpProxy(httpProxy);
-		msg.setMsg(result);
-		return msg;
+	public ResponseMsg<String> del(@PathVariable("host") String host, @PathVariable("port") int port) {
+		return httpPorxyService.del(host, port);
 	}
 }

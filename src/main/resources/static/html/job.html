@@ -10,19 +10,26 @@
 </head>
 <body>
 	<div class="tab-pane fade in active" id="tab2">
-		<div id="job_search">
-			<label>任务名:</label> 
-			<input id="search_job_name" type="text" class="input-medium search-query">
-			<input id="pageIndex" type="text" value="0" style="display:none">
-			<input id="pageSize"  type="text" value="15" style="display:none">
-			<input id="totalPage" type="text" style="display:none">
-			<input id="totalSize" type="text" style="display:none">
-			
-			<button id="search_job_bt" class="btn">搜索</button>
-			<input id="jobProfile" type="file" class="file"/>
-			<button id="upload_jobProfile" class="btn">上传站点配置</button>
+		<div>
+			<input type='text' id='returnLastShowDivId' value='job_div'
+				style='display: none' /> <a class='pull-right'
+				style='color: #FF0000; font-weight: bold'
+				href='javascript:returnLastShowDiv()'>返回</a>
 		</div>
-		<div id='job_div' style="width: 1260px; height: 780px;overflow: auto;">
+		<div id='job_div' class='showDiv'
+			style="width: 1260px; height: 780px; overflow: auto;">
+			<div id="job_search">
+				<label>任务名:</label> <input id="search_job_name" type="text"
+					class="input-medium search-query"> <input id="pageIndex"
+					type="text" value="0" style="display: none"> <input
+					id="pageSize" type="text" value="15" style="display: none">
+				<input id="totalPage" type="text" style="display: none"> <input
+					id="totalSize" type="text" style="display: none">
+
+				<button id="search_job_bt" class="btn">搜索</button>
+				<input id="jobProfile" type="file" class="file" />
+				<button id="upload_jobProfile" class="btn">上传站点配置</button>
+			</div>
 			<table class="table table-striped table-hover">
 				<thead>
 					<tr>
@@ -40,15 +47,15 @@
 				<tbody id="jobs">
 				</tbody>
 			</table>
-			<div id="pageInfo">
-			</div>
+			<div id="pageInfo"></div>
 		</div>
 		<!--<table class="table table-striped table-hover" id="reportTable1"></table>-->
-		
-		<div id="job_params_div" style="display: none;">
+
+		<div id='job_params_div' class='showDiv'
+			style="width: 1260px; height: 780px; overflow: auto; display: none;">
 			<table class="table table-striped table-hover">
 				<tr>
-					<td colspan="4" style="font-size: 16px;font-weight:bold;">任务基本信息</td>
+					<td colspan="4" style="font-size: 16px; font-weight: bold;">任务基本信息</td>
 				</tr>
 				<tr>
 					<td>任务名</td>
@@ -60,27 +67,27 @@
 				</tr>
 				<tr>
 					<td>工作空间</td>
-					<td><input class="form-control" name="workSpaceName" type="text"
-						placeholder="" /></td>
-					<td>工作class</td>                     
+					<td><input class="form-control" name="workSpaceName"
+						type="text" placeholder="" /></td>
+					<td>工作class</td>
 					<td><input class="form-control" name="workerClass" type="text"
 						placeholder="" /></td>
 				</tr>
 				<tr>
-				    <td>指定节点</td>
-					<td><input class="form-control" name="designatedNodeName" type="text"
-						placeholder="" /></td>
+					<td>指定节点</td>
+					<td><input class="form-control" name="designatedNodeName"
+						type="text" placeholder="" /></td>
 					<td>所需节点数</td>
 					<td><input class="form-control" name="needNodes" type="text"
 						placeholder="" /></td>
 				</tr>
 				<tr>
 					<td>描述</td>
-					<td colspan="3"><input class="form-control" size='50' name="describe" type="text"
-						placeholder="" /></td>
+					<td colspan="3"><input class="form-control" size='50'
+						name="describe" type="text" placeholder="" /></td>
 				</tr>
 				<tr>
-					<td colspan="4" style="font-size: 16px;font-weight:bold;">任务参数</td>
+					<td colspan="4" style="font-size: 16px; font-weight: bold;">任务参数</td>
 				</tr>
 				<tr>
 			</table>
@@ -95,16 +102,15 @@
 				</tbody>
 			</table>
 		</div>
-		
+
 		<div id="job_extractItem_div" style="display: none;">
 			<table class="table table-striped table-hover">
 				<thead>
 					<tr>
-						<td colspan="8" style="color:red;font-weight:bold" >说明:<br>
-											  主键: 1 主键类型, 0 非主键类型<br>
-											  类型: 1 字符, 2 URL, 3 文本, 4 电话, 5 数字, 6 日期, 7 元数据<br>
-											  输出类型: 0 不输出, 1 输出至保存, 2 输出到生成新page meta中, 3 url类型生成新page并输出到对了中<br>
-											  必须有值: 1 必须有值, 0 可以没有值
+						<td colspan="8" style="color: red; font-weight: bold">说明:<br>
+							主键: 1 主键类型, 0 非主键类型<br> 类型: 1 字符, 2 URL, 3 文本, 4 电话, 5 数字, 6
+							日期, 7 元数据<br> 输出类型: 0 不输出, 1 输出至保存, 2 输出到生成新page meta中, 3
+							url类型生成新page并输出到对了中<br> 必须有值: 1 必须有值, 0 可以没有值
 						</td>
 					</tr>
 					<tr>
@@ -121,14 +127,14 @@
 				<tbody>
 				</tbody>
 			</table>
-			<div id="pageInfo">
-			</div>
+			<div id="pageInfo"></div>
 		</div>
-		
-		<div id="jobSnapshot_div" style="display: none;">
-			<table class="table table-striped table-hover" style="margin: auto; margin-top: 20px; text-align: center;">
+
+		<div id="job_jobSnapshot_div" class='showDiv' style="display: none;">
+			<table class="table table-striped table-hover"
+				style="margin: auto; margin-top: 20px; text-align: center;">
 				<tr style="font-size: 14px; font-weight: bold;">
-					<td colspan="9" style="color:#FF0000">1:准备,&nbsp;2:等待执行,&nbsp;3:执行,&nbsp;4:暂停,&nbsp;5:停止,&nbsp;6:完成</td>
+					<td colspan="9" style="color: #FF0000">1:准备,&nbsp;2:等待执行,&nbsp;3:执行,&nbsp;4:暂停,&nbsp;5:停止,&nbsp;6:完成</td>
 				</tr>
 				<tr style="font-size: 14px; font-weight: bold;">
 					<td colspan="9"><span id="jobName"></span></td>
@@ -146,14 +152,13 @@
 				</tr>
 			</table>
 		</div>
-		
-		
+
+
 		<div id="job_workSpace_div" style="display: none;">
-			<table class="table table-striped table-hover" style="margin: auto; margin-top: 20px; text-align: center;">
+			<table class="table table-striped table-hover"
+				style="margin: auto; margin-top: 20px; text-align: center;">
 				<tr style="font-size: 14px; font-weight: bold;">
-					<td colspan="2">
-						<span id="job_workSpace_name"></span>
-					</td>
+					<td colspan="2"><span id="job_workSpace_name"></span></td>
 				</tr>
 				<tr style="font-size: 10px; font-weight: bold;">
 					<td>URL</td>
@@ -161,26 +166,31 @@
 				</tr>
 			</table>
 		</div>
-		
-		
-		<div id="job_errMsg_div" style="display: none;">
-			<table class="table table-striped table-hover" style="margin: auto; margin-top: 20px; text-align: center;">
+
+
+		<div id='job_worker_errMsg_div' class='showDiv'
+			style="width: 1260px; height: 780px;display: none;">
+			<input id="jobName" type="text" style="display: none">
+			<input id="jobSnapshotId" type="text" style="display: none">
+			<table class="table table-striped table-hover"
+				style="margin: auto; margin-top: 20px; text-align: center;">
 				<tr style="font-size: 14px; font-weight: bold;">
-					<td colspan="2">
-						<span id="title"></span>
-					</td>
+					<td colspan="3"><span id="title"></span></td>
 				</tr>
 				<tr style="font-size: 10px; font-weight: bold;">
 					<td>workerName</td>
 					<td>startTime</td>
-					<td>message</td>
+					<td>type</td>
 				</tr>
 			</table>
+			<div id="pageInfo">
+				<input id="pageIndex" type="text" value="0" style="display: none"> 
+			</div>
 		</div>
-		
-		
+
 		<div id="job_worker_div" style="display: none;">
-			<table class="table table-striped table-hover" style="margin: auto; margin-top: 20px; text-align: center;">
+			<table class="table table-striped table-hover"
+				style="margin: auto; margin-top: 20px; text-align: center;">
 				<tr style="font-size: 14px; font-weight: bold;">
 					<td colspan="12"><span id="job_worker_div_name"></span></td>
 				</tr>

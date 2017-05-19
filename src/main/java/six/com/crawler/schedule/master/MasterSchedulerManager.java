@@ -80,9 +80,13 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 
 	public static final String SCHEDULER_MANAGER_KEY = "scheduleManager";
 
+	public static final String CLEAR_BEFORE_DAYS_KEY = "clearBeforeDays";
+
 	private LinkedBlockingQueue<Job> pendingExecuteQueue = new LinkedBlockingQueue<>();
 
 	private Scheduler scheduler;
+
+	private final static String systemGroup = "exCrawler";
 
 	private final static String schedulerGroup = "exCrawler";
 
@@ -103,6 +107,8 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 		}
 		// 加载 当前节点 需要调度的任务
 		loadScheduledJob();
+		// 加载系统job
+		loadSystemJob();
 	}
 
 	private void loopReadWaitingJob() {
@@ -128,7 +134,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 		props.put("org.quartz.scheduler.rmi.proxy", false);
 		props.put("org.quartz.scheduler.wrapJobExecutionInUserTransaction", false);
 		props.put("org.quartz.threadPool.class", "org.quartz.simpl.SimpleThreadPool");
-		props.put("org.quartz.threadPool.threadCount", "1");
+		props.put("org.quartz.threadPool.threadCount", "2");
 		props.put("org.quartz.threadPool.threadPriority", "5");
 		props.put("org.quartz.threadPool.threadsInheritContextClassLoaderOfInitializingThread", true);
 		props.put("org.quartz.jobStore.misfireThreshold", "60000");
@@ -154,6 +160,28 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 			for (Job job : jobs) {
 				scheduled(job);
 			}
+		}
+	}
+
+	private void loadSystemJob() {
+		String systemJobName = "systemJob";
+		String cronTrigger = getConfigure().getConfig("master.systemjob.cronTrigger", "0 0 1 * * ? *");
+		int clearBeforeDays = getConfigure().getConfig("master.systemjob.clearBeforeDays", 7);
+		JobKey jobKey = new JobKey(systemJobName, systemGroup);
+		Trigger trigger = TriggerBuilder.newTrigger().withIdentity(systemJobName, systemGroup)
+				.withSchedule(CronScheduleBuilder.cronSchedule(cronTrigger)).startNow().build();
+		JobBuilder jobBuilder = JobBuilder.newJob(SystemClearJob.class);
+		jobBuilder.withIdentity(jobKey);
+		JobDataMap newJobDataMap = new JobDataMap();
+		newJobDataMap.put(SCHEDULER_MANAGER_KEY, this);
+		newJobDataMap.put(CLEAR_BEFORE_DAYS_KEY, clearBeforeDays);
+		jobBuilder.setJobData(newJobDataMap);
+		JobDetail jobDetail = jobBuilder.build();
+		try {
+			scheduler.scheduleJob(jobDetail, trigger);
+			log.info("load system's job");
+		} catch (SchedulerException e) {
+			log.error("scheduleJob err:" + systemJobName);
 		}
 	}
 

@@ -18,17 +18,18 @@ import six.com.crawler.admin.service.SiteService;
 import six.com.crawler.configure.SpiderConfigure;
 import six.com.crawler.dao.DataTableDao;
 import six.com.crawler.dao.ExtractPathDao;
+import six.com.crawler.dao.HttpProxyDao;
 import six.com.crawler.dao.JobDao;
 import six.com.crawler.dao.JobParamDao;
 import six.com.crawler.dao.JobSnapshotDao;
 import six.com.crawler.dao.PageDao;
 import six.com.crawler.dao.RedisManager;
 import six.com.crawler.dao.SiteDao;
-import six.com.crawler.http.HttpClient;
 import six.com.crawler.node.ClusterManager;
 import six.com.crawler.ocr.ImageDistinguish;
 import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.schedule.worker.AbstractWorkerPlugsManager;
+import six.com.crawler.work.downer.HttpClient;
 
 /**
  * @author sixliu E-mail:359852326@qq.com
@@ -47,7 +48,7 @@ public  class BaseTest extends AbstractJUnit4SpringContextTests {
 	public AbstractSchedulerManager jobWorkerManager;
 	
 	@Autowired
-	public ClusterManager nodeManager;
+	public ClusterManager clusterManager;
 
 	@Autowired
 	public SiteService siteService;
@@ -79,6 +80,9 @@ public  class BaseTest extends AbstractJUnit4SpringContextTests {
 	public RedisManager redisManager;
 
 
+	@Autowired
+	public HttpProxyDao httpProxyDao;
+	
 	@Autowired
 	public SpiderConfigure spiderConfigure;
 	

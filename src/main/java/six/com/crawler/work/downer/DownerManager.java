@@ -6,6 +6,9 @@ import six.com.crawler.entity.Page;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.downer.cache.DbDownerCache;
 import six.com.crawler.work.downer.cache.DownerCache;
+import six.com.crawler.work.downer.impl.ApacheHttpDowner;
+import six.com.crawler.work.downer.impl.ChromeDowner;
+import six.com.crawler.work.downer.impl.OkHttpDowner;
 
 /**
  * @author 作者

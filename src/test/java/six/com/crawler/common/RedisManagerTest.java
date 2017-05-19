@@ -13,8 +13,8 @@ import six.com.crawler.BaseTest;
 import six.com.crawler.dao.EnhanceJedisCluster;
 import six.com.crawler.entity.HttpProxy;
 import six.com.crawler.entity.Page;
-import six.com.crawler.http.HttpProxyPool;
 import six.com.crawler.utils.JavaSerializeUtils;
+import six.com.crawler.work.downer.HttpProxyPool;
 import six.com.crawler.work.space.RedisWorkSpace;
 
 /**

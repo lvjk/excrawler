@@ -19,22 +19,21 @@ public class HttpNodeCommandClientTest {
 	
 	public static void main(String[] a) throws InterruptedException {
 		NettyRpcCilent client = new NettyRpcCilent();
-		String targetHost = "192.168.12.80";
+		String targetHost = "192.168.12.27";
 		int targetPort = 8180;
 		int requestCount = 1;
 		CountDownLatch cdl=new CountDownLatch(requestCount);
 		TestService testService = client.lookupService(targetHost, targetPort, TestService.class,result->{
-			System.out.println("result:" + result);
+			System.out.println("回调打印结果:"+result);
 		});
 		String name = "six";
-		
 		ExecutorService executor = Executors.newFixedThreadPool(requestCount);
 		for (int i = 0; i < requestCount; i++) {
 			executor.execute(()->{
 				try {
 					long startTime = System.currentTimeMillis();
 					Object result=testService.say(name +"-"+index++);
-					System.out.println(result);
+					System.out.println("同步打印结果:"+result);
 					long endTime = System.currentTimeMillis();
 					long totalTime = endTime - startTime;
 					allTime += totalTime;

@@ -3,8 +3,8 @@ package six.com.crawler.admin.service;
 import java.util.List;
 
 import six.com.crawler.admin.api.ResponseMsg;
+import six.com.crawler.admin.vo.TestExtractPathVo;
 import six.com.crawler.work.extract.ExtractPath;
-import six.com.crawler.work.extract.TestExtractPath;
 
 /**
  * @author 作者
@@ -56,7 +56,7 @@ public interface ExtractPathService {
 	 * @param html
 	 * @return
 	 */
-	public List<String> testExtract(TestExtractPath extractPath);
+	public List<String> testExtract(TestExtractPathVo extractPath);
 
 
 	/**

@@ -26,13 +26,13 @@ import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.JobSnapshotState;
 import six.com.crawler.entity.WorkerErrMsg;
 import six.com.crawler.entity.WorkerSnapshot;
-import six.com.crawler.http.HttpClient;
 import six.com.crawler.node.Node;
 import six.com.crawler.node.ClusterManager;
 import six.com.crawler.ocr.ImageDistinguish;
 import six.com.crawler.schedule.cache.ScheduleCache;
 import six.com.crawler.schedule.worker.AbstractWorkerPlugsManager;
 import six.com.crawler.work.WorkerLifecycleState;
+import six.com.crawler.work.downer.HttpClient;
 import six.com.crawler.work.space.WorkSpaceManager;
 import six.com.crawler.dao.JobRelationshipDao;
 
@@ -84,6 +84,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 
 	@Autowired
 	private RedisManager redisManager;
+
 
 	@Autowired
 	private HttpProxyDao httpProxyDao;//

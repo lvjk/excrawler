@@ -1,4 +1,7 @@
 package six.com.crawler.work.downer.exception;
+
+import six.com.crawler.work.exception.WorkerExceptionType;
+
 /** 
 * @author  作者 
 * @E-mail: 359852326@qq.com 
@@ -14,10 +17,10 @@ public class TimeoutDownerException extends DownerException{
 
 
 	public TimeoutDownerException(String message) {
-		super(message);
+		super(WorkerExceptionType.DOWNER_TIMEOUT_EXCEPTION,message);
 	}
 
 	public TimeoutDownerException(String message, Throwable cause) {
-		super(message, cause);
+		super(WorkerExceptionType.DOWNER_TIMEOUT_EXCEPTION,message, cause);
 	}
 }

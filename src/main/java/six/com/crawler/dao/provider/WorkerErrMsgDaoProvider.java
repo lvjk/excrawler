@@ -22,9 +22,10 @@ public class WorkerErrMsgDaoProvider extends BaseProvider{
 			+ "jobSnapshotId,"
 			+ "jobName,"
 			+ "workerName,"
-			+ "UNIX_TIMESTAMP(startTime)*1000 startTime,"
+			+ "DATE_FORMAT(startTime,'%Y-%m-%d %H:%i:%s') startTime,"
+			+ "type,"
 			+ "msg";
-	private String saveColumns="jobSnapshotId,jobName,workerName,startTime,msg";
+	private String saveColumns="jobSnapshotId,jobName,workerName,startTime,type,msg";
 	
 	public String query(Map<String, Object> map) {
 		SQL sql=new SQL();
@@ -76,6 +77,7 @@ public class WorkerErrMsgDaoProvider extends BaseProvider{
 				+ "#{list["+INDEX_FLAG+"].jobName},"
 				+ "#{list["+INDEX_FLAG+"].workerName},"
 				+ "#{list["+INDEX_FLAG+"].startTime},"
+				+ "#{list["+INDEX_FLAG+"].type},"
 				+ "#{list["+INDEX_FLAG+"].msg})";
 		StringBuilder sbd = new StringBuilder();  
 		sbd.append("insert into ").append(TableNames.JOB_WORKER_SNAPSHOT_ERRMSG_TABLE_NAME);  

@@ -7,10 +7,10 @@ import org.junit.Test;
 
 import okhttp3.Request;
 import six.com.crawler.BaseTest;
-import six.com.crawler.http.HttpConstant;
-import six.com.crawler.http.HttpMethod;
-import six.com.crawler.http.HttpResult;
 import six.com.crawler.utils.AutoCharsetDetectorUtils.ContentType;
+import six.com.crawler.work.downer.HttpConstant;
+import six.com.crawler.work.downer.HttpMethod;
+import six.com.crawler.work.downer.HttpResult;
 import six.com.crawler.work.downer.PostContentType;
 
 /** 

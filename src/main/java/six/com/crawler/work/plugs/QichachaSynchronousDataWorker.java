@@ -16,22 +16,24 @@ import org.slf4j.LoggerFactory;
 import okhttp3.Request;
 import six.com.crawler.entity.Page;
 import six.com.crawler.exception.AbstractHttpException;
-import six.com.crawler.http.HttpConstant;
-import six.com.crawler.http.HttpMethod;
-import six.com.crawler.http.HttpResult;
 import six.com.crawler.utils.DbHelper;
 import six.com.crawler.utils.JobTableUtils;
 import six.com.crawler.work.DataBaseAbstractWorker;
 import six.com.crawler.work.CrawlerJobParamKeys;
 import six.com.crawler.work.WorkerLifecycleState;
+import six.com.crawler.work.downer.HttpConstant;
+import six.com.crawler.work.downer.HttpMethod;
+import six.com.crawler.work.downer.HttpResult;
 import six.com.crawler.work.downer.PostContentType;
+import six.com.crawler.work.exception.WorkerException;
+import six.com.crawler.work.exception.WorkerOtherException;
 
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年11月22日 下午2:42:28
  */
-public class QichachaSynchronousDataWorker extends DataBaseAbstractWorker{
+public class QichachaSynchronousDataWorker extends DataBaseAbstractWorker {
 
 	final static Logger LOG = LoggerFactory.getLogger(QichachaSynchronousDataWorker.class);
 	private String fixedTableName;
@@ -44,32 +46,32 @@ public class QichachaSynchronousDataWorker extends DataBaseAbstractWorker{
 	int batchSize = 100;
 	int startIndex = 0;
 
-
 	public final void insideInit() {
-		fixedTableName =getJob().getParam(CrawlerJobParamKeys.FIXED_TABLE_NAME);
+		fixedTableName = getJob().getParam(CrawlerJobParamKeys.FIXED_TABLE_NAME);
 		selectSqlTemplate = getJob().getParam(CrawlerJobParamKeys.SELECT_SQL_TEMPLATE);
 		updateSqlTemplate = getJob().getParam(CrawlerJobParamKeys.UPDATE_SQL_TEMPLATE);
 		sendHttpUlr = getJob().getParam(CrawlerJobParamKeys.SEND_HTTP_URL);
-		selectSql=JobTableUtils.buildSelectSql(selectSqlTemplate, fixedTableName);
-		updateSql=JobTableUtils.buildUpdateSql(updateSqlTemplate, fixedTableName);
+		selectSql = JobTableUtils.buildSelectSql(selectSqlTemplate, fixedTableName);
+		updateSql = JobTableUtils.buildUpdateSql(updateSqlTemplate, fixedTableName);
 		String httpMethod = getJob().getParam(CrawlerJobParamKeys.SEND_HTTP_METHOD);
 		method = "post".equalsIgnoreCase(httpMethod) ? HttpMethod.POST : HttpMethod.GET;
 	}
-	
+
 	@Override
-	protected void insideWork(Page doingPage) throws Exception {
-		final Connection connection = getConnection();
+	protected void insideWork(Page doingPage) throws WorkerException {
+		Connection connection = null;
 		PreparedStatement ps = null;
 		ResultSet resultSet = null;
 		try {
+			connection = getConnection();
 			// 查询最新未同步数据
 			ps = connection.prepareStatement(selectSql);
-			DbHelper.setPreparedStatement(ps,Arrays.asList(startIndex,batchSize));
+			DbHelper.setPreparedStatement(ps, Arrays.asList(startIndex, batchSize));
 			resultSet = ps.executeQuery();
 			String[] columns = DbHelper.getColumn(resultSet);
 			List<Map<String, Object>> result = DbHelper.paserResult(resultSet, columns);
-			if (null!=result&&!result.isEmpty()) {
-				handle(connection,result);
+			if (null != result && !result.isEmpty()) {
+				handle(connection, result);
 			}
 			if (result.isEmpty() || result.size() < batchSize) {
 				// 没有处理数据时 设置 state == WorkerLifecycleState.SUSPEND
@@ -77,7 +79,7 @@ public class QichachaSynchronousDataWorker extends DataBaseAbstractWorker{
 				return;
 			}
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			throw new WorkerOtherException(e);
 		} finally {
 			DbHelper.close(connection);
 		}
@@ -85,7 +87,7 @@ public class QichachaSynchronousDataWorker extends DataBaseAbstractWorker{
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected void handle(Connection connection,List<Map<String, Object>> datas) throws Exception{
+	protected void handle(Connection connection, List<Map<String, Object>> datas) throws Exception {
 		try {
 			datas.forEach(map -> {
 				for (String key : map.keySet()) {
@@ -94,7 +96,7 @@ public class QichachaSynchronousDataWorker extends DataBaseAbstractWorker{
 						String temp = StringUtils.remove(value.toString(), "法定代表人：");
 						temp = StringUtils.remove(temp, "法定代表：");
 						map.put(key, Arrays.asList(temp));
-					}else{
+					} else {
 						map.put(key, Arrays.asList(value));
 					}
 				}
@@ -113,7 +115,7 @@ public class QichachaSynchronousDataWorker extends DataBaseAbstractWorker{
 					}
 				});
 				updatePs.executeBatch();
-			}	
+			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -125,8 +127,8 @@ public class QichachaSynchronousDataWorker extends DataBaseAbstractWorker{
 		PostContentType postContentType = PostContentType.JSON;
 		Map<String, Object> parameters = new HashMap<>();
 		parameters.put("content", data);
-		Request request = getManager().getHttpClient().buildRequest(sendHttpUlr, null, method, headMap, postContentType, parameters,
-				null);
+		Request request = getManager().getHttpClient().buildRequest(sendHttpUlr, null, method, headMap, postContentType,
+				parameters, null);
 		HttpResult result;
 		try {
 			result = getManager().getHttpClient().executeRequest(request);

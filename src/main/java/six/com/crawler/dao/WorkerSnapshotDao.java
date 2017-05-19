@@ -2,6 +2,7 @@ package six.com.crawler.dao;
 
 import java.util.List;
 
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.InsertProvider;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.SelectProvider;
@@ -24,5 +25,13 @@ public interface WorkerSnapshotDao extends BaseDao{
 	
 	@InsertProvider(type = WorkerSnapshotDaoProvider.class, method = "batchSave")
 	public void batchSave(@Param(BATCH_SAVE_PARAM)List<WorkerSnapshot> jobSnapshot);
+	
+	/**
+	 * 删除多少天以前的数据
+	 * @param beforeDays
+	 * @return
+	 */
+	@Delete("delete from " + TableNames.JOB_WORKER_SNAPSHOT_TABLE_NAME + " where datediff(curdate(),startTime)>=#{beforeDays}")
+	public int delBeforeDate(int beforeDays);
 
 }

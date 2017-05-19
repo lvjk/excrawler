@@ -11,7 +11,7 @@ public class ResponseMsg<T> {
 	/**
 	 * 返回给调用者的提示消息
 	 */
-	private String msg="";// 信息
+	private String msg = "";// 信息
 	/**
 	 * 请求要么成功要么失败
 	 */
@@ -36,12 +36,20 @@ public class ResponseMsg<T> {
 	public void setData(T data) {
 		this.data = data;
 	}
-	
+
 	public int getIsOk() {
 		return isOk;
 	}
 
 	public void setIsOk(int isOk) {
 		this.isOk = isOk;
+	}
+
+	public void isOk() {
+		this.isOk = 1;
+	}
+
+	public void isNoOk() {
+		this.isOk = 0;
 	}
 }

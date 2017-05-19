@@ -7,6 +7,7 @@ import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.Page;
 import six.com.crawler.utils.ThreadUtils;
 import six.com.crawler.work.AbstractWorker;
+import six.com.crawler.work.exception.WorkerException;
 
 /**
  * @author 作者
@@ -24,7 +25,7 @@ public class TestWorker extends AbstractWorker<Page> {
 	int processCount;
 
 	@Override
-	protected void insideWork(Page doingPage) throws Exception {
+	protected void insideWork(Page doingPage) throws WorkerException {
 		processCount++;
 		log.info("test worker process:" + processCount);
 		ThreadUtils.sleep(3000);

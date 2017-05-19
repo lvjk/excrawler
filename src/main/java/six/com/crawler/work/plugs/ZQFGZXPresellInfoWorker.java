@@ -8,9 +8,9 @@ import org.jsoup.nodes.Element;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
-import six.com.crawler.http.HttpMethod;
 import six.com.crawler.utils.ArrayListUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
+import six.com.crawler.work.downer.HttpMethod;
 import six.com.crawler.work.space.WorkSpace;
 
 /**

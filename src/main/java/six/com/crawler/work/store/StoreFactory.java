@@ -1,6 +1,10 @@
 package six.com.crawler.work.store;
 
 import six.com.crawler.work.AbstractCrawlWorker;
+import six.com.crawler.work.store.impl.ConsoleStore;
+import six.com.crawler.work.store.impl.DataBaseStore;
+import six.com.crawler.work.store.impl.FileStore;
+import six.com.crawler.work.store.impl.HttpStore;
 
 /**
  * @author 作者

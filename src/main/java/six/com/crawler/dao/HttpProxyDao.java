@@ -1,95 +1,54 @@
 package six.com.crawler.dao;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Repository;
+import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.InsertProvider;
+import org.apache.ibatis.annotations.Select;
 
+import six.com.crawler.dao.provider.HttpProxyDaoProvider;
 import six.com.crawler.entity.HttpProxy;
-import six.com.crawler.http.HttpProxyPool;
-import six.com.crawler.node.ClusterManager;
-import six.com.crawler.node.lock.DistributedLock;
 
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
- * @date 创建时间：2017年3月22日 下午4:10:46
+ * @date 创建时间：2017年5月19日 上午9:26:20
  */
-@Repository
-public class HttpProxyDao implements InitializingBean {
+public interface HttpProxyDao {
 
-	final static Logger LOG = LoggerFactory.getLogger(HttpProxyDao.class);
+	/**
+	 * 获取所有代理
+	 * 
+	 * @return
+	 */
+	@Select("select `host`,`port`,`type`,`userName`,`passWord`,`expire`,`describe`,`version` from "
+			+ TableNames.HTTP_PROXY_TABLE_NAME)
+	List<HttpProxy> getAll();
 
-	@Autowired
-	private RedisManager redisManager;
+	/**
+	 * 保存代理
+	 * 
+	 * @param httpProxy
+	 * @return
+	 */
+	@InsertProvider(type = HttpProxyDaoProvider.class, method = "save")
+	int save(HttpProxy httpProxy);
 
-	@Autowired
-	private ClusterManager clusterManager;
+	/**
+	 * 通过指定host和post删除代理
+	 * 
+	 * @param host
+	 * @param port
+	 * @return
+	 */
+	@Delete("delete from " + TableNames.HTTP_PROXY_TABLE_NAME + " where `host` = #{host} and `port` = #{port}")
+	int del(String host, int port);
 
-	private DistributedLock distributedLock;
-
-	public List<HttpProxy> getHttpProxys() {
-		List<HttpProxy> result = new ArrayList<HttpProxy>();
-		Map<String, HttpProxy> map = redisManager.hgetAll(HttpProxyPool.REDIS_HTTP_PROXY_POOL, HttpProxy.class);
-		if (null != map) {
-			result.addAll(map.values());
-		}
-		return result;
-	}
-
-	public boolean save(HttpProxy httpProxy) {
-		distributedLock.lock();
-		try {
-			redisManager.hset(HttpProxyPool.REDIS_HTTP_PROXY_POOL, httpProxy.toString(), httpProxy);
-			return true;
-		} finally {
-			distributedLock.unLock();
-		}
-	}
-
-	public boolean del(HttpProxy httpProxy) {
-		distributedLock.lock();
-		try {
-			redisManager.hdel(HttpProxyPool.REDIS_HTTP_PROXY_POOL, httpProxy.toString());
-			return true;
-		} finally {
-			distributedLock.unLock();
-		}
-	}
-
-	public void delAllHttpProxy() {
-		distributedLock.lock();
-		try {
-			redisManager.del(HttpProxyPool.REDIS_HTTP_PROXY_POOL);
-		} finally {
-			distributedLock.unLock();
-		}
-	}
-
-	public RedisManager getRedisManager() {
-		return redisManager;
-	}
-
-	public void setRedisManager(RedisManager redisManager) {
-		this.redisManager = redisManager;
-	}
-
-	public ClusterManager getClusterManager() {
-		return clusterManager;
-	}
-
-	public void setClusterManager(ClusterManager clusterManager) {
-		this.clusterManager = clusterManager;
-	}
-
-	@Override
-	public void afterPropertiesSet() throws Exception {
-		distributedLock = clusterManager.getWriteLock(HttpProxyPool.REDIS_HTTP_PROXY_POOL);
-	}
-
+	/**
+	 * 删除所有代理
+	 * 
+	 * @return
+	 */
+	@Delete("delete from " + TableNames.HTTP_PROXY_TABLE_NAME)
+	int delAll();
 }

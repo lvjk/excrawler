@@ -10,9 +10,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
-import six.com.crawler.http.HttpMethod;
 import six.com.crawler.utils.JsonUtils;
 import six.com.crawler.utils.MD5Utils;
+import six.com.crawler.work.downer.HttpMethod;
 import six.com.crawler.work.downer.PostContentType;
 import six.com.crawler.work.space.Index;
 import six.com.crawler.work.space.WorkSpaceData;

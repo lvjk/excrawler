@@ -11,10 +11,11 @@ import org.slf4j.LoggerFactory;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
-import six.com.crawler.exception.BaseException;
-import six.com.crawler.http.HttpMethod;
 import six.com.crawler.utils.ArrayListUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
+import six.com.crawler.work.downer.HttpMethod;
+import six.com.crawler.work.exception.ProcessWorkerCrawlerException;
+import six.com.crawler.work.exception.WorkerCrawlerException;
 import six.com.crawler.work.extract.Extracter;
 import six.com.crawler.work.space.WorkSpace;
 
@@ -48,7 +49,7 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 
 	}
 
-	class DifferentPages extends BaseException {
+	public static class DifferentPages extends WorkerCrawlerException {
 
 		/**
 		 * 
@@ -56,7 +57,7 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 		private static final long serialVersionUID = -8769450490734642014L;
 
 		public DifferentPages(String message) {
-			super(message);
+			super("DifferentPages", message);
 		}
 	}
 
@@ -75,13 +76,13 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 				String end = ")";
 				String[] result = StringUtils.substringsBetween(text, start, end);
 				if (null == result || result.length != 1) {
-					throw new RuntimeException("find longitude and latitude err");
+					throw new ProcessWorkerCrawlerException("find longitude and latitude err");
 				}
 				String longitudeLatitudeStr = result[0];
 				longitudeLatitudeStr = StringUtils.replace(longitudeLatitudeStr, "'", "");
 				String[] longitudeAndLatitude = StringUtils.split(longitudeLatitudeStr, ",");
 				if (longitudeAndLatitude.length != 2) {
-					throw new RuntimeException("find longitude and latitude err");
+					throw new ProcessWorkerCrawlerException("find longitude and latitude err");
 				}
 				double longitude = 0;
 				double latitude = 0;

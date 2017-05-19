@@ -26,7 +26,6 @@ public class SerializableTest {
 		String url = "http://roll.mil.news.sina.com.cn/col/zgjq/index.shtml";
 		for (int i = 0; i < count; i++) {
 			Page page = new Page("sina", 1, url + i, url + i);
-			page.setDownerType(DownerType.HTTPCLIENT.value());// 设置此页面下载类型
 			page.setType(PageType.LISTING.value());
 			list.add(page);
 		}

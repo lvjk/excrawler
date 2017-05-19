@@ -2,6 +2,7 @@ package six.com.crawler.dao;
 
 import java.util.List;
 
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.InsertProvider;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.SelectProvider;
@@ -15,7 +16,6 @@ import six.com.crawler.entity.JobSnapshot;
  * @date 创建时间：2016年10月24日 下午3:36:26
  */
 public interface JobSnapshotDao extends BaseDao {
-
 
 	/**
 	 * 通过 jobSnapshotId 和 jobName 查询
@@ -43,9 +43,8 @@ public interface JobSnapshotDao extends BaseDao {
 	 * @return 最后一条运行记录
 	 */
 	@SelectProvider(type = JobSnapshotDaoProvider.class, method = "queryLastEnd")
-	public JobSnapshot queryLastEnd(@Param("jobName") String jobName,@Param("excludeId") String excludeId);
-	
-	
+	public JobSnapshot queryLastEnd(@Param("jobName") String jobName, @Param("excludeId") String excludeId);
+
 	/**
 	 * 通过任务名称查询 任务的下载状态
 	 * 
@@ -54,7 +53,7 @@ public interface JobSnapshotDao extends BaseDao {
 	 */
 	@SelectProvider(type = JobSnapshotDaoProvider.class, method = "queryCurrentJob")
 	public JobSnapshot queryCurrentJob(@Param("jobName") String jobName);
-	
+
 	/**
 	 * 保存任务运行记录
 	 * 
@@ -83,9 +82,10 @@ public interface JobSnapshotDao extends BaseDao {
 	@InsertProvider(type = JobSnapshotDaoProvider.class, method = "updateStatus")
 	public int updateStatus(@Param("version") int version, @Param("newVersion") int newVersion, @Param("id") String id,
 			@Param("status") int status);
-	
+
 	/**
 	 * 更新下载状态
+	 * 
 	 * @param version
 	 * @param newVersion
 	 * @param id
@@ -93,7 +93,15 @@ public interface JobSnapshotDao extends BaseDao {
 	 * @return
 	 */
 	@InsertProvider(type = JobSnapshotDaoProvider.class, method = "updateDownloadStatus")
-	public int updateDownloadStatus(@Param("version") int version, @Param("newVersion") int newVersion, @Param("id") String id,
-			@Param("downloadState") int status);
+	public int updateDownloadStatus(@Param("version") int version, @Param("newVersion") int newVersion,
+			@Param("id") String id, @Param("downloadState") int status);
+
+	/**
+	 * 删除多少天以前的数据
+	 * @param beforeDays
+	 * @return
+	 */
+	@Delete("delete from " + TableNames.JOB_SNAPSHOT_TABLE_NAME + " where datediff(curdate(),startTime)>=#{beforeDays}")
+	public int delBeforeDate(int beforeDays);
 
 }

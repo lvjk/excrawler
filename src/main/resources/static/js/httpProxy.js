@@ -1,16 +1,15 @@
 $(function() {
 	// 加载数据
-	loadTable("/crawler/httpPorxy/list", "get", "");
+	loadTable("/crawler/httpPorxy/getAll", "get", "");
 });
 
 function loadTable(url, method, params) {
 	if ("get" == method) {
 		$.get(url, function(result) {
-			var errCode = result.errCode;
-			if (null == errCode) {
+			if (1 == result.isOk) {
 				showDataTable(result.data);
 			}else{
-				alert(errCode);
+				alert(result.msg);
 			}
 		});
 	}
@@ -77,7 +76,7 @@ function addHttpProxy(){
 	var httpProxyDescribe = $('#addHttpProxyDescribeInput').val();
 
 	
-	$.post("/crawler/httpPorxy/add", {
+	$.post("/crawler/httpPorxy/save", {
 		host : httpProxyHost,
 		port : httpProxyPort,
 		userName:httpProxyUserName,

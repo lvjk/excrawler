@@ -10,10 +10,10 @@ import org.slf4j.LoggerFactory;
 
 import six.com.crawler.entity.HttpProxy;
 import six.com.crawler.entity.Page;
-import six.com.crawler.http.HttpResult;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.downer.cache.DownerCache;
 import six.com.crawler.work.downer.exception.DownerException;
+import six.com.crawler.work.downer.exception.OtherDownerException;
 
 /**
  * @author sixliu E-mail:359852326@qq.com
@@ -53,14 +53,14 @@ public abstract class AbstractDowner implements Downer, AutoCloseable {
 	 */
 	public Page down(Page page) throws DownerException {
 		if (null == page || StringUtils.isBlank(page.getOriginalUrl())) {
-			throw new DownerException("page is null or page's url is blank");
+			throw new OtherDownerException("page is null or page's url is blank");
 		}
 		if (useDownCache && !openDownCache) {
 			Page cachePage = doCache(page);
 			if (null == cachePage) {
 				doDown(page);
-			}else{
-				page=cachePage;
+			} else {
+				page = cachePage;
 			}
 		} else {
 			doDown(page);

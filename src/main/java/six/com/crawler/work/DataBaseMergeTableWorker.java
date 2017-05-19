@@ -12,6 +12,8 @@ import java.util.Map;
 import six.com.crawler.entity.Page;
 import six.com.crawler.utils.DbHelper;
 import six.com.crawler.utils.JobTableUtils;
+import six.com.crawler.work.exception.WorkerException;
+import six.com.crawler.work.exception.WorkerOtherException;
 
 /**
  * @author 作者
@@ -30,9 +32,8 @@ public class DataBaseMergeTableWorker extends DataBaseAbstractWorker {
 	private String delSqlTemplate;
 	private List<String> insertFields;
 
-
 	@Override
-	protected void insideWork(Page doingPage) throws Exception {
+	protected void insideWork(Page doingPage) throws WorkerException {
 		if (null != tableNameSuffixs && tableNameSuffixs.size() > 0) {
 			Connection connection = null;
 			try {
@@ -48,7 +49,7 @@ public class DataBaseMergeTableWorker extends DataBaseAbstractWorker {
 				delSnapshotTable(connection, SnapshotTableName);
 				tableNameSuffixs.remove(0);
 			} catch (Exception e) {
-				throw new RuntimeException(e);
+				throw new WorkerOtherException(e);
 			} finally {
 				DbHelper.close(connection);
 			}

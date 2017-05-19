@@ -17,16 +17,16 @@ import org.springframework.stereotype.Component;
 import okhttp3.Request;
 import six.com.crawler.admin.api.ResponseMsg;
 import six.com.crawler.admin.service.ExtractPathService;
+import six.com.crawler.admin.vo.TestExtractPathVo;
 import six.com.crawler.dao.ExtractPathDao;
 import six.com.crawler.entity.Page;
-import six.com.crawler.http.HttpClient;
-import six.com.crawler.http.HttpMethod;
-import six.com.crawler.http.HttpResult;
 import six.com.crawler.utils.JsoupUtils;
 import six.com.crawler.utils.AutoCharsetDetectorUtils.ContentType;
+import six.com.crawler.work.downer.HttpClient;
+import six.com.crawler.work.downer.HttpMethod;
+import six.com.crawler.work.downer.HttpResult;
 import six.com.crawler.work.extract.ExtractPath;
 import six.com.crawler.work.extract.PathType;
-import six.com.crawler.work.extract.TestExtractPath;
 
 /**
  * @author six
@@ -116,7 +116,7 @@ public class ExtractPathServiceImpl implements ExtractPathService {
 	}
 
 	@Override
-	public List<String> testExtract(TestExtractPath extractPath) {
+	public List<String> testExtract(TestExtractPathVo extractPath) {
 		String testUrl = extractPath.getTestUrl();
 		String testHtml = extractPath.getTestHtml();
 		List<String> extractResult = null;

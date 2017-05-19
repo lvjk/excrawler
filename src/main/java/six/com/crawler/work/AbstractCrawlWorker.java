@@ -7,33 +7,25 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.alibaba.druid.support.json.JSONUtils;
 
 import six.com.crawler.entity.HttpProxyType;
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.entity.Site;
-import six.com.crawler.http.HttpMethod;
-import six.com.crawler.http.HttpProxyPool;
 import six.com.crawler.node.lock.DistributedLock;
-import six.com.crawler.schedule.consts.DownloadContants;
 import six.com.crawler.utils.ThreadUtils;
 import six.com.crawler.work.downer.Downer;
-import six.com.crawler.work.downer.DownerHelper;
 import six.com.crawler.work.downer.DownerManager;
 import six.com.crawler.work.downer.DownerType;
+import six.com.crawler.work.downer.HttpProxyPool;
 import six.com.crawler.work.downer.exception.DownerException;
-import six.com.crawler.work.downer.exception.HttpFiveZeroTwoException;
-import six.com.crawler.work.downer.exception.RawDataNotFoundException;
+import six.com.crawler.work.downer.exception.HttpStatus502DownerException;
+import six.com.crawler.work.exception.UnknowWorkerCrawlerException;
+import six.com.crawler.work.exception.WorkerCrawlerException;
 import six.com.crawler.work.extract.ExtractItem;
 import six.com.crawler.work.extract.Extracter;
 import six.com.crawler.work.extract.ExtracterFactory;
@@ -47,6 +39,8 @@ import six.com.crawler.work.store.StoreType;
  * @date 2016年1月15日 下午6:45:26 爬虫抽象层
  * 
  *       当爬虫队列数据为null时 那么就会设置状态为finished
+ * 
+ *       注意:所有爬虫业务处理异常请继承 WorkerCrawlerException 基类
  */
 public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 
@@ -67,10 +61,6 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 	// 数据对外输出存儲处理程序
 	private Store store;
 
-	protected DownerHelper helper = null;
-
-	private ExecutorService cachedThreadPool = Executors.newCachedThreadPool();
-
 	public AbstractCrawlWorker() {
 		super(Page.class);
 	}
@@ -87,7 +77,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 			throw new NullPointerException("did not get site[" + siteCode + "]");
 		}
 
-		initDownerHelper(siteCode, jobSnapshot);
+		// initDownerHelper(siteCode, jobSnapshot);
 
 		// 初始化下载器
 		int downerTypeInt = getJob().getParamInt(CrawlerJobParamKeys.DOWNER_TYPE, 1);
@@ -102,8 +92,9 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 
 		String siteHttpProxyPoolLockPath = HttpProxyPool.REDIS_HTTP_PROXY_POOL + "_" + siteCode;
 		DistributedLock distributedLock = getManager().getNodeManager().getWriteLock(siteHttpProxyPoolLockPath);
-		httpProxyPool = new HttpProxyPool(getManager().getRedisManager(), distributedLock, siteCode, httpProxyType,
-				site.getVisitFrequency());
+
+		httpProxyPool = new HttpProxyPool(getManager().getHttpProxyDao(), getManager().getRedisManager(),
+				distributedLock, siteCode, httpProxyType, site.getVisitFrequency());
 		downer.setHttpProxy(httpProxyPool.getHttpProxy());
 
 		// 初始化内容抽取
@@ -121,12 +112,11 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 		}
 		this.store = StoreFactory.newStore(this, StoreType.valueOf(storeTypeInt));
 
-		useRawData(siteCode);
 		insideInit();
 	}
 
 	@Override
-	protected void insideWork(Page doingPage) throws Exception {
+	protected void insideWork(Page doingPage) throws WorkerCrawlerException {
 		if (null != doingPage) {
 			long downTime = 0;
 			long extractTime = 0;
@@ -139,19 +129,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 				beforeDown(doingPage);
 				long startTime = System.currentTimeMillis();
 
-				if (!helper.isDownloadState() || !helper.isUseRawData()) {// 当下载状态不为true的时候才需要下载
-					// 下载数据
-					doingPage=downer.down(doingPage);
-
-					if (helper.isSaveRawData()) {
-						// 保存源数据
-						saveRawData(doingPage, helper);
-					}
-				} else {
-					String fileName = helper.getRawDataPath() + "/data/" + convertFileName(doingPage.getFinalUrl());
-					String rawDataStr = readByFile(fileName);
-					doingPage.setPageSrc(rawDataStr);
-				}
+				doingPage = downer.down(doingPage);
 
 				// 暴露给实现类的抽取前操作
 				beforeExtract(doingPage);
@@ -178,9 +156,12 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 
 				log.info("finished processing,down time[" + downTime + "],extract time[" + extractTime + "],store time["
 						+ storeTime + "]:" + doingPage.getOriginalUrl());
+			} catch (WorkerCrawlerException e) {
+				throw e;
 			} catch (Exception e) {
-				throw new RuntimeException("process page err:" + doingPage.getOriginalUrl(), e);
+				throw new UnknowWorkerCrawlerException("unknow crawler process err:" + doingPage.getFinalUrl(), e);
 			}
+
 		}
 	}
 
@@ -189,176 +170,12 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 	 */
 	protected abstract void insideInit();
 
-	// private void outToWorkSpace(ResultContext resultContext, Page doingPage)
-	// {
-	// for(int i=0;null!=extractItems&&i<extractItems.size();i++){
-	// ExtractItem extractItem=extractItems.get(i);
-	// if(extractItem.getType()==ExtractItemType.URL.value()
-	// &&extractItem.getOutputType()==3){
-	// List<String>
-	// urlList=resultContext.getExtractResult(extractItem.getOutputKey());
-	// if(1==urlList.size()){
-	// String newUrl=urlList.get(0);
-	// }else if(urlList.size()>1){
-	//
-	// }
-	// }
-	// }
-	// }
-
 	/**
 	 * doingPage下载前 可以进行相关操作
 	 * 
 	 * @param doingPage
 	 */
 	protected abstract void beforeDown(Page doingPage);
-
-	/**
-	 * 是否保存原始数据
-	 * 
-	 * @param doingPage
-	 * @param helper
-	 */
-	protected void saveRawData(Page doingPage, DownerHelper helper) {
-		if (helper.isDownloadState()) {// 如果已下载完成。则不下载
-			return;
-		}
-		cachedThreadPool.execute(new Runnable() {// 异步保存文件
-			@Override
-			public void run() {
-				// 是否保存下载数据
-				if (doingPage.getNoNeedDown() != -1 && helper.isSaveRawData()) {
-					// 保存源数据
-					String savePath = helper.getRawDataPath();
-					String fileName = doingPage.getFinalUrl();
-					if (doingPage.getMethod() == HttpMethod.POST) {// 当请求为post时，将参数拼装到文件名中
-						if (null != doingPage.getParameters()) {
-							fileName = fileName + "_";
-							for (String key : doingPage.getParameters().keySet()) {
-								fileName = "&" + key + "=" + doingPage.getParameters().get(key);
-							}
-						}
-					}
-					fileName = convertFileName(fileName);
-					if (createDir(savePath)) {
-						// 保存数据
-						String dataPath = savePath + "/data/" + fileName;
-						if (null != doingPage.getPageSrc()) {
-							saveToFile(dataPath, doingPage.getPageSrc());
-						}
-
-						// 保存meta
-						String metaPath = savePath + "/meta/" + fileName;
-						String metaJsonStr = JSONUtils.toJSONString(doingPage.getMetaMap());
-						if (!metaJsonStr.isEmpty() && !"{}".equals(metaJsonStr)) {
-							saveToFile(metaPath, metaJsonStr);
-						}
-					}
-				}
-			}
-		});
-	}
-
-	/**
-	 * 是否使用原始数据
-	 * 
-	 * @param siteCode
-	 */
-	@SuppressWarnings("unchecked")
-	protected void useRawData(String siteCode) {
-		if (helper.isUseRawData()) {
-			boolean downloadState = true;// 页面上需要展示是否存在源数据
-			if (downloadState == true) {
-				String[] rawDataFiles = null;
-				String rawDataDir = helper.getRawDataPath() + "/data";
-				File rawDataFile = new File(rawDataDir);
-				if (!rawDataFile.exists()) {
-					throw new RawDataNotFoundException("Raw data not found exception!");
-				}
-				rawDataFiles = rawDataFile.list();
-				for (String fileName : rawDataFiles) {
-					File contextFile = new File(fileName);
-					String url = reConvertFileName(contextFile.getName());
-					Page data = new Page(siteCode, 1, url, url);
-
-					// String
-					// dataFileName=helper.getRawDataPath()+"/data/"+fileName;
-					// String rawDataStr=readByFile(dataFileName);
-
-					String metaFileName = helper.getRawDataPath() + "/meta/" + fileName;
-					String metaDataStr = readByFile(metaFileName);
-					if (null != metaDataStr && !metaDataStr.isEmpty() && metaDataStr.equals("{}")) {
-						Map<String, List<String>> metaDataMap = (Map<String, List<String>>) JSONUtils
-								.parse(metaDataStr);
-						// 无法得到上一步的参数。无法保证唯一性。
-						data.getMetaMap().putAll(metaDataMap);
-					}
-					// data.setPageSrc(rawDataStr);
-
-					getWorkSpace().push(data);
-				}
-			}
-		}
-	}
-
-	/**
-	 * 初始化下载帮助类
-	 * 
-	 * @param siteCode
-	 * @param jobSnapshot
-	 * @return
-	 */
-	public DownerHelper initDownerHelper(String siteCode, JobSnapshot jobSnapshot) {
-		boolean isSaveRawData = getJob().getParamInt(CrawlerJobParamKeys.IS_SAVE_RAW_DATA,
-				CrawlerJobParamKeys.DEFAULT_IS_SAVE_RAW_DATA) == 1 ? true : false;
-		helper = new DownerHelper();
-		String rawdataBasePath = getConfigure().getConfig("rawdata.path", "/home/excrawler/rawdata");
-		helper.setRawdataBasePath(rawdataBasePath);
-		helper.setSaveRawData(isSaveRawData);
-		helper.setSiteCode(siteCode);
-		helper.setJobName(getJob().getName());
-
-		jobSnapshot.setSaveRawData(isSaveRawData);
-
-		boolean isUseRawData = getJob().getParamInt(CrawlerJobParamKeys.IS_USE_RAW_DATA,
-				CrawlerJobParamKeys.DEFAULT_IS_USE_RAW_DATA) == 1 ? true : false;
-		helper.setUseRawData(isUseRawData);
-
-		JobSnapshot current = getManager().getJobSnapshotDao().queryCurrentJob(jobSnapshot.getName());
-		if (current != null) {
-			int lastDownloadState = current.getDownloadState();
-			if (lastDownloadState == DownloadContants.DOWN_LOAD_FINISHED) {
-				helper.setDownloadState(true);
-			} else {
-				helper.setDownloadState(false);
-			}
-		} else {
-			helper.setDownloadState(false);
-		}
-		return helper;
-	}
-
-	/**
-	 * URL字符转换
-	 * 
-	 * @param fileName
-	 * @return
-	 */
-	private String convertFileName(String fileName) {
-		String result = fileName.replaceAll("/", "@").replaceAll(":", "~").replaceAll("\\?", "!");
-		return result;
-	}
-
-	/**
-	 * URL字符转换-反转
-	 * 
-	 * @param fileName
-	 * @return
-	 */
-	public String reConvertFileName(String fileName) {
-		String result = fileName.replaceAll("@", "/").replaceAll("~", ":").replaceAll("!", "\\?");
-		return result;
-	}
 
 	/**
 	 * doingPage抽取前相关操作，可在这里实现验证识别或者判断是否需要登录
@@ -421,7 +238,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 					getWorkSpace().errRetryPush(doingPage);
 					msg = "retry processor[" + doingPage.getRetryProcess() + "] page:" + doingPage.getFinalUrl();
 				} else {
-					if (e instanceof HttpFiveZeroTwoException && doingPage.getFztRetryProcess() < retryProcess) {// 当超过重试次数之后，如果是502异常，则重新写入队列
+					if (e instanceof HttpStatus502DownerException && doingPage.getFztRetryProcess() < retryProcess) {// 当超过重试次数之后，如果是502异常，则重新写入队列
 						doingPage.setFztRetryProcess(doingPage.getFztRetryProcess() + 1);
 						getWorkSpace().errRetryPush(doingPage);
 						msg = "HttpCode[502] retry processor[" + doingPage.getRetryProcess() + "] page:"

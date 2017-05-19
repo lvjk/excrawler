@@ -25,7 +25,7 @@ import six.com.crawler.BaseTest;
 import six.com.crawler.ocr.ImageUtils;
 import six.com.crawler.utils.JsUtils;
 import six.com.crawler.utils.WebDriverUtils;
-import six.com.crawler.work.downer.ChromeDowner;
+import six.com.crawler.work.downer.impl.ChromeDowner;
 
 /**
  * @author 作者

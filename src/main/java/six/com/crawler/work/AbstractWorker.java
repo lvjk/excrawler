@@ -22,6 +22,8 @@ import six.com.crawler.node.lock.DistributedLock;
 import six.com.crawler.schedule.worker.WorkerSchedulerManager;
 import six.com.crawler.utils.ExceptionUtils;
 import six.com.crawler.utils.ThreadUtils;
+import six.com.crawler.work.exception.WorkerException;
+import six.com.crawler.work.exception.WorkerInitException;
 import six.com.crawler.work.space.WorkSpace;
 import six.com.crawler.work.space.WorkSpaceData;
 
@@ -83,7 +85,7 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 	 * @param workerData
 	 * @throws Exception
 	 */
-	protected abstract void insideWork(T workerData) throws Exception;
+	protected abstract void insideWork(T workerData) throws WorkerException;
 
 	/**
 	 * 内部异常处理方法，用来处理业务相关异常
@@ -135,7 +137,7 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 			initWorker(jobSnapshot);
 		} catch (Exception e) {
 			destroy();
-			throw new RuntimeException("init crawlWorker err", e);
+			throw new WorkerInitException("init worker err", e);
 		} finally {
 			distributedLock.unLock();
 		}
@@ -146,7 +148,7 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 		log.info("start init:" + getName());
 		try {
 			init();
-		} catch (Exception e) {
+		} catch (WorkerException e) {
 			compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.STOPED);
 			log.error("init worker err:" + getName(), e);
 			doErr(e);
@@ -216,7 +218,7 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 		long processTime = System.currentTimeMillis();
 		try {
 			insideWork(workData);
-		} catch (Exception e) {
+		} catch (WorkerException e) {
 			log.error("worker process err", e);
 			doErr(e);
 			onError(e, workData);
@@ -236,7 +238,7 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 
 	}
 
-	private void doErr(Exception e) {
+	private void doErr(WorkerException e) {
 		String msg = ExceptionUtils.getExceptionMsg(e);
 		workerSnapshot.setErrCount(workerSnapshot.getErrCount() + 1);
 		WorkerErrMsg errMsg = new WorkerErrMsg();
@@ -244,6 +246,7 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 		errMsg.setJobName(job.getName());
 		errMsg.setWorkerName(getName());
 		errMsg.setStartTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
+		errMsg.setType(e.getType());
 		errMsg.setMsg(msg);
 		workerSnapshot.getWorkerErrMsgs().add(errMsg);
 		getManager().getEmailClient().sendMailToAdmin("worker err", msg);

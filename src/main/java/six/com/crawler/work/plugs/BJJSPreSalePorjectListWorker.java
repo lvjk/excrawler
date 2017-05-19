@@ -10,9 +10,9 @@ import org.slf4j.LoggerFactory;
 
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
-import six.com.crawler.http.HttpMethod;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.WorkerLifecycleState;
+import six.com.crawler.work.downer.HttpMethod;
 import six.com.crawler.work.space.WorkSpace;
 
 /**

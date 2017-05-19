@@ -3,6 +3,11 @@ package six.com.crawler.work.extract;
 import java.util.List;
 
 import six.com.crawler.work.AbstractCrawlWorker;
+import six.com.crawler.work.extract.impl.CssCommonSelectExtracter;
+import six.com.crawler.work.extract.impl.CssTableForManyExtracter;
+import six.com.crawler.work.extract.impl.CssTableForOneExtracter;
+import six.com.crawler.work.extract.impl.JsonExtracter;
+import six.com.crawler.work.extract.impl.RegularExtracter;
 
 /**
  * @author 作者
@@ -34,7 +39,7 @@ public class ExtracterFactory {
 		} else if (ExtracterType.Json == extracterType) {
 			extracter = new JsonExtracter(worker, extractItems);
 		} else {
-			extracter = new EmptyExtracter(worker, extractItems);
+			extracter = new CssCommonSelectExtracter(worker, extractItems);
 		}
 		return extracter;
 	}

@@ -18,6 +18,9 @@ public interface TableNames {
 	/** 网站站点 页面 元素抽取路径 数据库 表名 **/
 	String SITE_EXTRACT_PATH_TABLE_NAME = "ex_crawler_platform_extract_path";
 
+	/** HTTP代理 数据库表名 **/
+	String HTTP_PROXY_TABLE_NAME = "ex_crawler_platform_http_proxy";
+
 	/** 任务 数据库 表名 **/
 	String JOB_TABLE_NAME = "ex_crawler_platform_job";
 
@@ -36,6 +39,4 @@ public interface TableNames {
 	/** 任务worker执行异常信息 数据库 表名 **/
 	String JOB_WORKER_SNAPSHOT_ERRMSG_TABLE_NAME = "ex_crawler_platform_job_worker_err";
 
-	/** http代理 数据库 表名 **/
-	String HTTP_PROXY_TABLE_NAME = "ex_crawler_platform_http_proxy";
 }

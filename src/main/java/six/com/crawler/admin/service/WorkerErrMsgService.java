@@ -19,5 +19,5 @@ public interface WorkerErrMsgService {
 	 * @param pageSize
 	 * @return
 	 */
-	public ResponseMsg<PageQuery<WorkerErrMsg>> query(String jobName,String jobSnapshotId,int pageIndex, int pageSize);
+	public ResponseMsg<PageQuery<WorkerErrMsg>> query(String jobName,String jobSnapshotId,int pageIndex);
 }

@@ -19,6 +19,7 @@ public class WorkerErrMsg extends BaseVo implements Serializable{
 	private String jobName;// jobName
 	private String workerName;// WorkName
 	private String startTime;// 异常发生时间
+	private String type;// 异常类型
 	private String msg;// 异常信息
 
 	public String getJobSnapshotId() {
@@ -53,6 +54,14 @@ public class WorkerErrMsg extends BaseVo implements Serializable{
 		this.startTime = startTime;
 	}
 
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
+	
 	public String getMsg() {
 		return msg;
 	}

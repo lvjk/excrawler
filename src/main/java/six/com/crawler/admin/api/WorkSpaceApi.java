@@ -16,8 +16,8 @@ import com.alibaba.fastjson.JSON;
 import six.com.crawler.admin.service.WorkSpaceService;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.WorkSpaceInfo;
-import six.com.crawler.http.HttpMethod;
 import six.com.crawler.utils.ArrayListUtils;
+import six.com.crawler.work.downer.HttpMethod;
 
 /**
  * @author 作者

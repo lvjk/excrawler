@@ -2,6 +2,7 @@ package six.com.crawler.dao;
 
 import java.util.List;
 
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.InsertProvider;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.SelectProvider;
@@ -26,14 +27,13 @@ public interface WorkerErrMsgDao extends BaseDao{
 			@Param(QUERY_PARAM_WORKERNAME)String workerName);
 	
 	/**
-	 * 支持 name%模糊查询
 	 * @param jobName
 	 * @param pageIndex
 	 * @param pageSize
 	 * @return
 	 */
 	@SelectProvider(type = WorkerErrMsgDaoProvider.class, method = "pageQuery")
-	public List<WorkerErrMsg> pageQuery(@Param("name")String jobName, 
+	public List<WorkerErrMsg> pageQuery(@Param("jobName")String jobName, 
 			@Param("jobSnapshotId")String jobSnapshotId,
 			@Param("start")int pageIndex, 
 			@Param("end")int pageSize);
@@ -45,4 +45,11 @@ public interface WorkerErrMsgDao extends BaseDao{
 	public int batchSave(@Param(BATCH_SAVE_PARAM)List<WorkerErrMsg> list);
 	
 
+	/**
+	 * 删除多少天以前的数据
+	 * @param beforeDays
+	 * @return
+	 */
+	@Delete("delete from " + TableNames.JOB_WORKER_SNAPSHOT_ERRMSG_TABLE_NAME + " where datediff(curdate(),startTime)>=#{beforeDays}")
+	public int delBeforeDate(int beforeDays);
 }

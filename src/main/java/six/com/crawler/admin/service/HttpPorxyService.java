@@ -2,6 +2,7 @@ package six.com.crawler.admin.service;
 
 import java.util.List;
 
+import six.com.crawler.admin.api.ResponseMsg;
 import six.com.crawler.entity.HttpProxy;
 
 /**
@@ -11,8 +12,7 @@ import six.com.crawler.entity.HttpProxy;
  */
 public interface HttpPorxyService {
 
-
-	public List<HttpProxy> getHttpProxys();
+	public ResponseMsg<List<HttpProxy>> getAll();
 
 	/**
 	 * 添加一个 http代理
@@ -21,7 +21,7 @@ public interface HttpPorxyService {
 	 * @param port
 	 * @return
 	 */
-	public String addHttpProxy(HttpProxy httpProxy);
+	public ResponseMsg<String> save(HttpProxy httpProxy);
 
 	/**
 	 * 更新指定http代理
@@ -30,7 +30,7 @@ public interface HttpPorxyService {
 	 * @param port
 	 * @return
 	 */
-	public String testHttpProxy(HttpProxy httpProxy);
+	public ResponseMsg<String> test(HttpProxy httpProxy);
 
 	/**
 	 * 删除指定http代理
@@ -38,13 +38,7 @@ public interface HttpPorxyService {
 	 * @param host
 	 * @return
 	 */
-	public String delHttpProxy(HttpProxy httpProxy);
-	
-	/**
-	 * 删除指定http代理
-	 * 
-	 * @param host
-	 * @return
-	 */
-	public void delAllHttpProxy();
+	public ResponseMsg<String> del(String host, int port);
+
+	public ResponseMsg<String> delAll();
 }

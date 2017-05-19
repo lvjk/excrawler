@@ -3,6 +3,7 @@ package six.com.crawler.work.plugs;
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.Page;
 import six.com.crawler.work.AbstractWorker;
+import six.com.crawler.work.exception.WorkerException;
 
 /** 
 * @author  作者 
@@ -23,7 +24,7 @@ public class TestPlugWorker extends AbstractWorker<Page>{
 	}
 
 	@Override
-	protected void insideWork(Page workerData) throws Exception {
+	protected void insideWork(Page workerData) throws WorkerException {
 		// TODO Auto-generated method stub
 		
 	}

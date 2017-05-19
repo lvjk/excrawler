@@ -39,6 +39,30 @@ $(function() {
 	searchJob();
 });
 
+function showDiv(showDivID){
+	var showDivs=$("div[class='showDiv']");
+	for (var i = 0; i < showDivs.length; i++) {
+		var showDiv=$(showDivs[i]);
+		var display=showDiv.css("display");
+		var lastShowDivId=showDiv.attr("id");
+		if(showDivID!=lastShowDivId&&("inline"==display||"inline-block"==display||"block"==display)){
+			showDiv.css("display","none");
+			$("#returnLastShowDivId").val(lastShowDivId);
+		}else if(showDivID==showDiv.attr("id")){
+			showDiv.css("display","block");	
+		}
+	}	
+}
+
+function returnLastShowDiv(){
+	var lastShowDivId=$("#returnLastShowDivId").val();
+	showDiv(lastShowDivId);
+}
+/**
+ * 与后台建立websocket连接
+ * 
+ * @returns
+ */
 function connect() {
 	if(!connected){
 		var socket = new SockJS('/crawler_websocket');
@@ -58,6 +82,11 @@ function connect() {
 	}
 }
 
+/**
+ * 请求刷新job运行快照
+ * 
+ * @returns
+ */
 function requestRefreshJobSnapshot() {
 	var jobTrs = $('#jobs').find("tr");
 	var jobNames="";
@@ -116,11 +145,83 @@ function refreshJobSnapshots(jobSnapshots) {
 						jobSnapshot.workSpaceDoingSize,
 						jobSnapshot.workSpaceErrSize);
 				$("#" + job_queue_count + jobName).html(workSpaceShowStr);
-				var errCountHtml=getErrCountHtml(jobSnapshot.name,jobSnapshot.workSpaceName,jobSnapshot.id,jobSnapshot.errCount);
+				var errCountHtml=getErrCountHtml(jobSnapshot.name,jobSnapshot.id,jobSnapshot.errCount);
 				$("#" + job_exception_count + jobName).html(errCountHtml);	
 			}
 		}
 	}
+}
+
+function getErrCountHtml(jobName,jobSnapshotId,errCount){
+	var errCountHtml;
+	if(errCount>0){
+		errCountHtml="<a href=\"javascript:showErrMsg('" + jobName+ "','" + jobSnapshotId+ "')\">"+errCount+"</a>";
+	}else{
+		errCountHtml=errCount;
+	}
+	return errCountHtml;
+}
+
+
+function showErrMsg(jobName,jobSnapshotId){
+	var workerErrMsgDiv=$("#job_worker_errMsg_div");
+	var pageIndex=workerErrMsgDiv.find("input[id='pageIndex']").val();
+	var url = "/crawler/job/jobSnapshot/queryErrMsg";
+	$.post(url, {
+		jobName:jobName,
+		jobSnapshotId : jobSnapshotId,
+		pageIndex : pageIndex
+	}, function(responseMsg) {
+		if (responseMsg.isOk == 1) {
+			var data=responseMsg.data.list;
+			var table = workerErrMsgDiv.find('table');
+			workerErrMsgDiv.find('#jobName').val(jobName);
+			workerErrMsgDiv.find('#jobSnapshotId').val(jobSnapshotId);
+			if (null != data && data.length > 0) {
+				workerErrMsgDiv.find("input[id='pageIndex']").val(pageIndex);
+				var table=workerErrMsgDiv.find("table");
+				table.find("tr[class=jobWorkerErrMsgDiv]").remove();
+				for (var i = 0; i < data.length; i++) {
+					var workerErrMsg = data[i];
+					var tr = $("<tr name='jobWorkerErrMsgDiv'></tr>");
+					$("<td>"+ workerErrMsg.workerName + "</td>").appendTo(tr);
+					$("<td>"+ workerErrMsg.startTime + "</td>").appendTo(tr);
+					var divId="workerErrMsg_"+workerErrMsg.id;
+					$("<td><a href=\"javascript:showErrMsgDetail('" + divId+ "')\">"+ workerErrMsg.type + "</a></td>").appendTo(tr);
+					$("<div id='"+divId+"' style='display: none;'><pre style='color:#FF0000;font-size:10px' >"+ workerErrMsg.msg + "</pre></div>").appendTo(tr);
+					tr.appendTo(table);
+				}
+				pageInfo("#job_worker_errMsg_div",responseMsg,"lastSearchJobWorkerErrMsg","nextSearchWorkerErrMsg");
+			}
+			showDiv("job_worker_errMsg_div");
+		}
+	});
+}
+
+function showErrMsgDetail(divId){
+	showLayer($("#"+divId));
+}
+
+function nextSearchWorkerErrMsg() {
+	var workerErrMsgDiv=$('#job_worker_errMsg_div');
+	var jobName=workerErrMsgDiv.find('#jobName').val();
+	var jobSnapshotId=workerErrMsgDiv.find('#jobSnapshotId').val();
+	var pageIndex=workerErrMsgDiv.find('#pageIndex').val();
+	pageIndex=parseInt(pageIndex);
+	pageIndex=pageIndex+1;
+	workerErrMsgDiv.find('#pageIndex').val(pageIndex)
+	showErrMsg(jobName,jobSnapshotId);
+}
+
+function lastSearchJobWorkerErrMsg() {
+	var workerErrMsgDiv=$('#job_worker_errMsg_div');
+	var jobName=workerErrMsgDiv.find('#jobName').val();
+	var jobSnapshotId=workerErrMsgDiv.find('#jobSnapshotId').val();
+	var pageIndex=workerErrMsgDiv.find('#pageIndex').val();
+	pageIndex=parseInt(pageIndex);
+	pageIndex=pageIndex-1;
+	workerErrMsgDiv.find('#pageIndex').val(pageIndex)
+	showErrMsg(jobName,jobSnapshotId);
 }
 
 
@@ -169,15 +270,10 @@ function lastSearchJob() {
 function showJobTable(result) {
 	var jobs=result.data.list;
 	if(null!=jobs&&jobs.length>0){
-		var pageIndex=result.data.pageIndex;
-		var pageSize=result.data.pageSize;
-		var totalPage=result.data.totalPage;
-		var totalSize=result.data.totalSize;
 		var jobDiv=$('#job_div');
 		var table = jobDiv.find('table');
 		table.find("tr[class=job]").remove();
 		var job;
-		var i = 0;
 		for (var i = 0; i < jobs.length; i++) {
 			job = jobs[i];
 			var tr = $("<tr class='job' name='"+job.name+"' title='"+job.describe+"'></tr>");
@@ -246,16 +342,19 @@ function showJobTable(result) {
 				  updateNextJobName(jobName);  
 			  }  
 		}); 
-		$('#pageInfo').html(pageInfo(totalPage,totalSize));
+		pageInfo("#job_div",result,"lastSearchJob","nextSearchJob");
 	}
 }
 
-function pageInfo(totalPage,totalSize){
-	var jobSearch=$('#job_search');
-	var pageIndex=jobSearch.find('#pageIndex').val();
-	var pageSize=jobSearch.find('#pageSize').val();
-	jobSearch.find('#totalPage').val(totalPage);
-	jobSearch.find('#totalSize').val(totalSize);
+function pageInfo(showDivId,responseMsg,lastSearch,nextSearch){
+	var pageIndex=responseMsg.data.pageIndex;
+	var pageSize=responseMsg.data.pageSize;
+	var totalPage=responseMsg.data.totalPage;
+	var totalSize=responseMsg.data.totalSize;
+	var showDivId=$(showDivId);
+	var pageIndex=showDivId.find('#pageIndex').val();
+	showDivId.find('#totalPage').val(totalPage);
+	showDivId.find('#totalSize').val(totalSize);
 	var pageInfoHtml="<span>";
 	pageInfoHtml+="总共<span style='color:#FF0000;font-weight:bold'>"+totalSize+"</span>条记录";
 	pageInfoHtml+="每页<span style='color:#FF0000;font-weight:bold'>"+pageSize+"</span>条";
@@ -264,15 +363,15 @@ function pageInfo(totalPage,totalSize){
 	pageInfoHtml+="</span>";
 	if(totalPage>1){
 		if(pageIndex>=totalPage-1){
-			pageInfoHtml+="<a class='pull-right' style='color:#FF0000;font-weight:bold' href='javascript:lastSearchJob()'>上一页</a>";
+			pageInfoHtml+="<a class='pull-right' style='color:#FF0000;font-weight:bold' href='javascript:"+lastSearch+"()'>上一页</a>";
 		}else if(pageIndex==0){
-			pageInfoHtml+="<a class='pull-right' style='color:#FF0000;font-weight:bold' href='javascript:nextSearchJob()'>下一页</a>";
+			pageInfoHtml+="<a class='pull-right' style='color:#FF0000;font-weight:bold' href='javascript:"+nextSearch+"()'>下一页</a>";
 		}else{
-			pageInfoHtml+="<a class='pull-right' style='color:#FF0000;font-weight:bold' href='javascript:nextSearchJob()'>下一页</a>";
-			pageInfoHtml+="<a class='pull-right' style='color:#FF0000;font-weight:bold' href='javascript:lastSearchJob()'>上一页&nbsp;&nbsp;&nbsp;&nbsp;</a>";
+			pageInfoHtml+="<a class='pull-right' style='color:#FF0000;font-weight:bold' href='javascript:"+nextSearch+"()'>下一页</a>";
+			pageInfoHtml+="<a class='pull-right' style='color:#FF0000;font-weight:bold' href='javascript:"+lastSearch+"()'>上一页&nbsp;&nbsp;&nbsp;&nbsp;</a>";
 		}
 	}
-	return pageInfoHtml;
+	showDivId.find('#pageInfo').html(pageInfoHtml);
 }
 
 /**
@@ -360,54 +459,6 @@ function getWorkSpaceHtml(workSpaceName,totalProcessCount,doingSize,errSize){
 	return queueShowStr;
 }
 
-function getErrCountHtml(jobName,workSpaceName,jobSnapshotId,errCount){
-	var errCountHtml;
-	if(errCount>0){
-		errCountHtml="<a href=\"javascript:showErrMsg('" + jobName+ "','"+ workSpaceName+ "','" + jobSnapshotId+ "')\">"+errCount+"</a>";
-	}else{
-		errCountHtml=errCount;
-	}
-	return errCountHtml;
-}
-
-function showErrMsg(jobName,workSpaceName,jobSnapshotId){
-	var workSpaceDiv=$("#job_errMsg_div");
-	var workSpace_table = workSpaceDiv.find("table");
-	var doingDataCursor = workSpaceDiv.find("input[id='doingDataCursor']").val();
-	var doingDataCursorInputs=workSpaceDiv.find("input[id='errDataCursor_"+workSpaceName+"']");
-	var doingDataCursor = "0";
-	if(null!=doingDataCursorInputs&&doingDataCursorInputs.length>0){
-		doingDataCursor=doingDataCursorInputs.val();
-	}
-	var url = "/crawler/workSpace/getDoingData/" + workSpaceName + "/" + doingDataCursor;
-	$.get(url, function(result) {
-		var dataMap = result.data;
-		var cursor = dataMap.cursor;
-		var data = dataMap.list;
-		if (null != data && data.length > 0) {
-			workSpaceDiv.find("input[id='doingDataCursor']").val(cursor);
-			workSpaceDiv.find("[id='job_workSpace_name']").html("工作空间[<span style='color:#FF0000'>" 
-							+ workSpaceName+ "</span>]信息");
-			workSpace_table.find("[name='data_page']").remove();
-			workSpace_table.find("[name='dataCursor']").remove();
-			for (var i = 0; i < data.length; i++) {
-				var page = data[i];
-				var tr = $("<tr name='data_page'></tr>");
-				$("<td><span style='color:#FF0000;font-size:6px;'>"
-						+ page.originalUrl + "</span></td>").appendTo(tr);
-				var operationTd = $("<td></td>");
-				var operation = "<a  href=\"javascript:clearDoing('"+ workSpaceName+ "')\">全部删除</a>&nbsp;";
-				// operation += "<a href=\"javascript:#\">处理</a>&nbsp;";
-				$(operation).appendTo(operationTd);
-				operationTd.appendTo(tr);
-				tr.appendTo(workSpace_table);
-			}
-			$("<input type='text' name='dataCursor' id='doingDataCursor_"+workSpaceName+"' value='"+cursor+"' style='display:none'/>").appendTo(workSpace_table);
-			showLayer(workSpaceDiv);
-		}
-	});
-}
-
 
 function showJobParams(jobName) {
 	var jobTr=$('#job_div').find("table").find("tr[name='"+jobName+"']");
@@ -473,7 +524,8 @@ function showJobParams(jobName) {
 				  }  
 			});
 		}
-		showLayer(jobParamsDiv);
+		showDiv("job_params_div");
+		// showLayer(jobParamsDiv);
 	});
 }
 
@@ -705,7 +757,7 @@ function updateIsScheduled(jobName) {
 
 function showHistoryJobSnapshot(jobName) {
 	var url = "/crawler/job/getHistoryJobSnapshot/" + jobName;
-	var jobSnapshotDiv = $("#jobSnapshot_div");
+	var jobSnapshotDiv = $("#job_jobSnapshot_div");
 	var table=jobSnapshotDiv.find("table");
 	table.find("tr[class='jobSnapshot']").remove();
 	$.get(url, function(result) {
@@ -730,7 +782,8 @@ function showHistoryJobSnapshot(jobName) {
 			$("<td>" + jobSnapshot.maxProcessTime + "</td>").appendTo(tr);
 			$("<td>" + jobSnapshot.minProcessTime + "</td>").appendTo(tr);
 			$("<td>" + jobSnapshot.totalProcessCount + "</td>").appendTo(tr);
-			$("<td>" + jobSnapshot.errCount + "</td>").appendTo(tr);
+			var errCountHtml=getErrCountHtml(jobSnapshot.name,jobSnapshot.id,jobSnapshot.errCount);
+			$("<td>" + errCountHtml + "</td>").appendTo(tr);
 			$("<td>查看异常</td>").appendTo(tr);
 			tr.appendTo(table);
 		}
@@ -740,7 +793,7 @@ function showHistoryJobSnapshot(jobName) {
 				  updateJobSnapshotStatus(jobSnapshotId);  
 			  }  
 		}); 
-		showLayer(jobSnapshotDiv);
+		showDiv("job_jobSnapshot_div");
 	});
 }
 

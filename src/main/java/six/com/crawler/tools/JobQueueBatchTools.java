@@ -17,8 +17,8 @@ import redis.clients.jedis.HostAndPort;
 import six.com.crawler.dao.EnhanceJedisCluster;
 import six.com.crawler.dao.RedisManager;
 import six.com.crawler.entity.Page;
-import six.com.crawler.http.HttpMethod;
 import six.com.crawler.utils.ArrayListUtils;
+import six.com.crawler.work.downer.HttpMethod;
 
 /**
  * 

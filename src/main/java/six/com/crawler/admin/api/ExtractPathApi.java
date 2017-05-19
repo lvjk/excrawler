@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import six.com.crawler.admin.service.ExtractPathService;
+import six.com.crawler.admin.vo.TestExtractPathVo;
 import six.com.crawler.work.extract.ExtractPath;
-import six.com.crawler.work.extract.TestExtractPath;
 
 /**
  * @author 作者
@@ -46,7 +46,7 @@ public class ExtractPathApi extends BaseApi {
 	@RequestMapping(value = "/crawler/extracter/testExtract", method = RequestMethod.POST)
 	@ResponseBody
 	public ResponseMsg<List<String>> testExtract(
-			TestExtractPath extractPath) {
+			TestExtractPathVo extractPath) {
 		ResponseMsg<List<String>> msg = createResponseMsg();
 		List<String> result = extracterService.testExtract(extractPath);
 		msg.setData(result);

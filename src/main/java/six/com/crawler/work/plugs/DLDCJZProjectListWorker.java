@@ -11,10 +11,10 @@ import org.slf4j.LoggerFactory;
 
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
-import six.com.crawler.http.HttpMethod;
 import six.com.crawler.utils.ArrayListUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.WorkerLifecycleState;
+import six.com.crawler.work.downer.HttpMethod;
 import six.com.crawler.work.space.WorkSpace;
 
 /**
@@ -46,11 +46,9 @@ public class DLDCJZProjectListWorker extends AbstractCrawlWorker {
 	@Override
 	protected void insideInit() {
 		projectInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("dldc_jz_project_info", Page.class);
-		if (!(helper.isDownloadState() && helper.isUseRawData())) {
-			Page firstPage = buildPage(pageIndex, PROJECT_LIST_URL);// 初始化第一页
-			getWorkSpace().clearDoing();
-			getWorkSpace().push(firstPage);
-		}
+		Page firstPage = buildPage(pageIndex, PROJECT_LIST_URL);// 初始化第一页
+		getWorkSpace().clearDoing();
+		getWorkSpace().push(firstPage);
 	}
 
 	@Override

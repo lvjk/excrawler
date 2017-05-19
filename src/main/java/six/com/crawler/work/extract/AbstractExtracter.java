@@ -17,9 +17,10 @@ import six.com.crawler.utils.AutoCharsetDetectorUtils;
 import six.com.crawler.utils.TelPhoneUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.extract.exception.ExtractEmptyResultException;
-import six.com.crawler.work.extract.exception.ExtractUnknownException;
-import six.com.crawler.work.extract.exception.NotFindExtractPathException;
+import six.com.crawler.work.extract.exception.EmptyResultExtractException;
+import six.com.crawler.work.extract.exception.ManyPrimaryExtractExceptiom;
+import six.com.crawler.work.extract.exception.UnknownExtractException;
+import six.com.crawler.work.extract.exception.UnfoundPathExtractException;
 
 /**
  * @author 作者
@@ -70,7 +71,7 @@ public abstract class AbstractExtracter implements Extracter {
 			}
 		}
 		if (primaryCount > 1) {
-			throw new RuntimeException("there are many primary=1");
+			throw new ManyPrimaryExtractExceptiom("there are many primary=1");
 		}
 		if (-1 != index) {
 			extractItems.remove(index);
@@ -97,7 +98,7 @@ public abstract class AbstractExtracter implements Extracter {
 							getAbstractWorker().getSite().getCode());
 				});
 				if (null == pathList || pathList.isEmpty()) {// 如果没有获取到path 抛异常
-					throw new NotFindExtractPathException("don't find path:" + doPaserItem.getPathName());
+					throw new UnfoundPathExtractException("don't find path:" + doPaserItem.getPathName());
 				}
 				int ranking = 0;// 默认使用排名第一的path 抽取
 				try {
@@ -111,30 +112,19 @@ public abstract class AbstractExtracter implements Extracter {
 						}
 					}
 				} catch (Exception e) {// 捕获 未知异常
-					throw new ExtractUnknownException("extractItem[" + doPaserItem.getOutputKey() + "] err", e);
+					throw new UnknownExtractException("extract item[" + doPaserItem.getOutputKey() + "]:"+doingPage.getFinalUrl(), e);
 				}
 			}
 			if (null == tempDoResults || tempDoResults.isEmpty()) {// 判断是否必须有值，如果是那么抛出异常
 				if (1 == doPaserItem.getPrimary() || 1 == doPaserItem.getMustHaveResult()) {
-					throw new ExtractEmptyResultException(
-							"extract resultKey [" + doPaserItem.getOutputKey() + "] value is empty");
+					throw new EmptyResultExtractException(
+							"extract resultKey [" + doPaserItem.getOutputKey() + "] value is empty:"+doingPage.getFinalUrl());
 				}
 			}
 			if (1 == doPaserItem.getPrimary()) {// 记录主键结果数量
 				if (-1 == primaryResultSize) {// primaryResultSize第一次直接赋值
 					primaryResultSize = tempDoResults.size();
 				}
-				// else {
-				// if (primaryResultSize != tempDoResults.size()) {//
-				// 对比与上一次的primaryResultSize
-				// // ，如果不相等那么抛出异常
-				// throw new PrimaryExtractException("extract primaryKey[" +
-				// doPaserItem.getOutputKey()
-				// + "]'s result size[" + tempDoResults.size() + "] did not
-				// match last primaryResultSize["
-				// + primaryResultSize + "]");
-				// }
-				// }
 			} else {
 				if (null == tempDoResults || tempDoResults.isEmpty()) {// 如果非主键结果为空，那么默认给它赋值跟主键数量一样的
 																		// 空值
@@ -181,7 +171,7 @@ public abstract class AbstractExtracter implements Extracter {
 			List<String> workerNameList = new ArrayList<>(primaryResultSize);
 			List<String> collectionDateList = new ArrayList<>(primaryResultSize);
 			List<String> originUrlList = new ArrayList<>(primaryResultSize);
-			List<String> refererUrlList=new ArrayList<>(primaryResultSize);
+			List<String> refererUrlList = new ArrayList<>(primaryResultSize);
 			String id = null;
 			for (int i = 0; i < primaryResultSize; i++) {
 				Map<String, String> dataMap = new HashMap<>();

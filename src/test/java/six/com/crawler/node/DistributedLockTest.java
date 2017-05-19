@@ -14,7 +14,7 @@ public class DistributedLockTest extends BaseTest {
 
 	@Test
 	public void test() {
-		DistributedLock lock = nodeManager.getReadLock("test");
+		DistributedLock lock = clusterManager.getReadLock("test");
 		try {
 			lock.lock();
 			System.out.println("hellow");
