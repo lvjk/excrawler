@@ -9,6 +9,7 @@ import org.jsoup.select.Elements;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.work.AbstractCrawlWorker;
+import six.com.crawler.work.exception.ProcessWorkerCrawlerException;
 
 public class NbCnnbfdcPresellInfoWorker extends AbstractCrawlWorker {
 
@@ -25,7 +26,7 @@ public class NbCnnbfdcPresellInfoWorker extends AbstractCrawlWorker {
 		String tableCss = "td>table:eq(1)";
 		Element element = doingPage.getDoc().select(tableCss).first();
 		if(null==element){
-			throw new RuntimeException("tableCss isn't num:" + tableCss);
+			throw new ProcessWorkerCrawlerException("tableCss isn't num:" + tableCss);
 		}
 		String location = element.select("tbody>tr:eq(0)>td:eq(1)>div").text() +
 				element.select("tbody>tr:eq(0)>td:eq(2)>div").text() + " " +

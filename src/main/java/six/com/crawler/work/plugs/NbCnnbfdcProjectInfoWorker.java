@@ -13,6 +13,7 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.JsoupUtils;
 import six.com.crawler.utils.JsoupUtils.TableResult;
 import six.com.crawler.work.AbstractCrawlWorker;
+import six.com.crawler.work.exception.ProcessWorkerCrawlerException;
 import six.com.crawler.work.space.WorkSpace;
 
 public class NbCnnbfdcProjectInfoWorker extends AbstractCrawlWorker {
@@ -74,7 +75,7 @@ public class NbCnnbfdcProjectInfoWorker extends AbstractCrawlWorker {
 		fieldMap.put("纳入网上可售非住宅套数", "forSellNoHouseCount");
 		Element table = doingPage.getDoc().select(tabaleCss).first();
 		if (null == table) {
-			throw new RuntimeException("don't find table:" + tabaleCss);
+			throw new ProcessWorkerCrawlerException("don't find table:" + tabaleCss);
 		}
 		String headCssSelect = "table>tbody>tr:eq(0)>td";
 		String dataCssSelect = "table>tbody>tr:gt(0)";
