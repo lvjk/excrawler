@@ -61,24 +61,24 @@ public class HttpProxyPool {
 			// 如果获取httpProxy==null 那么初始化站点http代理池
 			if (null == httpProxy) {
 				distributedLock.lock();
-				poolSize=redisManager.llen(siteHttpProxyPoolKey);
-				if(poolSize<=0){
-					int num = 0;
-					if (httpProxyType == HttpProxyType.ENABLE_ONE) {
-						num = 1;
-					} else {
-						num = -1;
-					}
-					try {
-						poolSize = initPool(num);
-					} catch (Exception e) {
-						throw new RuntimeException("init httpProxy pool");
-					} finally {
-						distributedLock.unLock();
-					}
+				try {
+					poolSize = redisManager.llen(siteHttpProxyPoolKey);
 					if (poolSize <= 0) {
-						throw new RuntimeException("there is not httpProxys");
+						int num = 0;
+						if (httpProxyType == HttpProxyType.ENABLE_ONE) {
+							num = 1;
+						} else {
+							num = -1;
+						}
+						poolSize = initPool(num);
+						if (poolSize <= 0) {
+							throw new RuntimeException("there is not httpProxys");
+						}
 					}
+				} catch (Exception e) {
+					throw new RuntimeException("init httpProxy pool");
+				} finally {
+					distributedLock.unLock();
 				}
 			} else {
 				long nowTime = System.currentTimeMillis();
