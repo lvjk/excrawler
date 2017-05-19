@@ -12,6 +12,7 @@ import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.downer.HttpMethod;
+import six.com.crawler.work.exception.ProcessWorkerCrawlerException;
 import six.com.crawler.work.space.WorkSpace;
 
 /**
@@ -51,7 +52,7 @@ public class NbCnnbfdcProjectListWorker extends AbstractCrawlWorker {
 		if (NumberUtils.isNumber(pageCountStr)) {
 			pageCount = Integer.valueOf(pageCountStr);
 		} else {
-			throw new RuntimeException("pageCount isn't num:" + pageCountStr);
+			throw new ProcessWorkerCrawlerException("pageCount isn't num:" + pageCountStr);
 		}
 		
 		getWorkSpace().clearDoing();

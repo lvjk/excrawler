@@ -13,6 +13,7 @@ import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.JsoupUtils;
 import six.com.crawler.utils.JsoupUtils.TableResult;
 import six.com.crawler.work.AbstractCrawlWorker;
+import six.com.crawler.work.exception.ProcessWorkerCrawlerException;
 
 public class NbCnnbfdcRoomInfoWorker extends AbstractCrawlWorker{
 	
@@ -44,7 +45,7 @@ public class NbCnnbfdcRoomInfoWorker extends AbstractCrawlWorker{
 	protected void beforeExtract(Page doingPage) {
 		Element table = doingPage.getDoc().select(tableCss).first();
 		if (null == table) {
-			throw new RuntimeException("don't find table:" + tableCss +",pageSrc is :"+doingPage.getPageSrc());
+			throw new ProcessWorkerCrawlerException("don't find table:" + tableCss +",pageSrc is :"+doingPage.getPageSrc());
 		}
 		List<TableResult> results = JsoupUtils.paserTable(table);
 		for (TableResult result : results) {
