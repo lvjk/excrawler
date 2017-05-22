@@ -40,6 +40,8 @@ public class ZQFGZXUnitInfoWorker extends AbstractCrawlWorker{
 		}else{
 			Element developer=attrs.get(2);
 			doingPage.getMetaMap().put("developer", ArrayListUtils.asList(developer.ownText()));
+			Element buildName=attrs.get(1);
+			doingPage.getMetaMap().put("unitName", ArrayListUtils.asList(buildName.ownText()));
 		}
 	}
 
