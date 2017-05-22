@@ -8,7 +8,7 @@ package six.com.crawler.work;
  */
 public class Constants {
 
-	// 上次处理数据时间
+	/** 获取元素超时 **/
 	public static final int FIND_ELEMENT_TIMEOUT= 1000;
 	
 	public static final int WOKER_PROCESS_PAGE_MAX_RETRY_COUNT = 3;

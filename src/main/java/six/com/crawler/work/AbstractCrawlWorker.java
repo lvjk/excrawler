@@ -1,11 +1,5 @@
 package six.com.crawler.work;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -47,8 +41,6 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 
 	final static Logger log = LoggerFactory.getLogger(AbstractCrawlWorker.class);
 
-	// 上次处理数据时间
-	protected int findElementTimeout = Constants.FIND_ELEMENT_TIMEOUT;
 	// 站点
 	private Site site;
 	// 下载器
@@ -61,6 +53,10 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 	private Extracter extracter;
 	// 数据对外输出存儲处理程序
 	private Store store;
+	//最大重试次数
+	private int maxRetryProcess;
+	// 获取元素超时
+	protected int findElementTimeout = Constants.FIND_ELEMENT_TIMEOUT;
 
 	public AbstractCrawlWorker() {
 		super(Page.class);
@@ -68,6 +64,9 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 
 	@Override
 	protected final void initWorker(JobSnapshot jobSnapshot) {
+
+		maxRetryProcess = getJob().getParamInt("worker_process_page_max_retry_count",
+				Constants.WOKER_PROCESS_PAGE_MAX_RETRY_COUNT);
 		// 初始化 站点code
 		String siteCode = getJob().getParam(CrawlerJobParamKeys.SITE_CODE);
 		if (StringUtils.isBlank(siteCode)) {
@@ -77,8 +76,6 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 		if (null == site) {
 			throw new NullPointerException("did not get site[" + siteCode + "]");
 		}
-
-		// initDownerHelper(siteCode, jobSnapshot);
 
 		// 初始化下载器
 		int downerTypeInt = getJob().getParamInt(CrawlerJobParamKeys.DOWNER_TYPE, 1);
@@ -122,7 +119,6 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 			long downTime = 0;
 			long extractTime = 0;
 			long storeTime = 0;
-			doingPage.setOriginalUrl(doingPage.getOriginalUrl()+"/sdfsggf");
 			try {
 				log.info("start to process page:" + doingPage.getOriginalUrl());
 				// 设置下载器代理
@@ -163,7 +159,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 						new ProcessWorkerCrawlerException("crawler process:" + doingPage.getOriginalUrl()));
 				throw crawlerException;
 			} catch (Exception e) {
-				throw new UnknowWorkerCrawlerException("unknow crawler process err:" + doingPage.getOriginalUrl(), e);
+				throw new UnknowWorkerCrawlerException("unknow crawler process:" + doingPage.getOriginalUrl(), e);
 			}
 
 		}
@@ -235,14 +231,12 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 				getWorkSpace().ack(doingPage);
 			} else {
 				String msg = null;
-				Integer retryProcess = getJob().getParamInt("worker_process_page_max_retry_count",
-						Constants.WOKER_PROCESS_PAGE_MAX_RETRY_COUNT);
-				if (null == insideException && doingPage.getRetryProcess() < retryProcess) {
+				if (null == insideException && doingPage.getRetryProcess() < maxRetryProcess) {
 					doingPage.setRetryProcess(doingPage.getRetryProcess() + 1);
 					getWorkSpace().errRetryPush(doingPage);
 					msg = "retry processor[" + doingPage.getRetryProcess() + "] page:" + doingPage.getFinalUrl();
 				} else {
-					if (e instanceof HttpStatus502DownerException && doingPage.getFztRetryProcess() < retryProcess) {// 当超过重试次数之后，如果是502异常，则重新写入队列
+					if (e instanceof HttpStatus502DownerException && doingPage.getFztRetryProcess() < maxRetryProcess) {// 当超过重试次数之后，如果是502异常，则重新写入队列
 						doingPage.setFztRetryProcess(doingPage.getFztRetryProcess() + 1);
 						getWorkSpace().errRetryPush(doingPage);
 						msg = "HttpCode[502] retry processor[" + doingPage.getRetryProcess() + "] page:"
@@ -258,92 +252,6 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 				log.error(msg, e);
 			}
 		}
-	}
-
-	/**
-	 * 创建dir，包含data和meta
-	 * 
-	 * @param destDirName
-	 * @return
-	 */
-	public static boolean createDir(String destDirName) {
-
-		if (!destDirName.endsWith(File.separator)) {
-			destDirName = destDirName + File.separator;
-		}
-
-		File dataDir = new File(destDirName + "/data");
-		File metaDir = new File(destDirName + "/meta");
-		if (dataDir.exists() && metaDir.exists()) {
-			return true;
-		}
-
-		// 创建目录
-		if (dataDir.mkdirs() && metaDir.mkdirs()) {
-			log.info("create dir " + destDirName + "success!");
-			return true;
-		} else {
-			log.error("create dir " + destDirName + "fail!");
-			return false;
-		}
-	}
-
-	public static void saveToFile(final String fileName, final String context) {
-		File file = null;
-		FileWriter writer = null;
-		try {
-			file = new File(fileName);
-			writer = new FileWriter(file);
-
-			writer.write(context);
-			writer.flush();
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				writer.close();
-			} catch (IOException e) {
-				log.error(e.getMessage(), e);
-			}
-		}
-	}
-
-	public static String readByFile(String fileName) {
-		String content = null;
-		File f = new File(fileName);
-
-		FileChannel channel = null;
-		FileInputStream fs = null;
-		try {
-			if (!f.exists()) {
-				return null;
-			}
-			fs = new FileInputStream(f);
-			channel = fs.getChannel();
-			ByteBuffer byteBuffer = ByteBuffer.allocate((int) channel.size());
-			while ((channel.read(byteBuffer)) > 0) {
-			}
-			content = new String(byteBuffer.array());
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-
-			try {
-				if (null != channel) {
-					channel.close();
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			try {
-				if (null != fs) {
-					fs.close();
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		return content;
 	}
 
 	public Downer getDowner() {
