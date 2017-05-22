@@ -24,6 +24,7 @@ import six.com.crawler.utils.ExceptionUtils;
 import six.com.crawler.utils.ThreadUtils;
 import six.com.crawler.work.exception.WorkerException;
 import six.com.crawler.work.exception.WorkerInitException;
+import six.com.crawler.work.exception.WorkerOtherException;
 import six.com.crawler.work.space.WorkSpace;
 import six.com.crawler.work.space.WorkSpaceData;
 
@@ -136,8 +137,7 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 					StringUtils.isBlank(workSpaceName) ? getJob().getName() : workSpaceName, workSpaceDataClz);
 			initWorker(jobSnapshot);
 		} catch (Exception e) {
-			destroy();
-			throw new WorkerInitException("init worker err", e);
+			throw e;
 		} finally {
 			distributedLock.unLock();
 		}
@@ -149,9 +149,10 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 		try {
 			init();
 		} catch (WorkerException e) {
-			compareAndSetState(WorkerLifecycleState.STARTED, WorkerLifecycleState.STOPED);
-			log.error("init worker err:" + getName(), e);
-			doErr(e);
+			getAndSetState(WorkerLifecycleState.STOPED);
+			String errMsg = "job[" + getJob().getName() + "]'s work[" + getName() + "] init err";
+			log.error(errMsg, e);
+			doErr(new WorkerInitException(errMsg, e));
 		}
 		log.info("end init:" + getName());
 		log.info("start work:" + getName());
@@ -201,17 +202,18 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 
 			}
 		} catch (Exception e) {
-			log.error("unkown job[" + getJob().getName() + "]'s work err:" + getName(), e);
-			throw new RuntimeException(e);
-		} finally {
-			workerSnapshot.setEndTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
-			if (workerSnapshot.getTotalProcessCount() > 0) {
-				workerSnapshot.setAvgProcessTime(
-						workerSnapshot.getTotalProcessTime() / workerSnapshot.getTotalProcessCount());
-			}
-			manager.updateWorkSnapshotAndReport(workerSnapshot, true);
-			log.info("start work:" + getName());
+			getAndSetState(WorkerLifecycleState.STOPED);
+			String errMsg = "job[" + getJob().getName() + "]'s work[" + getName() + "] unkown err and will stop";
+			log.error(errMsg, e);
+			doErr(new WorkerOtherException(errMsg, e));
 		}
+		workerSnapshot.setEndTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
+		if (workerSnapshot.getTotalProcessCount() > 0) {
+			workerSnapshot
+					.setAvgProcessTime(workerSnapshot.getTotalProcessTime() / workerSnapshot.getTotalProcessCount());
+		}
+		manager.updateWorkSnapshotAndReport(workerSnapshot, true);
+		log.info("start work:" + getName());
 	}
 
 	private void doStart(T workData) {

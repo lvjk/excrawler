@@ -24,6 +24,7 @@ import six.com.crawler.work.downer.DownerType;
 import six.com.crawler.work.downer.HttpProxyPool;
 import six.com.crawler.work.downer.exception.DownerException;
 import six.com.crawler.work.downer.exception.HttpStatus502DownerException;
+import six.com.crawler.work.exception.ProcessWorkerCrawlerException;
 import six.com.crawler.work.exception.UnknowWorkerCrawlerException;
 import six.com.crawler.work.exception.WorkerCrawlerException;
 import six.com.crawler.work.extract.ExtractItem;
@@ -121,6 +122,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 			long downTime = 0;
 			long extractTime = 0;
 			long storeTime = 0;
+			doingPage.setOriginalUrl(doingPage.getOriginalUrl()+"/sdfsggf");
 			try {
 				log.info("start to process page:" + doingPage.getOriginalUrl());
 				// 设置下载器代理
@@ -156,10 +158,12 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 
 				log.info("finished processing,down time[" + downTime + "],extract time[" + extractTime + "],store time["
 						+ storeTime + "]:" + doingPage.getOriginalUrl());
-			} catch (WorkerCrawlerException e) {
-				throw e;
+			} catch (WorkerCrawlerException crawlerException) {
+				crawlerException.addSuppressed(
+						new ProcessWorkerCrawlerException("crawler process:" + doingPage.getOriginalUrl()));
+				throw crawlerException;
 			} catch (Exception e) {
-				throw new UnknowWorkerCrawlerException("unknow crawler process err:" + doingPage.getFinalUrl(), e);
+				throw new UnknowWorkerCrawlerException("unknow crawler process err:" + doingPage.getOriginalUrl(), e);
 			}
 
 		}

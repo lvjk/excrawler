@@ -42,7 +42,7 @@ public class WorkeSpaceTransferTools {
 		// del(workSpaceName, redisConnection, "spider_redis_store");
 		// doMysql();
 		// nb_cnnbfdc_unit_info
-		WorkeSpaceTransferTools.del("*workers_sernum");
+		WorkeSpaceTransferTools.testPull1("nb_cnnbfdc_room_info");
 	}
 
 	public static void transfer(String workSpaceName, String redisConnection) {
@@ -65,8 +65,19 @@ public class WorkeSpaceTransferTools {
 					Page.class);
 			WorkSpace<Page> targetWorkQueue = new SegmentRedisWorkSpace<>(doRedisManager, distributedLock,
 					workSpaceName, Page.class);
+			
+			
+
+			
 			List<String> doneList = new ArrayList<>();
 			String cursorStr = "0";
+			
+			List<Page> resutList=new ArrayList<>();
+			cursorStr=targetWorkQueue.batchGetErrData(resutList, cursorStr);
+			for(Page page:resutList){
+				targetWorkQueue.addErr(page);
+			}
+			
 			int count = 0;
 			int size = doWorkQueue.doingSegmentSize();
 			for (int segmentIndex = 0; segmentIndex < size;segmentIndex++) {
@@ -195,6 +206,45 @@ public class WorkeSpaceTransferTools {
 			throw new RuntimeException(e);
 		}
 		return count;
+	}
+	
+	public static void testPull1(String workSpaceName) {
+		String redisConnection = "172.30.103.83:6379;172.30.103.83:6380;172.30.103.81:6379;172.30.103.81:6380;172.30.103.82:6379;172.30.103.82:6380;";
+		EnhanceJedisCluster jedisCluster = WorkeSpaceTransferTools.newJedis(redisConnection);
+		RedisManager redisManager = new RedisManager();
+		redisManager.setJedisCluster(jedisCluster);
+		DistributedLock distributedLock = new DistributedLock() {
+			@Override
+			public void unLock() {
+
+			}
+
+			@Override
+			public void lock() {
+
+			}
+		};
+		SegmentRedisWorkSpace<Page> workSpace = new SegmentRedisWorkSpace<>(redisManager, distributedLock,
+				workSpaceName, Page.class);
+		Page page = null;
+		boolean repair = false;
+		while (true) {
+			long start = System.currentTimeMillis();
+			page = workSpace.pull();
+			long end = System.currentTimeMillis();
+			System.out.println("pull time:" + (end - start));
+			if (null != page) {
+				workSpace.errRetryPush(page);
+			} else {
+				if (!repair) {
+					workSpace.repair();
+					repair = true;
+					continue;
+				} else {
+					break;
+				}
+			}
+		}
 	}
 
 	private static String getDoneKey(String workSpace, String key) {

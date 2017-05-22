@@ -287,6 +287,22 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 		currentNode.setMem(MyOperatingSystemMXBean.freeMemoryPRP());
 		return currentNode;
 	}
+	
+	@Override
+	public void clearLock(){
+		String path=ZooKeeperPathUtils.getDistributedLocksPath(getClusterName());
+		try {
+			List<String> childrens=curatorFramework.getChildren().forPath(path);
+			if(null!=childrens){
+				for(String children:childrens){
+					children=ZooKeeperPathUtils.getDistributedLockPath(getClusterName(), children);
+					curatorFramework.delete().forPath(children);
+				}
+			}
+		} catch (Exception e) {
+			log.error("clearLock getChildren",e);
+		}
+	}
 
 	@Override
 	public DistributedLock getReadLock(String path) {
@@ -340,6 +356,10 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 
 	public void setApplicationContext(ConfigurableApplicationContext applicationContext) {
 		this.applicationContext = applicationContext;
+	}
+	
+	public CuratorFramework getCuratorFramework(){
+		return curatorFramework;
 	}
 
 	public SpiderConfigure getConfigure() {

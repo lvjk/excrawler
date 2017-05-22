@@ -458,73 +458,75 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	@Override
 	public void askEnd(DispatchType dispatchType, String jobName) {
 		if (null != dispatchType && DispatchType.DISPATCH_TYPE_WORKER.equals(dispatchType.getName())) {
-			synchronized (keyLock.intern(jobName)) {
-				if (isWait(jobName)) {
-					log.info("check job[" + jobName + "]'s worker is all wait");
-					JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(jobName);
-					WorkSpace<WorkSpaceData> workSpace = getWorkSpaceManager()
-							.newWorkSpace(jobSnapshot.getWorkSpaceName(), WorkSpaceData.class);
-					log.info("start to repair workSpace[" + jobSnapshot.getWorkSpaceName() + "]");
-					workSpace.repair();
-					log.info("end to repair workSpace[" + jobSnapshot.getWorkSpaceName() + "]");
-					if (!workSpace.doingIsEmpty()) {
-						log.info("check workSpace is not empty after repaired workSpace["
-								+ jobSnapshot.getWorkSpaceName() + "]");
-						goOn(DispatchType.newDispatchTypeByManual(), jobName);
-					} else {
-						log.info("check workSpace is empty after repaired workSpace[" + jobSnapshot.getWorkSpaceName()
-								+ "]");
-						// 判断当前worker's job是被什么类型调度的 1.MANUAL手动触发
-						// 2.SCHEDULER调度器触发
-						if (DispatchType.DISPATCH_TYPE_MANUAL.equals(jobSnapshot.getDispatchType().getName())
-								|| DispatchType.DISPATCH_TYPE_SCHEDULER
-										.equals(jobSnapshot.getDispatchType().getName())) {
-							finish(DispatchType.newDispatchTypeByMaster(), jobName);
+			if (isWait(jobName)) {
+				synchronized (keyLock.intern(jobName)) {
+					if (isWait(jobName)) {
+						log.info("check job[" + jobName + "]'s worker is all wait");
+						JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(jobName);
+						WorkSpace<WorkSpaceData> workSpace = getWorkSpaceManager()
+								.newWorkSpace(jobSnapshot.getWorkSpaceName(), WorkSpaceData.class);
+						log.info("start to repair workSpace[" + jobSnapshot.getWorkSpaceName() + "]");
+						workSpace.repair();
+						log.info("end to repair workSpace[" + jobSnapshot.getWorkSpaceName() + "]");
+						if (!workSpace.doingIsEmpty()) {
+							log.info("check workSpace is not empty after repaired workSpace["
+									+ jobSnapshot.getWorkSpaceName() + "]");
+							goOn(DispatchType.newDispatchTypeByManual(), jobName);
 						} else {
-							// 通过当job的触发获取它触发的它的job快照
-							JobSnapshot lastJobSnapshot = getScheduleCache()
-									.getJobSnapshot(jobSnapshot.getDispatchType().getName());
-							// 如果触发的它的job快照==null,那么触发的它的job已经停止运行
-							if (null == lastJobSnapshot) {
-								// 从历史记录中获取触发它的 JobSnapshot
-								lastJobSnapshot = getJobSnapshotDao().query(
-										jobSnapshot.getDispatchType().getCurrentTimeMillis(),
-										jobSnapshot.getDispatchType().getName());
-								// 如果没获取到历史记录那么，我们将stop.然后打印日志非法被执行
+							log.info("check workSpace is empty after repaired workSpace[" + jobSnapshot.getWorkSpaceName()
+									+ "]");
+							// 判断当前worker's job是被什么类型调度的 1.MANUAL手动触发
+							// 2.SCHEDULER调度器触发
+							if (DispatchType.DISPATCH_TYPE_MANUAL.equals(jobSnapshot.getDispatchType().getName())
+									|| DispatchType.DISPATCH_TYPE_SCHEDULER
+											.equals(jobSnapshot.getDispatchType().getName())) {
+								finish(DispatchType.newDispatchTypeByMaster(), jobName);
+							} else {
+								// 通过当job的触发获取它触发的它的job快照
+								JobSnapshot lastJobSnapshot = getScheduleCache()
+										.getJobSnapshot(jobSnapshot.getDispatchType().getName());
+								// 如果触发的它的job快照==null,那么触发的它的job已经停止运行
 								if (null == lastJobSnapshot) {
-									stop(DispatchType.newDispatchTypeByManual(), jobName);
-									log.error("the job[" + jobName + "]'s jobSnapshot[" + jobSnapshot.getId()
-											+ "] is illegal execution");
+									// 从历史记录中获取触发它的 JobSnapshot
+									lastJobSnapshot = getJobSnapshotDao().query(
+											jobSnapshot.getDispatchType().getCurrentTimeMillis(),
+											jobSnapshot.getDispatchType().getName());
+									// 如果没获取到历史记录那么，我们将stop.然后打印日志非法被执行
+									if (null == lastJobSnapshot) {
+										stop(DispatchType.newDispatchTypeByManual(), jobName);
+										log.error("the job[" + jobName + "]'s jobSnapshot[" + jobSnapshot.getId()
+												+ "] is illegal execution");
+									} else {
+										// 如果触发它的jobSnapshot状态等于finishedstop
+										// 时， 当前状态保持一致
+										if (JobSnapshotState.FINISHED == lastJobSnapshot.getEnumStatus()) {
+											finish(DispatchType.newDispatchTypeByMaster(), jobName);
+										} else if (JobSnapshotState.STOP == lastJobSnapshot.getEnumStatus()) {
+											stop(DispatchType.newDispatchTypeByManual(), jobName);
+										}
+										// 如果触发它的jobSnapshot状态等于EXECUTING时，那么触发它的job没有被正常stop,但是当前状态应该设置为stop
+										else if (JobSnapshotState.EXECUTING == lastJobSnapshot.getEnumStatus()) {
+											stop(DispatchType.newDispatchTypeByManual(), jobName);
+										}
+									}
 								} else {
-									// 如果触发它的jobSnapshot状态等于finishedstop
-									// 时， 当前状态保持一致
-									if (JobSnapshotState.FINISHED == lastJobSnapshot.getEnumStatus()) {
+									// 如果触发它的jobSnapshot状态等于EXECUTING或者SUSPEND
+									// 时，那么应该休眠1000毫秒，否则保持跟触发它的jobSnapshot状态一样
+									if (JobSnapshotState.EXECUTING == lastJobSnapshot.getEnumStatus()
+											|| JobSnapshotState.SUSPEND == lastJobSnapshot.getEnumStatus()) {
+										rest(DispatchType.newDispatchTypeByMaster(), jobName);
+									} else if (JobSnapshotState.FINISHED == lastJobSnapshot.getEnumStatus()) {
 										finish(DispatchType.newDispatchTypeByMaster(), jobName);
 									} else if (JobSnapshotState.STOP == lastJobSnapshot.getEnumStatus()) {
-										stop(DispatchType.newDispatchTypeByManual(), jobName);
+										stop(DispatchType.newDispatchTypeByMaster(), jobName);
 									}
-									// 如果触发它的jobSnapshot状态等于EXECUTING时，那么触发它的job没有被正常stop,但是当前状态应该设置为stop
-									else if (JobSnapshotState.EXECUTING == lastJobSnapshot.getEnumStatus()) {
-										stop(DispatchType.newDispatchTypeByManual(), jobName);
-									}
-								}
-							} else {
-								// 如果触发它的jobSnapshot状态等于EXECUTING或者SUSPEND
-								// 时，那么应该休眠1000毫秒，否则保持跟触发它的jobSnapshot状态一样
-								if (JobSnapshotState.EXECUTING == lastJobSnapshot.getEnumStatus()
-										|| JobSnapshotState.SUSPEND == lastJobSnapshot.getEnumStatus()) {
-									rest(DispatchType.newDispatchTypeByMaster(), jobName);
-								} else if (JobSnapshotState.FINISHED == lastJobSnapshot.getEnumStatus()) {
-									finish(DispatchType.newDispatchTypeByMaster(), jobName);
-								} else if (JobSnapshotState.STOP == lastJobSnapshot.getEnumStatus()) {
-									stop(DispatchType.newDispatchTypeByMaster(), jobName);
 								}
 							}
-						}
 
+						}
+					} else {
+						log.info("check job[" + jobName + "]'s worker is not all wait");
 					}
-				} else {
-					log.info("check job[" + jobName + "]'s worker is not all wait");
 				}
 			}
 		}
@@ -533,39 +535,43 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	@Override
 	public void endWorker(DispatchType dispatchType, String jobName) {
 		if (null != dispatchType && DispatchType.DISPATCH_TYPE_WORKER.equals(dispatchType.getName())) {
-			synchronized (keyLock.intern(jobName)) {
-				boolean isFinish = isFinish(jobName);
-				boolean isStop = isStop(jobName);
-				if (isFinish || isStop) {
-					JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(jobName);
-					if (null != jobSnapshot) {
-						JobSnapshotState state = null;
-						if (isFinish) {
-							state = JobSnapshotState.FINISHED;
-						} else {
-							state = JobSnapshotState.STOP;
-						}
-						jobSnapshot.setStatus(state.value());
-						jobSnapshot.setEndTime(DateFormatUtils.format(new Date(), DateFormats.DATE_FORMAT_1));
-
-						List<WorkerSnapshot> workerSnapshots = getScheduleCache().getWorkerSnapshots(jobName);
-						totalWorkerSnapshot(jobSnapshot, workerSnapshots);
-
-						reportJobSnapshot(jobSnapshot);
-
-						getScheduleCache().delJob(jobName);
-						getScheduleCache().delWorkerSnapshots(jobName);
-						getScheduleCache().delJobSnapshot(jobName);
-
-						// 当任务正常完成时 判断是否有当前任务是否有下个执行任务，如果有的话那么直接执行
-						if (JobSnapshotState.FINISHED == state) {
-							// 更新downloadState。
-							if (jobSnapshot.isSaveRawData()) {
-								getJobSnapshotDao().updateDownloadStatus(jobSnapshot.getVersion(),
-										jobSnapshot.getVersion() + 1, jobSnapshot.getId(),
-										DownloadContants.DOWN_LOAD_FINISHED);
+			boolean isFinish = isFinish(jobName);
+			boolean isStop = isStop(jobName);
+			if (isFinish || isStop) {
+				synchronized (keyLock.intern(jobName)) {
+					isFinish = isFinish(jobName);
+					isStop = isStop(jobName);
+					if (isFinish || isStop) {
+						JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(jobName);
+						if (null != jobSnapshot) {
+							JobSnapshotState state = null;
+							if (isFinish) {
+								state = JobSnapshotState.FINISHED;
+							} else {
+								state = JobSnapshotState.STOP;
 							}
-							doJobRelationship(jobSnapshot, JobRelationship.TRIGGER_TYPE_SERIAL);
+							jobSnapshot.setStatus(state.value());
+							jobSnapshot.setEndTime(DateFormatUtils.format(new Date(), DateFormats.DATE_FORMAT_1));
+
+							List<WorkerSnapshot> workerSnapshots = getScheduleCache().getWorkerSnapshots(jobName);
+							totalWorkerSnapshot(jobSnapshot, workerSnapshots);
+
+							reportJobSnapshot(jobSnapshot);
+
+							getScheduleCache().delJob(jobName);
+							getScheduleCache().delWorkerSnapshots(jobName);
+							getScheduleCache().delJobSnapshot(jobName);
+
+							// 当任务正常完成时 判断是否有当前任务是否有下个执行任务，如果有的话那么直接执行
+							if (JobSnapshotState.FINISHED == state) {
+								// 更新downloadState。
+								if (jobSnapshot.isSaveRawData()) {
+									getJobSnapshotDao().updateDownloadStatus(jobSnapshot.getVersion(),
+											jobSnapshot.getVersion() + 1, jobSnapshot.getId(),
+											DownloadContants.DOWN_LOAD_FINISHED);
+								}
+								doJobRelationship(jobSnapshot, JobRelationship.TRIGGER_TYPE_SERIAL);
+							}
 						}
 					}
 				}

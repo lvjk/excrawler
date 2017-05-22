@@ -92,6 +92,8 @@ public interface ClusterManager {
 	 */
 	void remove(String commandName);
 
+	
+	void clearLock();
 	/**
 	 * 根据path 获取一个 分布式读锁
 	 * 

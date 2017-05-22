@@ -46,7 +46,7 @@ public class Page implements WorkSpaceData, Serializable {
 
 	private int pageNum;// 分页时 第几页
 
-	private HttpMethod method = HttpMethod.GET;;// 默认为get
+	private HttpMethod method = HttpMethod.GET;// 默认为get
 
 	private PageType type;// 页面类型
 
@@ -111,6 +111,9 @@ public class Page implements WorkSpaceData, Serializable {
 	}
 
 	public HttpMethod getMethod() {
+		if(null==method){
+			method = HttpMethod.GET;
+		}
 		return method;
 	}
 

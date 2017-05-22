@@ -7,36 +7,54 @@ package six.com.crawler.utils;
  */
 public class ExceptionUtils {
 
-	public static String getExceptionMsg(Exception exception) {
+	public static String getExceptionMsg(Throwable throwable) {
 		String msg = null;
-		if (null != exception) {
+		if (null != throwable) {
 			StringBuilder msgSb = new StringBuilder();
-			Throwable throwable = exception;
-			while (null != throwable) {
-				msgSb.append(throwable.getClass());
-				msgSb.append(":");
-				msgSb.append(throwable.getMessage());
-				msgSb.append("\n");
-				StackTraceElement[] stackTraceElements = throwable.getStackTrace();
-				if (null != stackTraceElements) {
-					for (StackTraceElement stackTraceElement : stackTraceElements) {
-						msgSb.append("\t\t\t");
-						msgSb.append(stackTraceElement.getClassName());
-						msgSb.append(".");
-						msgSb.append(stackTraceElement.getMethodName());
-						msgSb.append("(");
-						msgSb.append(stackTraceElement.getFileName());
-						msgSb.append(":");
-						msgSb.append(stackTraceElement.getLineNumber());
-						msgSb.append(")");
-						msgSb.append("\n");
-					}
-				}
-				throwable = throwable.getCause();
+			Throwable tempThrowable = throwable;
+			doExceptionMsg(tempThrowable, msgSb, true);
+			Throwable[] suppresseds = throwable.getSuppressed();
+			for (int i = 0; i < suppresseds.length; i++) {
+				tempThrowable = suppresseds[i];
+				getExceptionMsg(tempThrowable, msgSb, false);
 			}
 			msg = msgSb.toString();
 		}
 		return msg;
 	}
 
+	public static void getExceptionMsg(Throwable throwable, StringBuilder msgSb, boolean isGetStackTrace) {
+		Throwable tempThrowable = throwable;
+		doExceptionMsg(tempThrowable, msgSb, isGetStackTrace);
+		Throwable[] suppresseds = throwable.getSuppressed();
+		for (int i = 0; i < suppresseds.length; i++) {
+			tempThrowable = suppresseds[i];
+			getExceptionMsg(tempThrowable, msgSb, isGetStackTrace);
+		}
+	}
+
+	public static void doExceptionMsg(Throwable throwable, StringBuilder msgSb, boolean isGetStackTrace) {
+		do {
+			msgSb.append(throwable.getClass());
+			msgSb.append(":");
+			msgSb.append(throwable.getMessage());
+			msgSb.append("\n");
+			if (isGetStackTrace) {
+				StackTraceElement[] stackTraceElements = throwable.getStackTrace();
+				for (StackTraceElement stackTraceElement : stackTraceElements) {
+					msgSb.append("\t\t\t");
+					msgSb.append(stackTraceElement.getClassName());
+					msgSb.append(".");
+					msgSb.append(stackTraceElement.getMethodName());
+					msgSb.append("(");
+					msgSb.append(stackTraceElement.getFileName());
+					msgSb.append(":");
+					msgSb.append(stackTraceElement.getLineNumber());
+					msgSb.append(")");
+					msgSb.append("\n");
+				}
+			}
+			throwable = throwable.getCause();
+		} while (null != throwable);
+	}
 }

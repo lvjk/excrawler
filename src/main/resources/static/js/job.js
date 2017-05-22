@@ -193,10 +193,10 @@ function showErrMsg(jobName,jobSnapshotId){
 			var table = workerErrMsgDiv.find('table');
 			workerErrMsgDiv.find('#jobName').val(jobName);
 			workerErrMsgDiv.find('#jobSnapshotId').val(jobSnapshotId);
+			var table=workerErrMsgDiv.find("table");
+			table.find("tr[name='jobWorkerErrMsgDiv']").remove();
 			if (null != data && data.length > 0) {
 				workerErrMsgDiv.find("input[id='pageIndex']").val(pageIndex);
-				var table=workerErrMsgDiv.find("table");
-				table.find("tr[name='jobWorkerErrMsgDiv']").remove();
 				for (var i = 0; i < data.length; i++) {
 					var workerErrMsg = data[i];
 					var tr = $("<tr name='jobWorkerErrMsgDiv'></tr>");
