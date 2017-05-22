@@ -51,6 +51,7 @@ public class ZQFGZXRoomStateInfoWorker extends AbstractCrawlWorker{
 		List<String> actInnerAreas=new ArrayList<String>();
 		List<String> developers=new ArrayList<String>();
 		List<String> roomStates=new ArrayList<String>();
+		List<String> roomSequences=new ArrayList<String>();
 		
 		String unitId=null;
 		if(doingPage.getMeta("unitId")!=null&&doingPage.getMeta("unitId").size()>0){
@@ -63,6 +64,7 @@ public class ZQFGZXRoomStateInfoWorker extends AbstractCrawlWorker{
 		if(null!=floors&&floors.size()>0){
 			for (Element floor:floors) {
 				Elements rooms=floor.select("li:gt(0)");
+				int seqiemceIndex=1;
 				for (Element room:rooms) {
 					Elements attrs=room.select("dl[class='loupan-info']>dd");
 					String realEstate=attrs.get(0).select("a").first().ownText();
@@ -98,6 +100,8 @@ public class ZQFGZXRoomStateInfoWorker extends AbstractCrawlWorker{
 					roomNos.add(roomNo);
 					layers.add(layer);
 					unitIds.add(unitId);
+					roomSequences.add(layer+"-"+seqiemceIndex);
+					seqiemceIndex++;
 				}
 			}
 			
@@ -117,6 +121,7 @@ public class ZQFGZXRoomStateInfoWorker extends AbstractCrawlWorker{
 			doingPage.getMetaMap().put("developer", developers);
 			doingPage.getMetaMap().put("roomType", roomTypes);
 			doingPage.getMetaMap().put("roomProperty", roomProperties);
+			doingPage.getMetaMap().put("roomSequence", roomSequences);
 		}else{
 			throw new RuntimeException("don't find state node: ul[class=RoomState]; pageSrc is :" +doingPage.getPageSrc());
 		}
