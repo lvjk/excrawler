@@ -109,11 +109,11 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 			log.info("push workSpace[" + workSpaceName + "] data succeed:" + data.toString());
 			return true;
 		} catch (Exception e) {
-			log.error("push workSpace[" + workSpaceName + "] data err:" + data.toString(), e);
-			throw e;
+			log.error("push workSpace[" + workSpaceName + "] data:" + data.toString(), e);
 		} finally {
 			distributedLock.unLock();
 		}
+		return false;
 	}
 
 	@Override
@@ -127,7 +127,7 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 				doingSegmentQueue.push(index);
 				return true;
 			} catch (Exception e) {
-				throw e;
+				log.error("errRetryPush workSpace[" + workSpaceName + "] data:" + data.toString(), e);
 			} finally {
 				distributedLock.unLock();
 			}
@@ -153,8 +153,7 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 				}
 			}
 		} catch (Exception e) {
-			log.error("pull workSpace[" + workSpaceName + "] data err", e);
-			throw e;
+			log.error("pull workSpace[" + workSpaceName + "] data", e);
 		} finally {
 			distributedLock.unLock();
 		}
@@ -174,8 +173,7 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 				}
 			}
 		} catch (Exception e) {
-			log.error("repair workSpace[" + workSpaceName + "] err", e);
-			throw e;
+			log.error("repair workSpace[" + workSpaceName + "]", e);
 		} finally {
 			distributedLock.unLock();
 		}
@@ -209,20 +207,28 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 	}
 
 	public void addErr(T data) {
-		redisManager.hset(errQueueKey, data.getKey(), data);
+		try {
+			redisManager.hset(errQueueKey, data.getKey(), data);
+		} catch (Exception e) {
+			log.error("addErr workSpace[" + workSpaceName + "] data:" + data.toString(), e);
+		}
 	}
 
 	public void againDoErrQueue() {
-		Map<String, T> map = new HashMap<>();
-		String cursorStr = "0";
-		do {
-			cursorStr = redisManager.hscan(errQueueKey, cursorStr, map, clz);
-			map.values().stream().forEach(data -> {
-				push(data);
-			});
-			map.clear();
-		} while (!"0".equals(cursorStr));
-		redisManager.del(errQueueKey);
+		try {
+			Map<String, T> map = new HashMap<>();
+			String cursorStr = "0";
+			do {
+				cursorStr = redisManager.hscan(errQueueKey, cursorStr, map, clz);
+				map.values().stream().forEach(data -> {
+					push(data);
+				});
+				map.clear();
+			} while (!"0".equals(cursorStr));
+			redisManager.del(errQueueKey);
+		} catch (Exception e) {
+			log.error("againDoErrQueue workSpace[" + workSpaceName + "]", e);
+		}
 	}
 
 	@Override
@@ -233,7 +239,7 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 			try {
 				isduplicate = null != doneSegmentMap.where(key);
 			} catch (Exception e) {
-				throw e;
+				log.error("isDone workSpace[" + workSpaceName + "] key:" +key, e);
 			} finally {
 				distributedLock.unLock();
 			}
@@ -248,7 +254,7 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 			try {
 				doneSegmentMap.put(null, key, "1");
 			} catch (Exception e) {
-				throw e;
+				log.error("addDone workSpace[" + workSpaceName + "] key:" +key, e);
 			} finally {
 				distributedLock.unLock();
 			}
@@ -261,7 +267,7 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 		try {
 			doingSegmentMap.del(data.getIndex());
 		} catch (Exception e) {
-			throw e;
+			log.error("ack workSpace[" + workSpaceName + "] data:" + data.toString(), e);
 		} finally {
 			distributedLock.unLock();
 		}
@@ -269,27 +275,57 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 
 	@Override
 	public int doingSegmentSize() {
-		return doingSegmentMap.segmentSize();
+		int doingSegmentSize = 0;
+		try {
+			doingSegmentSize = doingSegmentMap.segmentSize();
+		} catch (Exception e) {
+			log.error("doingSegmentSize workSpace[" + workSpaceName + "]", e);
+		}
+		return doingSegmentSize;
 	}
 
 	@Override
 	public boolean doingIsEmpty() {
-		return 0 == doingSegmentMap.size() && 0 == doingSegmentQueue.size();
+		boolean doingIsEmpty = false;
+		try {
+			doingIsEmpty = 0 == doingSegmentMap.size() && 0 == doingSegmentQueue.size();
+		} catch (Exception e) {
+			log.error("doingIsEmpty workSpace[" + workSpaceName + "]", e);
+		}
+		return doingIsEmpty;
 	}
 
 	@Override
 	public int doingSize() {
-		return doingSegmentMap.size();
+		int doingSize = 0;
+		try {
+			doingSize = doingSegmentMap.size();
+		} catch (Exception e) {
+			log.error("doingSize workSpace[" + workSpaceName + "]", e);
+		}
+		return doingSize;
 	}
 
 	@Override
 	public int errSize() {
-		return redisManager.hllen(errQueueKey);
+		int errSize = 0;
+		try {
+			errSize = redisManager.hllen(errQueueKey);
+		} catch (Exception e) {
+			log.error("errSize workSpace[" + workSpaceName + "]", e);
+		}
+		return errSize;
 	}
 
 	@Override
 	public int doneSize() {
-		return doneSegmentMap.size();
+		int doneSize = 0;
+		try {
+			doneSize = doneSegmentMap.size();
+		} catch (Exception e) {
+			log.error("doneSize workSpace[" + workSpaceName + "]", e);
+		}
+		return doneSize;
 	}
 
 	@Override
@@ -299,7 +335,7 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 			doingSegmentQueue.clear();
 			doingSegmentMap.clear();
 		} catch (Exception e) {
-			throw e;
+			log.error("clearDoing workSpace[" + workSpaceName + "]", e);
 		} finally {
 			distributedLock.unLock();
 		}
@@ -311,7 +347,7 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 		try {
 			redisManager.del(errQueueKey);
 		} catch (Exception e) {
-			throw e;
+			log.error("clearErr workSpace[" + workSpaceName + "]", e);
 		} finally {
 			distributedLock.unLock();
 		}
@@ -323,7 +359,7 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 		try {
 			doneSegmentMap.clear();
 		} catch (Exception e) {
-			throw e;
+			log.error("clearDone workSpace[" + workSpaceName + "]", e);
 		} finally {
 			distributedLock.unLock();
 		}
@@ -335,7 +371,7 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 		try {
 			doingSegmentMap.cleanUp();
 		} catch (Exception e) {
-			throw e;
+			log.error("close workSpace[" + workSpaceName + "]", e);
 		} finally {
 			distributedLock.unLock();
 		}

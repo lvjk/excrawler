@@ -72,11 +72,7 @@ public class WorkeSpaceTransferTools {
 			List<String> doneList = new ArrayList<>();
 			String cursorStr = "0";
 			
-			List<Page> resutList=new ArrayList<>();
-			cursorStr=targetWorkQueue.batchGetErrData(resutList, cursorStr);
-			for(Page page:resutList){
-				targetWorkQueue.addErr(page);
-			}
+
 			
 			int count = 0;
 			int size = doWorkQueue.doingSegmentSize();
@@ -226,25 +222,26 @@ public class WorkeSpaceTransferTools {
 		};
 		SegmentRedisWorkSpace<Page> workSpace = new SegmentRedisWorkSpace<>(redisManager, distributedLock,
 				workSpaceName, Page.class);
-		Page page = null;
-		boolean repair = false;
-		while (true) {
-			long start = System.currentTimeMillis();
-			page = workSpace.pull();
-			long end = System.currentTimeMillis();
-			System.out.println("pull time:" + (end - start));
-			if (null != page) {
-				workSpace.errRetryPush(page);
-			} else {
-				if (!repair) {
-					workSpace.repair();
-					repair = true;
-					continue;
-				} else {
-					break;
-				}
-			}
-		}
+		workSpace.repair();
+//		Page page = null;
+//		boolean repair = false;
+//		while (true) {
+//			long start = System.currentTimeMillis();
+//			page = workSpace.pull();
+//			long end = System.currentTimeMillis();
+//			System.out.println("pull time:" + (end - start));
+//			if (null != page) {
+//				workSpace.errRetryPush(page);
+//			} else {
+//				if (!repair) {
+//					workSpace.repair();
+//					repair = true;
+//					continue;
+//				} else {
+//					break;
+//				}
+//			}
+//		}
 	}
 
 	private static String getDoneKey(String workSpace, String key) {
