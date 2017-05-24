@@ -24,6 +24,7 @@ import six.com.crawler.entity.Page;
 import six.com.crawler.node.lock.DistributedLock;
 import six.com.crawler.utils.DbHelper;
 import six.com.crawler.utils.MD5Utils;
+import six.com.crawler.work.space.RedisWorkSpace;
 import six.com.crawler.work.space.SegmentRedisWorkSpace;
 import six.com.crawler.work.space.SegmentRedisWorkSpaceBk;
 import six.com.crawler.work.space.WorkSpace;
@@ -38,58 +39,50 @@ public class WorkeSpaceTransferTools {
 	public final static String WORK_DONE_QUEUE_KEY_PRE = "workspace_done_queue_";
 
 	public static void main(String[] args) {
-		// transfer(workSpaceName, redisConnection);
+		transfer("tmsf_house_info");
 		// del(workSpaceName, redisConnection, "spider_redis_store");
 		// doMysql();
 		// nb_cnnbfdc_unit_info
-		WorkeSpaceTransferTools.testPull1("nb_cnnbfdc_room_info");
+		// WorkeSpaceTransferTools.testPull1("nb_cnnbfdc_room_info");
 	}
 
-	public static void transfer(String workSpaceName, String redisConnection) {
-		if (StringUtils.isNotBlank(workSpaceName) && StringUtils.isNotBlank(redisConnection)) {
-			EnhanceJedisCluster doRedis = newJedis(redisConnection);
-			RedisManager doRedisManager = new six.com.crawler.dao.RedisManager();
-			doRedisManager.setJedisCluster(doRedis);
-			DistributedLock distributedLock = new DistributedLock() {
-				@Override
-				public void unLock() {
+	public static void transfer(String workSpaceName) {
+		String redisConnection = "192.168.0.13:6379;192.168.0.13:6380;192.168.0.14:6379;192.168.0.14:6380;192.168.0.15:6379;192.168.0.15:6380;192.168.0.13:6381;192.168.0.14:6381";
+		
+//		String redisConnection = "122.112.214.233:6379;122.112.214.233:6380;"
+//				+ "122.112.214.232:6379;122.112.214.232:6380;"
+//				+ "122.112.210.132:6379;122.112.210.132:6380;";
+		EnhanceJedisCluster doRedis = newJedis(redisConnection);
+		RedisManager doRedisManager = new six.com.crawler.dao.RedisManager();
+		doRedisManager.setJedisCluster(doRedis);
+		DistributedLock distributedLock = new DistributedLock() {
+			@Override
+			public void unLock() {
 
-				}
-
-				@Override
-				public void lock() {
-
-				}
-			};
-			WorkSpace<Page> doWorkQueue = new SegmentRedisWorkSpaceBk<>(doRedisManager, distributedLock, workSpaceName,
-					Page.class);
-			WorkSpace<Page> targetWorkQueue = new SegmentRedisWorkSpace<>(doRedisManager, distributedLock,
-					workSpaceName, Page.class);
-			
-			
-
-			
-			List<String> doneList = new ArrayList<>();
-			String cursorStr = "0";
-			
-
-			
-			int count = 0;
-			int size = doWorkQueue.doingSegmentSize();
-			for (int segmentIndex = 0; segmentIndex < size;segmentIndex++) {
-				do {
-					cursorStr = doWorkQueue.batchGetDoneData(doneList, segmentIndex, cursorStr);
-					count += doneList.size();
-					for (String dataKey : doneList) {
-						targetWorkQueue.addDone(dataKey);
-					}
-					doneList.clear();
-					System.out.println("do data size:" + count);
-				} while (!"0".equals(cursorStr));
 			}
-			doWorkQueue.clearDone();
-		}
 
+			@Override
+			public void lock() {
+
+			}
+		};
+		WorkSpace<Page> doWorkQueue = new RedisWorkSpace<>(doRedisManager, distributedLock, workSpaceName, Page.class);
+		WorkSpace<Page> targetWorkQueue = new SegmentRedisWorkSpace<>(doRedisManager, distributedLock, workSpaceName,
+				Page.class);
+
+		List<String> doneList = new ArrayList<>();
+		String cursorStr = "0";
+		int count = 0;
+		do {
+			cursorStr = doWorkQueue.batchGetDoneData(doneList, 0, cursorStr);
+			count += doneList.size();
+			for (String dataKey : doneList) {
+				targetWorkQueue.addDone(dataKey);
+			}
+			doneList.clear();
+			System.out.println("do data size:" + count);
+		} while (!"0".equals(cursorStr));
+		//doWorkQueue.clearDone();
 	}
 
 	public static void del(String keyPre) {
@@ -203,7 +196,7 @@ public class WorkeSpaceTransferTools {
 		}
 		return count;
 	}
-	
+
 	public static void testPull1(String workSpaceName) {
 		String redisConnection = "172.30.103.83:6379;172.30.103.83:6380;172.30.103.81:6379;172.30.103.81:6380;172.30.103.82:6379;172.30.103.82:6380;";
 		EnhanceJedisCluster jedisCluster = WorkeSpaceTransferTools.newJedis(redisConnection);
@@ -223,25 +216,25 @@ public class WorkeSpaceTransferTools {
 		SegmentRedisWorkSpace<Page> workSpace = new SegmentRedisWorkSpace<>(redisManager, distributedLock,
 				workSpaceName, Page.class);
 		workSpace.repair();
-//		Page page = null;
-//		boolean repair = false;
-//		while (true) {
-//			long start = System.currentTimeMillis();
-//			page = workSpace.pull();
-//			long end = System.currentTimeMillis();
-//			System.out.println("pull time:" + (end - start));
-//			if (null != page) {
-//				workSpace.errRetryPush(page);
-//			} else {
-//				if (!repair) {
-//					workSpace.repair();
-//					repair = true;
-//					continue;
-//				} else {
-//					break;
-//				}
-//			}
-//		}
+		// Page page = null;
+		// boolean repair = false;
+		// while (true) {
+		// long start = System.currentTimeMillis();
+		// page = workSpace.pull();
+		// long end = System.currentTimeMillis();
+		// System.out.println("pull time:" + (end - start));
+		// if (null != page) {
+		// workSpace.errRetryPush(page);
+		// } else {
+		// if (!repair) {
+		// workSpace.repair();
+		// repair = true;
+		// continue;
+		// } else {
+		// break;
+		// }
+		// }
+		// }
 	}
 
 	private static String getDoneKey(String workSpace, String key) {

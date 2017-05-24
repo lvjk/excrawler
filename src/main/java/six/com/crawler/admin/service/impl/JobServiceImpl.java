@@ -37,7 +37,7 @@ import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.PageQuery;
 import six.com.crawler.entity.WorkSpaceInfo;
 import six.com.crawler.entity.WorkerSnapshot;
-import six.com.crawler.schedule.AbstractSchedulerManager;
+import six.com.crawler.schedule.master.AbstractMasterSchedulerManager;
 import six.com.crawler.utils.JobTableUtils;
 import six.com.crawler.work.extract.ExtractItem;
 
@@ -67,7 +67,7 @@ public class JobServiceImpl extends BaseService implements JobService {
 	private WorkerErrMsgDao workerErrMsgDao;
 
 	@Autowired
-	private AbstractSchedulerManager scheduleManager;
+	private AbstractMasterSchedulerManager scheduleManager;
 
 	@Autowired
 	private ExtractItemDao extractItemDao;
@@ -441,11 +441,11 @@ public class JobServiceImpl extends BaseService implements JobService {
 		this.jobDao = jobDao;
 	}
 
-	public AbstractSchedulerManager getScheduleManager() {
+	public AbstractMasterSchedulerManager getScheduleManager() {
 		return scheduleManager;
 	}
 
-	public void setScheduleManager(AbstractSchedulerManager scheduleManager) {
+	public void setScheduleManager(AbstractMasterSchedulerManager scheduleManager) {
 		this.scheduleManager = scheduleManager;
 	}
 

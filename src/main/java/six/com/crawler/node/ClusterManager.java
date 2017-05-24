@@ -15,7 +15,11 @@ import six.com.crawler.rpc.AsyCallback;
 
 public interface ClusterManager {
 
+	String INIT_PATH = "node_manager_init";
+
 	String getClusterName();
+
+	boolean getClusterEnable();
 
 	/**
 	 * 获取当前节点
@@ -23,6 +27,20 @@ public interface ClusterManager {
 	 * @return 当前节点
 	 */
 	Node getCurrentNode();
+
+	/**
+	 * 设置节点类型
+	 * 
+	 * @param type
+	 */
+	void setCurrentNodeType(NodeType type);
+
+	/**
+	 * 注册节点变化watcher
+	 * 
+	 * @param watcher
+	 */
+	void registerNodeChangeWatcher(NodeChangeWatcher watcher);
 
 	/**
 	 * 获取主节点
@@ -43,7 +61,14 @@ public interface ClusterManager {
 	 * 
 	 * @return
 	 */
-	List<Node> getWorkerNodes();
+	List<Node> getWorkerNodesFromRegister();
+
+	/**
+	 * 获取所有工作节点
+	 * 
+	 * @return
+	 */
+	List<Node> getWorkerNodesFromLocal();
 
 	/**
 	 * 通过节点名获取节点
@@ -79,11 +104,11 @@ public interface ClusterManager {
 	<T> T loolup(Node node, Class<T> clz, AsyCallback asyCallback);
 
 	/**
-	 * 基于Rpc Service注解注册
+	 * 注册节点Rpc Service
 	 * 
 	 * @param tagetOb
 	 */
-	void register(Object tagetOb);
+	void registerNodeService(Object tagetOb);
 
 	/**
 	 * 移除节点服务
@@ -92,8 +117,8 @@ public interface ClusterManager {
 	 */
 	void remove(String commandName);
 
-	
 	void clearLock();
+
 	/**
 	 * 根据path 获取一个 分布式读锁
 	 * 

@@ -38,7 +38,7 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 			Node newestNode = clusterManager.getNewestNode(masterNode);
 			allNodes.add(newestNode);
 		}
-		List<Node> workerNodes = clusterManager.getWorkerNodes();
+		List<Node> workerNodes = clusterManager.getWorkerNodesFromRegister();
 		if (null != workerNodes) {
 			for (Node workerNode : workerNodes) {
 				if (!allNodes.contains(workerNode)) {

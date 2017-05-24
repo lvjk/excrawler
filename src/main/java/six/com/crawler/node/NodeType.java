@@ -8,25 +8,18 @@ package six.com.crawler.node;
 public enum NodeType {
 
 	/**
-	 * 主节点 
-	 */
-	MASTER(0), 
-	/**
-	 * 备用主节点    
-	 */
-	MASTER_STANDBY(1), 
-	/**
-	 * 工作节点
-	 */
-	WORKER(2),
-	/**
-	 * 主节点工作节点
-	 */
-	MASTER_WORKER(3),
-	/**
 	 * 单机节点
 	 */
-	SINGLE(4);
+	SINGLE(0),
+	/**
+	 * 集群主节点
+	 */
+	MASTER(1),
+
+	/**
+	 * 集群工作节点
+	 */
+	WORKER(2);
 
 	final int value;
 
@@ -40,18 +33,13 @@ public enum NodeType {
 
 	public static NodeType valueOf(int type) {
 		if (0 == type) {
-			return MASTER;
+			return SINGLE;
 		} else if (1 == type) {
-			return MASTER_STANDBY;
+			return MASTER;
 		} else if (2 == type) {
 			return WORKER;
-		}  else if (3 == type) {
-			return MASTER_WORKER;
-		} else if (4 == type) {
-			return SINGLE;
-		}else {
+		} else {
 			return WORKER;
 		}
-
 	}
 }

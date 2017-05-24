@@ -300,23 +300,25 @@ public class Page implements WorkSpaceData, Serializable {
 	}
 
 	public String toString() {
-		String toString = null;
+		StringBuilder strBuf = new StringBuilder();
 		if (getMethod().value.equals(HttpMethod.POST.value)) {
 			Map<String, Object> params = getParameters();
-			StringBuilder originUrlBf = new StringBuilder();
 			if (null != params && params.size() > 0) {
 				for (String key : params.keySet()) {
-					originUrlBf.append(key + "=" + params.get(key) + "&");
+					strBuf.append(key + "=" + params.get(key) + "&");
 				}
-				originUrlBf.delete(originUrlBf.length() - 1, originUrlBf.length());
+				strBuf.delete(strBuf.length() - 1, strBuf.length());
 			}
-			originUrlBf.append("?post@");
-			originUrlBf.append(getFinalUrl());
-			toString = originUrlBf.toString();
+			strBuf.append("?post@");
+			strBuf.append(getFinalUrl());
 		} else {
-			toString = "get@" + getFinalUrl();
+			strBuf.append("get@" + getFinalUrl());
 		}
-		return toString;
+		if(!getMetaMap().isEmpty()){
+			String metaJson=JsonUtils.toJson(getMetaMap());
+			strBuf.append("@meta:"+metaJson);
+		}
+		return strBuf.toString();
 	}
 
 	@Override

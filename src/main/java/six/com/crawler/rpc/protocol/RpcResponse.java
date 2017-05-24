@@ -6,19 +6,18 @@ import java.io.Serializable;
  * @author six
  * @date 2016年6月2日 下午4:15:17 rpc响应
  */
-public class RpcResponse extends RpcMsg implements Serializable{
+public class RpcResponse extends RpcMsg implements Serializable {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -7823438169107836197L;
 
-
 	// 响应结果
 	private Object result;
-	
+
 	private int status;
-	
+
 	private String msg;
 
 	public RpcResponse() {
@@ -32,6 +31,7 @@ public class RpcResponse extends RpcMsg implements Serializable{
 	public void setResult(Object result) {
 		this.result = result;
 	}
+
 	public int getStatus() {
 		return status;
 	}
@@ -47,5 +47,9 @@ public class RpcResponse extends RpcMsg implements Serializable{
 	public void setMsg(String msg) {
 		this.msg = msg;
 	}
-	
+
+	public boolean isOk() {
+		return RpcResponseStatus.succeed == status;
+	}
+
 }

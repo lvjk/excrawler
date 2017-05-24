@@ -58,6 +58,8 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 			+ "&propertyid=" + projectIdTemplate + "&presellid=" + presellIdTemplate + "&buildingid="
 			+ buildingidTemplate;
 
+	private java.text.DecimalFormat df = new java.text.DecimalFormat("#.00");
+
 	@Override
 	protected void insideInit() {
 		houseInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("tmsf_house_info", Page.class);
@@ -133,52 +135,66 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 		if (null != houseList && !houseList.isEmpty()) {
 			for (Map<String, Object> houseMap : houseList) {
 				Object valueOb = null;
-				String internalId = (valueOb = houseMap.get("internalid")) != null ? valueOb.toString() : "";
-				boolean isAdd = false;
-				// 先判断是否在div布局中存在 raphael_box
-				Elements raphaelBoxDiv = getDivLayoutDivs(doingPage);
-				if (!raphaelBoxDiv.isEmpty()) {
-					Element houseDivElement = raphaelBoxDiv.select("div[fwid=" + internalId + "]").first();
-					if (null != houseDivElement) {
-						isAdd = true;
+				//String internalId = (valueOb = houseMap.get("internalid")) != null ? valueOb.toString() : "";
+				// boolean isAdd = false;
+				// // 先判断是否在div布局中存在 raphael_box
+				// Elements raphaelBoxDiv = getDivLayoutDivs(doingPage);
+				// if (!raphaelBoxDiv.isEmpty()) {
+				// Element houseDivElement = raphaelBoxDiv.select("div[fwid=" +
+				// internalId + "]").first();
+				// if (null != houseDivElement) {
+				// isAdd = true;
+				// }
+				// } else {
+				// // 如果div布局中不存在那么再判断是否在table布局中存在
+				// String jsUrl = StringUtils.replace(houseStatusJsUrlTemplate,
+				// sidTemplate, sid);
+				// jsUrl = StringUtils.replace(jsUrl, projectIdTemplate,
+				// propertyId);
+				// jsUrl = StringUtils.replace(jsUrl, presellIdTemplate,
+				// presellId_org);
+				// jsUrl = StringUtils.replace(jsUrl, buildingidTemplate,
+				// buildingId);
+				// String dataUrl = UrlUtils.paserUrl(doingPage.getBaseUrl(),
+				// doingPage.getFinalUrl(), jsUrl);
+				// Page houseJsPage = new Page(doingPage.getSiteCode(), 1,
+				// dataUrl, dataUrl);
+				// houseJsPage.setReferer(doingPage.getFinalUrl());
+				// houseJsPage.setMethod(HttpMethod.GET);
+				// getDowner().down(houseJsPage);
+				// String js = houseJsPage.getPageSrc();
+				// js = StringUtils.remove(js, "document.writeln(");
+				// js = StringUtils.remove(js, ");");
+				// js = JsUtils.evalJs(js);
+				// Element table = Jsoup.parse(js);
+				// Elements houseAs = table.select("a");
+				// String houseId = (valueOb = houseMap.get("houseid")) != null
+				// ? valueOb.toString() : "";
+				// for (Element houseA : houseAs) {
+				// String href = houseA.attr("href");
+				// if (StringUtils.contains(href, houseId)) {
+				// isAdd = true;
+				// break;
+				// }
+				// }
+				//
+				// }
+				// if (isAdd) {
+				String result = null;
+				for (String field : jsonKeyMap.keySet()) {
+					String jsonKey = jsonKeyMap.get(field);
+					valueOb = houseMap.get(jsonKey);
+					if (valueOb instanceof Double) {
+						result = df.format((Double) valueOb);
+					} else if (valueOb instanceof Float) {
+						result = df.format((Float) valueOb);
+					} else {
+						result = null != valueOb ? valueOb.toString() : "";
 					}
-				} else {
-					// 如果div布局中不存在那么再判断是否在table布局中存在
-					String jsUrl = StringUtils.replace(houseStatusJsUrlTemplate, sidTemplate, sid);
-					jsUrl = StringUtils.replace(jsUrl, projectIdTemplate, propertyId);
-					jsUrl = StringUtils.replace(jsUrl, presellIdTemplate, presellId_org);
-					jsUrl = StringUtils.replace(jsUrl, buildingidTemplate, buildingId);
-					String dataUrl = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), jsUrl);
-					Page houseJsPage = new Page(doingPage.getSiteCode(), 1, dataUrl, dataUrl);
-					houseJsPage.setReferer(doingPage.getFinalUrl());
-					houseJsPage.setMethod(HttpMethod.GET);
-					getDowner().down(houseJsPage);
-					String js = houseJsPage.getPageSrc();
-					js = StringUtils.remove(js, "document.writeln(");
-					js = StringUtils.remove(js, ");");
-					js = JsUtils.evalJs(js);
-					Element table = Jsoup.parse(js);
-					Elements houseAs = table.select("a");
-					String houseId = (valueOb = houseMap.get("houseid")) != null ? valueOb.toString() : "";
-					for (Element houseA : houseAs) {
-						String href = houseA.attr("href");
-						if (StringUtils.contains(href, houseId)) {
-							isAdd = true;
-							break;
-						}
-					}
-
+					doingPage.getMetaMap().computeIfAbsent(field, mapKey -> new ArrayList<>()).add(result);
 				}
+				// }
 
-				if (isAdd) {
-					for (String field : jsonKeyMap.keySet()) {
-						String jsonKey = jsonKeyMap.get(field);
-						valueOb = houseMap.get(jsonKey);
-						doingPage.getMetaMap().computeIfAbsent(field, mapKey -> new ArrayList<>())
-								.add(null != valueOb ? valueOb.toString() : "");
-
-					}
-				}
 			}
 		} else {
 			if (isTableLayout(doingPage)) {

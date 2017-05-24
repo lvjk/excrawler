@@ -2,6 +2,7 @@ package six.com.crawler.admin.service;
 
 import java.util.List;
 
+import six.com.crawler.admin.api.ResponseMsg;
 import six.com.crawler.entity.WorkerSnapshot;
 
 /** 
@@ -17,7 +18,7 @@ public interface MasterScheduledService {
 	 * @param jobName
 	 * @return
 	 */
-	public String execute(String jobName);
+	public ResponseMsg<String> execute(String jobName);
 	
 	
 	/**
@@ -26,7 +27,7 @@ public interface MasterScheduledService {
 	 * @param jobName
 	 * @return
 	 */
-	public String suspend(String jobName);
+	public ResponseMsg<String> suspend(String jobName);
 
 	/**
 	 * 继续执行job
@@ -34,7 +35,7 @@ public interface MasterScheduledService {
 	 * @param jobName
 	 * @return
 	 */
-	public String goOn(String jobName);
+	public ResponseMsg<String> goOn(String jobName);
 
 	/**
 	 * 终止执行job
@@ -42,8 +43,8 @@ public interface MasterScheduledService {
 	 * @param jobName
 	 * @return
 	 */
-	public String stop(String jobName);
+	public ResponseMsg<String> stop(String jobName);
 	
 
-	public List<WorkerSnapshot> getWorkerInfo(String jobName);
+	public ResponseMsg<List<WorkerSnapshot>> getWorkerInfo(String jobName);
 }
