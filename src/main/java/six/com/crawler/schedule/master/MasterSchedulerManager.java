@@ -111,19 +111,20 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 				log.error("master node repair err", e);
 			}
 			initMasterNodeScheduler();
-		}
-		// 注册变为主节点wather
-		getClusterManager().registerNodeChangeWatcher(new NodeChangeWatcher() {
-			@Override
-			public void onChange(NodeChangeEvent event) {
-				if (NodeChangeEvent.TO_MASTER == event) {
-					// 当检测到变更为主节点时那么，应该暂停当前节点上运行的任务，然后加载计划执行任务，
-					getWorkerSchedulerManager().stopAll(DispatchType.newDispatchTypeByMaster());
-					// 初始化主节点调度中心
-					initMasterNodeScheduler();
+		}else{
+			// 注册变为主节点wather
+			getClusterManager().registerNodeChangeWatcher(new NodeChangeWatcher() {
+				@Override
+				public void onChange(NodeChangeEvent event) {
+					if (NodeChangeEvent.TO_MASTER == event) {
+						// 当检测到变更为主节点时那么，应该暂停当前节点上运行的任务，然后加载计划执行任务，
+						getWorkerSchedulerManager().stopAll(DispatchType.newDispatchTypeByMaster());
+						// 初始化主节点调度中心
+						initMasterNodeScheduler();
+					}
 				}
-			}
-		});
+			});
+		}
 	}
 
 	private void initMasterNodeScheduler() {
