@@ -102,6 +102,16 @@ public interface ClusterManager {
 	 * @return
 	 */
 	<T> T loolup(Node node, Class<T> clz, AsyCallback asyCallback);
+	
+	
+	/**
+	 * 寻找节点服务
+	 * 
+	 * @param node
+	 * @param clz
+	 * @return
+	 */
+	<T> T loolup(Node node, Class<T> clz);
 
 	/**
 	 * 注册节点Rpc Service

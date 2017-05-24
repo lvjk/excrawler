@@ -246,7 +246,7 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 		ObjectCheckUtils.checkNotNull(targetNode, "targetNode");
 		Node newestNode = targetNode;
 		try {
-			ClusterManager findNodeManager = loolup(targetNode, ClusterManager.class, null);
+			ClusterManager findNodeManager = loolup(targetNode, ClusterManager.class);
 			newestNode = findNodeManager.getCurrentNode();
 		} catch (Exception e) {
 			log.error("get newest node:" + targetNode.getName(), e);
@@ -257,6 +257,11 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 	@Override
 	public <T> T loolup(Node node, Class<T> clz, AsyCallback asyCallback) {
 		return nettyRpcCilent.lookupService(node.getHost(), node.getTrafficPort(), clz, asyCallback);
+	}
+
+	@Override
+	public <T> T loolup(Node node, Class<T> clz) {
+		return nettyRpcCilent.lookupService(node.getHost(), node.getTrafficPort(), clz);
 	}
 
 	/**
