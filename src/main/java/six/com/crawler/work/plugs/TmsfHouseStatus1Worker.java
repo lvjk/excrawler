@@ -56,7 +56,7 @@ public class TmsfHouseStatus1Worker extends AbstractCrawlWorker {
 	protected void insideInit() {
 		houseInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("tmsf_house_info", Page.class);
 		jsonKeyMap = new HashMap<>();
-		jsonKeyMap.put("buildingName", "buildingname");
+		//jsonKeyMap.put("buildingName", "buildingname");
 		jsonKeyMap.put("unitName", "unitname");
 		jsonKeyMap.put("internalId", "internalid");
 		jsonKeyMap.put("houseId", "houseid");
@@ -198,7 +198,7 @@ public class TmsfHouseStatus1Worker extends AbstractCrawlWorker {
 				List<String> unitList = new ArrayList<>();
 				for (Element unitTd : unitTds) {
 					String unitName = unitTd.text();
-					if (!StringUtils.contains(unitName, "单元名称")) {
+					if (!StringUtils.contains(unitName, "单元")) {
 						unitList.add(unitName);
 					}
 				}
@@ -216,20 +216,36 @@ public class TmsfHouseStatus1Worker extends AbstractCrawlWorker {
 						for (Element element : houseElements) {
 							String housePageUrl = element.attr("href");
 							if (StringUtils.isNotBlank(housePageUrl)) {
+								String houseId = element.attr("id");
+								if(StringUtils.isNotBlank(houseId)){
+									houseId = StringUtils.replace(houseId, "H","");
+								}else{
+									houseId=StringUtils.substringAfterLast(housePageUrl, "_");
+									houseId=StringUtils.remove(houseId, ".htm");
+								}
 								String houseNo = element.text();
 								String onmouseoverHtml = element.attr("onmouseover");
 								String houseData = StringUtils.substringBetween(onmouseoverHtml,
 										"<table><tr><td width=240>", "</td><td width=150>tupian</td>");
-								houseData = StringUtils.remove(houseData, "<br/>");
-								String houseStatus = StringUtils.substringBetween(houseData, "当前状态：", "房屋用途：");
-								String houseUsage = StringUtils.substringBetween(houseData, "房屋用途：", "建筑面积");
-								String buildingArea = StringUtils.substringBetween(houseData, "建筑面积：", "毛坯单价");
-								String roughPrice = StringUtils.substringBetween(houseData, "毛坯单价：", "总　　价");
-								String totalPrice = StringUtils.substringBetween(houseData, "总　　价：", "房屋坐落");
-								String houseAddress = StringUtils.substringAfterLast(houseData, "房屋坐落：");
+								
+								houseData = StringUtils.replace(houseData, "<br/>", "");
+								houseData = StringUtils.replace(houseData, "　", "");
+								houseData = StringUtils.replace(houseData, " ", "");
+								houseData = StringUtils.replace(houseData, "：", "");
+								houseData = StringUtils.replace(houseData, ":", "");
+								String houseStatus = StringUtils.substringBetween(houseData, "当前状态", "房屋用途");
+								String houseUsage = StringUtils.substringBetween(houseData, "房屋用途", "建筑面积");
+								String buildingArea = StringUtils.substringBetween(houseData, "建筑面积", "毛坯单价");
+								String roughPrice = StringUtils.substringBetween(houseData, "毛坯单价", "总价");
+								String totalPrice = StringUtils.substringBetween(houseData, "总价", "房屋坐落");
+								String houseAddress = StringUtils.substringAfterLast(houseData, "房屋坐落");
 
 								doingPage.getMetaMap().computeIfAbsent("unitName", mapKey -> new ArrayList<>())
 										.add(unitName);
+								
+								doingPage.getMetaMap().computeIfAbsent("houseId", mapKey -> new ArrayList<>())
+								.add(houseId);
+								
 								doingPage.getMetaMap().computeIfAbsent("houseNo", mapKey -> new ArrayList<>())
 										.add(houseNo);
 								doingPage.getMetaMap().computeIfAbsent("status", mapKey -> new ArrayList<>())
@@ -256,6 +272,13 @@ public class TmsfHouseStatus1Worker extends AbstractCrawlWorker {
 			}
 
 		}
+	}
+	
+	public static void main(String[] garg){
+		String url="/newhouse/property_house_330189_27393846_67292.htm";
+		String id=StringUtils.substringAfterLast(url, "_");
+		id=StringUtils.remove(id, ".htm");
+		System.out.println(id);
 	}
 
 	private boolean isTableLayout(Page doingPage) {

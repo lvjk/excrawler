@@ -10,6 +10,8 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import com.google.common.collect.Lists;
+
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.utils.ArrayListUtils;
@@ -118,6 +120,7 @@ public class TmsfPresellInfo1Worker extends AbstractCrawlWorker {
 		Elements buildingidElements = doingPage.getDoc().select(buildingidCss);
 
 		for (Element buildingidElement : buildingidElements) {
+			String buildingName=buildingidElement.text();
 			String buildingid = buildingidElement.attr("href");
 			buildingid = StringUtils.substringBetween(buildingid, "javascript:doBuilding('", "')");
 			String houseInfoUrl = UrlUtils.paserUrl(doingPage.getBaseUrl(), doingPage.getFinalUrl(), formAction);
@@ -132,6 +135,7 @@ public class TmsfPresellInfo1Worker extends AbstractCrawlWorker {
 			houseInfoPage.setMethod(HttpMethod.POST);
 			houseInfoPage.setParameters(paramMap);
 			houseInfoPage.getMetaMap().putAll(doingPage.getMetaMap());
+			houseInfoPage.getMetaMap().put("buildingName",Lists.newArrayList(buildingName));
 			houseStatusQueue.push(houseInfoPage);
 		}
 	}

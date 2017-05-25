@@ -4,6 +4,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import com.google.common.collect.Lists;
+
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
@@ -86,6 +88,7 @@ public class TmsfHouseUrlWorker extends AbstractCrawlWorker {
 		String buildingidCss = "div[id=building_dd]>div[class=lptypebarin]>a";
 		Elements buildingidElements = doingPage.getDoc().select(buildingidCss);
 		for (Element buildingidElement : buildingidElements) {
+			String buildingName=buildingidElement.text();
 			String buildingId = buildingidElement.attr("href");
 			buildingId = StringUtils.substringBetween(buildingId, "javascript:doBuilding('", "');");
 			String houseInfoUrl = StringUtils.replace(houseInfoUrlTemplate, sidTemplate, sid);
@@ -103,6 +106,7 @@ public class TmsfHouseUrlWorker extends AbstractCrawlWorker {
 			houseInfoPage.setType(PageType.DATA.value());
 			houseInfoPage.addMeta("buildingId", buildingId);
 			houseInfoPage.getMetaMap().putAll(doingPage.getMetaMap());
+			houseInfoPage.getMetaMap().put("buildingName",Lists.newArrayList(buildingName));
 			houseStatusQueue.push(houseInfoPage);
 		}
 	}
