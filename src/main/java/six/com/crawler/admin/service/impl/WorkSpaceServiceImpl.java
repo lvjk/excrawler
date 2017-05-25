@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import six.com.crawler.admin.api.ResponseMsg;
 import six.com.crawler.admin.service.BaseService;
 import six.com.crawler.admin.service.WorkSpaceService;
+import six.com.crawler.admin.vo.PageVo;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.WorkSpaceInfo;
 import six.com.crawler.work.space.WorkSpace;
@@ -81,8 +82,16 @@ public class WorkSpaceServiceImpl extends BaseService implements WorkSpaceServic
 		Map<String, Object> resultMap = new HashMap<>();
 		List<Page> list = new ArrayList<>();
 		cursor = workSpaceManager.newWorkSpace(workSpaceName, Page.class).batchGetErrData(list, cursor);
+		List<PageVo> pageVolist = new ArrayList<>();
+		PageVo pageVo = null;
+		for (Page page : list) {
+			pageVo = new PageVo();
+			pageVo.setPageKey(page.getPageKey());
+			pageVo.setUrl(page.toString());
+			pageVolist.add(pageVo);
+		}
 		resultMap.put("cursor", cursor);
-		resultMap.put("list", list);
+		resultMap.put("list", pageVolist);
 		responseMsg.setIsOk(1);
 		responseMsg.setData(resultMap);
 		return responseMsg;

@@ -162,14 +162,8 @@ public class NettyRpcCilent extends AbstractRemote implements RpcCilent {
 				rpcRequest.setCallHost(targetHost);
 				rpcRequest.setCallPort(targetPort);
 				rpcRequest.setParams(args);
-				RpcResponse rpcResponse = null;
-				if (null == asyCallback) {
-					rpcResponse = synExecute(rpcRequest);
-					return rpcResponse.getResult();
-				} else {
-					asyExecute(rpcRequest, asyCallback);
-					return null;
-				}
+				asyExecute(rpcRequest, asyCallback);
+				return null;
 			}
 		});
 		return (T) enhancer.create();

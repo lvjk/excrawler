@@ -40,6 +40,8 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 
 	// 工作默认rest状态下 休息时间
 	private final static int DEFAULT_REST_TIME = 2000;
+	// 当前work线程
+	private Thread workThread;
 	// 用来lock 读写 状态
 	private final StampedLock setStateLock = new StampedLock();
 	// 用来lock Condition.await() 和condition.signalAll();
@@ -125,7 +127,7 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 		String jobName = getJob().getName();
 		MDC.put("jobName", jobName);
 		String path = "job_" + jobName + "_" + getWorkerSnapshot().getJobSnapshotId() + "_worker";
-		distributedLock = getManager().getNodeManager().getWriteLock(path);
+		distributedLock = getManager().getClusterManager().getWriteLock(path);
 		try {
 			distributedLock.lock();
 			restWaitTime = (long) job.getParamInt(CrawlerJobParamKeys.REST_WAIT_TIME, DEFAULT_REST_TIME);
@@ -135,15 +137,19 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 			String workSpaceName = getJob().getWorkSpaceName();
 			workSpace = getManager().getWorkSpaceManager().newWorkSpace(
 					StringUtils.isBlank(workSpaceName) ? getJob().getName() : workSpaceName, workSpaceDataClz);
-			initWorker(jobSnapshot);
+			initWorker(jobSnapshot);//
 		} catch (Exception e) {
-			throw e;
+			throw new WorkerInitException("job[" + getJob().getName() + "]'s work[" + getName() + "] init err", e);
 		} finally {
 			distributedLock.unLock();
 		}
 	}
 
+	/**
+	 * 工作流程处理中所有不可控异常都会设置为stop退出当前处理
+	 */
 	private final void work() {
+		workThread = Thread.currentThread();
 		workerSnapshot.setStartTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
 		log.info("start init:" + getName());
 		try {
@@ -166,7 +172,10 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 					try {
 						workData = getWorkSpace().pull();
 					} catch (Exception e) {
-						log.error("get data from workSpace", e);
+						String errMsg = "get data from workSpace:" + job.getWorkSpaceName();
+						log.error(errMsg, e);
+						doErr(new WorkerOtherException(errMsg, e));
+						continue;
 					}
 					if (null != workData) {
 						doStart(workData);
@@ -183,12 +192,8 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 					}
 					// wait状态时会询问管理者是否end，然后休息
 				} else if (getState() == WorkerLifecycleState.WAITED) {
-					try {
-						manager.askEnd(getJob().getName(), getName());
-						signalWait(0);
-					} catch (Exception e) {
-						log.error("worker[" + getName() + "] ask manager is end", e);
-					}
+					manager.askEnd(getJob().getName(), getName());
+					signalWait(0);
 					// suspend状态时会直接休息
 				} else if (getState() == WorkerLifecycleState.SUSPEND) {
 					signalWait(0);
@@ -223,6 +228,10 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 		} catch (WorkerException e) {
 			log.error("worker process err", e);
 			doErr(e);
+			onError(e, workData);
+		} catch (Exception e) {
+			log.error("worker process err", e);
+			doErr(new WorkerOtherException(e));
 			onError(e, workData);
 		}
 		// 统计次数加1
@@ -298,8 +307,12 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 	@Override
 	public final void stop() {
 		WorkerLifecycleState snapshot = getAndSetState(WorkerLifecycleState.STOPED);
+		// 如果当前状态属于暂停或者等待下那么signalRun
 		if (snapshot == WorkerLifecycleState.SUSPEND || snapshot == WorkerLifecycleState.WAITED) {
 			signalRun();
+		} else {
+			// 调用当前线程interrupt,并免因为io网络等其他原因导致阻塞无法stop
+			workThread.interrupt();
 		}
 		log.info("worker will stop:" + getName());
 	}

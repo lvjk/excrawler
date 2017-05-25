@@ -2,7 +2,9 @@ package six.com.crawler.node;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.annotation.PreDestroy;
 
@@ -24,8 +26,6 @@ import six.com.crawler.email.QQEmailClient;
 import six.com.crawler.node.lock.DistributedLock;
 import six.com.crawler.node.lock.DistributedReadLock;
 import six.com.crawler.node.lock.DistributedWriteLock;
-import six.com.crawler.node.register.NodeRegisterEvent;
-import six.com.crawler.node.register.NodeRegisterEventFactory;
 import six.com.crawler.rpc.AsyCallback;
 import six.com.crawler.rpc.NettyRpcCilent;
 import six.com.crawler.rpc.NettyRpcServer;
@@ -56,6 +56,8 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 
 	private String clusterName;
 
+	private boolean clusterEnable;
+
 	// 当前节点
 	private Node currentNode;
 
@@ -65,11 +67,16 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 
 	private NettyRpcCilent nettyRpcCilent;
 
-	private NodeRegisterEvent nodeRegisterEvent;
+	private NodeRegister nodeRegisterEvent;
+
+	private Set<NodeChangeWatcher> nodeTypeChangeWatchers = new HashSet<>();
 
 	public void afterPropertiesSet() {
 		// 初始化当前节点信息
 		clusterName = getConfigure().getConfig("cluster.name", null);
+		log.info("init cluster'name:" + clusterName);
+		clusterEnable = getConfigure().getConfig("cluster.enable", false);
+		log.info("init cluster'enable:" + clusterEnable);
 		// 检查集群名字是否设置
 		if (StringUtils.isBlank(clusterName)) {
 			log.error("don't set cluster's name ,please set it ,then to start");
@@ -85,17 +92,14 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 			log.error("don't set node's name ,please set it ,then to start");
 			exit(1);
 		}
-		// 检查节点类型
-		NodeType nodeType = getConfigure().getNodeType();
 		currentNode = new Node();
 		currentNode.setClusterName(clusterName);
-		currentNode.setType(nodeType);
 		currentNode.setName(nodeName);
 		currentNode.setHost(host);
 		currentNode.setPort(port);
 		currentNode.setTrafficPort(trafficPort);
 		currentNode.setRunningWorkerMaxSize(runningWorkerMaxSize);
-		log.info("the node[" + nodeName + "] type:" + nodeType);
+		log.info("init currentNode:" + currentNode.toString());
 		// 初始化curatorFramework
 		String connectString = getConfigure().getConfig("zookeeper.host", null);
 		if (StringUtils.isBlank(connectString)) {
@@ -116,22 +120,19 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 			log.error("init curatorFramework err");
 			exit(1);
 		}
-		String path = "node_manager_init";
-		DistributedLock writeLock = getWriteLock(path);
+		DistributedLock writeLock = getWriteLock(ClusterManager.INIT_PATH);
 		try {
 			writeLock.lock();
-			// 初始化注册当前节点
-			nodeRegisterEvent = NodeRegisterEventFactory.createNodeRegisterEvent(currentNode);
-			if (!nodeRegisterEvent.register(this, curatorFramework)) {
-				log.error("register node[" + currentNode.getName() + "] to zooKeeper failed");
-				exit(1);
-			}
 			/**
 			 * 初始化 节点server和client 通信
 			 */
 			nettyRpcServer = new NettyRpcServer(getCurrentNode().getHost(), getCurrentNode().getTrafficPort());
 			nettyRpcCilent = new NettyRpcCilent();
-			register(this);
+			registerNodeService(this);
+
+			// 初始化注册当前节点
+			nodeRegisterEvent = new NodeRegister(this, curatorFramework, currentNode);
+			nodeRegisterEvent.register();
 		} catch (Exception e) {
 			log.error("init clusterManager err", e);
 			exit(1);
@@ -173,7 +174,7 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 	 * @return
 	 */
 	@Override
-	public List<Node> getWorkerNodes() {
+	public List<Node> getWorkerNodesFromRegister() {
 		List<Node> allNodes = new ArrayList<>();
 		try {
 			String workerNodesPath = ZooKeeperPathUtils.getWorkerNodesPath(getClusterName());
@@ -189,6 +190,11 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 		return allNodes;
 	}
 
+	@Override
+	public List<Node> getWorkerNodesFromLocal() {
+		return null;
+	}
+
 	/**
 	 * 通过节点名获取节点
 	 * 
@@ -198,16 +204,12 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 	@Override
 	public Node getWorkerNode(String nodeName) {
 		Node workerNode = null;
-		if (getCurrentNode().getType() != NodeType.SINGLE) {
-			try {
-				byte[] data = curatorFramework.getData()
-						.forPath(ZooKeeperPathUtils.getWorkerNodePath(getClusterName(), nodeName));
-				workerNode = JavaSerializeUtils.unSerialize(data, Node.class);
-			} catch (Exception e) {
-				log.error("getWorkerNode err:" + nodeName, e);
-			}
-		} else {
-			workerNode = currentNode;
+		try {
+			byte[] data = curatorFramework.getData()
+					.forPath(ZooKeeperPathUtils.getWorkerNodePath(getClusterName(), nodeName));
+			workerNode = JavaSerializeUtils.unSerialize(data, Node.class);
+		} catch (Exception e) {
+			log.error("getWorkerNode err:" + nodeName, e);
 		}
 		return workerNode;
 	}
@@ -221,20 +223,18 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 	@Override
 	public List<Node> getFreeWorkerNodes(int needFresNodes) {
 		List<Node> freeNodes = new ArrayList<>(needFresNodes);
-		List<Node> allWorkerNodes = getWorkerNodes();
+		List<Node> allWorkerNodes = getWorkerNodesFromRegister();
 		for (Node workerNode : allWorkerNodes) {
-			if (workerNode.getType() != NodeType.MASTER) {
-				Node newestNode = null;
-				if (!getCurrentNode().equals(workerNode)) {
-					newestNode = getNewestNode(workerNode);
-				} else {
-					newestNode = getCurrentNode();
-				}
-				if (newestNode.getRunningWorkerSize() < newestNode.getRunningWorkerMaxSize()) {
-					freeNodes.add(workerNode);
-					if (freeNodes.size() >= needFresNodes) {
-						break;
-					}
+			Node newestNode = null;
+			if (!getCurrentNode().equals(workerNode)) {
+				newestNode = getNewestNode(workerNode);
+			} else {
+				newestNode = getCurrentNode();
+			}
+			if (newestNode.getRunningWorkerSize() < newestNode.getRunningWorkerMaxSize()) {
+				freeNodes.add(workerNode);
+				if (freeNodes.size() >= needFresNodes) {
+					break;
 				}
 			}
 		}
@@ -246,7 +246,7 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 		ObjectCheckUtils.checkNotNull(targetNode, "targetNode");
 		Node newestNode = targetNode;
 		try {
-			ClusterManager findNodeManager = loolup(targetNode, ClusterManager.class, null);
+			ClusterManager findNodeManager = loolup(targetNode, ClusterManager.class);
 			newestNode = findNodeManager.getCurrentNode();
 		} catch (Exception e) {
 			log.error("get newest node:" + targetNode.getName(), e);
@@ -259,13 +259,18 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 		return nettyRpcCilent.lookupService(node.getHost(), node.getTrafficPort(), clz, asyCallback);
 	}
 
+	@Override
+	public <T> T loolup(Node node, Class<T> clz) {
+		return nettyRpcCilent.lookupService(node.getHost(), node.getTrafficPort(), clz);
+	}
+
 	/**
 	 * 基于Rpc Service注解注册
 	 * 
 	 * @param tagetOb
 	 */
 	@Override
-	public void register(Object tagetOb) {
+	public void registerNodeService(Object tagetOb) {
 		nettyRpcServer.register(tagetOb);
 	}
 
@@ -287,20 +292,37 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 		currentNode.setMem(MyOperatingSystemMXBean.freeMemoryPRP());
 		return currentNode;
 	}
-	
+
 	@Override
-	public void clearLock(){
-		String path=ZooKeeperPathUtils.getDistributedLocksPath(getClusterName());
+	public void setCurrentNodeType(NodeType type) {
+		if (type != currentNode.getType()) {
+			currentNode.setType(type);
+			if (NodeType.MASTER == type) {
+				for (NodeChangeWatcher watcher : nodeTypeChangeWatchers) {
+					watcher.onChange(NodeChangeEvent.TO_MASTER);
+				}
+			}
+		}
+	}
+
+	@Override
+	public void registerNodeChangeWatcher(NodeChangeWatcher watcher) {
+		nodeTypeChangeWatchers.add(watcher);
+	}
+
+	@Override
+	public void clearLock() {
+		String path = ZooKeeperPathUtils.getDistributedLocksPath(getClusterName());
 		try {
-			List<String> childrens=curatorFramework.getChildren().forPath(path);
-			if(null!=childrens){
-				for(String children:childrens){
-					children=ZooKeeperPathUtils.getDistributedLockPath(getClusterName(), children);
+			List<String> childrens = curatorFramework.getChildren().forPath(path);
+			if (null != childrens) {
+				for (String children : childrens) {
+					children = ZooKeeperPathUtils.getDistributedLockPath(getClusterName(), children);
 					curatorFramework.delete().forPath(children);
 				}
 			}
 		} catch (Exception e) {
-			log.error("clearLock getChildren",e);
+			log.error("clearLock getChildren", e);
 		}
 	}
 
@@ -322,6 +344,12 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 		return writeLock;
 	}
 
+	@Override
+	public boolean getClusterEnable() {
+		return clusterEnable;
+	}
+
+	@Override
 	public String getClusterName() {
 		return clusterName;
 	}
@@ -330,7 +358,7 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 	public void destroy() {
 
 		if (null != nodeRegisterEvent) {
-			nodeRegisterEvent.unRegister(this, curatorFramework);
+			nodeRegisterEvent.unRegister();
 		}
 
 		if (null != nettyRpcCilent) {
@@ -357,8 +385,8 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 	public void setApplicationContext(ConfigurableApplicationContext applicationContext) {
 		this.applicationContext = applicationContext;
 	}
-	
-	public CuratorFramework getCuratorFramework(){
+
+	public CuratorFramework getCuratorFramework() {
 		return curatorFramework;
 	}
 

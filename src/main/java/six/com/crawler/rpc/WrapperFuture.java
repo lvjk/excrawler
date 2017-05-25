@@ -3,6 +3,7 @@ package six.com.crawler.rpc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 import six.com.crawler.rpc.protocol.RpcRequest;
 import six.com.crawler.rpc.protocol.RpcResponse;
 
@@ -65,7 +66,7 @@ public class WrapperFuture {
 		this.receiveTime = receiveTime;
 		notifyAll();
 		if (null != asyCallback) {
-			asyCallback.execute(response.getResult());
+			asyCallback.execute(rpcResponse);
 		}
 	}
 

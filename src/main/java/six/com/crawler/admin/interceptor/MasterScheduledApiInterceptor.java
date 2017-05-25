@@ -29,13 +29,14 @@ public class MasterScheduledApiInterceptor implements HandlerInterceptor {
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
 		if (clusterManager.getCurrentNode().getType() != NodeType.SINGLE
-				&&clusterManager.getCurrentNode().getType() != NodeType.MASTER
-				&& clusterManager.getCurrentNode().getType() != NodeType.MASTER_WORKER) {
+				&&clusterManager.getCurrentNode().getType() != NodeType.MASTER) {
 			Node masterNode = clusterManager.getMasterNode();
-			if (null != masterNode) {
+			if (null != masterNode&&masterNode.equals(clusterManager.getCurrentNode())) {
+				return true;
+			}else{
 				response.sendRedirect(getMasterIndex(masterNode));
+				return false;
 			}
-			return false;
 		}
 		return true;
 	}

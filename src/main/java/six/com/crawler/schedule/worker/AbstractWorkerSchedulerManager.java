@@ -21,7 +21,7 @@ public abstract class AbstractWorkerSchedulerManager extends AbstractSchedulerMa
 
 	protected final void init() {
 		doInit();
-		getNodeManager().register(this);
+		getClusterManager().registerNodeService(this);
 	}
 
 	protected abstract void doInit();

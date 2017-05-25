@@ -11,6 +11,7 @@ import java.util.concurrent.Executors;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Interner;
 import com.google.common.collect.Interners;
@@ -20,6 +21,8 @@ import six.com.crawler.entity.JobParam;
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.WorkerErrMsg;
 import six.com.crawler.entity.WorkerSnapshot;
+import six.com.crawler.node.Node;
+import six.com.crawler.node.NodeType;
 import six.com.crawler.schedule.DispatchType;
 import six.com.crawler.schedule.JobWorkerThreadFactory;
 import six.com.crawler.schedule.master.AbstractMasterSchedulerManager;
@@ -31,6 +34,7 @@ import six.com.crawler.work.Worker;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年3月13日 上午11:33:37
  */
+@Component
 public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 
 	final static Logger log = LoggerFactory.getLogger(MasterSchedulerManager.class);
@@ -42,7 +46,7 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 	private Interner<String> keyLock = Interners.<String>newWeakInterner();
 
 	protected void doInit() {
-		executor = Executors.newFixedThreadPool(getNodeManager().getCurrentNode().getRunningWorkerMaxSize(),
+		executor = Executors.newFixedThreadPool(getClusterManager().getCurrentNode().getRunningWorkerMaxSize(),
 				new JobWorkerThreadFactory());
 	}
 
@@ -54,42 +58,44 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 	 * @param job
 	 */
 	public void execute(DispatchType dispatchType, String jobName) {
-		if (null != dispatchType && StringUtils.equals(DispatchType.DISPATCH_TYPE_MASTER, dispatchType.getName())
-				&& StringUtils.isNotBlank(jobName)) {
-			synchronized (keyLock.intern(jobName)) {
-				Job job = getScheduleCache().getJob(jobName);
-				if (null != job) {
-					log.info("worker node[" + getNodeManager().getCurrentNode().getName() + "] execute job["
-							+ job.getName() + "]");
-					List<JobParam> jobParams = getJobParamDao().queryJobParams(job.getName());
-					job.setParamList(jobParams);
-					JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(job.getName());
-					if (null != jobSnapshot && StringUtils.isNotBlank(jobSnapshot.getId())) {
-						int needThreads = job.getThreads();
-						int freeThreads = getNodeManager().getCurrentNode().getFreeWorkerSize();
-						int actualThreads = 0;
-						if (needThreads <= freeThreads) {
-							actualThreads = needThreads;
+		Node currentNode = getClusterManager().getCurrentNode();
+		if (NodeType.SINGLE == currentNode.getType() || NodeType.WORKER == currentNode.getType()) {
+			if (null != dispatchType && StringUtils.equals(DispatchType.DISPATCH_TYPE_MASTER, dispatchType.getName())
+					&& StringUtils.isNotBlank(jobName)) {
+				synchronized (keyLock.intern(jobName)) {
+					Job job = getScheduleCache().getJob(jobName);
+					if (null != job) {
+						log.info("worker node[" + getClusterManager().getCurrentNode().getName() + "] execute job["
+								+ job.getName() + "]");
+						List<JobParam> jobParams = getJobParamDao().queryJobParams(job.getName());
+						job.setParamList(jobParams);
+						JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(job.getName());
+						if (null != jobSnapshot && StringUtils.isNotBlank(jobSnapshot.getId())) {
+							int needThreads = job.getThreads();
+							int freeThreads = getClusterManager().getCurrentNode().getFreeWorkerSize();
+							int actualThreads = 0;
+							if (needThreads <= freeThreads) {
+								actualThreads = needThreads;
+							} else {
+								actualThreads = freeThreads;
+							}
+							Worker<?>[] workers = buildJobWorker(job, jobSnapshot, actualThreads);
+							log.info("get " + actualThreads + " worker to execute job[" + job.getName() + "]");
+							for (Worker<?> worker : workers) {
+								executor.execute(() -> {
+									doExecute(jobName, worker);
+								});
+								log.info("the job[" + job.getName() + "] is be executed by worker[" + worker.getName()
+										+ "]");
+							}
 						} else {
-							actualThreads = freeThreads;
+							throw new RuntimeException("the job's jobSnapshot is not be init");
 						}
-						Worker<?>[] workers = buildJobWorker(job, jobSnapshot, actualThreads);
-						log.info("get " + actualThreads + " worker to execute job[" + job.getName() + "]");
-						for (Worker<?> worker : workers) {
-							executor.execute(() -> {
-								doExecute(jobName, worker);
-							});
-							log.info("the job[" + job.getName() + "] is be executed by worker[" + worker.getName()
-									+ "]");
-						}
-					} else {
-						throw new RuntimeException("the job's jobSnapshot is not be init");
 					}
 				}
 			}
 		}
 	}
-
 
 	private void doExecute(final String jobName, final Worker<?> worker) {
 		final String workerName = worker.getName();
@@ -97,7 +103,7 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 		final String systemThreadName = workerThread.getName();
 		final String newThreadName = systemThreadName + "-" + workerName;
 		workerThread.setName(newThreadName);
-		getNodeManager().getCurrentNode().incrAndGetRunningWorkerSize();
+		getClusterManager().getCurrentNode().incrAndGetRunningWorkerSize();
 		try {
 			worker.start();
 		} catch (Exception e) {
@@ -106,11 +112,13 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 		} finally {
 			worker.destroy();
 			workerThread.setName(systemThreadName);
-			getNodeManager().getCurrentNode().decrAndGetRunningWorkerSize();
+			getClusterManager().getCurrentNode().decrAndGetRunningWorkerSize();
 			try {
-				AbstractMasterSchedulerManager masterSchedulerManager = getNodeManager()
-						.loolup(getNodeManager().getMasterNode(), AbstractMasterSchedulerManager.class, result -> {
-							remove(jobName, workerName);
+				AbstractMasterSchedulerManager masterSchedulerManager = getClusterManager()
+						.loolup(getClusterManager().getMasterNode(), AbstractMasterSchedulerManager.class, result -> {
+							if(result.isOk()){
+								remove(jobName, workerName);
+							}
 						});
 				masterSchedulerManager.endWorker(DispatchType.newDispatchTypeByWorker(), jobName);
 			} catch (Exception e) {
@@ -221,9 +229,11 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 	public void askEnd(String jobName, String workerName) {
 		synchronized (keyLock.intern(jobName)) {
 			try {
-				AbstractMasterSchedulerManager masterSchedulerManager = getNodeManager()
-						.loolup(getNodeManager().getMasterNode(), AbstractMasterSchedulerManager.class, result -> {
-
+				AbstractMasterSchedulerManager masterSchedulerManager = getClusterManager()
+						.loolup(getClusterManager().getMasterNode(), AbstractMasterSchedulerManager.class, result -> {
+							if(!result.isOk()){
+								stop(DispatchType.newDispatchTypeByMaster(), jobName);
+							}
 						});
 				masterSchedulerManager.askEnd(DispatchType.newDispatchTypeByWorker(), jobName);
 			} catch (Exception e) {
@@ -271,12 +281,12 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 			for (int i = 0; i < workerSize; i++) {
 				Worker<?> newJobWorker = getWorkerPlugsManager().newWorker(workerClass);
 				if (null != newJobWorker) {
-					String workerName = "job[" + job.getName() + "]_node[" + getNodeManager().getCurrentNode().getName()
+					String workerName = "job[" + job.getName() + "]_node[" + getClusterManager().getCurrentNode().getName()
 							+ "]_worker_" + i;
 					WorkerSnapshot workerSnapshot = new WorkerSnapshot();
 					workerSnapshot.setJobSnapshotId(jobSnapshot.getId());
 					workerSnapshot.setJobName(job.getName());
-					workerSnapshot.setLocalNode(getNodeManager().getCurrentNode().getName());
+					workerSnapshot.setLocalNode(getClusterManager().getCurrentNode().getName());
 					workerSnapshot.setName(workerName);
 					workerSnapshot.setWorkerErrMsgs(new ArrayList<WorkerErrMsg>());
 					newJobWorker.bindWorkerSnapshot(workerSnapshot);

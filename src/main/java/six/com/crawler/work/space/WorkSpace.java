@@ -24,7 +24,7 @@ public interface WorkSpace<T extends WorkSpaceData> {
 	 * @param cursorStr
 	 * @return
 	 */
-	String batchGetDoingData(List<T> resutList,int segmentIndex, String cursorStr);
+	String batchGetDoingData(List<T> resutList, int segmentIndex, String cursorStr);
 
 	/**
 	 * 批量获取异常数据 当传入cursorStr为blank或者"0"的话，默认为新的查询,
@@ -35,8 +35,7 @@ public interface WorkSpace<T extends WorkSpaceData> {
 	 * @return
 	 */
 	String batchGetErrData(List<T> resutList, String cursorStr);
-	
-	
+
 	/**
 	 * 批量获取处理过的数据 当传入cursorStr为blank或者"0"的话，默认为新的查询,
 	 * 当返回cursorStr返回为"0"的话那么认为查询到末尾了
@@ -45,7 +44,7 @@ public interface WorkSpace<T extends WorkSpaceData> {
 	 * @param cursorStr
 	 * @return
 	 */
-	String batchGetDoneData(List<String> resutList, int segmentIndex,String cursorStr);
+	String batchGetDoneData(List<String> resutList, int segmentIndex, String cursorStr);
 
 	/**
 	 * 将数据 推到工作队列中
@@ -80,6 +79,9 @@ public interface WorkSpace<T extends WorkSpaceData> {
 	 */
 	void ack(T data);
 
+	/**
+	 * 队列修复
+	 */
 	void repair();
 
 	/**
@@ -115,10 +117,21 @@ public interface WorkSpace<T extends WorkSpaceData> {
 	 * @return
 	 */
 	int doingSize();
-	
+
+	/**
+	 * 处理队列是否为空
+	 * 
+	 * @return
+	 */
 	boolean doingIsEmpty();
 
+	/**
+	 * 处理队列分段数量
+	 * 
+	 * @return
+	 */
 	int doingSegmentSize();
+
 	/**
 	 * 获取工作异常队列size
 	 * 
@@ -148,5 +161,8 @@ public interface WorkSpace<T extends WorkSpaceData> {
 	 */
 	void clearDone();
 
+	/**
+	 * 关闭
+	 */
 	void close();
 }

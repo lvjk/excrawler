@@ -53,7 +53,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	private SpiderConfigure configure;
 
 	@Autowired
-	private ClusterManager nodeManager;
+	private ClusterManager clusterManager;
 
 	@Autowired
 	private SiteDao siteDao;
@@ -118,16 +118,16 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	protected abstract void init();
 
 	public void afterPropertiesSet() {
-		scheduleDispatchTypeIntercept = new ScheduleDispatchTypeIntercept(getNodeManager());
+		scheduleDispatchTypeIntercept = new ScheduleDispatchTypeIntercept(getClusterManager());
 		init();
 	}
 
-	public ClusterManager getNodeManager() {
-		return nodeManager;
+	public ClusterManager getClusterManager() {
+		return clusterManager;
 	}
 
-	public void setNodeManager(ClusterManager nodeManager) {
-		this.nodeManager = nodeManager;
+	public void setClusterManager(ClusterManager clusterManager) {
+		this.clusterManager = clusterManager;
 	}
 
 	public SpiderConfigure getConfigure() {
@@ -304,7 +304,7 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 			Node findNode = null;
 			for (WorkerSnapshot workerSnapshot : workerSnapshots) {
 				nodeName = workerSnapshot.getLocalNode();
-				findNode = getNodeManager().getWorkerNode(nodeName);
+				findNode = getClusterManager().getWorkerNode(nodeName);
 				if (null != findNode) {
 					nodes.add(findNode);
 				}

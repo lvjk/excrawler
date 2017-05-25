@@ -9,10 +9,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import six.com.crawler.admin.api.ResponseMsg;
+import six.com.crawler.admin.service.BaseService;
 import six.com.crawler.admin.service.MasterScheduledService;
 import six.com.crawler.entity.WorkerSnapshot;
-import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.schedule.DispatchType;
+import six.com.crawler.schedule.master.AbstractMasterSchedulerManager;
 
 /**
  * @author 作者
@@ -20,31 +22,35 @@ import six.com.crawler.schedule.DispatchType;
  * @date 创建时间：2017年2月24日 下午10:36:10
  */
 @Service
-public class MasterScheduledServiceImpl implements MasterScheduledService {
+public class MasterScheduledServiceImpl extends BaseService implements MasterScheduledService {
 
 	final static Logger LOG = LoggerFactory.getLogger(MasterScheduledServiceImpl.class);
 
 	@Autowired
-	private AbstractSchedulerManager scheduleManager;
+	private AbstractMasterSchedulerManager scheduleManager;
 
 	@Override
-	public String execute(String jobName) {
+	public ResponseMsg<String> execute(String jobName) {
+		ResponseMsg<String> responseMsg = createResponseMsg();
 		String msg = null;
 		if (StringUtils.isNotBlank(jobName)) {
 			if (scheduleManager.isRunning(jobName)) {
-				msg = "这个任务[" + jobName + "]正在运行";
+				msg = "the job[" + jobName + "] is running";
 			} else {
 				scheduleManager.execute(DispatchType.newDispatchTypeByManual(), jobName);
-				msg = "提交任务[" + jobName + "]到待执行队列";
+				msg = "already put job[" + jobName + "] to waiting queue";
 			}
 		} else {
-			msg = "这个任务[" + jobName + "]不存在";
+			msg = "the job[" + jobName + "] is not existed";
 		}
-		return msg;
+		responseMsg.isOk();
+		responseMsg.setMsg(msg);
+		return responseMsg;
 	}
 
 	@Override
-	public String suspend(String jobName) {
+	public ResponseMsg<String> suspend(String jobName) {
+		ResponseMsg<String> responseMsg = createResponseMsg();
 		String msg = null;
 		if (StringUtils.isNotBlank(jobName)) {
 			if (!scheduleManager.isRunning(jobName)) {
@@ -54,13 +60,16 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 				msg = "the job[" + jobName + "] have been requested to execute suspend";
 			}
 		} else {
-			msg = "这个任务[" + jobName + "]不存在";
+			msg = "the job[" + jobName + "] is not existed";
 		}
-		return msg;
+		responseMsg.isOk();
+		responseMsg.setMsg(msg);
+		return responseMsg;
 	}
 
 	@Override
-	public String goOn(String jobName) {
+	public ResponseMsg<String> goOn(String jobName) {
+		ResponseMsg<String> responseMsg = createResponseMsg();
 		String msg = null;
 		if (StringUtils.isNotBlank(jobName)) {
 			if (!scheduleManager.isRunning(jobName)) {
@@ -70,14 +79,17 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 				msg = "the job[" + jobName + "] have been requested to execute goOn";
 			}
 		} else {
-			msg = "这个任务[" + jobName + "]不存在";
+			msg = "the job[" + jobName + "] is not existed";
 		}
-		return msg;
+		responseMsg.isOk();
+		responseMsg.setMsg(msg);
+		return responseMsg;
 
 	}
 
 	@Override
-	public String stop(String jobName) {
+	public ResponseMsg<String> stop(String jobName) {
+		ResponseMsg<String> responseMsg = createResponseMsg();
 		String msg = null;
 		if (StringUtils.isNotBlank(jobName)) {
 			if (!scheduleManager.isRunning(jobName)) {
@@ -87,26 +99,31 @@ public class MasterScheduledServiceImpl implements MasterScheduledService {
 				msg = "the job[" + jobName + "] have been requested to execute stop";
 			}
 		} else {
-			msg = "这个任务[" + jobName + "]不存在";
+			msg = "the job[" + jobName + "] is not existed";
 		}
-		return msg;
+		responseMsg.isOk();
+		responseMsg.setMsg(msg);
+		return responseMsg;
 	}
 
-	public List<WorkerSnapshot> getWorkerInfo(String jobName) {
+	public ResponseMsg<List<WorkerSnapshot>> getWorkerInfo(String jobName) {
+		ResponseMsg<List<WorkerSnapshot>> responseMsg = createResponseMsg();
 		List<WorkerSnapshot> result = null;
 		if (StringUtils.isNotBlank(jobName)) {
 			result = scheduleManager.getScheduleCache().getWorkerSnapshots(jobName);
 		} else {
 			result = Collections.emptyList();
 		}
-		return result;
+		responseMsg.setData(result);
+		responseMsg.isOk();
+		return responseMsg;
 	}
 
-	public AbstractSchedulerManager getScheduleManager() {
+	public AbstractMasterSchedulerManager getScheduleManager() {
 		return scheduleManager;
 	}
 
-	public void setScheduleManager(AbstractSchedulerManager scheduleManager) {
+	public void setScheduleManager(AbstractMasterSchedulerManager scheduleManager) {
 		this.scheduleManager = scheduleManager;
 	}
 }

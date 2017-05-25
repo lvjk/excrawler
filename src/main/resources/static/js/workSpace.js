@@ -90,7 +90,7 @@ function showErrDataDiv(workSpaceName) {
 				var page = data[i];
 				var tr = $("<tr name='data_page'></tr>");
 				$("<td><span style='color:#FF0000;font-size:6px;'>"
-						+ page.originalUrl + "</span></td>").appendTo(tr);
+						+ page.url + "</span></td>").appendTo(tr);
 				var operationTd = $("<td></td>");
 				var operation = "<a  href=\"javascript:clearErr('"+workSpaceName+ "')\">全部删除</a>&nbsp;";
 				operation += "<a href=\"javascript:againDoErrQueue('"+workSpaceName+"')\">全部处理</a>&nbsp;";
