@@ -85,12 +85,16 @@ public class ZQFGZXPresellInfoWorker extends AbstractCrawlWorker{
 		String BASE_URL="http://www.zqfgzx.org.cn/";
 		List<String> unitIds=resultContext.getExtractResult("unitId");
 		List<String> unitUrls=resultContext.getExtractResult("unitUrl");
+		List<String> preSalePermitNos=resultContext.getExtractResult("preSalePermitNo");
+		List<String> completeUnitNames=resultContext.getExtractResult("completeUnitName");
 		for (int i = 0; i < unitIds.size(); i++) {
 			String url=BASE_URL+unitUrls.get(i);
 			Page unitPage=new Page(doingPage.getSiteCode(), 1, url, url);
 			unitPage.setMethod(HttpMethod.GET);
 			unitPage.setReferer(doingPage.getFinalUrl());
 			unitPage.getMetaMap().put("unitId", ArrayListUtils.asList(unitIds.get(i)));
+			unitPage.getMetaMap().put("preSalePermitNo", ArrayListUtils.asList(preSalePermitNos.get(i)));
+			unitPage.getMetaMap().put("completeUnitName", ArrayListUtils.asList(completeUnitNames.get(i)));
 			
 			unitInfoQueue.push(unitPage);
 		}
