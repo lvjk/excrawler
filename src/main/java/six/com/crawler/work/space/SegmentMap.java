@@ -45,19 +45,18 @@ public class SegmentMap<T> extends AbstractSegment<T> {
 	}
 
 	public String where(String key) {
-		String where = null;
+		Map<String, String> resultMap = new HashMap<>(1);
 		if (StringUtils.isNotBlank(key)) {
 			List<String> mapKeys = getSegments();
 			if (null != mapKeys) {
-				for (String mapKey : mapKeys) {
+				mapKeys.stream().parallel().forEach(mapKey -> {
 					if (getRedisManager().isExecuted(mapKey, key)) {
-						where = mapKey;
-						break;
+						resultMap.put("where", mapKey);
 					}
-				}
+				});
 			}
 		}
-		return where;
+		return resultMap.get("where");
 	}
 
 	public List<T> getData(String segmentMapKey) {

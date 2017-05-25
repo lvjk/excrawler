@@ -281,6 +281,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 				List<Node> freeNodes = getFreeNodes(designatedNodeName, needNodes, needThreads);
 				if (null != freeNodes && freeNodes.size() > 0) {
 					doExecute(job, freeNodes);
+					return;
 				} else {
 					log.error("there is no node to execute job[" + job.getName() + "]");
 				}
@@ -290,6 +291,9 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 		} else {
 			log.error("the job[" + job.getName() + "] is running");
 		}
+		getScheduleCache().delJob(job.getName());
+		getScheduleCache().delJobSnapshot(job.getName());
+		getScheduleCache().delWorkerSnapshots(job.getName());
 	}
 
 	/**

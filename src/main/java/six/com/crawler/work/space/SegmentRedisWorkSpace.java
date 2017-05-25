@@ -18,7 +18,7 @@ import six.com.crawler.node.lock.DistributedLock;
  */
 public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace<T> {
 
-	final static Logger log = LoggerFactory.getLogger(RedisWorkSpace.class);
+	final static Logger log = LoggerFactory.getLogger(SegmentRedisWorkSpace.class);
 
 	/**
 	 * 默认处理队列分片大小

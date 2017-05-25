@@ -14,7 +14,7 @@ import com.alibaba.druid.support.json.JSONUtils;
 import six.com.crawler.entity.Page;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.work.AbstractCrawlWorker;
-import six.com.crawler.work.space.RedisWorkSpace;
+import six.com.crawler.work.space.WorkSpace;
 
 /**
  * @author 作者
@@ -36,7 +36,7 @@ public class BaiduRouteApiWorker extends AbstractCrawlWorker {
 	private String startCityTemplate = "<<startCity>>";
 	private String endCityTemplate = "<<endCity>>";
 	private String akTemplate = "<<ak>>";
-	RedisWorkSpace<Page> routeStepInfoQueue;
+	WorkSpace<Page> routeStepInfoQueue;
 	int akIndex = 0;
 	List<String> aks= new ArrayList<String>(){
 		private static final long serialVersionUID = 8445868846711096516L;

@@ -43,6 +43,19 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 		projectInfo1Queue = getManager().getWorkSpaceManager().newWorkSpace("tmsf_project_info_1", Page.class);
 	}
 
+	static class DifferentPageWorkerCrawlerException extends ProcessWorkerCrawlerException {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 2220498684353338071L;
+
+		public DifferentPageWorkerCrawlerException(String message) {
+			super(message);
+		}
+
+	}
+
 	@Override
 	protected void beforeDown(Page doingPage) {
 
@@ -53,8 +66,7 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 		String projectNameCss = "div[id=head]>ul>li";
 		Elements projectNameElements = doingPage.getDoc().select(projectNameCss);
 		if (null != projectNameElements && !projectNameElements.isEmpty()) {
-			projectInfo1Queue.push(doingPage);
-			throw new ProcessWorkerCrawlerException("different pages:" + doingPage.getFinalUrl());
+			throw new DifferentPageWorkerCrawlerException("different pages:" + doingPage.getFinalUrl());
 		} else {
 			Elements mapDivs = doingPage.getDoc().select(mapDivCss);
 			if (null != mapDivs && !mapDivs.isEmpty()) {
@@ -94,6 +106,10 @@ public class TmsfProjectInfoWorker extends AbstractCrawlWorker {
 
 	@Override
 	protected boolean insideOnError(Exception t, Page doingPage) {
+		if (t instanceof DifferentPageWorkerCrawlerException) {
+			projectInfo1Queue.push(doingPage);
+			return true;
+		}
 		return false;
 	}
 

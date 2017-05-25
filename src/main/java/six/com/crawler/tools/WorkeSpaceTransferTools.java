@@ -24,9 +24,7 @@ import six.com.crawler.entity.Page;
 import six.com.crawler.node.lock.DistributedLock;
 import six.com.crawler.utils.DbHelper;
 import six.com.crawler.utils.MD5Utils;
-import six.com.crawler.work.space.RedisWorkSpace;
 import six.com.crawler.work.space.SegmentRedisWorkSpace;
-import six.com.crawler.work.space.SegmentRedisWorkSpaceBk;
 import six.com.crawler.work.space.WorkSpace;
 
 /**
@@ -40,18 +38,18 @@ public class WorkeSpaceTransferTools {
 
 	public static void main(String[] args) {
 		transfer("tmsf_house_info");
-		// del(workSpaceName, redisConnection, "spider_redis_store");
+		// del("spider_redis_store");
 		// doMysql();
 		// nb_cnnbfdc_unit_info
 		// WorkeSpaceTransferTools.testPull1("nb_cnnbfdc_room_info");
 	}
 
 	public static void transfer(String workSpaceName) {
-		String redisConnection = "192.168.0.13:6379;192.168.0.13:6380;192.168.0.14:6379;192.168.0.14:6380;192.168.0.15:6379;192.168.0.15:6380;192.168.0.13:6381;192.168.0.14:6381";
-		
+		 String redisConnection =
+		 "192.168.0.13:6379;192.168.0.13:6380;192.168.0.14:6379;192.168.0.14:6380;192.168.0.15:6379;192.168.0.15:6380;192.168.0.13:6381;192.168.0.14:6381";
+
 //		String redisConnection = "122.112.214.233:6379;122.112.214.233:6380;"
-//				+ "122.112.214.232:6379;122.112.214.232:6380;"
-//				+ "122.112.210.132:6379;122.112.210.132:6380;";
+//				+ "122.112.214.232:6379;122.112.214.232:6380;" + "122.112.210.132:6379;122.112.210.132:6380;";
 		EnhanceJedisCluster doRedis = newJedis(redisConnection);
 		RedisManager doRedisManager = new six.com.crawler.dao.RedisManager();
 		doRedisManager.setJedisCluster(doRedis);
@@ -66,27 +64,21 @@ public class WorkeSpaceTransferTools {
 
 			}
 		};
-		WorkSpace<Page> doWorkQueue = new RedisWorkSpace<>(doRedisManager, distributedLock, workSpaceName, Page.class);
 		WorkSpace<Page> targetWorkQueue = new SegmentRedisWorkSpace<>(doRedisManager, distributedLock, workSpaceName,
 				Page.class);
-
-		List<String> doneList = new ArrayList<>();
-		String cursorStr = "0";
-		int count = 0;
-		do {
-			cursorStr = doWorkQueue.batchGetDoneData(doneList, 0, cursorStr);
-			count += doneList.size();
-			for (String dataKey : doneList) {
-				targetWorkQueue.addDone(dataKey);
-			}
-			doneList.clear();
-			System.out.println("do data size:" + count);
-		} while (!"0".equals(cursorStr));
-		//doWorkQueue.clearDone();
+		Page page=null;
+		while(null!=(page=targetWorkQueue.pull())){
+			System.out.println("页面数据:" + page.toString());
+		}
 	}
 
 	public static void del(String keyPre) {
-		String redisConnection = "172.18.84.44:6379;172.18.84.45:6379;172.18.84.46:6379";
+		// 122.112.210.132
+		// String redisConnection =
+		// "172.18.84.44:6379;172.18.84.45:6379;172.18.84.46:6379";
+		// String redisConnection =
+		// "122.112.210.132:6379;2.112.210.132:6380;122.112.214.232:6379;122.112.214.232:6380;122.112.214.233:6379;122.112.214.233:6380";
+		String redisConnection = "192.168.0.13:6379;192.168.0.13:6380;192.168.0.14:6379;192.168.0.14:6380;192.168.0.15:6379;192.168.0.15:6380;192.168.0.13:6381;192.168.0.14:6381";
 		EnhanceJedisCluster doRedis = newJedis(redisConnection);
 		RedisManager doRedisManager = new six.com.crawler.dao.RedisManager();
 		doRedisManager.setJedisCluster(doRedis);
@@ -215,26 +207,25 @@ public class WorkeSpaceTransferTools {
 		};
 		SegmentRedisWorkSpace<Page> workSpace = new SegmentRedisWorkSpace<>(redisManager, distributedLock,
 				workSpaceName, Page.class);
-		workSpace.repair();
-		// Page page = null;
-		// boolean repair = false;
-		// while (true) {
-		// long start = System.currentTimeMillis();
-		// page = workSpace.pull();
-		// long end = System.currentTimeMillis();
-		// System.out.println("pull time:" + (end - start));
-		// if (null != page) {
-		// workSpace.errRetryPush(page);
-		// } else {
-		// if (!repair) {
-		// workSpace.repair();
-		// repair = true;
-		// continue;
-		// } else {
-		// break;
-		// }
-		// }
-		// }
+		Page page = null;
+		boolean repair = false;
+		while (true) {
+			long start = System.currentTimeMillis();
+			page = workSpace.pull();
+			long end = System.currentTimeMillis();
+			System.out.println("pull time:" + (end - start));
+			if (null != page) {
+				workSpace.errRetryPush(page);
+			} else {
+				if (!repair) {
+					workSpace.repair();
+					repair = true;
+					continue;
+				} else {
+					break;
+				}
+			}
+		}
 	}
 
 	private static String getDoneKey(String workSpace, String key) {
@@ -282,7 +273,7 @@ public class WorkeSpaceTransferTools {
 			temp = host.split(":");
 			set.add(new HostAndPort(temp[0], Integer.valueOf(temp[1])));
 		}
-		EnhanceJedisCluster jedisCluster = new EnhanceJedisCluster(set, 6000, config);
+		EnhanceJedisCluster jedisCluster = new EnhanceJedisCluster(set, 60000, config);
 		return jedisCluster;
 	}
 }

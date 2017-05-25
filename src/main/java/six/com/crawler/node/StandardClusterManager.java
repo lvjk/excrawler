@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.annotation.PreDestroy;
@@ -32,7 +33,6 @@ import six.com.crawler.rpc.NettyRpcServer;
 import six.com.crawler.rpc.RpcService;
 
 import six.com.crawler.utils.JavaSerializeUtils;
-import six.com.crawler.utils.ObjectCheckUtils;
 import six.com.crawler.utils.StringCheckUtils;
 
 /**
@@ -60,7 +60,7 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 
 	// 当前节点
 	private Node currentNode;
-
+	
 	private CuratorFramework curatorFramework;
 
 	private NettyRpcServer nettyRpcServer;
@@ -126,7 +126,9 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 			/**
 			 * 初始化 节点server和client 通信
 			 */
-			nettyRpcServer = new NettyRpcServer(getCurrentNode().getHost(), getCurrentNode().getTrafficPort());
+			String currentHost = getCurrentNode().getHost();
+			int currentPost = getCurrentNode().getTrafficPort();
+			nettyRpcServer = new NettyRpcServer(currentHost, currentPost);
 			nettyRpcCilent = new NettyRpcCilent();
 			registerNodeService(this);
 
@@ -243,7 +245,7 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 
 	@Override
 	public Node getNewestNode(Node targetNode) {
-		ObjectCheckUtils.checkNotNull(targetNode, "targetNode");
+		Objects.requireNonNull(targetNode, "the targetNode must be not null");
 		Node newestNode = targetNode;
 		try {
 			ClusterManager findNodeManager = loolup(targetNode, ClusterManager.class);
@@ -308,6 +310,16 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 	@Override
 	public void registerNodeChangeWatcher(NodeChangeWatcher watcher) {
 		nodeTypeChangeWatchers.add(watcher);
+	}
+	
+	@Override
+	public void missWorkerNode(String workerNodeName){
+		
+	}
+	
+	@Override
+	public void toMasterNode(){
+		
 	}
 
 	@Override

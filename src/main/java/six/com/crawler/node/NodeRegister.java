@@ -61,7 +61,9 @@ public class NodeRegister {
 					@Override
 					public void process(WatchedEvent event) {
 						if (EventType.NodeDeleted == event.getType()) {
-							log.info("missed worker node");
+							String workerNodeName=event.getPath();
+							log.info("missed worker node:"+workerNodeName);
+							//触发主节点丢失工作节点事件
 						}
 					}
 				}).forPath(workNodesPath);
@@ -78,6 +80,7 @@ public class NodeRegister {
 					@Override
 					public void process(WatchedEvent event) {
 						if (EventType.NodeDeleted == event.getType()) {
+							log.info("missed master node");
 							Node masterNode = getClusterManager().getMasterNode();
 							if (null == masterNode) {
 								DistributedLock writeLock = getClusterManager().getWriteLock(ClusterManager.INIT_PATH);
@@ -85,6 +88,7 @@ public class NodeRegister {
 									writeLock.lock();
 									masterNode = getClusterManager().getMasterNode();
 									if (null == masterNode) {
+										log.info("register own to master node");
 										try {
 											register();
 										} catch (Exception e) {
