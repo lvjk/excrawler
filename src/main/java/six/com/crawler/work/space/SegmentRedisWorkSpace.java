@@ -104,9 +104,13 @@ public class SegmentRedisWorkSpace<T extends WorkSpaceData> implements WorkSpace
 		distributedLock.lock();
 		try {
 			String dataKey = data.getKey();
-			Index index = doingSegmentMap.put(null, dataKey, data);
-			doingSegmentQueue.push(index);
-			log.info("push workSpace[" + workSpaceName + "] data succeed:" + data.toString());
+			if(null==doingSegmentMap.where(dataKey)){
+				Index index = doingSegmentMap.put(null, dataKey, data);
+				doingSegmentQueue.push(index);
+				log.info("push workSpace[" + workSpaceName + "] data succeed:" + data.toString());
+			}else{
+				log.info("workSpace[" + workSpaceName + "] has dontained data:" + data.toString());
+			}
 			return true;
 		} catch (Exception e) {
 			log.error("push workSpace[" + workSpaceName + "] data:" + data.toString(), e);

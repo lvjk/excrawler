@@ -13,8 +13,7 @@ import six.com.crawler.node.NodeType;
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
- * @date 创建时间：2017年3月17日 下午4:16:02
- * 控制页面 必须访问 master节点页面
+ * @date 创建时间：2017年3月17日 下午4:16:02 控制页面 必须访问 master节点页面
  * 
  */
 public class MasterScheduledApiInterceptor implements HandlerInterceptor {
@@ -29,11 +28,11 @@ public class MasterScheduledApiInterceptor implements HandlerInterceptor {
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
 		if (clusterManager.getCurrentNode().getType() != NodeType.SINGLE
-				&&clusterManager.getCurrentNode().getType() != NodeType.MASTER) {
-			Node masterNode = clusterManager.getMasterNode();
-			if (null != masterNode&&masterNode.equals(clusterManager.getCurrentNode())) {
+				&& clusterManager.getCurrentNode().getType() != NodeType.MASTER) {
+			Node masterNode = clusterManager.getMasterNodeFromRegister();
+			if (null != masterNode && masterNode.equals(clusterManager.getCurrentNode())) {
 				return true;
-			}else{
+			} else {
 				response.sendRedirect(getMasterIndex(masterNode));
 				return false;
 			}

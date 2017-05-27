@@ -212,80 +212,83 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 				js = StringUtils.remove(js, "document.writeln(");
 				js = StringUtils.remove(js, ");");
 				js = JsUtils.evalJs(js);
-				Element table = Jsoup.parse(js);
-				Elements unitTds = table.select("body>table>tbody>tr:eq(0)>td:gt(0)");
-				List<String> unitList = new ArrayList<>();
-				for (Element unitTd : unitTds) {
-					String unitName = unitTd.text();
-					if (!StringUtils.contains(unitName, "单元")) {
-						unitList.add(unitName);
-					}
-				}
-				Element unitHouseTrElement = table.select("body>table>tbody>tr:eq(1)").first();
-				if (null != unitHouseTrElement) {
-					Elements unitHouseTdElements = JsoupUtils.children(unitHouseTrElement, "td");
-					for (int i = 1; i < unitHouseTdElements.size(); i++) {
-						String unitName = StringUtils.EMPTY;
-						int unitIndex = i - 1;
-						if (unitIndex < unitList.size()) {
-							unitName = unitList.get(unitIndex);
+				Element tablesHtml = Jsoup.parse(js);
+				Elements tables=tablesHtml.select("body>table");
+				for(Element table:tables){
+					Elements unitTds = table.select("tbody>tr:eq(0)>td:gt(0)");
+					List<String> unitList = new ArrayList<>();
+					for (Element unitTd : unitTds) {
+						String unitName = unitTd.text();
+						if (!StringUtils.contains(unitName, "单元")) {
+							unitList.add(unitName);
 						}
-						Element unitHouseElement = unitHouseTdElements.get(i);
-						Elements houseElements = unitHouseElement.select("a");
-						for (Element element : houseElements) {
-							String housePageUrl = element.attr("href");
-							if (StringUtils.isNotBlank(housePageUrl)) {
-								String houseId = element.attr("id");
-								if(StringUtils.isNotBlank(houseId)){
-									houseId = StringUtils.replace(houseId, "H","");
-								}else{
-									houseId=StringUtils.substringAfterLast(housePageUrl, "_");
-									houseId=StringUtils.remove(houseId, ".htm");
+					}
+					Element unitHouseTrElement = table.select("tbody>tr:eq(1)").first();
+					if (null != unitHouseTrElement) {
+						Elements unitHouseTdElements = JsoupUtils.children(unitHouseTrElement, "td");
+						for (int i = 1; i < unitHouseTdElements.size(); i++) {
+							String unitName = StringUtils.EMPTY;
+							int unitIndex = i - 1;
+							if (unitIndex < unitList.size()) {
+								unitName = unitList.get(unitIndex);
+							}
+							Element unitHouseElement = unitHouseTdElements.get(i);
+							Elements houseElements = unitHouseElement.select("a");
+							for (Element element : houseElements) {
+								String housePageUrl = element.attr("href");
+								if (StringUtils.isNotBlank(housePageUrl)) {
+									String houseId = element.attr("id");
+									if(StringUtils.isNotBlank(houseId)){
+										houseId = StringUtils.replace(houseId, "H","");
+									}else{
+										houseId=StringUtils.substringAfterLast(housePageUrl, "_");
+										houseId=StringUtils.remove(houseId, ".htm");
+									}
+									
+									String houseNo = element.text();
+									String onmouseoverHtml = element.attr("onmouseover");
+									String houseData = StringUtils.substringBetween(onmouseoverHtml,
+											"<table><tr><td width=240>", "</td><td width=150>tupian</td>");
+									houseData = StringUtils.replace(houseData, "<br/>", "");
+									houseData = StringUtils.replace(houseData, "　", "");
+									houseData = StringUtils.replace(houseData, " ", "");
+									houseData = StringUtils.replace(houseData, "：", "");
+									houseData = StringUtils.replace(houseData, ":", "");
+									String houseStatus = StringUtils.substringBetween(houseData, "当前状态", "房屋用途");
+									String houseUsage = StringUtils.substringBetween(houseData, "房屋用途", "建筑面积");
+									String buildingArea = StringUtils.substringBetween(houseData, "建筑面积", "毛坯单价");
+									String roughPrice = StringUtils.substringBetween(houseData, "毛坯单价", "总价");
+									String totalPrice = StringUtils.substringBetween(houseData, "总价", "房屋坐落");
+									String houseAddress = StringUtils.substringAfterLast(houseData, "房屋坐落");
+									
+									doingPage.getMetaMap().computeIfAbsent("unitName", mapKey -> new ArrayList<>())
+											.add(unitName);
+									
+									doingPage.getMetaMap().computeIfAbsent("houseId", mapKey -> new ArrayList<>())
+									.add(houseId);
+									
+									doingPage.getMetaMap().computeIfAbsent("houseNo", mapKey -> new ArrayList<>())
+											.add(houseNo);
+									doingPage.getMetaMap().computeIfAbsent("status", mapKey -> new ArrayList<>())
+											.add(houseStatus);
+									doingPage.getMetaMap().computeIfAbsent("houseUsage", mapKey -> new ArrayList<>())
+											.add(houseUsage);
+									doingPage.getMetaMap().computeIfAbsent("buildingArea", mapKey -> new ArrayList<>())
+											.add(buildingArea);
+									doingPage.getMetaMap().computeIfAbsent("roughPrice", mapKey -> new ArrayList<>())
+											.add(roughPrice);
+									doingPage.getMetaMap().computeIfAbsent("totalPrice", mapKey -> new ArrayList<>())
+											.add(totalPrice);
+									doingPage.getMetaMap().computeIfAbsent("houseAddress", mapKey -> new ArrayList<>())
+											.add(houseAddress);
+
 								}
-								
-								String houseNo = element.text();
-								String onmouseoverHtml = element.attr("onmouseover");
-								String houseData = StringUtils.substringBetween(onmouseoverHtml,
-										"<table><tr><td width=240>", "</td><td width=150>tupian</td>");
-								houseData = StringUtils.replace(houseData, "<br/>", "");
-								houseData = StringUtils.replace(houseData, "　", "");
-								houseData = StringUtils.replace(houseData, " ", "");
-								houseData = StringUtils.replace(houseData, "：", "");
-								houseData = StringUtils.replace(houseData, ":", "");
-								String houseStatus = StringUtils.substringBetween(houseData, "当前状态", "房屋用途");
-								String houseUsage = StringUtils.substringBetween(houseData, "房屋用途", "建筑面积");
-								String buildingArea = StringUtils.substringBetween(houseData, "建筑面积", "毛坯单价");
-								String roughPrice = StringUtils.substringBetween(houseData, "毛坯单价", "总价");
-								String totalPrice = StringUtils.substringBetween(houseData, "总价", "房屋坐落");
-								String houseAddress = StringUtils.substringAfterLast(houseData, "房屋坐落");
-								
-								doingPage.getMetaMap().computeIfAbsent("unitName", mapKey -> new ArrayList<>())
-										.add(unitName);
-								
-								doingPage.getMetaMap().computeIfAbsent("houseId", mapKey -> new ArrayList<>())
-								.add(houseId);
-								
-								doingPage.getMetaMap().computeIfAbsent("houseNo", mapKey -> new ArrayList<>())
-										.add(houseNo);
-								doingPage.getMetaMap().computeIfAbsent("status", mapKey -> new ArrayList<>())
-										.add(houseStatus);
-								doingPage.getMetaMap().computeIfAbsent("houseUsage", mapKey -> new ArrayList<>())
-										.add(houseUsage);
-								doingPage.getMetaMap().computeIfAbsent("buildingArea", mapKey -> new ArrayList<>())
-										.add(buildingArea);
-								doingPage.getMetaMap().computeIfAbsent("roughPrice", mapKey -> new ArrayList<>())
-										.add(roughPrice);
-								doingPage.getMetaMap().computeIfAbsent("totalPrice", mapKey -> new ArrayList<>())
-										.add(totalPrice);
-								doingPage.getMetaMap().computeIfAbsent("houseAddress", mapKey -> new ArrayList<>())
-										.add(houseAddress);
 
 							}
 
 						}
 
 					}
-
 				}
 			}
 

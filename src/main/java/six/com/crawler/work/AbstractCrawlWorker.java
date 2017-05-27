@@ -120,7 +120,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 			long extractTime = 0;
 			long storeTime = 0;
 			try {
-				log.info("start to process page:" + doingPage.getOriginalUrl());
+				log.info("start to process page:" + doingPage.toString());
 				// 设置下载器代理
 				downer.setHttpProxy(httpProxyPool.getHttpProxy());
 				// 暴露给实现类的
@@ -153,7 +153,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 				getWorkSpace().addDone(doingPage.getKey());
 
 				log.info("finished processing,down time[" + downTime + "],extract time[" + extractTime + "],store time["
-						+ storeTime + "]:" + doingPage.getOriginalUrl());
+						+ storeTime + "]:" + doingPage.toString());
 			} catch (WorkerCrawlerException crawlerException) {
 				crawlerException.addSuppressed(
 						new ProcessWorkerCrawlerException("crawler process:" + doingPage.getOriginalUrl()));

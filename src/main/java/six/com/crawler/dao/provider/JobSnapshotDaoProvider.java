@@ -54,9 +54,9 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 				+ "		select "
 				+selectColumns
 				+ "       from "+TableNames.JOB_SNAPSHOT_TABLE_NAME
-				+ "      where `name` =#{jobName} "
-				+ "      order by `startTime` desc) a,"
-				+ "   (select FOUND_ROWS() totalSize)b limit #{start},#{end}";
+				+ "      where `name` =#{jobName}) a,"
+				+ "   (select FOUND_ROWS() totalSize)b"
+				+ "    order by `startTime` desc limit #{start},#{end}";
 		return sql;
 	}
 	

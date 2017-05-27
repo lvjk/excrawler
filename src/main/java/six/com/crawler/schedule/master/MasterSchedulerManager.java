@@ -37,7 +37,6 @@ import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.JobSnapshotState;
 import six.com.crawler.entity.WorkerSnapshot;
 import six.com.crawler.node.Node;
-import six.com.crawler.node.NodeChangeEvent;
 import six.com.crawler.node.NodeChangeWatcher;
 import six.com.crawler.node.NodeType;
 import six.com.crawler.schedule.AbstractSchedulerManager;
@@ -111,12 +110,12 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 				log.error("master node repair err", e);
 			}
 			initMasterNodeScheduler();
-		}else{
+		} else {
 			// 注册变为主节点wather
-			getClusterManager().registerNodeChangeWatcher(new NodeChangeWatcher() {
+			getClusterManager().registerToMasterNodeWatcher(new NodeChangeWatcher() {
 				@Override
-				public void onChange(NodeChangeEvent event) {
-					if (NodeChangeEvent.TO_MASTER == event) {
+				public void onChange(String masterNodeName) {
+					if (StringUtils.equals(masterNodeName, getClusterManager().getNodeName())) {
 						// 当检测到变更为主节点时那么，应该暂停当前节点上运行的任务，然后加载计划执行任务，
 						getWorkerSchedulerManager().stopAll(DispatchType.newDispatchTypeByMaster());
 						// 初始化主节点调度中心
@@ -133,14 +132,12 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 		loadSystemJob();// 初始化 加载系统job
 		loadScheduledJob();// 初始化加载需要时间调度的job
 		// 注册丢失worker节点wather
-		getClusterManager().registerNodeChangeWatcher(new NodeChangeWatcher() {
+		getClusterManager().registerMissWorkerNodeWatcher(new NodeChangeWatcher() {
 			@Override
-			public void onChange(NodeChangeEvent event) {
-				if (NodeChangeEvent.MISS_WORKER == event) {
-					// 找出丢失的workerNode
-					// 再次检查丢失的workerNode是否存活
-					// 清理丢失的workerNode在缓存中的worker运行记录
-				}
+			public void onChange(String workerNodeName) {
+				// 找出丢失的workerNode
+				// 再次检查丢失的workerNode是否存活
+				// 清理丢失的workerNode在缓存中的worker运行记录
 			}
 		});
 	}

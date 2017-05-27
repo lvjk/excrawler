@@ -10,5 +10,5 @@ package six.com.crawler.node;
 @FunctionalInterface
 public interface NodeChangeWatcher {
 
-	void onChange(NodeChangeEvent event);
+	void onChange(String nodeName);
 }

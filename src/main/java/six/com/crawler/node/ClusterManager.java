@@ -15,84 +15,44 @@ import six.com.crawler.rpc.AsyCallback;
 
 public interface ClusterManager {
 
-	String INIT_PATH = "node_manager_init";
-
 	String getClusterName();
+	
+	String getNodeName();
 
-	boolean getClusterEnable();
-
-	/**
-	 * 获取当前节点
-	 * 
-	 * @return 当前节点
-	 */
 	Node getCurrentNode();
 
-	/**
-	 * 设置节点类型
-	 * 
-	 * @param type
-	 */
-	void setCurrentNodeType(NodeType type);
+	Node getMasterNodeFromRegister();
+
+
+	List<Node> getWorkerNodesFromLocal();
+	
+	List<Node> getWorkerNodesFromRegister();
+
+	Node getWorkerNode(String nodeName);
+
+	List<Node> getFreeWorkerNodes(int needFresNodes);
+
+	Node getNewestNode(Node targetNode);
+
+	void addWorkerNode(Node workerNode);
+	
+	void removeWorkerNode(String workerNodeName);
+
+	void masterChange(Node master);
 
 	/**
 	 * 注册节点变化watcher
 	 * 
 	 * @param watcher
 	 */
-	void registerNodeChangeWatcher(NodeChangeWatcher watcher);
-
+	void registerToMasterNodeWatcher(NodeChangeWatcher watcher);
+	
 	/**
-	 * 获取主节点
+	 * 注册节点变化watcher
 	 * 
-	 * @return 主节点
+	 * @param watcher
 	 */
-	Node getMasterNode();
-
-	/**
-	 * 获取所有节点
-	 * 
-	 * @return
-	 */
-	List<Node> getAllNodes();
-
-	/**
-	 * 获取所有工作节点
-	 * 
-	 * @return
-	 */
-	List<Node> getWorkerNodesFromRegister();
-
-	/**
-	 * 获取所有工作节点
-	 * 
-	 * @return
-	 */
-	List<Node> getWorkerNodesFromLocal();
-
-	/**
-	 * 通过节点名获取节点
-	 * 
-	 * @param nodeName
-	 * @return
-	 */
-	Node getWorkerNode(String nodeName);
-
-	/**
-	 * 获取空闲可用节点
-	 * 
-	 * @param needFresNodes
-	 * @return
-	 */
-	List<Node> getFreeWorkerNodes(int needFresNodes);
-
-	/**
-	 * 获取目标节点最新信息
-	 * 
-	 * @param targetNode
-	 * @return
-	 */
-	Node getNewestNode(Node targetNode);
+	void registerMissWorkerNodeWatcher(NodeChangeWatcher watcher);
 
 	/**
 	 * 寻找节点服务
@@ -102,8 +62,7 @@ public interface ClusterManager {
 	 * @return
 	 */
 	<T> T loolup(Node node, Class<T> clz, AsyCallback asyCallback);
-	
-	
+
 	/**
 	 * 寻找节点服务
 	 * 
@@ -119,20 +78,6 @@ public interface ClusterManager {
 	 * @param tagetOb
 	 */
 	void registerNodeService(Object tagetOb);
-
-	/**
-	 * 移除节点服务
-	 * 
-	 * @param commandName
-	 */
-	void remove(String commandName);
-
-	void clearLock();
-	
-	
-	void missWorkerNode(String workerNodeName);
-	
-	void toMasterNode();
 
 	/**
 	 * 根据path 获取一个 分布式读锁

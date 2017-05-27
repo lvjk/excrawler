@@ -111,7 +111,7 @@ public class Page implements WorkSpaceData, Serializable {
 	}
 
 	public HttpMethod getMethod() {
-		if(null==method){
+		if (null == method) {
 			method = HttpMethod.GET;
 		}
 		return method;
@@ -314,9 +314,9 @@ public class Page implements WorkSpaceData, Serializable {
 		} else {
 			strBuf.append("get@" + getFinalUrl());
 		}
-		if(!getMetaMap().isEmpty()){
-			String metaJson=JsonUtils.toJson(getMetaMap());
-			strBuf.append("@meta:"+metaJson);
+		if (!getMetaMap().isEmpty()) {
+			String metaJson = JsonUtils.toJson(getMetaMap());
+			strBuf.append("@meta:" + metaJson);
 		}
 		return strBuf.toString();
 	}
@@ -336,4 +336,9 @@ public class Page implements WorkSpaceData, Serializable {
 		return index;
 	}
 
+	public static void main(String[] args) {
+		String url = "http://www.tmsf.com/newhouse/property_33_12874_info.htm";
+		String pageKey = MD5Utils.MD5(url);
+		System.out.println(pageKey);
+	}
 }

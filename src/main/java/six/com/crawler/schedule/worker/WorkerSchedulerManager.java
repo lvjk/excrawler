@@ -115,7 +115,7 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 			getClusterManager().getCurrentNode().decrAndGetRunningWorkerSize();
 			try {
 				AbstractMasterSchedulerManager masterSchedulerManager = getClusterManager()
-						.loolup(getClusterManager().getMasterNode(), AbstractMasterSchedulerManager.class, result -> {
+						.loolup(getClusterManager().getMasterNodeFromRegister(), AbstractMasterSchedulerManager.class, result -> {
 							if(result.isOk()){
 								remove(jobName, workerName);
 							}
@@ -230,7 +230,7 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 		synchronized (keyLock.intern(jobName)) {
 			try {
 				AbstractMasterSchedulerManager masterSchedulerManager = getClusterManager()
-						.loolup(getClusterManager().getMasterNode(), AbstractMasterSchedulerManager.class, result -> {
+						.loolup(getClusterManager().getMasterNodeFromRegister(), AbstractMasterSchedulerManager.class, result -> {
 							if(!result.isOk()){
 								stop(DispatchType.newDispatchTypeByMaster(), jobName);
 							}

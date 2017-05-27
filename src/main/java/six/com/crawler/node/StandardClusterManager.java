@@ -1,9 +1,9 @@
 package six.com.crawler.node;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -14,6 +14,12 @@ import org.apache.curator.RetryPolicy;
 import org.apache.curator.RetrySleeper;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.locks.InterProcessReadWriteLock;
+import org.apache.curator.shaded.com.google.common.collect.Lists;
+import org.apache.curator.shaded.com.google.common.collect.Maps;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.Watcher.Event.EventType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -45,6 +51,8 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 
 	final static Logger log = LoggerFactory.getLogger(StandardClusterManager.class);
 
+	String NODE_INIT_PATH = "node_manager_init";
+
 	@Autowired
 	private ConfigurableApplicationContext applicationContext;
 
@@ -56,27 +64,24 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 
 	private String clusterName;
 
-	private boolean clusterEnable;
-
-	// 当前节点
 	private Node currentNode;
-	
+
+	private Map<String, Node> workerNodes = Maps.newConcurrentMap();
+
+	private Set<NodeChangeWatcher> toMasterNodeWatchers = new HashSet<>();
+
+	private Set<NodeChangeWatcher> missWorkerNodeWatchers = new HashSet<>();
+
 	private CuratorFramework curatorFramework;
 
 	private NettyRpcServer nettyRpcServer;
 
 	private NettyRpcCilent nettyRpcCilent;
 
-	private NodeRegister nodeRegisterEvent;
-
-	private Set<NodeChangeWatcher> nodeTypeChangeWatchers = new HashSet<>();
-
 	public void afterPropertiesSet() {
 		// 初始化当前节点信息
 		clusterName = getConfigure().getConfig("cluster.name", null);
 		log.info("init cluster'name:" + clusterName);
-		clusterEnable = getConfigure().getConfig("cluster.enable", false);
-		log.info("init cluster'enable:" + clusterEnable);
 		// 检查集群名字是否设置
 		if (StringUtils.isBlank(clusterName)) {
 			log.error("don't set cluster's name ,please set it ,then to start");
@@ -120,7 +125,7 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 			log.error("init curatorFramework err");
 			exit(1);
 		}
-		DistributedLock writeLock = getWriteLock(ClusterManager.INIT_PATH);
+		DistributedLock writeLock = getWriteLock(NODE_INIT_PATH);
 		try {
 			writeLock.lock();
 			/**
@@ -131,10 +136,8 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 			nettyRpcServer = new NettyRpcServer(currentHost, currentPost);
 			nettyRpcCilent = new NettyRpcCilent();
 			registerNodeService(this);
-
 			// 初始化注册当前节点
-			nodeRegisterEvent = new NodeRegister(this, curatorFramework, currentNode);
-			nodeRegisterEvent.register();
+			register();
 		} catch (Exception e) {
 			log.error("init clusterManager err", e);
 			exit(1);
@@ -143,13 +146,87 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 		}
 	}
 
-	/**
-	 * 获取主节点
-	 * 
-	 * @return
-	 */
+	private void register() throws Exception {
+		boolean clusterEnable = getConfigure().getConfig("cluster.enable", false);
+		log.info("init cluster'enable:" + clusterEnable);
+		if (!clusterEnable) {
+			unRegisterMaster();
+			unRegisterWorker();
+			byte[] data = JavaSerializeUtils.serialize(getCurrentNode());
+			String masterNodePath = ZooKeeperPathUtils.getMasterNodePath(getCurrentNode().getClusterName(),
+					getCurrentNode().getName());
+			curatorFramework.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(masterNodePath,
+					data);
+			String workerNodePath = ZooKeeperPathUtils.getWorkerNodePath(getCurrentNode().getClusterName(),
+					getCurrentNode().getName());
+			curatorFramework.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(workerNodePath,
+					data);
+			getCurrentNode().setType(NodeType.SINGLE);
+		} else {
+			Node zkMasterNode = getMasterNodeFromRegister();
+			if (null == zkMasterNode || zkMasterNode.equals(getCurrentNode())) {
+				unRegisterMaster();
+				byte[] data = JavaSerializeUtils.serialize(getCurrentNode());
+				curatorFramework.create()
+						.creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(ZooKeeperPathUtils
+								.getMasterNodePath(getCurrentNode().getClusterName(), getCurrentNode().getName()),
+								data);
+				getCurrentNode().setType(NodeType.MASTER);
+			} else {
+				unRegisterWorker();
+				byte[] data = JavaSerializeUtils.serialize(getCurrentNode());
+				String nodePath = ZooKeeperPathUtils.getWorkerNodePath(getCurrentNode().getClusterName(),
+						getCurrentNode().getName());
+				curatorFramework.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(nodePath,
+						data);
+				String masterNodePath = ZooKeeperPathUtils.getMasterNodePath(getCurrentNode().getClusterName(),
+						zkMasterNode.getName());
+				curatorFramework.checkExists().usingWatcher(new Watcher() {
+					@Override
+					public void process(WatchedEvent event) {
+						if (EventType.NodeDeleted == event.getType()) {
+							log.info("missed master node");
+							Node masterNode = getMasterNodeFromRegister();
+							if (null == masterNode) {
+								DistributedLock writeLock = getWriteLock(NODE_INIT_PATH);
+								try {
+									writeLock.lock();
+									masterNode = getMasterNodeFromRegister();
+									if (null == masterNode) {
+										log.info("register own to master node");
+										try {
+											register();
+											masterChange(getCurrentNode());
+										} catch (Exception e) {
+											log.error("register node:" + getCurrentNode().getName(), e);
+										}
+									} else {
+										loolup(masterNode, ClusterManager.class).addWorkerNode(getCurrentNode());
+										masterChange(masterNode);
+									}
+								} finally {
+									writeLock.unLock();
+								}
+							} else {
+								loolup(masterNode, ClusterManager.class).addWorkerNode(getCurrentNode());
+								masterChange(masterNode);
+							}
+						}
+					}
+				}).forPath(masterNodePath);
+				loolup(zkMasterNode, ClusterManager.class).addWorkerNode(getCurrentNode());
+				getCurrentNode().setType(NodeType.WORKER);
+			}
+		}
+	}
+
 	@Override
-	public Node getMasterNode() {
+	public String getNodeName() {
+		return currentNode.getName();
+	}
+
+	@Override
+	public Node getMasterNodeFromRegister() {
 		Node masterNode = null;
 		try {
 			List<String> masterNodePaths = curatorFramework.getChildren()
@@ -163,11 +240,6 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 			log.error("getMasterNode err", e);
 		}
 		return masterNode;
-	}
-
-	@Override
-	public List<Node> getAllNodes() {
-		return Collections.emptyList();
 	}
 
 	/**
@@ -194,7 +266,7 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 
 	@Override
 	public List<Node> getWorkerNodesFromLocal() {
-		return null;
+		return Lists.newArrayList(workerNodes.values());
 	}
 
 	/**
@@ -276,17 +348,6 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 		nettyRpcServer.register(tagetOb);
 	}
 
-	/**
-	 * 移除节点服务
-	 * 
-	 * @param commandName
-	 */
-	@Override
-	public void remove(String commandName) {
-		nettyRpcServer.remove(commandName);
-		log.info("remove nodeCommand:" + commandName);
-	}
-
 	@RpcService(name = "getCurrentNode")
 	@Override
 	public Node getCurrentNode() {
@@ -296,45 +357,50 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 	}
 
 	@Override
-	public void setCurrentNodeType(NodeType type) {
-		if (type != currentNode.getType()) {
-			currentNode.setType(type);
-			if (NodeType.MASTER == type) {
-				for (NodeChangeWatcher watcher : nodeTypeChangeWatchers) {
-					watcher.onChange(NodeChangeEvent.TO_MASTER);
+	public void registerToMasterNodeWatcher(NodeChangeWatcher watcher) {
+		toMasterNodeWatchers.add(watcher);
+	}
+
+	@Override
+	public void registerMissWorkerNodeWatcher(NodeChangeWatcher watcher) {
+		missWorkerNodeWatchers.add(watcher);
+	}
+
+	@RpcService(name = "addWorkerNode")
+	@Override
+	public void addWorkerNode(Node workerNode) {
+		String workNodesPath = ZooKeeperPathUtils.getWorkerNodePath(getClusterName(), workerNode.getName());
+		try {
+			curatorFramework.checkExists().usingWatcher(new Watcher() {
+				@Override
+				public void process(WatchedEvent event) {
+					if (EventType.NodeDeleted == event.getType()) {
+						String workerNodeName = event.getPath();
+						log.info("missed worker node:" + workerNodeName);
+						removeWorkerNode(workerNodeName);
+					}
 				}
+			}).forPath(workNodesPath);
+			workerNodes.put(workerNode.getName(), workerNode);
+		} catch (Exception e) {
+			log.error("master node[" + getNodeName() + "] watch worker node[" + workerNode.getName() + "] failed", e);
+		}
+
+	}
+
+	@Override
+	public void removeWorkerNode(String workerNodeName) {
+		if (null != workerNodes.remove(workerNodeName)) {
+			for (NodeChangeWatcher watcher : missWorkerNodeWatchers) {
+				watcher.onChange(workerNodeName);
 			}
 		}
 	}
 
 	@Override
-	public void registerNodeChangeWatcher(NodeChangeWatcher watcher) {
-		nodeTypeChangeWatchers.add(watcher);
-	}
-	
-	@Override
-	public void missWorkerNode(String workerNodeName){
-		
-	}
-	
-	@Override
-	public void toMasterNode(){
-		
-	}
-
-	@Override
-	public void clearLock() {
-		String path = ZooKeeperPathUtils.getDistributedLocksPath(getClusterName());
-		try {
-			List<String> childrens = curatorFramework.getChildren().forPath(path);
-			if (null != childrens) {
-				for (String children : childrens) {
-					children = ZooKeeperPathUtils.getDistributedLockPath(getClusterName(), children);
-					curatorFramework.delete().forPath(children);
-				}
-			}
-		} catch (Exception e) {
-			log.error("clearLock getChildren", e);
+	public void masterChange(Node master) {
+		for (NodeChangeWatcher watcher : toMasterNodeWatchers) {
+			watcher.onChange(master.getName());
 		}
 	}
 
@@ -357,22 +423,12 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 	}
 
 	@Override
-	public boolean getClusterEnable() {
-		return clusterEnable;
-	}
-
-	@Override
 	public String getClusterName() {
 		return clusterName;
 	}
 
 	@PreDestroy
 	public void destroy() {
-
-		if (null != nodeRegisterEvent) {
-			nodeRegisterEvent.unRegister();
-		}
-
 		if (null != nettyRpcCilent) {
 			nettyRpcCilent.destroy();
 		}
@@ -380,9 +436,52 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 		if (null != nettyRpcServer) {
 			nettyRpcServer.destroy();
 		}
+		unRegister();
 		if (null != curatorFramework) {
 			curatorFramework.close();
 		}
+	}
+
+	/**
+	 * 移除注册信息
+	 */
+	public void unRegister() {
+		unRegisterWorker();
+		unRegisterMaster();
+	}
+
+	protected void unRegisterMaster() {
+		String masterNodePath = ZooKeeperPathUtils.getMasterNodePath(getCurrentNode().getClusterName(),
+				getCurrentNode().getName());
+		try {
+			if (checkIsRegister(masterNodePath)) {
+				curatorFramework.delete().forPath(masterNodePath);
+			}
+		} catch (Exception e) {
+			log.error("unRegister master node:" + getCurrentNode().getName(), e);
+		}
+	}
+
+	protected void unRegisterWorker() {
+		String workerNodePath = ZooKeeperPathUtils.getWorkerNodePath(getCurrentNode().getClusterName(),
+				getCurrentNode().getName());
+		try {
+			if (checkIsRegister(workerNodePath)) {
+				curatorFramework.delete().forPath(workerNodePath);
+			}
+		} catch (Exception e) {
+			log.error("unRegister worker node:" + getCurrentNode().getName(), e);
+		}
+	}
+
+	public boolean checkIsRegister(String path) {
+		boolean isRegister = false;
+		try {
+			isRegister = null != curatorFramework.checkExists().forPath(path);
+		} catch (Exception e) {
+			log.error("", e);
+		}
+		return isRegister;
 	}
 
 	private void exit(int status) {
