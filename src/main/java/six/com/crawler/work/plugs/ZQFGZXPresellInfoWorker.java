@@ -94,7 +94,7 @@ public class ZQFGZXPresellInfoWorker extends AbstractCrawlWorker{
 			unitPage.setReferer(doingPage.getFinalUrl());
 			unitPage.getMetaMap().put("unitId", ArrayListUtils.asList(unitIds.get(i)));
 			unitPage.getMetaMap().put("preSalePermitNo", ArrayListUtils.asList(preSalePermitNos.get(i)));
-			unitPage.getMetaMap().put("completeUnitName", ArrayListUtils.asList(completeUnitNames.get(i).replaceAll("( ", "(")));
+			unitPage.getMetaMap().put("completeUnitName", ArrayListUtils.asList(completeUnitNames.get(i).replaceAll("\\( ", "\\(")));
 			
 			unitInfoQueue.push(unitPage);
 		}
