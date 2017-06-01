@@ -1,12 +1,16 @@
 package six.com.crawler.work.downer.impl;
 
 
+import java.io.File;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import okhttp3.Dispatcher;
+import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import six.com.crawler.entity.HttpProxy;
 import six.com.crawler.entity.Page;
@@ -14,11 +18,14 @@ import six.com.crawler.entity.PageType;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.utils.AutoCharsetDetectorUtils.ContentType;
 import six.com.crawler.work.AbstractCrawlWorker;
+import six.com.crawler.work.CrawlerJobParamKeys;
 import six.com.crawler.work.downer.AbstractDowner;
+import six.com.crawler.work.downer.CookiesStore;
 import six.com.crawler.work.downer.HttpClient;
 import six.com.crawler.work.downer.HttpConstant;
 import six.com.crawler.work.downer.HttpMethod;
 import six.com.crawler.work.downer.HttpResult;
+import six.com.crawler.work.downer.MX509TrustManager;
 import six.com.crawler.work.downer.PostContentType;
 import six.com.crawler.work.downer.cache.DownerCache;
 import six.com.crawler.work.downer.exception.DownerException;
@@ -37,7 +44,27 @@ public class OkHttpDowner extends AbstractDowner {
 	public OkHttpDowner(AbstractCrawlWorker worker, boolean openDownCache, boolean useDownCache,
 			DownerCache downerCache) {
 		super(worker, openDownCache, useDownCache, downerCache);
-		httpClient = worker.getManager().getHttpClient();
+		int httpTimeout = worker.getJob().getParamInt(CrawlerJobParamKeys.HTTP_CONNECT_TIMEOUT,
+				CrawlerJobParamKeys.DEFAULT_HTTP_CONNECT_TIMEOUT);
+		int writeTimeout = worker.getJob().getParamInt(CrawlerJobParamKeys.HTTP_WRITE_TIMEOUT,
+				CrawlerJobParamKeys.DEFAULT_HTTP_WRITE_TIMEOUT);
+		int readTimeout = worker.getJob().getParamInt(CrawlerJobParamKeys.HTTP_READ_TIMEOUT,
+				CrawlerJobParamKeys.DEFAULT_HTTP_READ_TIMEOUT);
+
+		OkHttpClient.Builder okHttpClientBuilder = new OkHttpClient.Builder();
+		okHttpClientBuilder.sslSocketFactory(MX509TrustManager.getSSLSocketFactory(),
+				MX509TrustManager.myX509TrustManager);
+		okHttpClientBuilder.connectTimeout(httpTimeout, TimeUnit.SECONDS);
+		okHttpClientBuilder.writeTimeout(writeTimeout, TimeUnit.SECONDS);
+		okHttpClientBuilder.readTimeout(readTimeout, TimeUnit.SECONDS);
+		okHttpClientBuilder.dispatcher(new Dispatcher());
+		okHttpClientBuilder.followRedirects(true);
+		okHttpClientBuilder.followSslRedirects(true);
+		String cookirDir = httpClient.getConfigure().getSpiderHome() + File.separator + "cookies";
+		httpClient.setCookiesStore(new CookiesStore(cookirDir));
+		okHttpClientBuilder.cookieJar(httpClient.getCookiesStore());
+
+		httpClient.setOkClient(okHttpClientBuilder.build());
 	}
 
 	protected HttpResult insideDown(Page page) throws DownerException {
