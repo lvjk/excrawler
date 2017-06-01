@@ -44,6 +44,8 @@ public class OkHttpDowner extends AbstractDowner {
 	public OkHttpDowner(AbstractCrawlWorker worker, boolean openDownCache, boolean useDownCache,
 			DownerCache downerCache) {
 		super(worker, openDownCache, useDownCache, downerCache);
+		httpClient = worker.getManager().getHttpClient();
+		
 		int httpTimeout = worker.getJob().getParamInt(CrawlerJobParamKeys.HTTP_CONNECT_TIMEOUT,
 				CrawlerJobParamKeys.DEFAULT_HTTP_CONNECT_TIMEOUT);
 		int writeTimeout = worker.getJob().getParamInt(CrawlerJobParamKeys.HTTP_WRITE_TIMEOUT,
