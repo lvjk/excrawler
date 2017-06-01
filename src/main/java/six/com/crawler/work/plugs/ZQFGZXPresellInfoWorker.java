@@ -99,7 +99,4 @@ public class ZQFGZXPresellInfoWorker extends AbstractCrawlWorker{
 			unitInfoQueue.push(unitPage);
 		}
 	}
-	public static void main(String[] args) {
-		
-	}
 }
