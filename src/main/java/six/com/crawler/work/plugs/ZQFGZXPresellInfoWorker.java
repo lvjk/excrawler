@@ -40,9 +40,10 @@ public class ZQFGZXPresellInfoWorker extends AbstractCrawlWorker{
 	
 	@Override
 	protected void insideInit() {
+		String firstRefUrl= "http://www.zqfgzx.org.cn/index.php?s=/Property/ysxkgg.html";
 		unitInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("zqfgzx_unit_info", Page.class);
 		int pageIndex = 1;
-		Page firstPage = buildPage(pageIndex,null);// 初始化第一页
+		Page firstPage = buildPage(pageIndex,firstRefUrl);// 初始化第一页
 		getDowner().down(firstPage);
 		
 		Element pageCountElement = firstPage.getDoc().select(pageCountCss).last();
