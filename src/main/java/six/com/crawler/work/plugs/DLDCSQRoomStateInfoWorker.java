@@ -73,7 +73,12 @@ public class DLDCSQRoomStateInfoWorker extends AbstractCrawlWorker{
 					String state=room.select("font").first().attr("color");
 					String roomNo=room.select("font").first().ownText();
 					
-					states.add(roomState.get(state));
+					if(null != roomState.get(state)){
+						states.add(roomState.get(state));
+					}else{
+						states.add("其他");
+					}
+					
 					roomNos.add(roomNo);
 					
 					floors.add(floor);
