@@ -314,10 +314,10 @@ public class Page implements WorkSpaceData, Serializable {
 		} else {
 			strBuf.append("get@" + getFinalUrl());
 		}
-		if (!getMetaMap().isEmpty()) {
-			String metaJson = JsonUtils.toJson(getMetaMap());
-			strBuf.append("@meta:" + metaJson);
-		}
+//		if (!getMetaMap().isEmpty()) {
+//			String metaJson = JsonUtils.toJson(getMetaMap());
+//			strBuf.append("@meta:" + metaJson);
+//		}
 		return strBuf.toString();
 	}
 

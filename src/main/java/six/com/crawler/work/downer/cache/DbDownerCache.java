@@ -29,6 +29,7 @@ public class DbDownerCache extends AbstractDownerCache {
 		PagePo pagePo = new PagePo();
 		pagePo.setSiteCode(page.getSiteCode());
 		pagePo.setPageKey(page.getKey());
+		pagePo.setPageUrl(page.toString());
 		pagePo.setPageSrc(page.getPageSrc());
 		byte[] data = JavaSerializeUtils.serialize(page);
 		pagePo.setData(data);

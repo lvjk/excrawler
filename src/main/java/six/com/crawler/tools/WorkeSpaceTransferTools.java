@@ -45,11 +45,13 @@ public class WorkeSpaceTransferTools {
 	}
 
 	public static void transfer(String workSpaceName) {
-		 String redisConnection =
-		 "192.168.0.13:6379;192.168.0.13:6380;192.168.0.14:6379;192.168.0.14:6380;192.168.0.15:6379;192.168.0.15:6380;192.168.0.13:6381;192.168.0.14:6381";
+		// String redisConnection =
+		// "192.168.0.13:6379;192.168.0.13:6380;192.168.0.14:6379;192.168.0.14:6380;192.168.0.15:6379;192.168.0.15:6380;192.168.0.13:6381;192.168.0.14:6381";
 
-//		String redisConnection = "122.112.214.233:6379;122.112.214.233:6380;"
-//				+ "122.112.214.232:6379;122.112.214.232:6380;" + "122.112.210.132:6379;122.112.210.132:6380;";
+		String redisConnection = "172.18.88.44:6379;172.18.88.45:6379;172.18.88.46:6379";
+		// String redisConnection = "122.112.214.233:6379;122.112.214.233:6380;"
+		// + "122.112.214.232:6379;122.112.214.232:6380;" +
+		// "122.112.210.132:6379;122.112.210.132:6380;";
 		EnhanceJedisCluster doRedis = newJedis(redisConnection);
 		RedisManager doRedisManager = new six.com.crawler.dao.RedisManager();
 		doRedisManager.setJedisCluster(doRedis);
@@ -66,8 +68,8 @@ public class WorkeSpaceTransferTools {
 		};
 		WorkSpace<Page> targetWorkQueue = new SegmentRedisWorkSpace<>(doRedisManager, distributedLock, workSpaceName,
 				Page.class);
-		Page page=null;
-		while(null!=(page=targetWorkQueue.pull())){
+		Page page = null;
+		while (null != (page = targetWorkQueue.pull())) {
 			System.out.println("页面数据:" + page.toString());
 		}
 	}

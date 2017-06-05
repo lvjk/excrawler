@@ -14,7 +14,9 @@ public class PagePo {
 	private String siteCode;
 	/** 页面唯一key **/
 	private String pageKey;
-	/** 页面源码**/
+	/** 页面url **/
+	private String pageUrl;
+	/** 页面源码 **/
 	private String pageSrc;
 	/** 页面序列化byte **/
 	private byte[] data;
@@ -34,7 +36,15 @@ public class PagePo {
 	public void setPageKey(String pageKey) {
 		this.pageKey = pageKey;
 	}
-	
+
+	public String getPageUrl() {
+		return pageUrl;
+	}
+
+	public void setPageUrl(String pageUrl) {
+		this.pageUrl = pageUrl;
+	}
+
 	public String getPageSrc() {
 		return pageSrc;
 	}

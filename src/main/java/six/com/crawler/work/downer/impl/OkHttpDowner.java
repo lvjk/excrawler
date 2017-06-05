@@ -65,7 +65,6 @@ public class OkHttpDowner extends AbstractDowner {
 		String cookirDir = httpClient.getConfigure().getSpiderHome() + File.separator + "cookies";
 		httpClient.setCookiesStore(new CookiesStore(cookirDir));
 		okHttpClientBuilder.cookieJar(httpClient.getCookiesStore());
-
 		httpClient.setOkClient(okHttpClientBuilder.build());
 	}
 

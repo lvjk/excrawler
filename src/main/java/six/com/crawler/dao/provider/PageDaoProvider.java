@@ -18,7 +18,7 @@ public class PageDaoProvider {
 
 	public String queryByPageKey(Map<String, Object> map) {
 		SQL sql = new SQL();
-		sql.SELECT("`siteCode`,`pageKey`,`pageSrc`,`data`");
+		sql.SELECT("`siteCode`,`pageKey`,`pageUrl`,`pageSrc`,`data`");
 		sql.FROM(TableNames.SITE_PAGE_TABLE_NAME);
 		sql.WHERE("`siteCode` = #{siteCode} and `pageKey` = #{pageKey}");
 		return sql.toString();
@@ -64,8 +64,8 @@ public class PageDaoProvider {
 		StringBuilder sql = new StringBuilder();
 		sql.append("insert into ");
 		sql.append(TableNames.SITE_PAGE_TABLE_NAME);
-		sql.append("(`siteCode`,pageKey,pageSrc,data) ");
-		sql.append("values(#{siteCode},#{pageKey},#{pageSrc},#{data}) ");
+		sql.append("(`siteCode`,pageKey,pageUrl,pageSrc,data) ");
+		sql.append("values(#{siteCode},#{pageKey},#{pageUrl},#{pageSrc},#{data}) ");
 		sql.append("ON DUPLICATE KEY UPDATE pageSrc=#{pageSrc},data=#{data}");
 		return sql.toString();
 	}
