@@ -74,14 +74,14 @@ public class ZQFGZXRoomStateInfoWorker extends AbstractCrawlWorker{
 					String layer=attrs.get(7).ownText();
 					
 					String realEstateName=attrs.get(6).select("a").first().ownText();
-					String preBuildArea=attrs.get(3).ownText().replace("㎡", "");
-					String preShareArea=attrs.get(4).ownText().replace("㎡", "");
-					String preInnerArea=attrs.get(5).ownText().replace("㎡", "");
+					String preBuildArea=attrs.get(3).ownText();
+					String preShareArea=attrs.get(4).ownText();
+					String preInnerArea=attrs.get(5).ownText();
 					
 					String state=attrs.get(9).ownText();
-					String actBuildArea=attrs.get(10).ownText().replace("㎡", "");
-					String actShareArea=attrs.get(11).ownText().replace("㎡", "");
-					String actInnerArea=attrs.get(12).ownText().replace("㎡", "");
+					String actBuildArea=attrs.get(10).ownText();
+					String actShareArea=attrs.get(11).ownText();
+					String actInnerArea=attrs.get(12).ownText();
 					String developer=attrs.get(13).ownText();
 					
 					preBuildAreas.add(preBuildArea);
