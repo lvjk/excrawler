@@ -51,17 +51,17 @@ public class HttpProxyPool {
 		HttpProxy httpProxy = null;
 		int index = 0;
 		Long tempIndex = null;
-		while (true) {
-			tempIndex = redisManager.incr(siteHttpProxyIndexKey);
-			index = tempIndex.intValue() - 1;
-			if (index >= poolSize && 0 != poolSize) {
-				index = index % poolSize;
-			}
-			httpProxy = redisManager.lindex(siteHttpProxyPoolKey, index, HttpProxy.class);
-			// 如果获取httpProxy==null 那么初始化站点http代理池
-			if (null == httpProxy) {
-				distributedLock.lock();
-				try {
+		try {
+			distributedLock.lock();
+			while (true) {
+				tempIndex = redisManager.incr(siteHttpProxyIndexKey);
+				index = tempIndex.intValue() - 1;
+				if (index >= poolSize && 0 != poolSize) {
+					index = index % poolSize;
+				}
+				httpProxy = redisManager.lindex(siteHttpProxyPoolKey, index, HttpProxy.class);
+				// 如果获取httpProxy==null 那么初始化站点http代理池
+				if (null == httpProxy) {
 					poolSize = redisManager.llen(siteHttpProxyPoolKey);
 					if (poolSize <= 0) {
 						int num = 0;
@@ -75,22 +75,22 @@ public class HttpProxyPool {
 							throw new RuntimeException("there is not httpProxys");
 						}
 					}
-				} catch (Exception e) {
-					throw new RuntimeException("init httpProxy pool");
-				} finally {
-					distributedLock.unLock();
-				}
-			} else {
-				long nowTime = System.currentTimeMillis();
-				long alreadyRestTime = nowTime - httpProxy.getLastUseTime();
-				if (alreadyRestTime >= restTime) {
-					httpProxy.setLastUseTime(nowTime);
-					redisManager.lset(siteHttpProxyPoolKey, index, httpProxy);
-					log.info(siteHttpProxyPoolKey + "'s index[" + index + "] [" + httpProxy.toString()
-							+ "] alreadyRestTime:" + alreadyRestTime);
-					break;
+				} else {
+					long nowTime = System.currentTimeMillis();
+					long alreadyRestTime = nowTime - httpProxy.getLastUseTime();
+					if (alreadyRestTime >= restTime) {
+						httpProxy.setLastUseTime(nowTime);
+						redisManager.lset(siteHttpProxyPoolKey, index, httpProxy);
+						log.info(siteHttpProxyPoolKey + "'s index[" + index + "] [" + httpProxy.toString()
+								+ "] alreadyRestTime:" + alreadyRestTime);
+						break;
+					}
 				}
 			}
+		} catch (Exception e) {
+			throw new RuntimeException("get httpProxy from pool:" + siteHttpProxyPoolKey);
+		} finally {
+			distributedLock.unLock();
 		}
 		return httpProxy;
 	}
