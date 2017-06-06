@@ -82,6 +82,26 @@ public class NettyRpcServer extends AbstractRemote implements RpcServer {
 		thread.start();
 	}
 	
+	static class WrapperServiceImpl implements WrapperService{
+
+		Object tagetOb;
+		Method method;
+		
+		public WrapperServiceImpl(Object tagetOb,Method method){
+			this.tagetOb=tagetOb;
+			this.method=method;
+		}
+		@Override
+		public Object invoke(Object[] paras) {
+			try {
+				return method.invoke(tagetOb, paras);
+			} catch (Exception e) {
+				throw new RpcInvokeException(e);
+			}
+		}
+		
+	}
+	
 	@Override
 	public void register(Object tagetOb) {
 		Objects.requireNonNull(tagetOb, "tagetOb must not be null");
@@ -102,13 +122,7 @@ public class NettyRpcServer extends AbstractRemote implements RpcServer {
 			String className=targetClz.getName();
 			for (String methodName : map.keySet()) {
 				final String serviceName=getServiceName(className, methodName);
-				registerMap.put(serviceName, paras -> {
-					try {
-						return map.get(serviceName).invoke(tagetOb, paras);
-					} catch (Exception e) {
-						throw new RpcInvokeException(e);
-					}
-				});
+				registerMap.put(serviceName,new WrapperServiceImpl(tagetOb, map.get(methodName)));
 				log.info("register rpc service:" + serviceName);
 			}
 			targetClz = targetClz.getSuperclass();
