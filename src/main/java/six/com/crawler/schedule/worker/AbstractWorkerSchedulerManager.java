@@ -3,9 +3,11 @@ package six.com.crawler.schedule.worker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import six.com.crawler.entity.Job;
+import six.com.crawler.rpc.AsyCallback;
 import six.com.crawler.rpc.RpcService;
 import six.com.crawler.schedule.AbstractSchedulerManager;
 import six.com.crawler.schedule.DispatchType;
+import six.com.crawler.schedule.master.AbstractMasterSchedulerManager;
 
 /**
  * @author 作者
@@ -43,6 +45,24 @@ public abstract class AbstractWorkerSchedulerManager extends AbstractSchedulerMa
 	public final void cancelScheduled(String jobChainName) {
 	}
 
+	/**
+	 * 当asyCallback等于null时，获取到的MasterSchedulerManager调用方法都会同步, 否则为异步回调
+	 * 
+	 * @param asyCallback
+	 * @return
+	 */
+	public AbstractMasterSchedulerManager getMasterSchedulerManager(AsyCallback asyCallback) {
+		AbstractMasterSchedulerManager masterSchedulerManager = null;
+		if (null == asyCallback) {
+			getClusterManager().loolup(getClusterManager().getMasterNodeFromRegister(),
+					AbstractMasterSchedulerManager.class, asyCallback);
+		} else {
+			masterSchedulerManager = getClusterManager().loolup(getClusterManager().getMasterNodeFromRegister(),
+					AbstractMasterSchedulerManager.class);
+		}
+		return masterSchedulerManager;
+	}
+
 	@RpcService(name = "execute")
 	public abstract void execute(DispatchType dispatchType, String jobName);
 
@@ -51,19 +71,19 @@ public abstract class AbstractWorkerSchedulerManager extends AbstractSchedulerMa
 
 	@RpcService(name = "rest")
 	public abstract void rest(DispatchType dispatchType, String jobName);
-	
+
 	@RpcService(name = "goOn")
 	public abstract void goOn(DispatchType dispatchType, String jobName);
 
 	@RpcService(name = "stop")
 	public abstract void stop(DispatchType dispatchType, String jobName);
-	
+
 	@RpcService(name = "finish")
 	public abstract void finish(DispatchType dispatchType, String jobName);
 
 	@RpcService(name = "stopAll")
 	public abstract void stopAll(DispatchType dispatchType);
-	
-	public abstract void askEnd(String jobName,String workerName);
+
+	public abstract void askEnd(String jobName, String workerName);
 
 }
