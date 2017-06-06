@@ -158,7 +158,8 @@ public class NettyRpcCilent extends AbstractRemote implements RpcCilent {
 				String requestId = createRequestId(targetHost, targetPort, method.getName());
 				RpcRequest rpcRequest = new RpcRequest();
 				rpcRequest.setId(requestId);
-				rpcRequest.setCommand(method.getName());
+				String serviceName=getServiceName(clz.getName(), method.getName());
+				rpcRequest.setCommand(serviceName);
 				rpcRequest.setCallHost(targetHost);
 				rpcRequest.setCallPort(targetPort);
 				rpcRequest.setParams(args);
@@ -185,7 +186,8 @@ public class NettyRpcCilent extends AbstractRemote implements RpcCilent {
 					String requestId = createRequestId(targetHost, targetPort, method.getName());
 					RpcRequest rpcRequest = new RpcRequest();
 					rpcRequest.setId(requestId);
-					rpcRequest.setCommand(method.getName());
+					String serviceName=getServiceName(clz.getName(), method.getName());
+					rpcRequest.setCommand(serviceName);
 					rpcRequest.setCallHost(targetHost);
 					rpcRequest.setCallPort(targetPort);
 					rpcRequest.setParams(args);

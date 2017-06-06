@@ -22,5 +22,9 @@ public class AbstractRemote implements Remote {
 	public RpcSerialize getRpcSerialize() {
 		return rpcSerialize;
 	}
+	
+	protected String getServiceName(String className,String methodName){
+		return className+"."+methodName;
+	}
 
 }
