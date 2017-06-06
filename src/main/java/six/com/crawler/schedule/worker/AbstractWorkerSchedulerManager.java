@@ -46,20 +46,25 @@ public abstract class AbstractWorkerSchedulerManager extends AbstractSchedulerMa
 	}
 
 	/**
-	 * 当asyCallback等于null时，获取到的MasterSchedulerManager调用方法都会同步, 否则为异步回调
+	 * 获取到的MasterSchedulerManager调用方法都会异步回调
 	 * 
 	 * @param asyCallback
 	 * @return
 	 */
 	public AbstractMasterSchedulerManager getMasterSchedulerManager(AsyCallback asyCallback) {
-		AbstractMasterSchedulerManager masterSchedulerManager = null;
-		if (null == asyCallback) {
-			getClusterManager().loolup(getClusterManager().getMasterNodeFromRegister(),
-					AbstractMasterSchedulerManager.class, asyCallback);
-		} else {
-			masterSchedulerManager = getClusterManager().loolup(getClusterManager().getMasterNodeFromRegister(),
-					AbstractMasterSchedulerManager.class);
-		}
+		AbstractMasterSchedulerManager masterSchedulerManager = getClusterManager().loolup(
+				getClusterManager().getMasterNodeFromRegister(), AbstractMasterSchedulerManager.class, asyCallback);
+		return masterSchedulerManager;
+	}
+
+	/**
+	 * 获取到的MasterSchedulerManager调用方法都会同步
+	 * 
+	 * @return
+	 */
+	public AbstractMasterSchedulerManager getMasterSchedulerManager() {
+		AbstractMasterSchedulerManager masterSchedulerManager = getClusterManager()
+				.loolup(getClusterManager().getMasterNodeFromRegister(), AbstractMasterSchedulerManager.class);
 		return masterSchedulerManager;
 	}
 
