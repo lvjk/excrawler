@@ -8,7 +8,7 @@ import java.io.Serializable;
  * @date 创建时间：2017年1月10日 下午12:01:24
  * 
  */
-public class WorkerErrMsg extends BaseVo implements Serializable{
+public class WorkerErrMsg extends BasePo implements Serializable{
 
 	/**
 	 * 

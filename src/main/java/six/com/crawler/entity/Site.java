@@ -6,7 +6,7 @@ import java.io.Serializable;
  * @author sixliu E-mail:359852326@qq.com
  * @version 创建时间：2016年1月4日 下午10:28:07 类说明 站点
  */
-public class Site implements Serializable {
+public class Site extends BasePo implements Serializable {
 
 	private static final long serialVersionUID = 3748779904088935189L;
 

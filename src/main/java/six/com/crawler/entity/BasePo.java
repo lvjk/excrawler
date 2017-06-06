@@ -2,13 +2,12 @@ package six.com.crawler.entity;
 
 import java.io.Serializable;
 
-/** 
-* @author  作者 
-* @E-mail: 359852326@qq.com 
-* @date 创建时间：2017年3月24日 上午10:07:02 
-* 基本数据定义, 所有需要存储的数据都需要继承此类 ，有id 和version 2个字段
-*/
-public abstract class BaseVo implements Serializable{
+/**
+ * @author 作者
+ * @E-mail: 359852326@qq.com
+ * @date 创建时间：2017年3月24日 上午10:07:02 基本数据定义, 所有需要存储的数据都需要继承此类 ，有id 和version 2个字段
+ */
+public abstract class BasePo implements Serializable {
 
 	/**
 	 * 
@@ -19,13 +18,16 @@ public abstract class BaseVo implements Serializable{
 	 * 数据id
 	 */
 	private String id;
-	
+
+	/**
+	 * 统计查询到的总数据数量
+	 */
+	private int totalSize;
+
 	/**
 	 * 数据版本
 	 */
-	private int version;//数据版本
-	
-	private int totalSize;
+	private int version;// 数据版本
 
 	public void setTotalSize(int totalSize) {
 		this.totalSize = totalSize;
@@ -34,7 +36,7 @@ public abstract class BaseVo implements Serializable{
 	public int getTotalSize() {
 		return totalSize;
 	}
-	
+
 	public String getId() {
 		return id;
 	}

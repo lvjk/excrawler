@@ -2,14 +2,14 @@ package six.com.crawler.work.extract;
 
 import java.io.Serializable;
 
-import six.com.crawler.entity.BaseVo;
+import six.com.crawler.entity.BasePo;
 
 /**
  * @author sixliu E-mail:359852326@qq.com
  * @version 创建时间：2016年5月16日 下午9:14:46 类说明 页面数据类型
  */
 
-public class ExtractItem extends BaseVo implements Serializable {
+public class ExtractItem extends BasePo implements Serializable {
 
 	private static final long serialVersionUID = 5530674966621099301L;
 

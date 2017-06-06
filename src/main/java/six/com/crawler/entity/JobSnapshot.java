@@ -16,7 +16,7 @@ import six.com.crawler.utils.JsonUtils;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年2月16日 上午9:32:02
  */
-public class JobSnapshot extends BaseVo implements Serializable {
+public class JobSnapshot extends BasePo implements Serializable {
 
 	private static final long serialVersionUID = -5076089473208316846L;
 	private String id;// id

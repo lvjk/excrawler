@@ -225,6 +225,7 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 		long processTime = System.currentTimeMillis();
 		try {
 			insideWork(workData);
+			getWorkSpace().ack(workData);
 		} catch (WorkerException e) {
 			log.error("worker process err", e);
 			doErr(e);

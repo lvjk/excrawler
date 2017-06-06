@@ -38,11 +38,4 @@ public class SiteDaoProvider extends BaseProvider{
 		return sql.toString();
 	}
 	
-	
-	public String del(String siteCode) {
-		SQL sql = new SQL();
-		sql.DELETE_FROM(TableNames.SITE_TABLE_NAME);
-		sql.WHERE("code = #{siteCode}");
-		return sql.toString();
-	}
 }

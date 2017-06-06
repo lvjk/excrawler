@@ -2,13 +2,13 @@ package six.com.crawler.work.extract;
 
 import java.io.Serializable;
 
-import six.com.crawler.entity.BaseVo;
+import six.com.crawler.entity.BasePo;
 
 /**
  * @author sixliu E-mail:359852326@qq.com
  * @version 创建时间：2016年5月17日 下午7:48:04 类说明
  */ 
-public class ExtractPath extends BaseVo implements Serializable{
+public class ExtractPath extends BasePo implements Serializable{
 
 	/**
 	 * 

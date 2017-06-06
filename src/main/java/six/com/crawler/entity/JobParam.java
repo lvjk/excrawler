@@ -6,7 +6,7 @@ package six.com.crawler.entity;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年9月9日 下午2:43:39
  */
-public class JobParam extends BaseVo{
+public class JobParam extends BasePo{
 
 	/**
 	 * 

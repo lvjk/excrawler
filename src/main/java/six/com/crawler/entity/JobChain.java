@@ -11,7 +11,7 @@ import java.io.Serializable;
  *       任务链下的所有任务共享当前任务链状态
  * 
  */
-public class JobChain extends BaseVo implements Serializable {
+public class JobChain extends BasePo implements Serializable {
 
 	/**
 	 * 

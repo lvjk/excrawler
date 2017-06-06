@@ -38,7 +38,7 @@ public class SiteServiceImpl implements SiteService {
 	private ExtractPathService extracterService;
 
 	public List<Site> querySites(int pageIndex, int pageSize) {
-		List<Site> sites = siteDao.querySites(pageIndex, pageSize);
+		List<Site> sites = siteDao.pageQuery(pageIndex, pageSize);
 		return sites;
 	}
 

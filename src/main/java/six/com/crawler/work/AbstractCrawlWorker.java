@@ -53,10 +53,12 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 	private Extracter extracter;
 	// 数据对外输出存儲处理程序
 	private Store store;
-	//最大重试次数
+	// 最大重试次数
 	private int maxRetryProcess;
 	// 获取元素超时
 	protected int findElementTimeout = Constants.FIND_ELEMENT_TIMEOUT;
+
+	private boolean isSaveDoneData;
 
 	public AbstractCrawlWorker() {
 		super(Page.class);
@@ -110,6 +112,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 		}
 		this.store = StoreFactory.newStore(this, StoreType.valueOf(storeTypeInt));
 
+		isSaveDoneData = getJob().getParamBoolean(CrawlerJobParamKeys.IS_SAVE_DONE_DATA, true);
 		insideInit();
 	}
 
@@ -147,11 +150,10 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 				getWorkerSnapshot().setTotalResultCount(getWorkerSnapshot().getTotalResultCount() + storeCount);
 				// 暴露给实现类的完成操作
 				onComplete(doingPage, resultContext);
-				// 流程走到这步，可以确认数据已经被完全处理,那么ack 数据，最终删除数据
-				getWorkSpace().ack(doingPage);
 				// 添加数据被处理记录
-				getWorkSpace().addDone(doingPage.getKey());
-
+				if (isSaveDoneData) {
+					getWorkSpace().addDone(doingPage.getKey());
+				}
 				log.info("finished processing,down time[" + downTime + "],extract time[" + extractTime + "],store time["
 						+ storeTime + "]:" + doingPage.toString());
 			} catch (WorkerCrawlerException crawlerException) {

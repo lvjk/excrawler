@@ -95,5 +95,8 @@ public interface CrawlerJobParamKeys {
 	String UPDATE_SQL_TEMPLATE = "updateSqlTemplate";
 
 	String DEL_SQL_TEMPLATE = "delSqlTemplate";
+	
+	/**是否保存处理过的数据**/
+	String IS_SAVE_DONE_DATA="isSaveDoneData";
 
 }

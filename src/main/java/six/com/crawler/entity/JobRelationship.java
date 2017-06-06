@@ -5,7 +5,7 @@ package six.com.crawler.entity;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年4月14日 下午3:54:25  job 组
  */
-public class JobRelationship extends BaseVo{
+public class JobRelationship extends BasePo{
 	
 
 	/**
