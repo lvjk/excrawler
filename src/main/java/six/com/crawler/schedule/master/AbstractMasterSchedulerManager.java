@@ -31,6 +31,8 @@ public abstract class AbstractMasterSchedulerManager extends AbstractSchedulerMa
 
 	protected abstract void doInit();
 
+	@RpcService()
+	public abstract void execute(DispatchType dispatchType, String jobName);
 	/**
 	 * 当job's worker结束后,由工作节点调度管理类调用,通知job's worker 结束工作
 	 * 
@@ -39,6 +41,13 @@ public abstract class AbstractMasterSchedulerManager extends AbstractSchedulerMa
 	 */
 	@RpcService()
 	public abstract void endWorker(DispatchType dispatchType, String jobName);
+	
+
+	@RpcService()
+	public abstract void finish(DispatchType dispatchType, String jobName);
+	
+	@RpcService()
+	public abstract void stop(DispatchType dispatchType, String jobName);
 
 	/**
 	 * 当job's worker工作时从工作空间获取不到处理数据,由工作节点调度管理类调用,询问当前job's worker是否结束
