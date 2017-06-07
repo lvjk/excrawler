@@ -69,4 +69,6 @@ public interface WorkerExceptionType {
 	String STORE_DB_EXECUTE_EXCEPTION = "store_db_execute";
 
 	String STORE_DB_DUPLICATE_EXCEPTION = "store_db_duplicate";
+	
+	String WORKER_MONITOR_JOB_EXCEPTION = "monitor_job_exception";
 }
