@@ -142,7 +142,7 @@ public class JobServiceImpl extends BaseService implements JobService {
 	@Override
 	public ResponseMsg<List<JobParam>> queryJobParams(String jobName) {
 		ResponseMsg<List<JobParam>> responese = createResponseMsg();
-		List<JobParam> jobParams = jobParamDao.queryJobParams(jobName);
+		List<JobParam> jobParams = jobParamDao.queryByJob(jobName);
 		/**
 		 * 由于< 属于特殊字符，所以改用 {}。
 		 */
@@ -218,7 +218,7 @@ public class JobServiceImpl extends BaseService implements JobService {
 		JobProfile profile = new JobProfile();
 		Job job = jobDao.query(param);
 		if (null != job) {
-			List<JobParam> jobParams = jobParamDao.queryJobParams(param);
+			List<JobParam> jobParams = jobParamDao.queryByJob(param);
 			job.setParamList(jobParams);
 			List<ExtractItem> extractItems = extractItemDao.query(param);
 			profile.setJob(job);
@@ -251,7 +251,7 @@ public class JobServiceImpl extends BaseService implements JobService {
 				if (null != profile && null != profile.getJob()) {
 					Job job = profile.getJob();
 					// 删除job参数数据
-					jobParamDao.delJobParams(job.getName());
+					jobParamDao.delByJob(job.getName());
 					// 删除job抽取项
 					extractItemDao.del(job.getName());
 					// 删除job

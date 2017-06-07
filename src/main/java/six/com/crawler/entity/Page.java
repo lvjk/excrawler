@@ -337,7 +337,7 @@ public class Page implements WorkSpaceData, Serializable {
 	}
 
 	public static void main(String[] args) {
-		String url = "http://www.tmsf.com/newhouse/property_33_12874_info.htm";
+		String url = "http://www.tmsf.com/newhouse/property_33_12493_info.htm";
 		String pageKey = MD5Utils.MD5(url);
 		System.out.println(pageKey);
 	}

@@ -28,7 +28,7 @@ public class Job extends BasePo implements Serializable {
 
 	private String cronTrigger = "";// cronTrigger 定时
 
-	private long workFrequency = 1000;// 每次处理时间的阈值 默认1000毫秒
+	private long workFrequency ;// 每次处理时间的阈值 默认1000毫秒
 
 	private String workerClass = "";// worker class
 

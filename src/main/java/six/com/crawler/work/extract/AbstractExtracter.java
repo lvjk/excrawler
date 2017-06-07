@@ -94,8 +94,8 @@ public abstract class AbstractExtracter implements Extracter {
 				tempDoResults = doingPage.getMeta(doPaserItem.getOutputKey());
 			} else {
 				List<ExtractPath> pathList = extractPathMap.computeIfAbsent(doPaserItem.getPathName(), mapKey -> {// 获取所有path
-					return getAbstractWorker().getManager().getExtractPathDao().query(doPaserItem.getPathName(),
-							getAbstractWorker().getSite().getCode());
+					return getAbstractWorker().getManager().getExtractPathDao()
+							.queryBySiteAndName(getAbstractWorker().getSite().getCode(), doPaserItem.getPathName());
 				});
 				if (null == pathList || pathList.isEmpty()) {// 如果没有获取到path 抛异常
 					throw new UnfoundPathExtractException("don't find path:" + doPaserItem.getPathName());
@@ -112,13 +112,14 @@ public abstract class AbstractExtracter implements Extracter {
 						}
 					}
 				} catch (Exception e) {// 捕获 未知异常
-					throw new UnknownExtractException("extract item[" + doPaserItem.getOutputKey() + "]:"+doingPage.getFinalUrl(), e);
+					throw new UnknownExtractException(
+							"extract item[" + doPaserItem.getOutputKey() + "]:" + doingPage.getFinalUrl(), e);
 				}
 			}
 			if (null == tempDoResults || tempDoResults.isEmpty()) {// 判断是否必须有值，如果是那么抛出异常
 				if (1 == doPaserItem.getPrimary() || 1 == doPaserItem.getMustHaveResult()) {
-					throw new EmptyResultExtractException(
-							"extract resultKey [" + doPaserItem.getOutputKey() + "] value is empty:"+doingPage.getFinalUrl());
+					throw new EmptyResultExtractException("extract resultKey [" + doPaserItem.getOutputKey()
+							+ "] value is empty:" + doingPage.getFinalUrl());
 				}
 			}
 			if (1 == doPaserItem.getPrimary()) {// 记录主键结果数量

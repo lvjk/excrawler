@@ -8,7 +8,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.PreDestroy;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,26 +102,23 @@ public class NettyRpcServer extends AbstractRemote implements RpcServer {
 	}
 	
 	@Override
-	public void register(Object tagetOb) {
-		Objects.requireNonNull(tagetOb, "tagetOb must not be null");
-		Class<?> targetClz = tagetOb.getClass();
+	public void register(Class<?> protocol,Object instance) {
+		Objects.requireNonNull(protocol, "tagetOb must not be null");
+		Objects.requireNonNull(instance, "tagetOb must not be null");
+		Class<?> targetClz =instance.getClass();
+		String className=protocol.getName();
 		while (null != targetClz && targetClz != Object.class) {
 			Method[] allMethods = targetClz.getMethods();
 			Map<String, Method> map = new HashMap<>();
 			for (Method method : allMethods) {
 				RpcService rpcAnnotation = method.getAnnotation(RpcService.class);
 				if (null != rpcAnnotation) {
-					String serviceName = ((RpcService) rpcAnnotation).name();
-					if (StringUtils.isBlank(serviceName)) {
-						serviceName = method.getName();
-					}
-					map.put(serviceName, method);
+					map.put(method.getName(), method);
 				}
 			}
-			String className=targetClz.getName();
 			for (String methodName : map.keySet()) {
 				final String serviceName=getServiceName(className, methodName);
-				registerMap.put(serviceName,new WrapperServiceImpl(tagetOb, map.get(methodName)));
+				registerMap.put(serviceName,new WrapperServiceImpl(instance, map.get(methodName)));
 				log.info("register rpc service:" + serviceName);
 			}
 			targetClz = targetClz.getSuperclass();

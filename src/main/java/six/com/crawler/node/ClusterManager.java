@@ -77,7 +77,7 @@ public interface ClusterManager {
 	 * 
 	 * @param tagetOb
 	 */
-	void registerNodeService(Object tagetOb);
+	void registerNodeService(Class<?> protocol,Object tagetOb);
 
 	/**
 	 * 根据path 获取一个 分布式读锁

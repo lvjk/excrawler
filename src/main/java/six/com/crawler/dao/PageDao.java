@@ -1,14 +1,12 @@
 package six.com.crawler.dao;
 
-import java.util.List;
-
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.InsertProvider;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.SelectProvider;
 
 import six.com.crawler.dao.po.PagePo;
 import six.com.crawler.dao.provider.PageDaoProvider;
-import six.com.crawler.entity.Page;
 
 /**
  * @author 作者
@@ -17,19 +15,33 @@ import six.com.crawler.entity.Page;
  */
 public interface PageDao extends BaseDao {
 
-	@SelectProvider(type = PageDaoProvider.class, method = "queryByPageKey")
-	public PagePo queryByPageKey(@Param("siteCode") String siteCode, @Param("pageKey") String pageKey);
+	/**
+	 * 通过指定siteCode和pageKey查询，返回最新的一条数据
+	 * 
+	 * @param siteCode
+	 * @param pageKey
+	 * @return
+	 */
+	@SelectProvider(type = PageDaoProvider.class, method = "queryBySiteAndKey")
+	public PagePo queryBySiteAndKey(@Param("siteCode") String siteCode, @Param("pageKey") String pageKey);
 
-	@SelectProvider(type = PageDaoProvider.class, method = "queryByPageKeys")
-	public List<Page> queryByPageKeys(String siteCode, List<String> pageKeys);
-
+	/**
+	 * 保存PagePo
+	 * 
+	 * @param page
+	 * @return 返回保存的数据条数
+	 */
 	@InsertProvider(type = PageDaoProvider.class, method = "save")
-	public int save(PagePo page);
-	
-	@InsertProvider(type = PageDaoProvider.class, method = "update")
-	public int update(PagePo page);
+	public int save(PagePo pagePo);
 
-	@InsertProvider(type = PageDaoProvider.class, method = "bathSave")
-	public int bathSave(List<Page> list);
+	/**
+	 * 删除指定多少天以前的数据
+	 * 
+	 * @param beforeDays
+	 *            多少天以前
+	 * @return 返回删除掉的数据条数
+	 */
+	@Delete("delete from " + TableNames.SITE_PAGE_TABLE_NAME + " where datediff(curdate(),updateTime)>=#{beforeDays}")
+	public int delBeforeDate(int beforeDays);
 
 }

@@ -135,7 +135,7 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 			int currentPost = getCurrentNode().getTrafficPort();
 			nettyRpcServer = new NettyRpcServer(currentHost, currentPost);
 			nettyRpcCilent = new NettyRpcCilent();
-			registerNodeService(this);
+			registerNodeService(ClusterManager.class, this);
 			// 初始化注册当前节点
 			register();
 		} catch (Exception e) {
@@ -344,11 +344,11 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 	 * @param tagetOb
 	 */
 	@Override
-	public void registerNodeService(Object tagetOb) {
-		nettyRpcServer.register(tagetOb);
+	public void registerNodeService(Class<?> protocol, Object tagetOb) {
+		nettyRpcServer.register(protocol, tagetOb);
 	}
 
-	@RpcService(name = "getCurrentNode")
+	@RpcService()
 	@Override
 	public Node getCurrentNode() {
 		currentNode.setCpu(MyOperatingSystemMXBean.getAvailableProcessors());
@@ -366,7 +366,7 @@ public class StandardClusterManager implements ClusterManager, InitializingBean 
 		missWorkerNodeWatchers.add(watcher);
 	}
 
-	@RpcService(name = "addWorkerNode")
+	@RpcService()
 	@Override
 	public void addWorkerNode(Node workerNode) {
 		String workNodesPath = ZooKeeperPathUtils.getWorkerNodePath(getClusterName(), workerNode.getName());

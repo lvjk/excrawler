@@ -19,17 +19,17 @@ public interface HttpProxyDao {
 	/**
 	 * 获取所有代理
 	 * 
-	 * @return
+	 * @return 返回所有数据集合
 	 */
 	@Select("select `host`,`port`,`type`,`userName`,`passWord`,`expire`,`describe`,`version` from "
 			+ TableNames.HTTP_PROXY_TABLE_NAME)
 	List<HttpProxy> getAll();
 
 	/**
-	 * 保存代理
+	 * 保存指定代理
 	 * 
 	 * @param httpProxy
-	 * @return
+	 * @return 返回保存的数据条数
 	 */
 	@InsertProvider(type = HttpProxyDaoProvider.class, method = "save")
 	int save(HttpProxy httpProxy);
@@ -38,8 +38,10 @@ public interface HttpProxyDao {
 	 * 通过指定host和post删除代理
 	 * 
 	 * @param host
+	 *            http代理主机
 	 * @param port
-	 * @return
+	 *            http代理端口
+	 * @return 返回删除掉的数据条数
 	 */
 	@Delete("delete from " + TableNames.HTTP_PROXY_TABLE_NAME + " where `host` = #{host} and `port` = #{port}")
 	int del(String host, int port);
@@ -47,7 +49,7 @@ public interface HttpProxyDao {
 	/**
 	 * 删除所有代理
 	 * 
-	 * @return
+	 * @return 返回删除掉的数据条数
 	 */
 	@Delete("delete from " + TableNames.HTTP_PROXY_TABLE_NAME)
 	int delAll();

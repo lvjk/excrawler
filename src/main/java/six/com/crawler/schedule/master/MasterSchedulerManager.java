@@ -237,7 +237,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 					getScheduleCache().delJobSnapshot(jobName);
 					getScheduleCache().delWorkerSnapshots(jobName);
 
-					List<JobParam> jobParams = getJobParamDao().queryJobParams(job.getName());
+					List<JobParam> jobParams = getJobParamDao().queryByJob(job.getName());
 					job.setParamList(jobParams);
 
 					String id = dispatchType.getCurrentTimeMillis();
@@ -318,10 +318,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 				workerSchedulerManager = getClusterManager().loolup(freeNode, AbstractWorkerSchedulerManager.class,
 						response -> {
 							if (response.isOk()) {
-								List<WorkerSnapshot> workers = getScheduleCache().getWorkerSnapshots(job.getName());
-								if (null != workers && workers.size() > 0) {
-									doJobRelationship(jobSnapshot, JobRelationship.TRIGGER_TYPE_PARALLEL);
-								}
+								doJobRelationship(jobSnapshot, JobRelationship.TRIGGER_TYPE_PARALLEL);
 							}
 						});
 				workerSchedulerManager.execute(DispatchType.newDispatchTypeByMaster(), job.getName());

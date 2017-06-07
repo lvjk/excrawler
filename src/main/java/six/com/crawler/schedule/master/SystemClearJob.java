@@ -26,6 +26,7 @@ public class SystemClearJob implements org.quartz.Job {
 		scheduleManager.getWorkerErrMsgDao().delBeforeDate(clearBeforeDays);
 		scheduleManager.getWorkerSnapshotDao().delBeforeDate(clearBeforeDays);
 		scheduleManager.getJobSnapshotDao().delBeforeDate(clearBeforeDays);
+		scheduleManager.getPageDao().delBeforeDate(clearBeforeDays);
 		log.info("end to execute SystemClearJob");
 	}
 

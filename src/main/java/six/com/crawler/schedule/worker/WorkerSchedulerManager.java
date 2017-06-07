@@ -2,7 +2,6 @@ package six.com.crawler.schedule.worker;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -17,7 +16,6 @@ import com.google.common.collect.Interner;
 import com.google.common.collect.Interners;
 
 import six.com.crawler.entity.Job;
-import six.com.crawler.entity.JobParam;
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.WorkerErrMsg;
 import six.com.crawler.entity.WorkerSnapshot;
@@ -67,8 +65,6 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 					if (null != job) {
 						log.info("worker node[" + getClusterManager().getCurrentNode().getName() + "] execute job["
 								+ job.getName() + "]");
-						List<JobParam> jobParams = getJobParamDao().queryJobParams(job.getName());
-						job.setParamList(jobParams);
 						JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(job.getName());
 						if (null != jobSnapshot && StringUtils.isNotBlank(jobSnapshot.getId())) {
 							int needThreads = job.getThreads();

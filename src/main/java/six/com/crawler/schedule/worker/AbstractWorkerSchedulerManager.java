@@ -23,7 +23,7 @@ public abstract class AbstractWorkerSchedulerManager extends AbstractSchedulerMa
 
 	protected final void init() {
 		doInit();
-		getClusterManager().registerNodeService(this);
+		getClusterManager().registerNodeService(AbstractWorkerSchedulerManager.class,this);
 	}
 
 	protected abstract void doInit();
@@ -68,25 +68,25 @@ public abstract class AbstractWorkerSchedulerManager extends AbstractSchedulerMa
 		return masterSchedulerManager;
 	}
 
-	@RpcService(name = "execute")
+	@RpcService()
 	public abstract void execute(DispatchType dispatchType, String jobName);
 
-	@RpcService(name = "suspend")
+	@RpcService()
 	public abstract void suspend(DispatchType dispatchType, String jobName);
 
-	@RpcService(name = "rest")
+	@RpcService()
 	public abstract void rest(DispatchType dispatchType, String jobName);
 
-	@RpcService(name = "goOn")
+	@RpcService()
 	public abstract void goOn(DispatchType dispatchType, String jobName);
 
-	@RpcService(name = "stop")
+	@RpcService()
 	public abstract void stop(DispatchType dispatchType, String jobName);
 
-	@RpcService(name = "finish")
+	@RpcService()
 	public abstract void finish(DispatchType dispatchType, String jobName);
 
-	@RpcService(name = "stopAll")
+	@RpcService()
 	public abstract void stopAll(DispatchType dispatchType);
 
 	public abstract void askEnd(String jobName, String workerName);

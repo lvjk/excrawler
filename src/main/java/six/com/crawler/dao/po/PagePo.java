@@ -1,5 +1,7 @@
 package six.com.crawler.dao.po;
 
+import six.com.crawler.entity.BasePo;
+
 /**
  * @author 作者
  * @E-mail: 359852326@qq.com
@@ -8,8 +10,16 @@ package six.com.crawler.dao.po;
  *       网站抓取Page 对应数据 po
  * 
  */
-public class PagePo {
+public class PagePo extends BasePo{
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -6739289067989865883L;
+	/** 所属哪个任务产生的pagevo **/
+	private String jobName;
+	/** 所属哪个任务运行批次产生的pagevo **/
+	private String jobSnapshotId;
 	/** 站点code **/
 	private String siteCode;
 	/** 页面唯一key **/
@@ -20,6 +30,22 @@ public class PagePo {
 	private String pageSrc;
 	/** 页面序列化byte **/
 	private byte[] data;
+
+	public String getJobName() {
+		return jobName;
+	}
+
+	public void setJobName(String jobName) {
+		this.jobName = jobName;
+	}
+
+	public String getJobSnapshotId() {
+		return jobSnapshotId;
+	}
+
+	public void setJobSnapshotId(String jobSnapshotId) {
+		this.jobSnapshotId = jobSnapshotId;
+	}
 
 	public String getSiteCode() {
 		return siteCode;

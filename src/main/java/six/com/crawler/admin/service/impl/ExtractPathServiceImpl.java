@@ -66,7 +66,7 @@ public class ExtractPathServiceImpl implements ExtractPathService {
 	 * @return
 	 */
 	public List<ExtractPath> query(String pathName, String siteCode) {
-		List<ExtractPath> result = pathdao.query(pathName, siteCode);
+		List<ExtractPath> result = pathdao.queryBySiteAndName(siteCode,pathName);
 		return result;
 	}
 

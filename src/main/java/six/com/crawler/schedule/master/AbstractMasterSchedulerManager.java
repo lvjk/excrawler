@@ -26,7 +26,7 @@ public abstract class AbstractMasterSchedulerManager extends AbstractSchedulerMa
 
 	protected final void init() {
 		doInit();
-		getClusterManager().registerNodeService(this);
+		getClusterManager().registerNodeService(AbstractMasterSchedulerManager.class,this);
 	}
 
 	protected abstract void doInit();
@@ -37,7 +37,7 @@ public abstract class AbstractMasterSchedulerManager extends AbstractSchedulerMa
 	 * @param dispatchType
 	 * @param jobName
 	 */
-	@RpcService(name = "endWorker")
+	@RpcService()
 	public abstract void endWorker(DispatchType dispatchType, String jobName);
 
 	/**
@@ -46,7 +46,7 @@ public abstract class AbstractMasterSchedulerManager extends AbstractSchedulerMa
 	 * @param dispatchType
 	 * @param jobName
 	 */
-	@RpcService(name = "askEnd")
+	@RpcService()
 	public abstract void askEnd(DispatchType dispatchType, String jobName);
 	
 	
