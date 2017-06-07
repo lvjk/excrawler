@@ -46,6 +46,21 @@ public class WorkerErrMsgDaoProvider extends BaseProvider{
 		return sql.toString();
 	}
 	
+	public String queryByJob(Map<String, Object> map){
+		SQL sql=new SQL();
+		sql.SELECT(queryColumns);
+		sql.FROM(TableNames.JOB_WORKER_SNAPSHOT_ERRMSG_TABLE_NAME);
+		Object ob=map.get(WorkerErrMsgDao.QUERY_PARAM_JOBSNAPSHOTID);
+		if(null!=ob){
+			sql.WHERE(WorkerErrMsgDao.QUERY_PARAM_JOBSNAPSHOTID+"=#{"+WorkerErrMsgDao.QUERY_PARAM_JOBSNAPSHOTID+"}");
+		}
+		ob=map.get(WorkerErrMsgDao.QUERY_PARAM_JOBNAME);
+		if(null!=ob){
+			sql.WHERE(WorkerErrMsgDao.QUERY_PARAM_JOBNAME+"=#{"+WorkerErrMsgDao.QUERY_PARAM_JOBNAME+"}");
+		}
+		return sql.toString();
+	}
+	
 	public String pageQuery(Map<String, Object> queryParams) {
 		String sql="select b.totalSize,a.* "
 				+ " from("

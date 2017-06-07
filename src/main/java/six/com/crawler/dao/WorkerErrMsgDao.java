@@ -26,6 +26,11 @@ public interface WorkerErrMsgDao extends BaseDao{
 			@Param(QUERY_PARAM_JOBNAME)String jobName,
 			@Param(QUERY_PARAM_WORKERNAME)String workerName);
 	
+	
+	@SelectProvider(type = WorkerErrMsgDaoProvider.class, method = "queryByJob")
+	public List<WorkerErrMsg> queryByJob(@Param(QUERY_PARAM_JOBSNAPSHOTID)String jobSnapshotId,
+			@Param(QUERY_PARAM_JOBNAME)String jobName);
+	
 	/**
 	 * @param jobName
 	 * @param pageIndex
