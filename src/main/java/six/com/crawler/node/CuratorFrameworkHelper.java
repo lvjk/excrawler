@@ -17,7 +17,7 @@ public class CuratorFrameworkHelper {
 
 	final static Logger log = LoggerFactory.getLogger(CuratorFrameworkHelper.class);
 
-	public CuratorFramework newCuratorFramework(String connectStr, String clusterName, RetryPolicy retryPolicy) {
+	public static CuratorFramework newCuratorFramework(String connectStr, String clusterName, RetryPolicy retryPolicy) {
 		CuratorFramework curatorFramework = null;
 		curatorFramework = CuratorFrameworkFactory.newClient(connectStr, retryPolicy);
 		curatorFramework.start();

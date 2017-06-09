@@ -110,12 +110,11 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 			workerThread.setName(systemThreadName);
 			getClusterManager().getCurrentNode().decrAndGetRunningWorkerSize();
 			try {
-				AbstractMasterSchedulerManager masterSchedulerManager = getClusterManager()
-						.loolup(getClusterManager().getMasterNodeFromRegister(), AbstractMasterSchedulerManager.class, result -> {
-							if(result.isOk()){
-								remove(jobName, workerName);
-							}
-						});
+				AbstractMasterSchedulerManager masterSchedulerManager = getMasterSchedulerManager(result -> {
+					if (result.isOk()) {
+						remove(jobName, workerName);
+					}
+				});
 				masterSchedulerManager.endWorker(DispatchType.newDispatchTypeByWorker(), jobName);
 			} catch (Exception e) {
 				log.error("notice master node job[" + jobName + "]'s worker[" + workerName + "] is end err", e);
@@ -225,9 +224,8 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 	public void askEnd(String jobName, String workerName) {
 		synchronized (keyLock.intern(jobName)) {
 			try {
-				AbstractMasterSchedulerManager masterSchedulerManager = getClusterManager()
-						.loolup(getClusterManager().getMasterNodeFromRegister(), AbstractMasterSchedulerManager.class, result -> {
-							if(!result.isOk()){
+				AbstractMasterSchedulerManager masterSchedulerManager = getMasterSchedulerManager(result -> {
+							if (!result.isOk()) {
 								stop(DispatchType.newDispatchTypeByMaster(), jobName);
 							}
 						});
@@ -277,8 +275,8 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 			for (int i = 0; i < workerSize; i++) {
 				Worker<?> newJobWorker = getWorkerPlugsManager().newWorker(workerClass);
 				if (null != newJobWorker) {
-					String workerName = "job[" + job.getName() + "]_node[" + getClusterManager().getCurrentNode().getName()
-							+ "]_worker_" + i;
+					String workerName = "job[" + job.getName() + "]_node["
+							+ getClusterManager().getCurrentNode().getName() + "]_worker_" + i;
 					WorkerSnapshot workerSnapshot = new WorkerSnapshot();
 					workerSnapshot.setJobSnapshotId(jobSnapshot.getId());
 					workerSnapshot.setJobName(job.getName());

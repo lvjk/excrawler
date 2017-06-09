@@ -15,19 +15,41 @@ import six.com.crawler.rpc.AsyCallback;
 
 public interface ClusterManager {
 
+	/**
+	 * 获取当前集群名
+	 * @return
+	 */
 	String getClusterName();
 	
+	/**
+	 * 获取当前节点名
+	 * @return
+	 */
 	String getNodeName();
-
-	Node getCurrentNode();
-
-	Node getMasterNodeFromRegister();
-
-
-	List<Node> getWorkerNodesFromLocal();
 	
-	List<Node> getWorkerNodesFromRegister();
-
+	/**
+	 * 获取当前节点
+	 * @return
+	 */
+	Node getCurrentNode();
+	
+	/**
+	 * 获取当前集群主节点
+	 * @return
+	 */
+	Node getMaster();
+	
+	/**
+	 * 获取所有工作节点
+	 * @return
+	 */
+	List<Node> getWorkerNodes();
+	
+	/**
+	 * 获取指定工作节点
+	 * @param nodeName
+	 * @return
+	 */
 	Node getWorkerNode(String nodeName);
 
 	List<Node> getFreeWorkerNodes(int needFresNodes);
@@ -85,14 +107,7 @@ public interface ClusterManager {
 	 * @param path
 	 * @return
 	 */
-	DistributedLock getReadLock(String path);
+	DistributedLock getDistributedLock(String path);
 
-	/**
-	 * 根据path获取一个分布式写锁
-	 * 
-	 * @param path
-	 * @return
-	 */
-	DistributedLock getWriteLock(String path);
 
 }

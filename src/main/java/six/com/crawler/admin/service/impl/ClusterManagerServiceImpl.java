@@ -33,12 +33,12 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 	@Override
 	public List<Node> getClusterInfo() {
 		List<Node> allNodes = new ArrayList<>();
-		Node masterNode = clusterManager.getMasterNodeFromRegister();
+		Node masterNode = clusterManager.getMaster();
 		if (null != masterNode) {
 			Node newestNode = clusterManager.getNewestNode(masterNode);
 			allNodes.add(newestNode);
 		}
-		List<Node> workerNodes = clusterManager.getWorkerNodesFromRegister();
+		List<Node> workerNodes = clusterManager.getWorkerNodes();
 		if (null != workerNodes) {
 			for (Node workerNode : workerNodes) {
 				if (!allNodes.contains(workerNode)) {

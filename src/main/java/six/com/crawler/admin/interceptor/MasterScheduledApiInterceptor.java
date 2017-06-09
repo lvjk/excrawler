@@ -29,7 +29,7 @@ public class MasterScheduledApiInterceptor implements HandlerInterceptor {
 			throws Exception {
 		if (clusterManager.getCurrentNode().getType() != NodeType.SINGLE
 				&& clusterManager.getCurrentNode().getType() != NodeType.MASTER) {
-			Node masterNode = clusterManager.getMasterNodeFromRegister();
+			Node masterNode = clusterManager.getMaster();
 			if (null != masterNode && masterNode.equals(clusterManager.getCurrentNode())) {
 				return true;
 			} else {

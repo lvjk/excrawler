@@ -91,7 +91,7 @@ public abstract class AbstractCrawlWorker extends AbstractWorker<Page> {
 		HttpProxyType httpProxyType = HttpProxyType.valueOf(httpProxyTypeInt);
 
 		String siteHttpProxyPoolLockPath = HttpProxyPool.REDIS_HTTP_PROXY_POOL + "_" + siteCode;
-		DistributedLock distributedLock = getManager().getClusterManager().getWriteLock(siteHttpProxyPoolLockPath);
+		DistributedLock distributedLock = getManager().getClusterManager().getDistributedLock(siteHttpProxyPoolLockPath);
 
 		httpProxyPool = new HttpProxyPool(getManager().getHttpProxyDao(), getManager().getRedisManager(),
 				distributedLock, siteCode, httpProxyType, site.getVisitFrequency());

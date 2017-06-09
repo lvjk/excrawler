@@ -100,11 +100,6 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 		if (NodeType.SINGLE == getClusterManager().getCurrentNode().getType()
 				|| NodeType.MASTER == getClusterManager().getCurrentNode().getType()) {
 			try {
-				stopAll(DispatchType.newDispatchTypeByManual());
-			} catch (Exception e) {
-				log.error("master node stop all err", e);
-			}
-			try {
 				repair();
 			} catch (Exception e) {
 				log.error("master node repair err", e);
@@ -267,23 +262,19 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	 *            任务name
 	 */
 	private void doExecute(Job job) {
+		// 判断任务是否在运行
 		if (!isRunning(job.getName())) {
-			// 判断任务是否在运行
-			if (!isRunning(job.getName())) {
-				log.info("master node execute job[" + job.getName() + "]");
-				// TODO 这里计算可执行资源时，需要进行资源隔离，避免并发导致同时分配
-				String designatedNodeName = job.getDesignatedNodeName();
-				int needNodes = job.getNeedNodes();
-				int needThreads = job.getThreads();
-				List<Node> freeNodes = getFreeNodes(designatedNodeName, needNodes, needThreads);
-				if (null != freeNodes && freeNodes.size() > 0) {
-					doExecute(job, freeNodes);
-					return;
-				} else {
-					log.error("there is no node to execute job[" + job.getName() + "]");
-				}
+			log.info("master node execute job[" + job.getName() + "]");
+			// TODO 这里计算可执行资源时，需要进行资源隔离，避免并发导致同时分配
+			String designatedNodeName = job.getDesignatedNodeName();
+			int needNodes = job.getNeedNodes();
+			int needThreads = job.getThreads();
+			List<Node> freeNodes = getFreeNodes(designatedNodeName, needNodes, needThreads);
+			if (null != freeNodes && freeNodes.size() > 0) {
+				doExecute(job, freeNodes);
+				return;
 			} else {
-				log.error("the job[" + job.getName() + "] is running");
+				log.error("there is no node to execute job[" + job.getName() + "]");
 			}
 		} else {
 			log.error("the job[" + job.getName() + "] is running");
@@ -632,7 +623,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 				}
 			}
 		}
-		List<Node> nodes = getClusterManager().getWorkerNodesFromRegister();
+		List<Node> nodes = getClusterManager().getWorkerNodes();
 		AbstractWorkerSchedulerManager workerSchedulerManager = null;
 		for (Node node : nodes) {
 			if (!currentNode.equals(node)) {

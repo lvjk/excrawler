@@ -37,7 +37,7 @@ public class ScheduleDispatchTypeIntercept {
 		if (null != dispatchType && (null == passDispatchTypeNames
 				|| (null != passDispatchTypeNames && passDispatchTypeNames.contains(dispatchType.getName())))) {
 			if (null != operationJobLockPath) {
-				DistributedLock distributedLock = clusterManager.getWriteLock(operationJobLockPath);
+				DistributedLock distributedLock = clusterManager.getDistributedLock(operationJobLockPath);
 				try {
 					distributedLock.lock();
 					resullt = schedulerProcess.process();

@@ -12,13 +12,13 @@ import org.slf4j.LoggerFactory;
  * 
  *       基于 Constructor InterProcessMutex 的分布式写锁
  */
-public class DistributedWriteLock implements DistributedLock {
+public class ZkDistributedLock implements DistributedLock {
 
-	final static Logger log = LoggerFactory.getLogger(DistributedWriteLock.class);
+	final static Logger log = LoggerFactory.getLogger(ZkDistributedLock.class);
 	private String path;
 	private InterProcessMutex interProcessMutex;
 
-	public DistributedWriteLock(String path, InterProcessReadWriteLock interProcessReadWriteLock) {
+	public ZkDistributedLock(String path, InterProcessReadWriteLock interProcessReadWriteLock) {
 		this.path = path;
 		this.interProcessMutex = interProcessReadWriteLock.writeLock();
 	}

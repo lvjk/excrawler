@@ -118,7 +118,8 @@ public class NettyRpcServer extends AbstractRemote implements RpcServer {
 			}
 			for (String methodName : map.keySet()) {
 				final String serviceName=getServiceName(className, methodName);
-				registerMap.put(serviceName,new WrapperServiceImpl(instance, map.get(methodName)));
+				Method method=map.get(methodName);
+				registerMap.put(serviceName,new WrapperServiceImpl(instance,method));
 				log.info("register rpc service:" + serviceName);
 			}
 			targetClz = targetClz.getSuperclass();

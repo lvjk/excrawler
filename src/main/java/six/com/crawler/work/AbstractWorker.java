@@ -127,7 +127,7 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 		String jobName = getJob().getName();
 		MDC.put("jobName", jobName);
 		String path = "job_" + jobName + "_" + getWorkerSnapshot().getJobSnapshotId() + "_worker";
-		distributedLock = getManager().getClusterManager().getWriteLock(path);
+		distributedLock = getManager().getClusterManager().getDistributedLock(path);
 		try {
 			distributedLock.lock();
 			restWaitTime = (long) job.getParamInt(CrawlerJobParamKeys.REST_WAIT_TIME, DEFAULT_REST_TIME);

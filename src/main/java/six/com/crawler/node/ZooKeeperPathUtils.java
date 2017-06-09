@@ -45,6 +45,11 @@ public class ZooKeeperPathUtils {
 	public static String getWorkerNodePath(String clusterName, String nodeName) {
 		return getWorkerNodesPath(clusterName) + "/" + nodeName;
 	}
+	
+	public static String getWorkerNodeName(String clusterName,String workerNodePath) {
+		String nodeName=workerNodePath.replace(getWorkerNodesPath(clusterName) + "/","");
+		return nodeName;
+	}
 
 	public static String getDistributedLocksPath(String clusterName) {
 		return getClusterRootPath(clusterName) + "/lock";

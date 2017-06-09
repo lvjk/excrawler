@@ -23,7 +23,7 @@ public abstract class AbstractWorkerSchedulerManager extends AbstractSchedulerMa
 
 	protected final void init() {
 		doInit();
-		getClusterManager().registerNodeService(AbstractWorkerSchedulerManager.class,this);
+		getClusterManager().registerNodeService(AbstractWorkerSchedulerManager.class, this);
 	}
 
 	protected abstract void doInit();
@@ -52,8 +52,8 @@ public abstract class AbstractWorkerSchedulerManager extends AbstractSchedulerMa
 	 * @return
 	 */
 	public AbstractMasterSchedulerManager getMasterSchedulerManager(AsyCallback asyCallback) {
-		AbstractMasterSchedulerManager masterSchedulerManager = getClusterManager().loolup(
-				getClusterManager().getMasterNodeFromRegister(), AbstractMasterSchedulerManager.class, asyCallback);
+		AbstractMasterSchedulerManager masterSchedulerManager = getClusterManager()
+				.loolup(getClusterManager().getMaster(), AbstractMasterSchedulerManager.class, asyCallback);
 		return masterSchedulerManager;
 	}
 
@@ -64,7 +64,7 @@ public abstract class AbstractWorkerSchedulerManager extends AbstractSchedulerMa
 	 */
 	public AbstractMasterSchedulerManager getMasterSchedulerManager() {
 		AbstractMasterSchedulerManager masterSchedulerManager = getClusterManager()
-				.loolup(getClusterManager().getMasterNodeFromRegister(), AbstractMasterSchedulerManager.class);
+				.loolup(getClusterManager().getMaster(), AbstractMasterSchedulerManager.class);
 		return masterSchedulerManager;
 	}
 

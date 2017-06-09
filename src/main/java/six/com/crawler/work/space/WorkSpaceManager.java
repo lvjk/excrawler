@@ -39,7 +39,7 @@ public class WorkSpaceManager {
 	 * @return
 	 */
 	public <T extends WorkSpaceData> WorkSpace<T> newWorkSpace(String workSpaceName, Class<T> clz) {
-		DistributedLock distributedLock = clusterManager.getWriteLock(WORKSPACE_PRE + workSpaceName);
+		DistributedLock distributedLock = clusterManager.getDistributedLock(WORKSPACE_PRE + workSpaceName);
 		WorkSpace<T> workQueue = new SegmentRedisWorkSpace<>(redisManager, distributedLock, workSpaceName, clz);
 		return workQueue;
 	}
