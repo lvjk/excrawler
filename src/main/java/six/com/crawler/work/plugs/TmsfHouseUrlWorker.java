@@ -11,6 +11,7 @@ import six.com.crawler.entity.PageType;
 import six.com.crawler.entity.ResultContext;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.downer.HttpMethod;
+import six.com.crawler.work.extract.exception.EmptyResultExtractException;
 import six.com.crawler.work.space.WorkSpace;
 
 /**
@@ -87,8 +88,12 @@ public class TmsfHouseUrlWorker extends AbstractCrawlWorker {
 		String presellId = doingPage.getMetaMap().get("presellId_org").get(0);
 		String buildingidCss = "div[id=building_dd]>div[class=lptypebarin]>a";
 		Elements buildingidElements = doingPage.getDoc().select(buildingidCss);
+		if (null == buildingidElements || buildingidElements.isEmpty()) {
+			throw new EmptyResultExtractException("there is not building from the presell");
+		}
+
 		for (Element buildingidElement : buildingidElements) {
-			String buildingName=buildingidElement.text();
+			String buildingName = buildingidElement.text();
 			String buildingId = buildingidElement.attr("href");
 			buildingId = StringUtils.substringBetween(buildingId, "javascript:doBuilding('", "');");
 			String houseInfoUrl = StringUtils.replace(houseInfoUrlTemplate, sidTemplate, sid);
@@ -106,7 +111,7 @@ public class TmsfHouseUrlWorker extends AbstractCrawlWorker {
 			houseInfoPage.setType(PageType.DATA.value());
 			houseInfoPage.addMeta("buildingId", buildingId);
 			houseInfoPage.getMetaMap().putAll(doingPage.getMetaMap());
-			houseInfoPage.getMetaMap().put("buildingName",Lists.newArrayList(buildingName));
+			houseInfoPage.getMetaMap().put("buildingName", Lists.newArrayList(buildingName));
 			houseStatusQueue.push(houseInfoPage);
 		}
 	}
