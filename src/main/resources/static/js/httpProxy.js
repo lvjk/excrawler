@@ -38,7 +38,7 @@ function showDataTable(httpProxys){
 		$("<td>"+checkStr(httpProxy.describe)+"</td>")
 		.appendTo(tr);
 		var httpProxyOperationTd = $("<td></td>");
-		var httpProxyOperation= "<a href=\"javascript:testHttpProxy('" + checkStr(httpProxy.host)+ "','" + checkStr(httpProxy.port)+ "')\">测试</a>&nbsp;";
+		var httpProxyOperation= "<a href=\"javascript:testHttpProxy('" + checkStr(httpProxy.host)+ "','" + checkStr(httpProxy.port)+ "','" +checkStr(httpProxy.userName)+ "','" + checkStr(httpProxy.passWord)+ "')\">测试</a>&nbsp;";
 		httpProxyOperation += "<a href=\"javascript:delHttpProxy('" + httpProxy.host+ "','" + httpProxy.port+ "')\">删除</a>&nbsp;";
 		$(httpProxyOperation).appendTo(httpProxyOperationTd);
 		httpProxyOperationTd.appendTo(tr);
@@ -90,10 +90,12 @@ function addHttpProxy(){
 }
 
 
-function testHttpProxy(httpProxyHost,httpProxyPort){
+function testHttpProxy(httpProxyHost,httpProxyPort,httpProxyUserName,httpProxyPassWord){
 	$.post("/crawler/httpPorxy/test", {
 		host : httpProxyHost,
-		port : httpProxyPort
+		port : httpProxyPort,
+		userName:httpProxyUserName,
+		passWord:httpProxyPassWord
 	}, function(result) {
 		alert(result.msg);
 	});
