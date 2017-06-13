@@ -4,9 +4,9 @@ import java.io.Serializable;
 import java.util.List;
 
 import six.com.crawler.entity.JobSnapshot;
-import six.com.crawler.entity.JobSnapshotState;
+import six.com.crawler.entity.JobSnapshotStatus;
 import six.com.crawler.entity.WorkerErrMsg;
-import six.com.crawler.schedule.DispatchType;
+import six.com.crawler.schedule.TriggerType;
 import six.com.crawler.work.exception.WorkerException;
 import six.com.crawler.work.exception.WorkerMonitorException;
 import six.com.crawler.work.space.WorkSpaceData;
@@ -37,14 +37,14 @@ public class CommonMonitorWorker extends AbstractMonitorWorker implements Serial
 		if(null==jobSnapshot){
 			 throw new WorkerMonitorException("Job info exception!");
 		}
-		if(jobSnapshot.getStatus()==JobSnapshotState.FINISHED.value()){
+		if(jobSnapshot.getStatus()==JobSnapshotStatus.FINISHED.value()){
 			//任务结束
 			getWorkSpace().clearDoing();
-			getManager().getMasterSchedulerManager().finish(DispatchType.newDispatchTypeByMaster(),getJobSnapshot().getName());
+			getManager().getMasterSchedulerManager().finish(TriggerType.newDispatchTypeByMaster(),getJobSnapshot().getName());
 			return false;
-		}else if(jobSnapshot.getStatus()==JobSnapshotState.STOP.value()){
+		}else if(jobSnapshot.getStatus()==JobSnapshotStatus.STOP.value()){
 			
-			getManager().getMasterSchedulerManager().stop(DispatchType.newDispatchTypeByMaster(),getJobSnapshot().getName());
+			getManager().getMasterSchedulerManager().stop(TriggerType.newDispatchTypeByMaster(),getJobSnapshot().getName());
 			return false;
 		}else{
 			//非正常结束
@@ -52,7 +52,7 @@ public class CommonMonitorWorker extends AbstractMonitorWorker implements Serial
 			for (int i = 0; i < msgs.size(); i++) {
 				if(msgs.get(i).getType().equals("worker_init")){
 					//重新调度任务并返回false
-					getManager().getMasterSchedulerManager().execute(DispatchType.newDispatchTypeByMaster(), getTriggerJobName());
+					getManager().getMasterSchedulerManager().execute(TriggerType.newDispatchTypeByMaster(), getTriggerJobName());
 					return false;
 				}
 			}

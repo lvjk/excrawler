@@ -16,17 +16,17 @@ public class JobRelationship extends BasePo{
 	/**
 	 * 串行
 	 */
-	public static int TRIGGER_TYPE_SERIAL =1;
+	public static int EXECUTE_TYPE_SERIAL =1;
 	
 	/**
 	 * 并行
 	 */
-	public static int TRIGGER_TYPE_PARALLEL=2;
+	public static int EXECUTE_TYPE_PARALLEL=2;
 	
 	
 	private String currentJobName;
 	private String nextJobName;
-	private int triggerType;
+	private int executeType;
 	
 	public String getCurrentJobName() {
 		return currentJobName;
@@ -40,11 +40,11 @@ public class JobRelationship extends BasePo{
 	public void setNextJobName(String nextJobName) {
 		this.nextJobName = nextJobName;
 	}
-	public int getTriggerType() {
-		return triggerType;
+	public int getExecuteType() {
+		return executeType;
 	}
-	public void setTriggerType(int triggerType) {
-		this.triggerType = triggerType;
+	public void setExecuteType(int executeType) {
+		this.executeType = executeType;
 	}
 
 }

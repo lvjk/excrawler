@@ -13,7 +13,7 @@ import six.com.crawler.admin.api.ResponseMsg;
 import six.com.crawler.admin.service.BaseService;
 import six.com.crawler.admin.service.MasterScheduledService;
 import six.com.crawler.entity.WorkerSnapshot;
-import six.com.crawler.schedule.DispatchType;
+import six.com.crawler.schedule.TriggerType;
 import six.com.crawler.schedule.master.AbstractMasterSchedulerManager;
 
 /**
@@ -37,7 +37,7 @@ public class MasterScheduledServiceImpl extends BaseService implements MasterSch
 			if (scheduleManager.isRunning(jobName)) {
 				msg = "the job[" + jobName + "] is running";
 			} else {
-				scheduleManager.execute(DispatchType.newDispatchTypeByManual(), jobName);
+				scheduleManager.execute(TriggerType.newDispatchTypeByManual(), jobName);
 				msg = "already put job[" + jobName + "] to waiting queue";
 			}
 		} else {
@@ -56,7 +56,7 @@ public class MasterScheduledServiceImpl extends BaseService implements MasterSch
 			if (!scheduleManager.isRunning(jobName)) {
 				msg = "the job[" + jobName + "] is not running and don't suspend";
 			} else {
-				scheduleManager.suspend(DispatchType.newDispatchTypeByManual(), jobName);
+				scheduleManager.suspend(TriggerType.newDispatchTypeByManual(), jobName);
 				msg = "the job[" + jobName + "] have been requested to execute suspend";
 			}
 		} else {
@@ -75,7 +75,7 @@ public class MasterScheduledServiceImpl extends BaseService implements MasterSch
 			if (!scheduleManager.isRunning(jobName)) {
 				msg = "the job[" + jobName + "] is not running and don't goOn";
 			} else {
-				scheduleManager.goOn(DispatchType.newDispatchTypeByManual(), jobName);
+				scheduleManager.goOn(TriggerType.newDispatchTypeByManual(), jobName);
 				msg = "the job[" + jobName + "] have been requested to execute goOn";
 			}
 		} else {
@@ -95,7 +95,7 @@ public class MasterScheduledServiceImpl extends BaseService implements MasterSch
 			if (!scheduleManager.isRunning(jobName)) {
 				msg = "the job[" + jobName + "] is not running and don't stop";
 			} else {
-				scheduleManager.stop(DispatchType.newDispatchTypeByManual(), jobName);
+				scheduleManager.stop(TriggerType.newDispatchTypeByManual(), jobName);
 				msg = "the job[" + jobName + "] have been requested to execute stop";
 			}
 		} else {

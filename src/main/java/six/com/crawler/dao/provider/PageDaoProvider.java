@@ -2,8 +2,6 @@ package six.com.crawler.dao.provider;
 
 import java.util.Map;
 
-import org.apache.ibatis.jdbc.SQL;
-
 import six.com.crawler.dao.TableNames;
 import six.com.crawler.dao.po.PagePo;
 
@@ -15,10 +13,10 @@ import six.com.crawler.dao.po.PagePo;
 public class PageDaoProvider {
 
 	public String queryBySiteAndKey(Map<String, Object> map) {
-		SQL sql = new SQL();
-		sql.SELECT("`jobName`,`jobSnapshotId`,`siteCode`,`pageKey`,`pageUrl`,`pageSrc`,`data`");
-		sql.FROM(TableNames.SITE_PAGE_TABLE_NAME);
-		sql.WHERE("`siteCode` = #{siteCode} and `pageKey` = #{pageKey} order by updateTime desc limit 0,1");
+		StringBuilder sql=new StringBuilder();
+		sql.append(" select `jobName`,`jobSnapshotId`,`siteCode`,`pageKey`,`pageUrl`,`pageSrc`,`data`");
+		sql.append(" from "+TableNames.SITE_PAGE_TABLE_NAME);
+		sql.append(" where `siteCode` = #{siteCode} and `pageKey` = #{pageKey} order by updateTime desc limit 0,1");
 		return sql.toString();
 	}
 

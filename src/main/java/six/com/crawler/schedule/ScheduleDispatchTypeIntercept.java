@@ -31,7 +31,7 @@ public class ScheduleDispatchTypeIntercept {
 	 *            通过后被调用的操作
 	 * @return
 	 */
-	public <T> T intercept(DispatchType dispatchType, Set<String> passDispatchTypeNames, String operationJobLockPath,
+	public <T> T intercept(TriggerType dispatchType, Set<String> passDispatchTypeNames, String operationJobLockPath,
 			SchedulerProcess<T> schedulerProcess) {
 		T resullt = null;
 		if (null != dispatchType && (null == passDispatchTypeNames

@@ -21,7 +21,7 @@ import six.com.crawler.entity.WorkerErrMsg;
 import six.com.crawler.entity.WorkerSnapshot;
 import six.com.crawler.node.Node;
 import six.com.crawler.node.NodeType;
-import six.com.crawler.schedule.DispatchType;
+import six.com.crawler.schedule.TriggerType;
 import six.com.crawler.schedule.JobWorkerThreadFactory;
 import six.com.crawler.schedule.master.AbstractMasterSchedulerManager;
 import six.com.crawler.schedule.master.MasterSchedulerManager;
@@ -55,10 +55,10 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 	 * 
 	 * @param job
 	 */
-	public void execute(DispatchType dispatchType, String jobName) {
+	public void execute(TriggerType dispatchType, String jobName) {
 		Node currentNode = getClusterManager().getCurrentNode();
 		if (NodeType.SINGLE == currentNode.getType() || NodeType.WORKER == currentNode.getType()) {
-			if (null != dispatchType && StringUtils.equals(DispatchType.DISPATCH_TYPE_MASTER, dispatchType.getName())
+			if (null != dispatchType && StringUtils.equals(TriggerType.DISPATCH_TYPE_MASTER, dispatchType.getName())
 					&& StringUtils.isNotBlank(jobName)) {
 				synchronized (keyLock.intern(jobName)) {
 					Job job = getScheduleCache().getJob(jobName);
@@ -115,7 +115,7 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 						remove(jobName, workerName);
 					}
 				});
-				masterSchedulerManager.endWorker(DispatchType.newDispatchTypeByWorker(), jobName);
+				masterSchedulerManager.endWorker(TriggerType.newDispatchTypeByWorker(), jobName);
 			} catch (Exception e) {
 				log.error("notice master node job[" + jobName + "]'s worker[" + workerName + "] is end err", e);
 			}
@@ -144,8 +144,8 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 	}
 
 	@Override
-	public void suspend(DispatchType dispatchType, String jobName) {
-		if (null != dispatchType && StringUtils.equals(DispatchType.DISPATCH_TYPE_MASTER, dispatchType.getName())
+	public void suspend(TriggerType dispatchType, String jobName) {
+		if (null != dispatchType && StringUtils.equals(TriggerType.DISPATCH_TYPE_MASTER, dispatchType.getName())
 				&& StringUtils.isNotBlank(jobName)) {
 			synchronized (keyLock.intern(jobName)) {
 				Map<String, Worker<?>> workers = getWorkers(jobName);
@@ -157,8 +157,8 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 	}
 
 	@Override
-	public void rest(DispatchType dispatchType, String jobName) {
-		if (null != dispatchType && StringUtils.equals(DispatchType.DISPATCH_TYPE_MASTER, dispatchType.getName())
+	public void rest(TriggerType dispatchType, String jobName) {
+		if (null != dispatchType && StringUtils.equals(TriggerType.DISPATCH_TYPE_MASTER, dispatchType.getName())
 				&& StringUtils.isNotBlank(jobName)) {
 			synchronized (keyLock.intern(jobName)) {
 				Map<String, Worker<?>> workers = getWorkers(jobName);
@@ -176,8 +176,8 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 	 * @return
 	 */
 	@Override
-	public void goOn(DispatchType dispatchType, String jobName) {
-		if (null != dispatchType && StringUtils.equals(DispatchType.DISPATCH_TYPE_MASTER, dispatchType.getName())
+	public void goOn(TriggerType dispatchType, String jobName) {
+		if (null != dispatchType && StringUtils.equals(TriggerType.DISPATCH_TYPE_MASTER, dispatchType.getName())
 				&& StringUtils.isNotBlank(jobName)) {
 			synchronized (keyLock.intern(jobName)) {
 				Map<String, Worker<?>> workers = getWorkers(jobName);
@@ -195,8 +195,8 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 	 * @return
 	 */
 	@Override
-	public void stop(DispatchType dispatchType, String jobName) {
-		if (null != dispatchType && StringUtils.equals(DispatchType.DISPATCH_TYPE_MASTER, dispatchType.getName())
+	public void stop(TriggerType dispatchType, String jobName) {
+		if (null != dispatchType && StringUtils.equals(TriggerType.DISPATCH_TYPE_MASTER, dispatchType.getName())
 				&& StringUtils.isNotBlank(jobName)) {
 			synchronized (keyLock.intern(jobName)) {
 				Map<String, Worker<?>> workers = getWorkers(jobName);
@@ -208,8 +208,8 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 	}
 
 	@Override
-	public void finish(DispatchType dispatchType, String jobName) {
-		if (null != dispatchType && StringUtils.equals(DispatchType.DISPATCH_TYPE_MASTER, dispatchType.getName())
+	public void finish(TriggerType dispatchType, String jobName) {
+		if (null != dispatchType && StringUtils.equals(TriggerType.DISPATCH_TYPE_MASTER, dispatchType.getName())
 				&& StringUtils.isNotBlank(jobName)) {
 			synchronized (keyLock.intern(jobName)) {
 				Map<String, Worker<?>> workers = getWorkers(jobName);
@@ -226,10 +226,10 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 			try {
 				AbstractMasterSchedulerManager masterSchedulerManager = getMasterSchedulerManager(result -> {
 							if (!result.isOk()) {
-								stop(DispatchType.newDispatchTypeByMaster(), jobName);
+								stop(TriggerType.newDispatchTypeByMaster(), jobName);
 							}
 						});
-				masterSchedulerManager.askEnd(DispatchType.newDispatchTypeByWorker(), jobName);
+				masterSchedulerManager.askEnd(TriggerType.newDispatchTypeByWorker(), jobName);
 			} catch (Exception e) {
 				log.error("ask master job[" + jobName + "]'s worker[" + workerName + "] is end", e);
 			}
@@ -237,9 +237,9 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 	}
 
 	@Override
-	public synchronized void stopAll(DispatchType dispatchType) {
-		if (null != dispatchType && (StringUtils.equals(DispatchType.DISPATCH_TYPE_MASTER, dispatchType.getName())
-				|| StringUtils.equals(DispatchType.DISPATCH_TYPE_WORKER, dispatchType.getName()))) {
+	public synchronized void stopAll(TriggerType dispatchType) {
+		if (null != dispatchType && (StringUtils.equals(TriggerType.DISPATCH_TYPE_MASTER, dispatchType.getName())
+				|| StringUtils.equals(TriggerType.DISPATCH_TYPE_WORKER, dispatchType.getName()))) {
 			synchronized (localJobWorkersMap) {
 				for (Map<String, Worker<?>> jobWorkerMap : localJobWorkersMap.values()) {
 					for (Worker<?> worker : jobWorkerMap.values()) {
@@ -300,7 +300,7 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 
 	public void shutdown() {
 		// 然后获取当前节点有关的job worker 然后调用stop
-		stopAll(DispatchType.newDispatchTypeByWorker());
+		stopAll(TriggerType.newDispatchTypeByWorker());
 		// 然后shut down worker线程池
 		executor.shutdown();
 	}

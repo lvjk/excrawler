@@ -7,7 +7,7 @@ import java.io.Serializable;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2016年10月12日 上午10:29:28
  */
-public enum JobSnapshotState implements Serializable {
+public enum JobSnapshotStatus implements Serializable {
 
 	/**
 	 * 准备
@@ -41,11 +41,11 @@ public enum JobSnapshotState implements Serializable {
 
 	private final int value;
 
-	private JobSnapshotState(int value) {
+	private JobSnapshotStatus(int value) {
 		this.value = value;
 	}
 
-	public static JobSnapshotState valueOf(int type) {
+	public static JobSnapshotStatus valueOf(int type) {
 		if (1 == type) {
 			return READY;
 		} else if (2 == type) {

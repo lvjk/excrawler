@@ -34,16 +34,14 @@ import six.com.crawler.entity.Job;
 import six.com.crawler.entity.JobParam;
 import six.com.crawler.entity.JobRelationship;
 import six.com.crawler.entity.JobSnapshot;
-import six.com.crawler.entity.JobSnapshotState;
+import six.com.crawler.entity.JobSnapshotStatus;
 import six.com.crawler.entity.WorkerSnapshot;
 import six.com.crawler.node.Node;
 import six.com.crawler.node.NodeChangeWatcher;
 import six.com.crawler.node.NodeType;
 import six.com.crawler.schedule.AbstractSchedulerManager;
-import six.com.crawler.schedule.DispatchType;
-import six.com.crawler.schedule.consts.DownloadContants;
+import six.com.crawler.schedule.TriggerType;
 import six.com.crawler.schedule.worker.AbstractWorkerSchedulerManager;
-import six.com.crawler.work.CrawlerJobParamKeys;
 import six.com.crawler.work.space.WorkSpace;
 import six.com.crawler.work.space.WorkSpaceData;
 
@@ -112,7 +110,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 				public void onChange(String masterNodeName) {
 					if (StringUtils.equals(masterNodeName, getClusterManager().getNodeName())) {
 						// 当检测到变更为主节点时那么，应该暂停当前节点上运行的任务，然后加载计划执行任务，
-						getWorkerSchedulerManager().stopAll(DispatchType.newDispatchTypeByMaster());
+						getWorkerSchedulerManager().stopAll(TriggerType.newDispatchTypeByMaster());
 						// 初始化主节点调度中心
 						initMasterNodeScheduler();
 					}
@@ -222,7 +220,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	 * 
 	 * @param job
 	 */
-	public void execute(DispatchType dispatchType, String jobName) {
+	public void execute(TriggerType dispatchType, String jobName) {
 		Node currentNode = getClusterManager().getCurrentNode();
 		if (NodeType.SINGLE == currentNode.getType() || NodeType.MASTER == currentNode.getType()) {
 			synchronized (keyLock.intern(jobName)) {
@@ -239,10 +237,9 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 					JobSnapshot jobSnapshot = new JobSnapshot();
 					jobSnapshot.setId(id);
 					jobSnapshot.setName(job.getName());
-					jobSnapshot.setDispatchType(dispatchType);
+					jobSnapshot.setTriggerType(dispatchType);
 					jobSnapshot.setWorkSpaceName(job.getWorkSpaceName());
-					jobSnapshot.setDesignatedNodeName(job.getDesignatedNodeName());
-					jobSnapshot.setStatus(JobSnapshotState.WAITING_EXECUTED.value());
+					jobSnapshot.setStatus(JobSnapshotStatus.WAITING_EXECUTED.value());
 					getScheduleCache().updateJobSnapshot(jobSnapshot);
 					pendingExecuteQueue.add(job);
 					log.info("already submit job[" + jobName + "] to queue and it[" + id + "] will to be executed");
@@ -292,11 +289,10 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	 */
 	private void doExecute(Job job, List<Node> freeNodes) {
 		JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(job.getName());
-		jobSnapshot.setSaveRawData(job.getParamBoolean(CrawlerJobParamKeys.IS_SAVE_RAW_DATA, false));
 		// 任务开始时候 开始时间和结束时间默认是一样的
 		jobSnapshot.setStartTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
 		jobSnapshot.setEndTime(DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_1));
-		jobSnapshot.setStatus(JobSnapshotState.EXECUTING.value());
+		jobSnapshot.setStatus(JobSnapshotStatus.EXECUTING.value());
 		// 缓存将被执行的job,提供给workerSchedule那边使用。
 		getScheduleCache().setJob(job);
 		// 更新将被执行的job's jobSnapshot
@@ -309,10 +305,10 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 				workerSchedulerManager = getClusterManager().loolup(freeNode, AbstractWorkerSchedulerManager.class,
 						response -> {
 							if (response.isOk()) {
-								doJobRelationship(jobSnapshot, JobRelationship.TRIGGER_TYPE_PARALLEL);
+								doJobRelationship(jobSnapshot, JobRelationship.EXECUTE_TYPE_PARALLEL);
 							}
 						});
-				workerSchedulerManager.execute(DispatchType.newDispatchTypeByMaster(), job.getName());
+				workerSchedulerManager.execute(TriggerType.newDispatchTypeByMaster(), job.getName());
 				log.info("already request worker node[" + freeNode.getName() + "] to execut the job[" + job.getName()
 						+ "]");
 			} catch (Exception e) {
@@ -339,20 +335,20 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 		return freeNodes;
 	}
 
-	private void doJobRelationship(JobSnapshot jobSnapshot, int triggerType) {
+	private void doJobRelationship(JobSnapshot jobSnapshot, int executeType) {
 		List<JobRelationship> jobRelationships = getJobRelationshipDao().query(jobSnapshot.getName());
 		// TODO 这里并发触发的话，需要考虑 是否成功并发执行
 		for (JobRelationship jobRelationship : jobRelationships) {
-			if (triggerType == jobRelationship.getTriggerType()) {
-				execute(DispatchType.newDispatchTypeByJob(jobSnapshot.getName(), jobSnapshot.getId()),
+			if (executeType == jobRelationship.getExecuteType()) {
+				execute(TriggerType.newDispatchTypeByJob(jobSnapshot.getName(), jobSnapshot.getId()),
 						jobRelationship.getNextJobName());
 			}
 		}
 	}
 
 	@Override
-	public void suspend(DispatchType dispatchType, String jobName) {
-		if (null != dispatchType && DispatchType.DISPATCH_TYPE_MANUAL.equals(dispatchType.getName())) {
+	public void suspend(TriggerType dispatchType, String jobName) {
+		if (null != dispatchType && TriggerType.DISPATCH_TYPE_MANUAL.equals(dispatchType.getName())) {
 			synchronized (keyLock.intern(jobName)) {
 				Set<Node> nodes = getWorkerNode(jobName);
 				AbstractWorkerSchedulerManager workerSchedulerManager = null;
@@ -362,11 +358,11 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 								result -> {
 									if (result.isOk() && isSuspend(jobName)) {
 										JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(jobName);
-										jobSnapshot.setStatus(JobSnapshotState.SUSPEND.value());
+										jobSnapshot.setStatus(JobSnapshotStatus.SUSPEND.value());
 										getScheduleCache().updateJobSnapshot(jobSnapshot);
 									}
 								});
-						workerSchedulerManager.suspend(DispatchType.newDispatchTypeByMaster(), jobName);
+						workerSchedulerManager.suspend(TriggerType.newDispatchTypeByMaster(), jobName);
 						log.info("already request worker node[" + node.getName() + "] to suspend the job[" + jobName
 								+ "]");
 					} catch (Exception e) {
@@ -378,9 +374,9 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	}
 
 	@Override
-	public void goOn(DispatchType dispatchType, String jobName) {
-		if (null != dispatchType && (DispatchType.DISPATCH_TYPE_MANUAL.equals(dispatchType.getName())
-				|| DispatchType.DISPATCH_TYPE_MASTER.equals(dispatchType.getName()))) {
+	public void goOn(TriggerType dispatchType, String jobName) {
+		if (null != dispatchType && (TriggerType.DISPATCH_TYPE_MANUAL.equals(dispatchType.getName())
+				|| TriggerType.DISPATCH_TYPE_MASTER.equals(dispatchType.getName()))) {
 			synchronized (keyLock.intern(jobName)) {
 				Set<Node> nodes = getWorkerNode(jobName);
 				AbstractWorkerSchedulerManager workerSchedulerManager = null;
@@ -390,11 +386,11 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 								result -> {
 									if (result.isOk() && isRunning(jobName)) {
 										JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(jobName);
-										jobSnapshot.setStatus(JobSnapshotState.EXECUTING.value());
+										jobSnapshot.setStatus(JobSnapshotStatus.EXECUTING.value());
 										getScheduleCache().updateJobSnapshot(jobSnapshot);
 									}
 								});
-						workerSchedulerManager.goOn(DispatchType.newDispatchTypeByMaster(), jobName);
+						workerSchedulerManager.goOn(TriggerType.newDispatchTypeByMaster(), jobName);
 						log.info(
 								"already request worker node[" + node.getName() + "] to goOn the job[" + jobName + "]");
 					} catch (Exception e) {
@@ -406,9 +402,9 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	}
 
 	@Override
-	public void stop(DispatchType dispatchType, String jobName) {
-		if (null != dispatchType && (DispatchType.DISPATCH_TYPE_MANUAL.equals(dispatchType.getName())
-				|| DispatchType.DISPATCH_TYPE_MASTER.equals(dispatchType.getName()))) {
+	public void stop(TriggerType dispatchType, String jobName) {
+		if (null != dispatchType && (TriggerType.DISPATCH_TYPE_MANUAL.equals(dispatchType.getName())
+				|| TriggerType.DISPATCH_TYPE_MASTER.equals(dispatchType.getName()))) {
 			synchronized (keyLock.intern(jobName)) {
 				Set<Node> nodes = getWorkerNode(jobName);
 				AbstractWorkerSchedulerManager workerSchedulerManager = null;
@@ -418,7 +414,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 								result -> {
 
 								});
-						workerSchedulerManager.stop(DispatchType.newDispatchTypeByMaster(), jobName);
+						workerSchedulerManager.stop(TriggerType.newDispatchTypeByMaster(), jobName);
 						log.info(
 								"already request worker node[" + node.getName() + "] to stop the job[" + jobName + "]");
 					} catch (Exception e) {
@@ -430,8 +426,8 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	}
 
 	@Override
-	public void rest(DispatchType dispatchType, String jobName) {
-		if (null != dispatchType && DispatchType.DISPATCH_TYPE_MASTER.equals(dispatchType.getName())) {
+	public void rest(TriggerType dispatchType, String jobName) {
+		if (null != dispatchType && TriggerType.DISPATCH_TYPE_MASTER.equals(dispatchType.getName())) {
 			synchronized (keyLock.intern(jobName)) {
 				Set<Node> nodes = getWorkerNode(jobName);
 				AbstractWorkerSchedulerManager workerSchedulerManager = null;
@@ -441,7 +437,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 								result -> {
 
 								});
-						workerSchedulerManager.rest(DispatchType.newDispatchTypeByMaster(), jobName);
+						workerSchedulerManager.rest(TriggerType.newDispatchTypeByMaster(), jobName);
 						log.info(
 								"already request worker node[" + node.getName() + "] to wait the job[" + jobName + "]");
 					} catch (Exception e) {
@@ -453,8 +449,8 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	}
 
 	@Override
-	public void finish(DispatchType dispatchType, String jobName) {
-		if (null != dispatchType && DispatchType.DISPATCH_TYPE_MASTER.equals(dispatchType.getName())) {
+	public void finish(TriggerType dispatchType, String jobName) {
+		if (null != dispatchType && TriggerType.DISPATCH_TYPE_MASTER.equals(dispatchType.getName())) {
 			synchronized (keyLock.intern(jobName)) {
 				Set<Node> nodes = getWorkerNode(jobName);
 				AbstractWorkerSchedulerManager workerSchedulerManager = null;
@@ -464,7 +460,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 								result -> {
 
 								});
-						workerSchedulerManager.finish(DispatchType.newDispatchTypeByMaster(), jobName);
+						workerSchedulerManager.finish(TriggerType.newDispatchTypeByMaster(), jobName);
 						log.info("already request worker node[" + node.getName() + "] to finish the job[" + jobName
 								+ "]");
 					} catch (Exception e) {
@@ -476,8 +472,8 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	}
 
 	@Override
-	public void askEnd(DispatchType dispatchType, String jobName) {
-		if (null != dispatchType && DispatchType.DISPATCH_TYPE_WORKER.equals(dispatchType.getName())) {
+	public void askEnd(TriggerType dispatchType, String jobName) {
+		if (null != dispatchType && TriggerType.DISPATCH_TYPE_WORKER.equals(dispatchType.getName())) {
 			if (isWait(jobName)) {
 				synchronized (keyLock.intern(jobName)) {
 					if (isWait(jobName)) {
@@ -491,54 +487,54 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 						if (!workSpace.doingIsEmpty()) {
 							log.info("check workSpace is not empty after repaired workSpace["
 									+ jobSnapshot.getWorkSpaceName() + "]");
-							goOn(DispatchType.newDispatchTypeByManual(), jobName);
+							goOn(TriggerType.newDispatchTypeByManual(), jobName);
 						} else {
 							log.info("check workSpace is empty after repaired workSpace["
 									+ jobSnapshot.getWorkSpaceName() + "]");
 							// 判断当前worker's job是被什么类型调度的 1.MANUAL手动触发
 							// 2.SCHEDULER调度器触发
-							if (DispatchType.DISPATCH_TYPE_MANUAL.equals(jobSnapshot.getDispatchType().getName())
-									|| DispatchType.DISPATCH_TYPE_SCHEDULER
-											.equals(jobSnapshot.getDispatchType().getName())) {
-								finish(DispatchType.newDispatchTypeByMaster(), jobName);
+							if (TriggerType.DISPATCH_TYPE_MANUAL.equals(jobSnapshot.getTriggerType().getName())
+									|| TriggerType.DISPATCH_TYPE_SCHEDULER
+											.equals(jobSnapshot.getTriggerType().getName())) {
+								finish(TriggerType.newDispatchTypeByMaster(), jobName);
 							} else {
 								// 通过当job的触发获取它触发的它的job快照
 								JobSnapshot lastJobSnapshot = getScheduleCache()
-										.getJobSnapshot(jobSnapshot.getDispatchType().getName());
+										.getJobSnapshot(jobSnapshot.getTriggerType().getName());
 								// 如果触发的它的job快照==null,那么触发的它的job已经停止运行
 								if (null == lastJobSnapshot) {
 									// 从历史记录中获取触发它的 JobSnapshot
 									lastJobSnapshot = getJobSnapshotDao().query(
-											jobSnapshot.getDispatchType().getCurrentTimeMillis(),
-											jobSnapshot.getDispatchType().getName());
+											jobSnapshot.getTriggerType().getCurrentTimeMillis(),
+											jobSnapshot.getTriggerType().getName());
 									// 如果没获取到历史记录那么，我们将stop.然后打印日志非法被执行
 									if (null == lastJobSnapshot) {
-										stop(DispatchType.newDispatchTypeByManual(), jobName);
+										stop(TriggerType.newDispatchTypeByManual(), jobName);
 										log.error("the job[" + jobName + "]'s jobSnapshot[" + jobSnapshot.getId()
 												+ "] is illegal execution");
 									} else {
 										// 如果触发它的jobSnapshot状态等于finishedstop
 										// 时， 当前状态保持一致
-										if (JobSnapshotState.FINISHED == lastJobSnapshot.getEnumStatus()) {
-											finish(DispatchType.newDispatchTypeByMaster(), jobName);
-										} else if (JobSnapshotState.STOP == lastJobSnapshot.getEnumStatus()) {
-											stop(DispatchType.newDispatchTypeByManual(), jobName);
+										if (JobSnapshotStatus.FINISHED == lastJobSnapshot.getEnumStatus()) {
+											finish(TriggerType.newDispatchTypeByMaster(), jobName);
+										} else if (JobSnapshotStatus.STOP == lastJobSnapshot.getEnumStatus()) {
+											stop(TriggerType.newDispatchTypeByManual(), jobName);
 										}
 										// 如果触发它的jobSnapshot状态等于EXECUTING时，那么触发它的job没有被正常stop,但是当前状态应该设置为stop
-										else if (JobSnapshotState.EXECUTING == lastJobSnapshot.getEnumStatus()) {
-											stop(DispatchType.newDispatchTypeByManual(), jobName);
+										else if (JobSnapshotStatus.EXECUTING == lastJobSnapshot.getEnumStatus()) {
+											stop(TriggerType.newDispatchTypeByManual(), jobName);
 										}
 									}
 								} else {
 									// 如果触发它的jobSnapshot状态等于EXECUTING或者SUSPEND
 									// 时，那么应该休眠1000毫秒，否则保持跟触发它的jobSnapshot状态一样
-									if (JobSnapshotState.EXECUTING == lastJobSnapshot.getEnumStatus()
-											|| JobSnapshotState.SUSPEND == lastJobSnapshot.getEnumStatus()) {
-										rest(DispatchType.newDispatchTypeByMaster(), jobName);
-									} else if (JobSnapshotState.FINISHED == lastJobSnapshot.getEnumStatus()) {
-										finish(DispatchType.newDispatchTypeByMaster(), jobName);
-									} else if (JobSnapshotState.STOP == lastJobSnapshot.getEnumStatus()) {
-										stop(DispatchType.newDispatchTypeByMaster(), jobName);
+									if (JobSnapshotStatus.EXECUTING == lastJobSnapshot.getEnumStatus()
+											|| JobSnapshotStatus.SUSPEND == lastJobSnapshot.getEnumStatus()) {
+										rest(TriggerType.newDispatchTypeByMaster(), jobName);
+									} else if (JobSnapshotStatus.FINISHED == lastJobSnapshot.getEnumStatus()) {
+										finish(TriggerType.newDispatchTypeByMaster(), jobName);
+									} else if (JobSnapshotStatus.STOP == lastJobSnapshot.getEnumStatus()) {
+										stop(TriggerType.newDispatchTypeByMaster(), jobName);
 									}
 								}
 							}
@@ -553,8 +549,8 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	}
 
 	@Override
-	public void endWorker(DispatchType dispatchType, String jobName) {
-		if (null != dispatchType && DispatchType.DISPATCH_TYPE_WORKER.equals(dispatchType.getName())) {
+	public void endWorker(TriggerType dispatchType, String jobName) {
+		if (null != dispatchType && TriggerType.DISPATCH_TYPE_WORKER.equals(dispatchType.getName())) {
 			boolean isFinish = isFinish(jobName);
 			boolean isStop = isStop(jobName);
 			if (isFinish || isStop) {
@@ -564,11 +560,11 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 					if (isFinish || isStop) {
 						JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(jobName);
 						if (null != jobSnapshot) {
-							JobSnapshotState state = null;
+							JobSnapshotStatus state = null;
 							if (isFinish) {
-								state = JobSnapshotState.FINISHED;
+								state = JobSnapshotStatus.FINISHED;
 							} else {
-								state = JobSnapshotState.STOP;
+								state = JobSnapshotStatus.STOP;
 							}
 							jobSnapshot.setStatus(state.value());
 							jobSnapshot.setEndTime(DateFormatUtils.format(new Date(), DateFormats.DATE_FORMAT_1));
@@ -583,14 +579,8 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 							getScheduleCache().delJobSnapshot(jobName);
 
 							// 当任务正常完成时 判断是否有当前任务是否有下个执行任务，如果有的话那么直接执行
-							if (JobSnapshotState.FINISHED == state) {
-								// 更新downloadState。
-								if (jobSnapshot.isSaveRawData()) {
-									getJobSnapshotDao().updateDownloadStatus(jobSnapshot.getVersion(),
-											jobSnapshot.getVersion() + 1, jobSnapshot.getId(),
-											DownloadContants.DOWN_LOAD_FINISHED);
-								}
-								doJobRelationship(jobSnapshot, JobRelationship.TRIGGER_TYPE_SERIAL);
+							if (JobSnapshotStatus.FINISHED == state) {
+								doJobRelationship(jobSnapshot, JobRelationship.EXECUTE_TYPE_SERIAL);
 							}
 						}
 					}
@@ -600,7 +590,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	}
 
 	@Override
-	public synchronized void stopAll(DispatchType dispatchType) {
+	public synchronized void stopAll(TriggerType dispatchType) {
 		List<JobSnapshot> allJobs = getScheduleCache().getJobSnapshots();
 		Node currentNode = getClusterManager().getCurrentNode();
 		for (JobSnapshot jobSnapshot : allJobs) {
@@ -614,7 +604,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 								result -> {
 
 								});
-						workerSchedulerManager.stop(DispatchType.newDispatchTypeByMaster(), job.getName());
+						workerSchedulerManager.stop(TriggerType.newDispatchTypeByMaster(), job.getName());
 						log.info("Already request worker node[" + node.getName() + "] to stop the job[" + job.getName()
 								+ "]");
 					} catch (Exception e) {
@@ -632,7 +622,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 							result -> {
 
 							});
-					workerSchedulerManager.stopAll(DispatchType.newDispatchTypeByMaster());
+					workerSchedulerManager.stopAll(TriggerType.newDispatchTypeByMaster());
 					log.info("Already request worker node[" + node.getName() + "] to stop all");
 				} catch (Exception e) {
 					log.error("get node[" + node.getName() + "]'s workerSchedulerManager err", e);
@@ -665,7 +655,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 			AbstractSchedulerManager scheduleManager = (AbstractSchedulerManager) context.getJobDetail().getJobDataMap()
 					.get(SCHEDULER_MANAGER_KEY);
 			String jobName = (String) context.getJobDetail().getJobDataMap().get(JOB_NAME_KEY);
-			scheduleManager.execute(DispatchType.newDispatchTypeByScheduler(), jobName);
+			scheduleManager.execute(TriggerType.newDispatchTypeByScheduler(), jobName);
 		}
 	}
 

@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import com.alibaba.druid.pool.DruidDataSource;
 
 import six.com.crawler.entity.JobSnapshot;
-import six.com.crawler.entity.JobSnapshotState;
+import six.com.crawler.entity.JobSnapshotStatus;
 import six.com.crawler.utils.DbHelper;
 import six.com.crawler.utils.JobTableUtils;
 import six.com.crawler.work.AbstractWorker;
@@ -81,7 +81,7 @@ public class DataBaseStore extends AbstarctStore {
 			if ("1".equals(isSnapshotTable)) {
 				JobSnapshot lastJobSnapshot = getWorker().getManager().getLastEnd(getWorker().getJob().getName(),
 						jobSnapshot.getId());
-				if (null != lastJobSnapshot && JobSnapshotState.FINISHED != lastJobSnapshot.getEnumStatus()) {
+				if (null != lastJobSnapshot && JobSnapshotStatus.FINISHED != lastJobSnapshot.getEnumStatus()) {
 					tableName = lastJobSnapshot.getParam(TABLE_KEY);
 				}
 				if (StringUtils.isBlank(tableName) || !checkIsCreated(tableName)) {

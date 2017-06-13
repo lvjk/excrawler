@@ -33,8 +33,8 @@ public abstract class AbstractMonitorWorker extends AbstractWorker<WorkSpaceData
 
 	@Override
 	protected void initWorker(JobSnapshot jobSnapshot) {
-		triggerJobName = jobSnapshot.getDispatchType().getName();
-		triggerJobSnapshotId = jobSnapshot.getDispatchType().getCurrentTimeMillis();
+		triggerJobName = jobSnapshot.getTriggerType().getName();
+		triggerJobSnapshotId = jobSnapshot.getTriggerType().getCurrentTimeMillis();
 		fillWorkSpace();
 	}
 	

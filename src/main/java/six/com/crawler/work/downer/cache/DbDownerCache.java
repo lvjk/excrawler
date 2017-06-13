@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import six.com.crawler.dao.PageDao;
 import six.com.crawler.dao.po.PagePo;
+import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.Page;
 import six.com.crawler.utils.JavaSerializeUtils;
 
@@ -15,10 +16,12 @@ import six.com.crawler.utils.JavaSerializeUtils;
  */
 public class DbDownerCache extends AbstractDownerCache {
 
+	private JobSnapshot jobSnapshot;
 	private PageDao pageDao;
 
-	public DbDownerCache(String siteCode, PageDao pageDao) {
+	public DbDownerCache(String siteCode,JobSnapshot jobSnapshot, PageDao pageDao) {
 		super(siteCode);
+		this.jobSnapshot=jobSnapshot;
 		this.pageDao = pageDao;
 	}
 
@@ -27,6 +30,8 @@ public class DbDownerCache extends AbstractDownerCache {
 	@Override
 	protected void doWirte(Page page) {
 		PagePo pagePo = new PagePo();
+		pagePo.setJobName(jobSnapshot.getName());
+		pagePo.setJobSnapshotId(jobSnapshot.getId());
 		pagePo.setSiteCode(page.getSiteCode());
 		pagePo.setPageKey(page.getKey());
 		pagePo.setPageUrl(page.toString());

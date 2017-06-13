@@ -23,7 +23,7 @@ import six.com.crawler.dao.WorkerErrMsgDao;
 import six.com.crawler.dao.WorkerSnapshotDao;
 import six.com.crawler.email.QQEmailClient;
 import six.com.crawler.entity.JobSnapshot;
-import six.com.crawler.entity.JobSnapshotState;
+import six.com.crawler.entity.JobSnapshotStatus;
 import six.com.crawler.entity.WorkerErrMsg;
 import six.com.crawler.entity.WorkerSnapshot;
 import six.com.crawler.node.Node;
@@ -406,8 +406,8 @@ public abstract class AbstractSchedulerManager implements SchedulerManager, Init
 	 */
 	public boolean isRunning(String jobName) {
 		JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(jobName);
-		return null != jobSnapshot && (jobSnapshot.getEnumStatus() == JobSnapshotState.EXECUTING
-				|| jobSnapshot.getEnumStatus() == JobSnapshotState.SUSPEND);
+		return null != jobSnapshot && (jobSnapshot.getEnumStatus() == JobSnapshotStatus.EXECUTING
+				|| jobSnapshot.getEnumStatus() == JobSnapshotStatus.SUSPEND);
 	}
 
 	public boolean isStart(String jobName) {

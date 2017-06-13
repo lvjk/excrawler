@@ -8,7 +8,7 @@ import java.util.Map;
 import org.apache.commons.lang3.time.DateFormatUtils;
 
 import six.com.crawler.common.DateFormats;
-import six.com.crawler.schedule.DispatchType;
+import six.com.crawler.schedule.TriggerType;
 import six.com.crawler.utils.JsonUtils;
 
 /**
@@ -19,16 +19,12 @@ import six.com.crawler.utils.JsonUtils;
 public class JobSnapshot extends BasePo implements Serializable {
 
 	private static final long serialVersionUID = -5076089473208316846L;
-	private String id;// id
 	private String name;// 任务名
-	private String designatedNodeName;// 指定节点
-	private JobSnapshotState status = JobSnapshotState.READY;// 任务状态
-	private DispatchType dispatchType;// 触发任务的类型
+	private JobSnapshotStatus status = JobSnapshotStatus.READY;// 任务状态
+	private TriggerType triggerType;// 触发任务的类型
 	private String workSpaceName;// 任务工作空间名
 	private String startTime;// 开始时间
 	private String endTime;//结束时间
-	private int downloadState;// 下载状态
-	private boolean isSaveRawData;
 	private int isScheduled;//
 	private int workSpaceDoingSize;// 任务队列数量
 	private int workSpaceErrSize;// 错误任务队列数量
@@ -67,32 +63,25 @@ public class JobSnapshot extends BasePo implements Serializable {
 		this.name = name;
 	}
 
-	public String getDesignatedNodeName() {
-		return designatedNodeName;
-	}
-
-	public void setDesignatedNodeName(String designatedNodeName) {
-		this.designatedNodeName = designatedNodeName;
-	}
 
 	public int getStatus() {
 		return status.value();
 	}
 
-	public JobSnapshotState getEnumStatus() {
+	public JobSnapshotStatus getEnumStatus() {
 		return status;
 	}
 
 	public void setStatus(int status) {
-		this.status = JobSnapshotState.valueOf(status);
+		this.status = JobSnapshotStatus.valueOf(status);
 	}
 
-	public DispatchType getDispatchType() {
-		return dispatchType;
+	public TriggerType getTriggerType() {
+		return triggerType;
 	}
 
-	public void setDispatchType(DispatchType dispatchType) {
-		this.dispatchType = dispatchType;
+	public void setTriggerType(TriggerType triggerType) {
+		this.triggerType = triggerType;
 	}
 
 	public String getWorkSpaceName() {
@@ -207,22 +196,6 @@ public class JobSnapshot extends BasePo implements Serializable {
 		this.errCount = errCount;
 	}
 
-	public int getDownloadState() {
-		return downloadState;
-	}
-
-	public void setDownloadState(int downloadState) {
-		this.downloadState = downloadState;
-	}
-
-	public boolean isSaveRawData() {
-		return isSaveRawData;
-	}
-
-	public void setSaveRawData(boolean isSaveRawData) {
-		this.isSaveRawData = isSaveRawData;
-	}
-
 	public String getParam(String key) {
 		return this.runtimeParamMap.get(key);
 	}
@@ -253,7 +226,6 @@ public class JobSnapshot extends BasePo implements Serializable {
 		sbd.append("name:").append(name).append(",");
 		sbd.append("startTime:").append(startTime).append(",");
 		sbd.append("endTime:").append(endTime).append(",");
-		sbd.append("isSaveRawData:").append(isSaveRawData).append(",");
 		sbd.append("totalProcessCount:").append(totalProcessCount).append(",");
 		sbd.append("totalResultCount:").append(totalResultCount).append(",");
 		sbd.append("avgProcessTime:").append(avgProcessTime).append(",");

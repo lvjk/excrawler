@@ -6,7 +6,7 @@ import six.com.crawler.entity.Job;
 import six.com.crawler.rpc.AsyCallback;
 import six.com.crawler.rpc.RpcService;
 import six.com.crawler.schedule.AbstractSchedulerManager;
-import six.com.crawler.schedule.DispatchType;
+import six.com.crawler.schedule.TriggerType;
 import six.com.crawler.schedule.master.AbstractMasterSchedulerManager;
 
 /**
@@ -69,25 +69,25 @@ public abstract class AbstractWorkerSchedulerManager extends AbstractSchedulerMa
 	}
 
 	@RpcService()
-	public abstract void execute(DispatchType dispatchType, String jobName);
+	public abstract void execute(TriggerType dispatchType, String jobName);
 
 	@RpcService()
-	public abstract void suspend(DispatchType dispatchType, String jobName);
+	public abstract void suspend(TriggerType dispatchType, String jobName);
 
 	@RpcService()
-	public abstract void rest(DispatchType dispatchType, String jobName);
+	public abstract void rest(TriggerType dispatchType, String jobName);
 
 	@RpcService()
-	public abstract void goOn(DispatchType dispatchType, String jobName);
+	public abstract void goOn(TriggerType dispatchType, String jobName);
 
 	@RpcService()
-	public abstract void stop(DispatchType dispatchType, String jobName);
+	public abstract void stop(TriggerType dispatchType, String jobName);
 
 	@RpcService()
-	public abstract void finish(DispatchType dispatchType, String jobName);
+	public abstract void finish(TriggerType dispatchType, String jobName);
 
 	@RpcService()
-	public abstract void stopAll(DispatchType dispatchType);
+	public abstract void stopAll(TriggerType dispatchType);
 
 	public abstract void askEnd(String jobName, String workerName);
 

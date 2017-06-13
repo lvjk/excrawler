@@ -17,17 +17,17 @@ public abstract class BasePo implements Serializable {
 	/**
 	 * 数据id
 	 */
-	private String id;
+	protected String id;
 
 	/**
 	 * 统计查询到的总数据数量
 	 */
-	private int totalSize;
+	protected int totalSize;
 
 	/**
 	 * 数据版本
 	 */
-	private int version;// 数据版本
+	protected int version;// 数据版本
 
 	public void setTotalSize(int totalSize) {
 		this.totalSize = totalSize;

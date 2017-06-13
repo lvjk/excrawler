@@ -14,7 +14,7 @@ import six.com.crawler.common.DateFormats;
  *       job被触发执行的 类型
  * 
  */
-public class DispatchType implements Serializable {
+public class TriggerType implements Serializable {
 
 	/**
 	 * 
@@ -48,8 +48,8 @@ public class DispatchType implements Serializable {
 	 * @param jobName
 	 * @return
 	 */
-	public static DispatchType newDispatchTypeByJob(String name, String currentTimeMillis) {
-		return new DispatchType(name, currentTimeMillis);
+	public static TriggerType newDispatchTypeByJob(String name, String currentTimeMillis) {
+		return new TriggerType(name, currentTimeMillis);
 	}
 
 	/**
@@ -57,8 +57,8 @@ public class DispatchType implements Serializable {
 	 * 
 	 * @return
 	 */
-	public static DispatchType newDispatchTypeByManual() {
-		return new DispatchType(DISPATCH_TYPE_MANUAL,
+	public static TriggerType newDispatchTypeByManual() {
+		return new TriggerType(DISPATCH_TYPE_MANUAL,
 				DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_2));
 	}
 
@@ -67,8 +67,8 @@ public class DispatchType implements Serializable {
 	 * 
 	 * @return
 	 */
-	public static DispatchType newDispatchTypeByScheduler() {
-		return new DispatchType(DISPATCH_TYPE_SCHEDULER,
+	public static TriggerType newDispatchTypeByScheduler() {
+		return new TriggerType(DISPATCH_TYPE_SCHEDULER,
 				DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_2));
 	}
 
@@ -77,8 +77,8 @@ public class DispatchType implements Serializable {
 	 * 
 	 * @return
 	 */
-	public static DispatchType newDispatchTypeByMaster() {
-		return new DispatchType(DISPATCH_TYPE_MASTER,
+	public static TriggerType newDispatchTypeByMaster() {
+		return new TriggerType(DISPATCH_TYPE_MASTER,
 				DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_2));
 	}
 	
@@ -88,15 +88,15 @@ public class DispatchType implements Serializable {
 	 * 
 	 * @return
 	 */
-	public static DispatchType newDispatchTypeByWorker() {
-		return new DispatchType(DISPATCH_TYPE_WORKER,
+	public static TriggerType newDispatchTypeByWorker() {
+		return new TriggerType(DISPATCH_TYPE_WORKER,
 				DateFormatUtils.format(System.currentTimeMillis(), DateFormats.DATE_FORMAT_2));
 	}
 
 	private final String name;
 	private final String currentTimeMillis;
 
-	public DispatchType(String name, String currentTimeMillis) {
+	public TriggerType(String name, String currentTimeMillis) {
 		this.name = name;
 		this.currentTimeMillis = currentTimeMillis;
 	}
@@ -120,8 +120,8 @@ public class DispatchType implements Serializable {
 	@Override
 	public boolean equals(Object o) {
 		if (null != o) {
-			if (o instanceof DispatchType) {
-				DispatchType dispatchType = (DispatchType) o;
+			if (o instanceof TriggerType) {
+				TriggerType dispatchType = (TriggerType) o;
 				if (null != name && name.equals(dispatchType.getName())) {
 					return true;
 				}

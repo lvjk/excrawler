@@ -92,19 +92,6 @@ public interface JobSnapshotDao extends BaseDao {
 			@Param("status") int status);
 
 	/**
-	 * 更新下载状态
-	 * 
-	 * @param version
-	 * @param newVersion
-	 * @param id
-	 * @param downloadState
-	 * @return
-	 */
-	@InsertProvider(type = JobSnapshotDaoProvider.class, method = "updateDownloadStatus")
-	public int updateDownloadStatus(@Param("version") int version, @Param("newVersion") int newVersion,
-			@Param("id") String id, @Param("downloadState") int status);
-
-	/**
 	 * 删除多少天以前的数据
 	 * @param beforeDays
 	 * @return

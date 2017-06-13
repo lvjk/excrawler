@@ -24,7 +24,7 @@ public interface SchedulerManager {
 	 * 
 	 * @param job
 	 */
-	public void execute(DispatchType dispatchType, String jobName);
+	public void execute(TriggerType dispatchType, String jobName);
 
 	/**
 	 * 暂停任务
@@ -32,7 +32,7 @@ public interface SchedulerManager {
 	 * @param job
 	 * @return
 	 */
-	public void suspend(DispatchType dispatchType, String jobName);
+	public void suspend(TriggerType dispatchType, String jobName);
 
 	/**
 	 * 让job[jobName] worker 休息默认时间
@@ -40,7 +40,7 @@ public interface SchedulerManager {
 	 * @param dispatchType
 	 * @param jobName
 	 */
-	public void rest(DispatchType dispatchType, String jobName);
+	public void rest(TriggerType dispatchType, String jobName);
 
 	/**
 	 * 继续任务
@@ -48,7 +48,7 @@ public interface SchedulerManager {
 	 * @param job
 	 * @return
 	 */
-	public void goOn(DispatchType dispatchType, String jobName);
+	public void goOn(TriggerType dispatchType, String jobName);
 
 	/**
 	 * 停止任务
@@ -56,7 +56,7 @@ public interface SchedulerManager {
 	 * @param job
 	 * @return
 	 */
-	public void stop(DispatchType dispatchType, String jobName);
+	public void stop(TriggerType dispatchType, String jobName);
 
 	/**
 	 * 完成任务
@@ -64,7 +64,7 @@ public interface SchedulerManager {
 	 * @param dispatchType
 	 * @param jobName
 	 */
-	public void finish(DispatchType dispatchType, String jobName);
+	public void finish(TriggerType dispatchType, String jobName);
 
 	/**
 	 * 停止所有任务
@@ -72,7 +72,7 @@ public interface SchedulerManager {
 	 * @param job
 	 * @return
 	 */
-	public void stopAll(DispatchType dispatchType);
+	public void stopAll(TriggerType dispatchType);
 
 	/**
 	 * 调度器修复,当节点启动时会自动被调用

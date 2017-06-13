@@ -21,7 +21,6 @@ public class JobSnapshotDaoProvider extends BaseProvider {
 					+ "DATE_FORMAT(startTime,'%Y-%m-%d %H:%i:%s') startTime,"
 					+ "DATE_FORMAT(endTime,'%Y-%m-%d %H:%i:%s') endTime," 
 					+ "`status`," 
-					+ "downloadState,"
 					+ "totalProcessCount," 
 					+ "totalResultCount,"
 					+ "totalProcessTime," 

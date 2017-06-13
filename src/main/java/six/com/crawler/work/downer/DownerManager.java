@@ -43,7 +43,7 @@ public class DownerManager {
 		Downer downer = null;
 		DownerCache downerCache = null;
 		if (openDownCache || useDownCache) {
-			downerCache = new DbDownerCache(siteCode, worker.getManager().getPageDao());
+			downerCache = new DbDownerCache(siteCode,worker.getJobSnapshot(), worker.getManager().getPageDao());
 		} else {
 			downerCache = new DownerCache() {
 				@Override
