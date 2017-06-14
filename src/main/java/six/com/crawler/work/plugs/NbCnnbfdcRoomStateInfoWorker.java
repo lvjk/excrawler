@@ -54,14 +54,12 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker {
 				roomStates.put(key, value);
 			}
 		}
-		String unitId = StringUtils.substringAfter(doingPage.getFinalUrl(), "GetHouseTable.aspx?qrykey=");
+		String unitId = StringUtils.substringAfter(doingPage.getOriginalUrl(), "GetHouseTable.aspx?qrykey=");
 		String unitName=doingPage.getMeta("unitName").get(0);
 		String projectId = doingPage.getMeta("projectId").get(0);
 		String projectName = doingPage.getMeta("projectName").get(0);
 		List<String> unitIds = new ArrayList<String>();
 		List<String> roomNos = new ArrayList<String>();
-		String styleCssQuery = "table[id]>tbody>tr>td>table";
-		Elements styleElements = doingPage.getDoc().select(styleCssQuery);
 		List<String> roomStateList = new ArrayList<String>();
 		List<String> roomIds = new ArrayList<String>();
 		List<String> contractNos = new ArrayList<String>();
@@ -71,11 +69,9 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker {
 
 		Elements rooms = doingPage.getDoc().select("table[id]");
 		for (Element room : rooms) {
+			Element et=room.select("tbody>tr>td>table").first();
+			
 			String roomId = room.attr("id").replaceAll("room", "");
-			roomIds.add(roomId);
-		}
-
-		for (Element et : styleElements) {
 			String bgColor = "";
 			String style = et.attr("style");
 			if (style != null) {
@@ -110,6 +106,7 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker {
 			unitNames.add(unitName);
 			projectIds.add(projectId);
 			projectNames.add(projectName);
+			roomIds.add(roomId);
 		}
 
 		doingPage.getMetaMap().put("projectId", projectIds);
