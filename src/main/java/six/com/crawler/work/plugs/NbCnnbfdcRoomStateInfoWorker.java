@@ -74,15 +74,18 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker {
 			String roomId = room.attr("id").replaceAll("room", "");
 			String bgColor = "";
 			String style = et.attr("style");
-			if (style != null) {
-				String[] ss = style.split(";");
-				for (String string : ss) {
-					if (string.contains("background-color")) {
-						bgColor = string.split(":")[1];
-						break;
-					}
+			if(style==null){
+				continue;
+			}
+			
+			String[] ss = style.split(";");
+			for (String string : ss) {
+				if (string.contains("background-color")) {
+					bgColor = string.split(":")[1];
+					break;
 				}
 			}
+			
 			String roomState = roomStates.get(bgColor);
 			roomState = roomState.replace(": ", "");
 			Elements elements = et.select("tbody>tr:eq(1)>td>a");
