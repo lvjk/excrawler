@@ -572,7 +572,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 							List<WorkerSnapshot> workerSnapshots = getScheduleCache().getWorkerSnapshots(jobName);
 							totalWorkerSnapshot(jobSnapshot, workerSnapshots);
 
-							reportJobSnapshot(jobSnapshot);
+							reportJobSnapshot(jobSnapshot,workerSnapshots);
 
 							getScheduleCache().delJob(jobName);
 							getScheduleCache().delWorkerSnapshots(jobName);
@@ -632,18 +632,11 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	}
 
 	@Transactional
-	private void reportJobSnapshot(JobSnapshot jobSnapshot) {
+	private void reportJobSnapshot(JobSnapshot jobSnapshot,List<WorkerSnapshot> workerSnapshots) {
 		if (null != jobSnapshot) {
 			getJobSnapshotDao().update(jobSnapshot);
-			List<WorkerSnapshot> workerSnapshots = jobSnapshot.getWorkerSnapshots();
-			if (null != workerSnapshots) {
+			if (null != workerSnapshots&&workerSnapshots.size()>0) {
 				getWorkerSnapshotDao().batchSave(workerSnapshots);
-				for (WorkerSnapshot workerSnapshot : workerSnapshots) {
-					if (null != workerSnapshot.getWorkerErrMsgs() && workerSnapshot.getWorkerErrMsgs().size() > 0) {
-						getWorkerErrMsgDao().batchSave(workerSnapshot.getWorkerErrMsgs());
-					}
-
-				}
 			}
 		}
 

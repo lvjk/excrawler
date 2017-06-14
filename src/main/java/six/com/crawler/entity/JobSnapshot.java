@@ -2,7 +2,6 @@ package six.com.crawler.entity;
 
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.time.DateFormatUtils;
@@ -35,7 +34,6 @@ public class JobSnapshot extends BasePo implements Serializable {
 	private int maxProcessTime;// 最大任务处理时间
 	private int minProcessTime;// 最小任务处理时间
 	private int errCount;// 异常次数
-	private transient List<WorkerSnapshot> workerSnapshots;// job运行记录WorkerSnapshot
 	private String runtimeParams;
 	private Map<String, String> runtimeParamMap = new HashMap<String, String>();
 
@@ -178,14 +176,6 @@ public class JobSnapshot extends BasePo implements Serializable {
 
 	public void setMinProcessTime(int minProcessTime) {
 		this.minProcessTime = minProcessTime;
-	}
-
-	public List<WorkerSnapshot> getWorkerSnapshots() {
-		return workerSnapshots;
-	}
-
-	public void setWorkerSnapshots(List<WorkerSnapshot> workerSnapshots) {
-		this.workerSnapshots = workerSnapshots;
 	}
 
 	public int getErrCount() {
