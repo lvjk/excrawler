@@ -22,7 +22,7 @@ public interface JobRelationshipDao extends BaseDao{
 	 */
 	@Select("select currentJobName,"
 			+ "   nextJobName,"
-			+ " triggerType,"
+			+ " executeType,"
 			+ "`version` from "+TABLE_NAME+" where currentJobName = #{jobName}")
 	public List<JobRelationship> query(String jobName);
 }
