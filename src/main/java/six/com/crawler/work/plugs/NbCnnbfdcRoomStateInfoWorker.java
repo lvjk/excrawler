@@ -69,14 +69,16 @@ public class NbCnnbfdcRoomStateInfoWorker extends AbstractCrawlWorker {
 
 		Elements rooms = doingPage.getDoc().select("table[id]");
 		for (Element room : rooms) {
+			if(room.select("tbody>tr>td>table")==null){
+				continue;
+			}
+			
 			Element et=room.select("tbody>tr>td>table").first();
 			
 			String roomId = room.attr("id").replaceAll("room", "");
 			String bgColor = "";
+			
 			String style = et.attr("style");
-			if(style==null){
-				continue;
-			}
 			
 			String[] ss = style.split(";");
 			for (String string : ss) {
