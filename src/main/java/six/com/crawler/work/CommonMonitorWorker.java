@@ -42,13 +42,15 @@ public class CommonMonitorWorker extends AbstractMonitorWorker implements Serial
 			getWorkSpace().clearDoing();
 			getManager().getMasterSchedulerManager().finish(TriggerType.newDispatchTypeByMaster(),getJobSnapshot().getName());
 			return false;
-		}else if(jobSnapshot.getStatus()==JobSnapshotStatus.STOP.value()){
-			
-			getManager().getMasterSchedulerManager().stop(TriggerType.newDispatchTypeByMaster(),getJobSnapshot().getName());
-			return false;
 		}else{
 			//非正常结束
 			List<WorkerErrMsg> msgs = getManager().getWorkerErrMsgDao().queryByJob(getTriggerJobSnapshotId(), getTriggerJobName());
+			
+			if(jobSnapshot.getStatus()==JobSnapshotStatus.STOP.value() && (msgs == null || msgs.size() == 0)){
+				getManager().getMasterSchedulerManager().stop(TriggerType.newDispatchTypeByMaster(),getJobSnapshot().getName());
+				return false;
+			}
+			
 			for (int i = 0; i < msgs.size(); i++) {
 				if(msgs.get(i).getType().equals("worker_init")){
 					//重新调度任务并返回false
@@ -56,7 +58,6 @@ public class CommonMonitorWorker extends AbstractMonitorWorker implements Serial
 					return false;
 				}
 			}
-			
 			return true;
 		}
 	};
