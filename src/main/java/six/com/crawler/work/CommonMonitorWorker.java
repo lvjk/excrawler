@@ -31,38 +31,32 @@ public class CommonMonitorWorker extends AbstractMonitorWorker implements Serial
 	 */
 	protected boolean doMonitor() throws WorkerException{
 		JobSnapshot jobSnapshot=getManager().getScheduleCache().getJobSnapshot(getTriggerJobName());
-		if(null==jobSnapshot){
-			jobSnapshot=getManager().getJobSnapshotDao().query(getTriggerJobSnapshotId(), getTriggerJobName());
-		}
-		if(null==jobSnapshot){
-			 throw new WorkerMonitorException("Job info exception!");
-		}
-		if(jobSnapshot.getStatus()==JobSnapshotStatus.FINISHED.value()){
-			//任务结束
-			getWorkSpace().clearDoing();
-			getManager().getMasterSchedulerManager().finish(TriggerType.newDispatchTypeByMaster(),getJobSnapshot().getName());
-			return false;
-		}else{
-			//非正常结束
-			List<WorkerErrMsg> msgs = getManager().getWorkerErrMsgDao().queryByJob(getTriggerJobSnapshotId(), getTriggerJobName());
-			
-			if(jobSnapshot.getStatus()==JobSnapshotStatus.STOP.value()){
-				if(msgs == null || msgs.size() == 0){
-					getManager().getMasterSchedulerManager().stop(TriggerType.newDispatchTypeByMaster(),getJobSnapshot().getName());
-					return false;
-				}else{
-					for (int i = 0; i < msgs.size(); i++) {
-						if(msgs.get(i).getType().equals("worker_init")){
-							//重新调度任务并返回false
-							getManager().getMasterSchedulerManager().execute(TriggerType.newDispatchTypeByMaster(), getTriggerJobName());
-							return false;
-						}
-					}
-				}
-			}
-			
-			return true;
-		}
+		 //当null == jobSnapshot时表明被监控的任务结束了
+	    if (null == jobSnapshot) {
+	      jobSnapshot = getManager().getJobSnapshotDao().query(getTriggerJobSnapshotId(), getTriggerJobName());
+	      if (null == jobSnapshot) {
+	        throw new WorkerMonitorException("Job info exception!");
+	      }
+	      if (jobSnapshot.getStatus() == JobSnapshotStatus.STOP.value()) {
+	        // 非正常结束
+	        List<WorkerErrMsg> msgs = getManager().getWorkerErrMsgDao().queryByJob(getTriggerJobSnapshotId(),
+	            getTriggerJobName());
+	        if (msgs != null) {
+	          for (int i = 0; i < msgs.size(); i++) {
+	            if (msgs.get(i).getType().equals("worker_init")) {
+	              // 重新调度任务
+	              getManager().getMasterSchedulerManager().execute(TriggerType.newDispatchTypeByMaster(),
+	                  getTriggerJobName());
+	            }
+	          }
+	        }
+	      }
+	      //返回true
+	      return false;
+	    } else {
+	      //否则返回true，继续监控
+	      return true;
+	    }
 	};
 
 	@Override
