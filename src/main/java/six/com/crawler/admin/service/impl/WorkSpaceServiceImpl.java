@@ -68,8 +68,8 @@ public class WorkSpaceServiceImpl extends BaseService implements WorkSpaceServic
 	public ResponseMsg<Map<String, Object>> getWorkSpaceDoingData(String workSpaceName, String cursor) {
 		ResponseMsg<Map<String, Object>> responseMsg = createResponseMsg();
 		Map<String, Object> resultMap = new HashMap<>();
-		List<Page> list = new ArrayList<>();
-		cursor = workSpaceManager.newWorkSpace(workSpaceName, Page.class).batchGetDoingData(list, 0, cursor);
+		List<WorkSpaceData> list = new ArrayList<>();
+		cursor = workSpaceManager.newWorkSpace(workSpaceName, WorkSpaceData.class).batchGetDoingData(list, 0, cursor);
 		resultMap.put("cursor", cursor);
 		resultMap.put("list", list);
 		responseMsg.setIsOk(1);
@@ -80,14 +80,14 @@ public class WorkSpaceServiceImpl extends BaseService implements WorkSpaceServic
 	public ResponseMsg<Map<String, Object>> getWorkSpaceErrData(String workSpaceName, String cursor) {
 		ResponseMsg<Map<String, Object>> responseMsg = createResponseMsg();
 		Map<String, Object> resultMap = new HashMap<>();
-		List<Page> list = new ArrayList<>();
-		cursor = workSpaceManager.newWorkSpace(workSpaceName, Page.class).batchGetErrData(list, cursor);
+		List<WorkSpaceData> list = new ArrayList<>();
+		cursor = workSpaceManager.newWorkSpace(workSpaceName, WorkSpaceData.class).batchGetErrData(list, cursor);
 		List<PageVo> pageVolist = new ArrayList<>();
 		PageVo pageVo = null;
-		for (Page page : list) {
+		for (WorkSpaceData workSpaceData : list) {
 			pageVo = new PageVo();
-			pageVo.setPageKey(page.getPageKey());
-			pageVo.setUrl(page.toString());
+			pageVo.setPageKey(workSpaceData.getKey());
+			pageVo.setUrl(workSpaceData.toString());
 			pageVolist.add(pageVo);
 		}
 		resultMap.put("cursor", cursor);
