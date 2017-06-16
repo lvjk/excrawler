@@ -1,6 +1,5 @@
 package six.com.crawler.work;
 
-import java.io.Serializable;
 import java.util.List;
 
 import six.com.crawler.entity.JobSnapshot;
@@ -19,9 +18,7 @@ import six.com.crawler.work.space.WorkSpaceData;
  *       监控任务worker
  * 
  */
-public class CommonMonitorWorker extends AbstractMonitorWorker implements Serializable{
-
-	private static final long serialVersionUID = -3421176209187012514L;
+public class CommonMonitorWorker extends AbstractMonitorWorker{
 
 	/**
 	 * 实现监控逻辑,需要循环监控的话，返回true,否则返回false监控任务线程将会结束

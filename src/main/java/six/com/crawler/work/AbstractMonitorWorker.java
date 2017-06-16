@@ -1,10 +1,7 @@
 package six.com.crawler.work;
 
-import java.io.Serializable;
-
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.work.exception.WorkerException;
-import six.com.crawler.work.space.Index;
 import six.com.crawler.work.space.WorkSpaceData;
 
 /**
@@ -38,30 +35,6 @@ public abstract class AbstractMonitorWorker extends AbstractWorker<WorkSpaceData
 		fillWorkSpace();
 	}
 	
-	private class MonitorData implements WorkSpaceData,Serializable{
-
-		private static final long serialVersionUID = -6303001982409677119L;
-
-		@Override
-		public void setIndex(Index index) {
-			// TODO Auto-generated method stub
-			
-		}
-
-		@Override
-		public Index getIndex() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public String getKey() {
-			// TODO Auto-generated method stub
-			return "monitor";
-		}
-		
-	}
-
 	private void fillWorkSpace() {
 		getWorkSpace().push(new MonitorData());
 	}
