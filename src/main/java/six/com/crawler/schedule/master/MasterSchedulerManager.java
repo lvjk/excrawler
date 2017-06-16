@@ -142,14 +142,11 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 			while (true) {
 				try {
 					job = pendingExecuteQueue.take();
-				} catch (InterruptedException e1) {
-				}
-				if (null != job) {
-					try{
+					if (null != job) {
 						doExecute(job);
-					}catch (Exception e) {
-						log.error("",e);
 					}
+				} catch (Exception e) {
+					log.error("", e);
 				}
 			}
 		}, "loop-read-pendingExecuteQueue-thread");
@@ -576,7 +573,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 							List<WorkerSnapshot> workerSnapshots = getScheduleCache().getWorkerSnapshots(jobName);
 							totalWorkerSnapshot(jobSnapshot, workerSnapshots);
 
-							reportJobSnapshot(jobSnapshot,workerSnapshots);
+							reportJobSnapshot(jobSnapshot, workerSnapshots);
 
 							getScheduleCache().delJob(jobName);
 							getScheduleCache().delWorkerSnapshots(jobName);
@@ -636,10 +633,10 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 	}
 
 	@Transactional
-	private void reportJobSnapshot(JobSnapshot jobSnapshot,List<WorkerSnapshot> workerSnapshots) {
+	private void reportJobSnapshot(JobSnapshot jobSnapshot, List<WorkerSnapshot> workerSnapshots) {
 		if (null != jobSnapshot) {
 			getJobSnapshotDao().update(jobSnapshot);
-			if (null != workerSnapshots&&workerSnapshots.size()>0) {
+			if (null != workerSnapshots && workerSnapshots.size() > 0) {
 				getWorkerSnapshotDao().batchSave(workerSnapshots);
 			}
 		}
