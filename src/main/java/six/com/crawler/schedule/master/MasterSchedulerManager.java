@@ -226,7 +226,8 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 		if (NodeType.SINGLE == currentNode.getType() || NodeType.MASTER == currentNode.getType()) {
 			synchronized (keyLock.intern(jobName)) {
 				Job job = getJobDao().query(jobName);
-				if (null != job && !pendingExecuteQueue.contains(job)) {
+				if (null != job && !pendingExecuteQueue.contains(job)&&!isRunning(jobName)) {
+		
 					getScheduleCache().delJob(jobName);
 					getScheduleCache().delJobSnapshot(jobName);
 					getScheduleCache().delWorkerSnapshots(jobName);
@@ -572,7 +573,6 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 
 							List<WorkerSnapshot> workerSnapshots = getScheduleCache().getWorkerSnapshots(jobName);
 							totalWorkerSnapshot(jobSnapshot, workerSnapshots);
-
 							reportJobSnapshot(jobSnapshot, workerSnapshots);
 
 							getScheduleCache().delJob(jobName);
