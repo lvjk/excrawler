@@ -145,7 +145,11 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 				} catch (InterruptedException e1) {
 				}
 				if (null != job) {
-					doExecute(job);
+					try{
+						doExecute(job);
+					}catch (Exception e) {
+						log.error("",e);
+					}
 				}
 			}
 		}, "loop-read-pendingExecuteQueue-thread");
