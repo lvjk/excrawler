@@ -285,8 +285,11 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 
 	@Override
 	public final void rest() {
-		compareAndSetState(WorkerLifecycleState.WAITED, WorkerLifecycleState.REST);
-		log.info("worker will rest:" + getName());
+		if(compareAndSetState(WorkerLifecycleState.WAITED, WorkerLifecycleState.REST)){
+			signalRun();
+			log.info("worker will rest:" + getName());
+		}
+		
 	}
 
 	@Override
