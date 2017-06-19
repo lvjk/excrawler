@@ -179,6 +179,8 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 				manager.updateWorkSnapshotAndReport(workerSnapshot, false);
 				// 运行状态时会从队列里获取数据然后进行处理，如果没有获取到数据那么状态改为wait
 				if (getState() == WorkerLifecycleState.STARTED) {
+					// 频率控制
+					frequencyControl();
 					T workData = null;
 					try {
 						workData = getWorkSpace().pull();
@@ -257,9 +259,6 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 			workerSnapshot.setMinProcessTime((int) processTime);
 		}
 		workerSnapshot.setAvgProcessTime(workerSnapshot.getTotalProcessTime() / workerSnapshot.getTotalProcessCount());
-		// 频率控制
-		frequencyControl();
-
 	}
 
 	private void doErr(WorkerException e) {
