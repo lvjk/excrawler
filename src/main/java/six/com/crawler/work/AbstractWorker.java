@@ -189,6 +189,7 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 						compareAndSetState(WorkerLifecycleState.REST, WorkerLifecycleState.STARTED);
 					} else {
 						signalWait(restWaitTime);
+						manager.askEnd(getJob().getName(), getName());
 					}
 					// wait状态时会询问管理者是否end，然后休息
 				} else if (getState() == WorkerLifecycleState.WAITED) {
