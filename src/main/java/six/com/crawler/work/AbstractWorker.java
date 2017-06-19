@@ -336,11 +336,13 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 	 * @param restTime
 	 */
 	private void signalWait(long restTime) {
-		if ((getState() == WorkerLifecycleState.SUSPEND || getState() == WorkerLifecycleState.REST
+		if ((getState() == WorkerLifecycleState.SUSPEND 
+				|| getState() == WorkerLifecycleState.REST
 				|| getState() == WorkerLifecycleState.WAITED)) {
 			reentrantLock.lock();
 			try {
-				if ((getState() == WorkerLifecycleState.SUSPEND || getState() == WorkerLifecycleState.REST
+				if ((getState() == WorkerLifecycleState.SUSPEND 
+						|| getState() == WorkerLifecycleState.REST
 						|| getState() == WorkerLifecycleState.WAITED)) {
 					if (restTime > 0) {
 						condition.await(restTime, TimeUnit.MILLISECONDS);
@@ -360,11 +362,15 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 	 * 通知工作线程恢复运行
 	 */
 	private void signalRun() {
-		if (getState() == WorkerLifecycleState.STARTED || getState() == WorkerLifecycleState.STOPED
+		if (getState() == WorkerLifecycleState.STARTED 
+				||getState() == WorkerLifecycleState.REST
+				|| getState() == WorkerLifecycleState.STOPED
 				|| getState() == WorkerLifecycleState.FINISHED) {
 			reentrantLock.lock();
 			try {
-				if (getState() == WorkerLifecycleState.STARTED || getState() == WorkerLifecycleState.STOPED
+				if (getState() == WorkerLifecycleState.STARTED 
+						||getState() == WorkerLifecycleState.REST
+						|| getState() == WorkerLifecycleState.STOPED
 						|| getState() == WorkerLifecycleState.FINISHED) {
 					condition.signalAll();
 				}
