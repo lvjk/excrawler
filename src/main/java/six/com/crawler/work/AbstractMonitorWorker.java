@@ -32,12 +32,10 @@ public abstract class AbstractMonitorWorker extends AbstractWorker<WorkSpaceData
 	protected void initWorker(JobSnapshot jobSnapshot) {
 		triggerJobName = jobSnapshot.getTriggerType().getName();
 		triggerJobSnapshotId = jobSnapshot.getTriggerType().getCurrentTimeMillis();
-		fillWorkSpace();
-	}
-	
-	private void fillWorkSpace() {
 		getWorkSpace().push(new MonitorData());
 	}
+	
+
 
 	/**
 	 * 实现监控逻辑,需要循环监控的话，返回true,否则返回false监控任务线程将会结束
@@ -50,7 +48,7 @@ public abstract class AbstractMonitorWorker extends AbstractWorker<WorkSpaceData
 	@Override
 	protected void insideWork(WorkSpaceData workerData) throws WorkerException {
 		if (doMonitor()) {
-			fillWorkSpace();
+			getWorkSpace().errRetryPush(workerData);
 		}
 	}
 
