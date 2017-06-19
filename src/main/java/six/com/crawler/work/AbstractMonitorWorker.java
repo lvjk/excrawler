@@ -59,6 +59,7 @@ public abstract class AbstractMonitorWorker extends AbstractWorker<WorkSpaceData
 	private MonitorData newMonitorData(){
 		MonitorData data=new MonitorData();
 		String key=getName()+"_"+getJobSnapshotId()+"_"+index.incrementAndGet();
+		data.setKey(key);
 		return data;
 	}
 
