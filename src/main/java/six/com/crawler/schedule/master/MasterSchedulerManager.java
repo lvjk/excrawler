@@ -498,6 +498,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 							if (TriggerType.DISPATCH_TYPE_MANUAL.equals(jobSnapshot.getTriggerType().getName())
 									|| TriggerType.DISPATCH_TYPE_SCHEDULER
 											.equals(jobSnapshot.getTriggerType().getName())) {
+								log.info("master check the job["+jobName+"] is not triggered by job");
 								finish(TriggerType.newDispatchTypeByMaster(), jobName);
 							} else {
 								// 通过当job的触发获取它触发的它的job快照
@@ -518,12 +519,13 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 										// 如果触发它的jobSnapshot状态等于finishedstop
 										// 时， 当前状态保持一致
 										if (JobSnapshotStatus.FINISHED == lastJobSnapshot.getEnumStatus()) {
+											log.info("master check the job["+jobName+"]'s triggered job is finished");
 											finish(TriggerType.newDispatchTypeByMaster(), jobName);
 										} else if (JobSnapshotStatus.STOP == lastJobSnapshot.getEnumStatus()) {
+											log.info("master check the job["+jobName+"]'s triggered job is stoped");
 											stop(TriggerType.newDispatchTypeByManual(), jobName);
-										}
-										// 如果触发它的jobSnapshot状态等于EXECUTING时，那么触发它的job没有被正常stop,但是当前状态应该设置为stop
-										else if (JobSnapshotStatus.EXECUTING == lastJobSnapshot.getEnumStatus()) {
+										}else{// 如果触发它的jobSnapshot状态等于其他时，那么触发它的job没有被正常stop,但是当前状态应该设置为stop
+											log.info("master check the job["+jobName+"]'s triggered job is stoped");
 											stop(TriggerType.newDispatchTypeByManual(), jobName);
 										}
 									}
@@ -532,10 +534,13 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 									// 时，那么应该休眠1000毫秒，否则保持跟触发它的jobSnapshot状态一样
 									if (JobSnapshotStatus.EXECUTING == lastJobSnapshot.getEnumStatus()
 											|| JobSnapshotStatus.SUSPEND == lastJobSnapshot.getEnumStatus()) {
+										log.info("master check the job["+jobName+"]'s triggered job is running");
 										rest(TriggerType.newDispatchTypeByMaster(), jobName);
 									} else if (JobSnapshotStatus.FINISHED == lastJobSnapshot.getEnumStatus()) {
+										log.info("master check the job["+jobName+"]'s triggered job is finished");
 										finish(TriggerType.newDispatchTypeByMaster(), jobName);
 									} else if (JobSnapshotStatus.STOP == lastJobSnapshot.getEnumStatus()) {
+										log.info("master check the job["+jobName+"]'s triggered job is stoped");
 										stop(TriggerType.newDispatchTypeByMaster(), jobName);
 									}
 								}
