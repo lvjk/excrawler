@@ -32,7 +32,7 @@ public abstract class AbstractMonitorWorker extends AbstractWorker<WorkSpaceData
 	protected void initWorker(JobSnapshot jobSnapshot) {
 		triggerJobName = jobSnapshot.getTriggerType().getName();
 		triggerJobSnapshotId = jobSnapshot.getTriggerType().getCurrentTimeMillis();
-		getWorkSpace().push(new MonitorData());
+		getWorkSpace().push(new MonitorData(jobSnapshot));
 	}
 	
 
@@ -48,7 +48,7 @@ public abstract class AbstractMonitorWorker extends AbstractWorker<WorkSpaceData
 	@Override
 	protected void insideWork(WorkSpaceData workerData) throws WorkerException {
 		if (doMonitor()) {
-			getWorkSpace().errRetryPush(workerData);
+			getWorkSpace().push(new MonitorData(getJobSnapshot()));
 		}
 	}
 
