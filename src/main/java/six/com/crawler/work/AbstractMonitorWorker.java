@@ -1,5 +1,7 @@
 package six.com.crawler.work;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.work.exception.WorkerException;
 import six.com.crawler.work.space.WorkSpaceData;
@@ -24,6 +26,8 @@ public abstract class AbstractMonitorWorker extends AbstractWorker<WorkSpaceData
 	 */
 	private String triggerJobSnapshotId;
 	
+	private  AtomicInteger index=new AtomicInteger(0);
+	
 	public AbstractMonitorWorker() {
 		super(WorkSpaceData.class);
 	}
@@ -32,7 +36,7 @@ public abstract class AbstractMonitorWorker extends AbstractWorker<WorkSpaceData
 	protected void initWorker(JobSnapshot jobSnapshot) {
 		triggerJobName = jobSnapshot.getTriggerType().getName();
 		triggerJobSnapshotId = jobSnapshot.getTriggerType().getCurrentTimeMillis();
-		getWorkSpace().push(new MonitorData());
+		getWorkSpace().push(newMonitorData());
 	}
 	
 
@@ -48,8 +52,15 @@ public abstract class AbstractMonitorWorker extends AbstractWorker<WorkSpaceData
 	@Override
 	protected void insideWork(WorkSpaceData workerData) throws WorkerException {
 		if (doMonitor()) {
-			getWorkSpace().errRetryPush(workerData);
+			getWorkSpace().push(newMonitorData());
 		}
+	}
+	
+	private MonitorData newMonitorData(){
+		MonitorData data=new MonitorData();
+		String key=getName()+"_"+getJobSnapshotId()+"_"+index.incrementAndGet();
+		data.setKey(key);
+		return data;
 	}
 
 	protected String getTriggerJobName() {

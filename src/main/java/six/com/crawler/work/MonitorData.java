@@ -14,6 +14,7 @@ public class MonitorData implements WorkSpaceData,Serializable{
 
 	private static final long serialVersionUID = -6303001982409677119L;
 	
+	private String key;
 	private Index index;
 
 	@Override
@@ -26,9 +27,13 @@ public class MonitorData implements WorkSpaceData,Serializable{
 		return this.index;
 	}
 
+	public void setKey(String key) {
+		 this.key=key;
+	}
+	
 	@Override
 	public String getKey() {
-		return "monitor";
+		return key;
 	}
 	
 }

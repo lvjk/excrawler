@@ -56,6 +56,8 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 	private WorkerSchedulerManager manager;
 	// worker的上级job
 	private Job job;
+	//JobSnapshotId
+	private String jobSnapshotId;
 	// worker的工作空间
 	private WorkSpace<T> workSpace;
 	// worker处理的数据class
@@ -107,18 +109,27 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 		this.workSpaceDataClz = workSpaceDataClz;
 	}
 
+	@Override
 	public void bindConfigure(SpiderConfigure configure) {
 		this.configure = configure;
 	}
 
+	@Override
 	public void bindManager(WorkerSchedulerManager manager) {
 		this.manager = manager;
 	}
 
+	@Override
 	public void bindJob(Job job) {
 		this.job = job;
 	}
+	
+	@Override
+	public void bindJobSnapshotId(String jobSnapshotId){
+		this.jobSnapshotId=jobSnapshotId;
+	}
 
+	@Override
 	public void bindWorkerSnapshot(WorkerSnapshot workerSnapshot) {
 		this.workerSnapshot = workerSnapshot;
 	}
@@ -126,7 +137,7 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 	private void init() {
 		String jobName = getJob().getName();
 		MDC.put("jobName", jobName);
-		String path = "job_" + jobName + "_" + getWorkerSnapshot().getJobSnapshotId() + "_worker";
+		String path = "job_" + jobName + "_" + jobSnapshotId + "_worker";
 		distributedLock = getManager().getClusterManager().getDistributedLock(path);
 		try {
 			distributedLock.lock();
@@ -378,6 +389,12 @@ public abstract class AbstractWorker<T extends WorkSpaceData> implements Worker<
 	@Override
 	public String getName() {
 		return workerSnapshot.getName();
+	}
+	
+	
+	@Override
+	public String getJobSnapshotId(){
+		return jobSnapshotId;
 	}
 
 	@Override

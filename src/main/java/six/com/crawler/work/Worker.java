@@ -37,6 +37,13 @@ public interface Worker<T extends WorkSpaceData> extends WorkerLifecycle {
 	 * @param job
 	 */
 	void bindJob(Job job);
+	
+	/**
+	 * 绑定worker jobSnapshotId
+	 * 
+	 * @param workerSnapshot
+	 */
+	void bindJobSnapshotId(String jobSnapshotId);
 
 	/**
 	 * 绑定worker 运行快照
@@ -65,6 +72,8 @@ public interface Worker<T extends WorkSpaceData> extends WorkerLifecycle {
 	 * @return
 	 */
 	JobSnapshot getJobSnapshot();
+	
+	String getJobSnapshotId();
 
 	/**
 	 * 获取work Job

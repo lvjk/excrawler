@@ -287,6 +287,7 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 					newJobWorker.bindConfigure(getConfigure());
 					newJobWorker.bindManager(this);
 					newJobWorker.bindJob(job);
+					newJobWorker.bindJobSnapshotId(jobSnapshot.getId());
 					workers[i] = newJobWorker;
 					jobworkersMap.put(workerName, newJobWorker);
 				}
