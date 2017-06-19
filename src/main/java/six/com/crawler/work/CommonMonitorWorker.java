@@ -42,8 +42,9 @@ public class CommonMonitorWorker extends AbstractMonitorWorker{
 	          for (int i = 0; i < msgs.size(); i++) {
 	            if (msgs.get(i).getType().equals("worker_init")) {
 	              // 重新调度任务
-	              getManager().getMasterSchedulerManager().execute(TriggerType.newDispatchTypeByMaster(),
+	              getManager().getMasterSchedulerManager(result->{}).execute(TriggerType.newDispatchTypeByMaster(),
 	                  getTriggerJobName());
+	              finish();
 	            }
 	          }
 	        }
