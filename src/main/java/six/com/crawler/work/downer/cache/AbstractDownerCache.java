@@ -5,7 +5,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import six.com.crawler.dao.po.PagePo;
+import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.Page;
+import six.com.crawler.utils.JavaSerializeUtils;
 
 /**
  * @author 作者
@@ -17,13 +20,15 @@ public abstract class AbstractDownerCache implements DownerCache {
 	protected final static Logger log = LoggerFactory.getLogger(AbstractDownerCache.class);
 
 	/** 结束标志对象 **/
-	private static Page endFlag = new Page();
+	private static PagePo endFlag = new PagePo();
 	private String siteCode;
-	private LinkedBlockingQueue<Page> writeCacheQueue = new LinkedBlockingQueue<Page>();
+	private JobSnapshot jobSnapshot;
+	private LinkedBlockingQueue<PagePo> writeCacheQueue = new LinkedBlockingQueue<PagePo>();
 	private Thread cacheThread;
 
-	public AbstractDownerCache(String siteCode) {
+	public AbstractDownerCache(String siteCode,JobSnapshot jobSnapshot) {
 		this.siteCode = siteCode;
+		this.jobSnapshot=jobSnapshot;
 		cacheThread = new Thread(() -> {
 			loopDoWirte();
 		}, "downer-write-cache-thread");
@@ -32,16 +37,35 @@ public abstract class AbstractDownerCache implements DownerCache {
 
 	@Override
 	public final void write(Page page) {
-		writeCacheQueue.add(page);
+		if(null!=page){
+			PagePo pagePo = new PagePo();
+			pagePo.setJobName(jobSnapshot.getName());
+			pagePo.setJobSnapshotId(jobSnapshot.getId());
+			pagePo.setSiteCode(page.getSiteCode());
+			pagePo.setPageKey(page.getKey());
+			pagePo.setPageUrl(page.toString());
+			pagePo.setPageSrc(page.getPageSrc());
+			byte[] data = JavaSerializeUtils.serialize(page);
+			pagePo.setData(data);
+			writeCacheQueue.add(pagePo);
+		}
 	}
 
 	@Override
 	public final Page read(Page page) {
-		return doRead(page);
+		Page cachePage = null;
+		if(null!=page){
+			PagePo pagePo=doRead(page);
+			if (null != pagePo && null != pagePo.getData()) {
+				cachePage = JavaSerializeUtils.unSerialize(pagePo.getData(), Page.class);
+				cachePage.setPageSrc(pagePo.getPageSrc());
+			}
+		}
+		return cachePage;
 	}
 
 	private void loopDoWirte() {
-		Page page = null;
+		PagePo page = null;
 		while (true) {
 			try {
 				page = writeCacheQueue.take();
@@ -61,9 +85,9 @@ public abstract class AbstractDownerCache implements DownerCache {
 		}
 	}
 
-	protected abstract void doWirte(Page page);
+	protected abstract void doWirte(PagePo page);
 
-	protected abstract Page doRead(Page page);
+	protected abstract PagePo doRead(Page page);
 
 	public String getSiteCode() {
 		return siteCode;
@@ -71,7 +95,7 @@ public abstract class AbstractDownerCache implements DownerCache {
 
 	@Override
 	public void close() {
-		write(endFlag);
+		writeCacheQueue.add(endFlag);
 	}
 
 }
