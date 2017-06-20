@@ -139,7 +139,7 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 				List<String> unitList = new ArrayList<>();
 				for (Element unitTd : unitTds) {
 					String unitName = unitTd.text();
-					if (StringUtils.contains(unitName, "单元")) {
+					if (!StringUtils.contains(unitName, "{单元")) {
 						unitList.add(unitName);
 					}
 				}
