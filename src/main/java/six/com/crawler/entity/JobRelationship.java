@@ -19,6 +19,9 @@ public class JobRelationship extends BasePo {
 	private String nextJobName;
 	/** 被触发的job执行方式 默认为串行 **/
 	private int executeType = EXECUTE_TYPE_SERIAL;
+	
+	//判断是否生效，1为生效，0为失效
+	private int status;
 
 	public String getCurrentJobName() {
 		return currentJobName;
@@ -42,6 +45,14 @@ public class JobRelationship extends BasePo {
 
 	public void setExecuteType(int executeType) {
 		this.executeType = executeType;
+	}
+
+	public int getStatus() {
+		return status;
+	}
+
+	public void setStatus(int status) {
+		this.status = status;
 	}
 
 }
