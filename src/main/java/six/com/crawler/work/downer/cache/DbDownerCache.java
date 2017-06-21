@@ -7,7 +7,6 @@ import six.com.crawler.dao.PageDao;
 import six.com.crawler.dao.po.PagePo;
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.Page;
-import six.com.crawler.utils.JavaSerializeUtils;
 
 /**
  * @author 作者
@@ -16,42 +15,27 @@ import six.com.crawler.utils.JavaSerializeUtils;
  */
 public class DbDownerCache extends AbstractDownerCache {
 
-	private JobSnapshot jobSnapshot;
 	private PageDao pageDao;
 
-	public DbDownerCache(String siteCode,JobSnapshot jobSnapshot, PageDao pageDao) {
-		super(siteCode);
-		this.jobSnapshot=jobSnapshot;
+	public DbDownerCache(String siteCode, JobSnapshot jobSnapshot, PageDao pageDao) {
+		super(siteCode, jobSnapshot);
 		this.pageDao = pageDao;
 	}
 
 	protected final static Logger log = LoggerFactory.getLogger(DbDownerCache.class);
 
 	@Override
-	protected void doWirte(Page page) {
-		PagePo pagePo = new PagePo();
-		pagePo.setJobName(jobSnapshot.getName());
-		pagePo.setJobSnapshotId(jobSnapshot.getId());
-		pagePo.setSiteCode(page.getSiteCode());
-		pagePo.setPageKey(page.getKey());
-		pagePo.setPageUrl(page.toString());
-		pagePo.setPageSrc(page.getPageSrc());
-		byte[] data = JavaSerializeUtils.serialize(page);
-		pagePo.setData(data);
-		pageDao.save(pagePo);
+	protected void doWirte(PagePo page) {
+		pageDao.save(page);
 	}
 
 	@Override
-	protected Page doRead(Page page) {
-		Page cachePage = null;
+	protected PagePo doRead(Page page) {
+		PagePo pagePo = null;
 		String siteCode = page.getSiteCode();
 		String pageKey = page.getPageKey();
-		PagePo pagePo = pageDao.queryBySiteAndKey(siteCode, pageKey);
-		if (null != pagePo && null != pagePo.getData()) {
-			cachePage = JavaSerializeUtils.unSerialize(pagePo.getData(), Page.class);
-			cachePage.setPageSrc(pagePo.getPageSrc());
-		}
-		return cachePage;
+		pagePo = pageDao.queryBySiteAndKey(siteCode, pageKey);
+		return pagePo;
 	}
 
 }
