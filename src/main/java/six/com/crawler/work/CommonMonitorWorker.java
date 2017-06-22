@@ -41,11 +41,11 @@ public class CommonMonitorWorker extends AbstractMonitorWorker{
 	        if (msgs != null) {
 	          for (int i = 0; i < msgs.size(); i++) {
 	            if (msgs.get(i).getType().equals("worker_init")) {
-	              finish();
-	              frequencyControl();
 	              // 重新调度任务
 	              getManager().getMasterSchedulerManager(result->{}).execute(TriggerType.newDispatchTypeByMaster(),
 	                  getTriggerJobName());
+	              
+	              finish();
 	            }
 	          }
 	        }
