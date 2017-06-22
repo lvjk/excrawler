@@ -42,34 +42,25 @@ public class NbCnnbfdcPresellInfoWorker extends AbstractCrawlWorker {
 		String houseNo = "";
 		String licenseReleaseTime = "";
 		String capitalRegulationBank = "";
-		Elements elements = element.select("tbody>tr:eq(3)>td");
-		Element element_4 = element.select("tbody>tr:eq(4)>td:eq(0)").first();
-		Elements elements2 = null;
-		if(element_4!=null){
-			String s = StringUtils.trim(element_4.select("div").text()).replace("<br>", "").replace(" ", "");
-			if(!s.equals("非住宅幢号套数")){
-				elements2 = element.select("tbody>tr:eq(6)>td");
-				Elements elements4 = element.select("tbody>tr:eq(4)>td");
-				if(elements2!=null){
-					elements2.addAll(elements4);
-				}
+		
+		Elements unitElements= element.select("tbody>tr:gt(1)");
+		Elements elements = new Elements();
+		for (int i = 0; i < unitElements.size(); i++) {
+			Element item=unitElements.get(i);
+			String s=StringUtils.trim(item.select("td").first().text()).replace("<br>", "").replace(" ", "");
+			if(s.equals("非住宅幢号套数") || s.equals("住宅幢号套数")){
+				continue;
+			}else if(s.equals("住宅类")){
+				break;
 			}else{
-				elements2 = element.select("tbody>tr:eq(5)>td");
+				elements.addAll(item.select("td"));
 			}
 		}
-		Elements ets = null;
+		
 		if(null!=elements){
-			if(null!=elements2){
-				elements.addAll(elements2);
-			}
-			ets = elements;
-		}else if(null!=elements2){
-			ets = elements2;
-		}
-		if(null!=ets){
-			for(int i=0;i<ets.size();i++){
+			for(int i=0;i<elements.size();i++){
 				if(i%2==0){
-					String tx = StringUtils.trim(ets.get(i).select("div").text());
+					String tx = StringUtils.trim(elements.get(i).select("div").text());
 					tx = tx.replace(" ", "");
 					if(StringUtils.isNotEmpty(tx)){
 						houseNo = houseNo + tx + " ";
