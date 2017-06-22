@@ -22,6 +22,7 @@ import six.com.crawler.utils.JsoupUtils;
 import six.com.crawler.utils.UrlUtils;
 import six.com.crawler.work.AbstractCrawlWorker;
 import six.com.crawler.work.downer.HttpMethod;
+import six.com.crawler.work.downer.exception.DownerException;
 import six.com.crawler.work.space.WorkSpace;
 
 /**
@@ -94,7 +95,13 @@ public class TmsfHouseStatusWorker extends AbstractCrawlWorker {
 		String buildingId = doingPage.getMetaMap().get("buildingId").get(0);
 		
 		if (isTableLayout(doingPage)) {
-			if(doTable(doingPage, sid, propertyId, presellId, buildingId)==0){
+			try{
+				
+				if(doTable(doingPage, sid, propertyId, presellId, buildingId)==0){
+					doJson(doingPage, sid, propertyId, presellId, buildingId);
+				}
+			}catch(DownerException e){
+				log.error("execute request["+doingPage.getOriginalUrl()+"] error", e);;
 				doJson(doingPage, sid, propertyId, presellId, buildingId);
 			}
 		}else{
