@@ -341,7 +341,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 		List<JobRelationship> jobRelationships = getJobRelationshipDao().query(jobSnapshot.getName());
 		// TODO 这里并发触发的话，需要考虑 是否成功并发执行
 		for (JobRelationship jobRelationship : jobRelationships) {
-			if (executeType == jobRelationship.getExecuteType()) {
+			if ((executeType == jobRelationship.getExecuteType())&&(1==jobRelationship.getStatus())) {
 				execute(TriggerType.newDispatchTypeByJob(jobSnapshot.getName(), jobSnapshot.getId()),
 						jobRelationship.getNextJobName());
 			}

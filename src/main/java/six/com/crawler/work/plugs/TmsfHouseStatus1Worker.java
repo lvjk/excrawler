@@ -56,7 +56,6 @@ public class TmsfHouseStatus1Worker extends AbstractCrawlWorker {
 	protected void insideInit() {
 		houseInfoQueue = getManager().getWorkSpaceManager().newWorkSpace("tmsf_house_info", Page.class);
 		jsonKeyMap = new HashMap<>();
-		// jsonKeyMap.put("buildingName", "buildingname");
 		jsonKeyMap.put("unitName", "unitname");
 		jsonKeyMap.put("internalId", "internalid");
 		jsonKeyMap.put("houseId", "houseid");
@@ -76,7 +75,6 @@ public class TmsfHouseStatus1Worker extends AbstractCrawlWorker {
 
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	protected void beforeExtract(Page doingPage) {
 		String sidCss = "input[id=sid]";
@@ -85,9 +83,7 @@ public class TmsfHouseStatus1Worker extends AbstractCrawlWorker {
 		if (null != sidElement) {
 			sid = sidElement.attr("value");
 		}
-
-		String propertyId = doingPage.getMetaMap().get("propertyId").get(0);
-
+		
 		String presellidCss = "input[id=presellid]";
 		Element presellidElement = doingPage.getDoc().select(presellidCss).first();
 		String presellId = "";
@@ -101,45 +97,53 @@ public class TmsfHouseStatus1Worker extends AbstractCrawlWorker {
 			buildingId = buildingidElement.attr("value");
 		}
 
+		String propertyId = doingPage.getMetaMap().get("propertyId").get(0);
+		
 		if (isTableLayout(doingPage)) {
-			doTable(doingPage, sid, propertyId, presellId, buildingId);
+			if(doTable(doingPage, sid, propertyId, presellId, buildingId)==0){
+				doJson(doingPage, sid, propertyId, presellId, buildingId);
+			}
 		}else{
-			String houseInfoUrl = StringUtils.replace(houseStatusJsonUrlTemplate, sidTemplate, sid);
-			houseInfoUrl = StringUtils.replace(houseInfoUrl, propertyIdTemplate, propertyId);
-			houseInfoUrl = StringUtils.replace(houseInfoUrl, presellIdTemplate, presellId);
-			houseInfoUrl = StringUtils.replace(houseInfoUrl, buildingidTemplate, buildingId);
-
-			Page houseInfoPage = new Page(doingPage.getSiteCode(), 1, houseInfoUrl, houseInfoUrl);
-			houseInfoPage.setReferer(doingPage.getFinalUrl());
-			houseInfoPage.setMethod(HttpMethod.GET);
-			houseInfoPage.getMetaMap().put("buildingId", ArrayListUtils.asList(buildingId));
-			getDowner().down(houseInfoPage);
-
-			String houseInfoJson = houseInfoPage.getPageSrc();
-			Map<String, Object> map = JsonUtils.toObject(houseInfoJson, Map.class);
-			List<Map<String, Object>> houseList = (List<Map<String, Object>>) map.get("list");
-			if (null != houseList && !houseList.isEmpty()) {
-				for (Map<String, Object> houseMap : houseList) {
-					Object valueOb = null;
-					String result = null;
-					for (String field : jsonKeyMap.keySet()) {
-						String jsonKey = jsonKeyMap.get(field);
-						valueOb = houseMap.get(jsonKey);
-						if (valueOb instanceof Double) {
-							result = df.format((Double) valueOb);
-						} else if (valueOb instanceof Float) {
-							result = df.format((Float) valueOb);
-						} else {
-							result = null != valueOb ? valueOb.toString() : "";
-						}
-						doingPage.getMetaMap().computeIfAbsent(field, mapKey -> new ArrayList<>()).add(result);
+			doJson(doingPage, sid, propertyId, presellId, buildingId);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void doJson(Page doingPage,String sid,String propertyId,String presellId,String buildingId){
+		String houseInfoUrl = StringUtils.replace(houseStatusJsonUrlTemplate, sidTemplate, sid);
+		houseInfoUrl = StringUtils.replace(houseInfoUrl, propertyIdTemplate, propertyId);
+		houseInfoUrl = StringUtils.replace(houseInfoUrl, presellIdTemplate, presellId);
+		houseInfoUrl = StringUtils.replace(houseInfoUrl, buildingidTemplate, buildingId);
+		Page houseInfoPage = new Page(doingPage.getSiteCode(), 1, houseInfoUrl, houseInfoUrl);
+		houseInfoPage.setReferer(doingPage.getFinalUrl());
+		houseInfoPage.setMethod(HttpMethod.GET);
+		houseInfoPage.getMetaMap().put("buildingId", ArrayListUtils.asList(buildingId));
+		getDowner().down(houseInfoPage);
+		String houseInfoJson = houseInfoPage.getPageSrc();
+		Map<String, Object> map = JsonUtils.toObject(houseInfoJson, Map.class);
+		List<Map<String, Object>> houseList = (List<Map<String, Object>>) map.get("list");
+		if (null != houseList && !houseList.isEmpty()) {
+			for (Map<String, Object> houseMap : houseList) {
+				Object valueOb = null;
+				String result = null;
+				for (String field : jsonKeyMap.keySet()) {
+					String jsonKey = jsonKeyMap.get(field);
+					valueOb = houseMap.get(jsonKey);
+					if (valueOb instanceof Double) {
+						result = df.format((Double) valueOb);
+					} else if (valueOb instanceof Float) {
+						result = df.format((Float) valueOb);
+					} else {
+						result = null != valueOb ? valueOb.toString() : "";
 					}
+					doingPage.getMetaMap().computeIfAbsent(field, mapKey -> new ArrayList<>()).add(result);
 				}
 			}
 		}
 	}
 
-	private void doTable(Page doingPage,String sid,String propertyId,String presellId,String buildingId){
+	private int doTable(Page doingPage,String sid,String propertyId,String presellId,String buildingId){
+		int getCount=0;
 		String jsUrl = StringUtils.replace(houseStatusJsUrlTemplate, sidTemplate, sid);
 		jsUrl = StringUtils.replace(jsUrl, projectIdTemplate, propertyId);
 		jsUrl = StringUtils.replace(jsUrl, presellIdTemplate, presellId);
@@ -223,6 +227,7 @@ public class TmsfHouseStatus1Worker extends AbstractCrawlWorker {
 									.add(totalPrice);
 							doingPage.getMetaMap().computeIfAbsent("houseAddress", mapKey -> new ArrayList<>())
 									.add(houseAddress);
+							getCount++;
 
 						}
 
@@ -232,6 +237,7 @@ public class TmsfHouseStatus1Worker extends AbstractCrawlWorker {
 
 			}
 		}
+		return getCount;
 	}
 
 	private boolean isTableLayout(Page doingPage) {
