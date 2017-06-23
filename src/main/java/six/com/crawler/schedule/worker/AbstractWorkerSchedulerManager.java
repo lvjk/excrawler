@@ -69,7 +69,7 @@ public abstract class AbstractWorkerSchedulerManager extends AbstractSchedulerMa
 	}
 
 	@RpcService()
-	public abstract void execute(TriggerType dispatchType, String jobName);
+	public abstract String execute(TriggerType dispatchType, String jobName);
 
 	@RpcService()
 	public abstract void suspend(TriggerType dispatchType, String jobName);

@@ -55,7 +55,8 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 	 * 
 	 * @param job
 	 */
-	public void execute(TriggerType dispatchType, String jobName) {
+	public String execute(TriggerType dispatchType, String jobName) {
+		String jobSnapshotId=null;
 		Node currentNode = getClusterManager().getCurrentNode();
 		if (NodeType.SINGLE == currentNode.getType() || NodeType.WORKER == currentNode.getType()) {
 			if (null != dispatchType && StringUtils.equals(TriggerType.DISPATCH_TYPE_MASTER, dispatchType.getName())
@@ -67,6 +68,7 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 								+ job.getName() + "]");
 						JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(job.getName());
 						if (null != jobSnapshot && StringUtils.isNotBlank(jobSnapshot.getId())) {
+							jobSnapshotId=jobSnapshot.getId();
 							int needThreads = job.getThreads();
 							int freeThreads = getClusterManager().getCurrentNode().getFreeWorkerSize();
 							int actualThreads = 0;
@@ -91,6 +93,7 @@ public class WorkerSchedulerManager extends AbstractWorkerSchedulerManager {
 				}
 			}
 		}
+		return jobSnapshotId;
 	}
 
 	private void doExecute(final String jobName, final Worker<?> worker) {
