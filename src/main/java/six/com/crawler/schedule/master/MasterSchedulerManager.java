@@ -205,20 +205,22 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 		boolean reulst = false;
 		if (SchedulerCommand.EXECUTE.equals(command.getCommand())) {
 			String jobSnapshotId = execute(TriggerType.newDispatchTypeByMaster(), command.getJobName());
-			reulst = TimeoutHelper.checkTimeout(() -> {
-				List<WorkerSnapshot> workers = getScheduleCache().getWorkerSnapshots(command.getCommand());
-				if (null != workers && workers.size() > 0) {
-					return true;
-				} else {
-					JobSnapshot tempJobSnapshot = getJobSnapshotDao().query(jobSnapshotId, command.getJobName());
-					if (null != tempJobSnapshot && (tempJobSnapshot.getStatus() == JobSnapshotStatus.STOP.value()
-							|| tempJobSnapshot.getStatus() == JobSnapshotStatus.FINISHED.value())) {
+			if(StringUtils.isNotBlank(jobSnapshotId)){
+				reulst = TimeoutHelper.checkTimeout(() -> {
+					List<WorkerSnapshot> workers = getScheduleCache().getWorkerSnapshots(command.getCommand());
+					if (null != workers && workers.size() > 0) {
 						return true;
 					} else {
-						return false;
+						JobSnapshot tempJobSnapshot = getJobSnapshotDao().query(jobSnapshotId, command.getJobName());
+						if (null != tempJobSnapshot && (tempJobSnapshot.getStatus() == JobSnapshotStatus.STOP.value()
+								|| tempJobSnapshot.getStatus() == JobSnapshotStatus.FINISHED.value())) {
+							return true;
+						} else {
+							return false;
+						}
 					}
-				}
-			}, timeOut, interval, "check to execute job[" + command.getJobName() + "]");
+				}, timeOut, interval, "check to execute job[" + command.getJobName() + "]");
+			}
 		} else if (SchedulerCommand.SUSPEND.equals(command.getCommand())) {
 			suspend(TriggerType.newDispatchTypeByManual(), command.getJobName());
 		} else if (SchedulerCommand.GOON.equals(command.getCommand())) {
