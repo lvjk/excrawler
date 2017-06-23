@@ -40,6 +40,8 @@ import six.com.crawler.node.Node;
 import six.com.crawler.node.NodeChangeWatcher;
 import six.com.crawler.node.NodeType;
 import six.com.crawler.schedule.AbstractSchedulerManager;
+import six.com.crawler.schedule.SchedulerCommand;
+import six.com.crawler.schedule.SchedulerCommandGroup;
 import six.com.crawler.schedule.TriggerType;
 import six.com.crawler.schedule.worker.AbstractWorkerSchedulerManager;
 import six.com.crawler.work.space.WorkSpace;
@@ -93,6 +95,10 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 
 	private Interner<String> keyLock = Interners.<String>newWeakInterner();
 
+	private LinkedBlockingQueue<SchedulerCommandGroup> schedulerCommandQueue = new LinkedBlockingQueue<>();
+
+	private Thread doSchedulerCommand;
+
 	protected final void doInit() {
 		// 如果当前节点是否master
 		if (NodeType.SINGLE == getClusterManager().getCurrentNode().getType()
@@ -121,6 +127,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 
 	private void initMasterNodeScheduler() {
 		initDoJobThread();// 初始化 读取等待执行任务线程 线程
+		initDoSchedulerCommand();
 		initScheduler();// 初始化 时间调度器
 		loadSystemJob();// 初始化 加载系统job
 		loadScheduledJob();// 初始化加载需要时间调度的job
@@ -152,6 +159,76 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 		}, "loop-read-pendingExecuteQueue-thread");
 		doJobThread.setDaemon(true);
 		doJobThread.start();
+	}
+
+	private void initDoSchedulerCommand() {
+		doSchedulerCommand = new Thread(() -> {
+			log.info("start Thread{do-scheduler-command-thread}");
+			SchedulerCommandGroup commandGroup = null;
+			while (true) {
+				try {
+					commandGroup = schedulerCommandQueue.take();
+					if (null != commandGroup) {
+						doCommandGroup(commandGroup);
+					}
+				} catch (Exception e) {
+					log.error("", e);
+				}
+			}
+		}, "loop-read-pendingExecuteQueue-thread");
+		doSchedulerCommand.setDaemon(true);
+		doSchedulerCommand.start();
+	}
+
+	@Override
+	public void submitCommand(SchedulerCommandGroup commandGroup) {
+		schedulerCommandQueue.add(commandGroup);
+	}
+
+	private void doCommandGroup(SchedulerCommandGroup commandGroup) {
+		SchedulerCommand[] commands = commandGroup.getSchedulerCommands();
+		if (null != commands) {
+			for (int i = 0; i < commands.length;) {
+				SchedulerCommand command = commands[i];
+				if (doCommand(command, 6000)) {
+					i++;
+				} else {
+					log.error("execute schedulerCommand failed:" + command.toString());
+					break;
+				}
+			}
+		}
+
+	}
+
+	private boolean doCommand(SchedulerCommand command, long timeOut) {
+		boolean reulst = false;
+		if (SchedulerCommand.EXECUTE.equals(command.getCommand())) {
+			execute(TriggerType.newDispatchTypeByMaster(), command.getJobName());
+			reulst = TimeoutHelper.checkTimeout(() -> {
+				List<WorkerSnapshot> workers = getScheduleCache().getWorkerSnapshots(command.getCommand());
+				if (null != workers && workers.size() > 0) {
+					return true;
+				} else {
+					return false;
+				}
+			}, timeOut, "check to execute job[" + command.getJobName() + "]");
+		} else if (SchedulerCommand.SUSPEND.equals(command.getCommand())) {
+			suspend(TriggerType.newDispatchTypeByManual(), command.getJobName());
+		} else if (SchedulerCommand.GOON.equals(command.getCommand())) {
+			goOn(TriggerType.newDispatchTypeByManual(), command.getJobName());
+		} else if (SchedulerCommand.STOP.equals(command.getCommand())) {
+			stop(TriggerType.newDispatchTypeByMaster(), command.getJobName());
+			reulst = TimeoutHelper.checkTimeout(() -> {
+				return getScheduleCache().getJobSnapshot(command.getJobName()) == null ? true : false;
+			}, timeOut, "check to stop job[" + command.getJobName() + "]");
+		} else if (SchedulerCommand.FINISH.equals(command.getCommand())) {
+			finish(TriggerType.newDispatchTypeByMaster(), command.getJobName());
+			reulst = TimeoutHelper.checkTimeout(() -> {
+				return getScheduleCache().getJobSnapshot(command.getJobName()) == null ? true : false;
+			}, timeOut, "check to finish job[" + command.getJobName() + "]");
+		}
+		return reulst;
 	}
 
 	private void initScheduler() {
@@ -226,8 +303,8 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 		if (NodeType.SINGLE == currentNode.getType() || NodeType.MASTER == currentNode.getType()) {
 			synchronized (keyLock.intern(jobName)) {
 				Job job = getJobDao().query(jobName);
-				if (null != job && !pendingExecuteQueue.contains(job)&&!isRunning(jobName)) {
-		
+				if (null != job && !pendingExecuteQueue.contains(job) && !isRunning(jobName)) {
+
 					getScheduleCache().delJob(jobName);
 					getScheduleCache().delJobSnapshot(jobName);
 					getScheduleCache().delWorkerSnapshots(jobName);
@@ -341,7 +418,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 		List<JobRelationship> jobRelationships = getJobRelationshipDao().query(jobSnapshot.getName());
 		// TODO 这里并发触发的话，需要考虑 是否成功并发执行
 		for (JobRelationship jobRelationship : jobRelationships) {
-			if ((executeType == jobRelationship.getExecuteType())&&(1==jobRelationship.getStatus())) {
+			if ((executeType == jobRelationship.getExecuteType()) && (1 == jobRelationship.getStatus())) {
 				execute(TriggerType.newDispatchTypeByJob(jobSnapshot.getName(), jobSnapshot.getId()),
 						jobRelationship.getNextJobName());
 			}
@@ -498,7 +575,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 							if (TriggerType.DISPATCH_TYPE_MANUAL.equals(jobSnapshot.getTriggerType().getName())
 									|| TriggerType.DISPATCH_TYPE_SCHEDULER
 											.equals(jobSnapshot.getTriggerType().getName())) {
-								log.info("master check the job["+jobName+"] is not triggered by job");
+								log.info("master check the job[" + jobName + "] is not triggered by job");
 								finish(TriggerType.newDispatchTypeByMaster(), jobName);
 							} else {
 								// 通过当job的触发获取它触发的它的job快照
@@ -519,13 +596,14 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 										// 如果触发它的jobSnapshot状态等于finishedstop
 										// 时， 当前状态保持一致
 										if (JobSnapshotStatus.FINISHED == lastJobSnapshot.getEnumStatus()) {
-											log.info("master check the job["+jobName+"]'s triggered job is finished");
+											log.info("master check the job[" + jobName
+													+ "]'s triggered job is finished");
 											finish(TriggerType.newDispatchTypeByMaster(), jobName);
 										} else if (JobSnapshotStatus.STOP == lastJobSnapshot.getEnumStatus()) {
-											log.info("master check the job["+jobName+"]'s triggered job is stoped");
+											log.info("master check the job[" + jobName + "]'s triggered job is stoped");
 											stop(TriggerType.newDispatchTypeByManual(), jobName);
-										}else{// 如果触发它的jobSnapshot状态等于其他时，那么触发它的job没有被正常stop,但是当前状态应该设置为stop
-											log.info("master check the job["+jobName+"]'s triggered job is stoped");
+										} else {// 如果触发它的jobSnapshot状态等于其他时，那么触发它的job没有被正常stop,但是当前状态应该设置为stop
+											log.info("master check the job[" + jobName + "]'s triggered job is stoped");
 											stop(TriggerType.newDispatchTypeByManual(), jobName);
 										}
 									}
@@ -534,13 +612,13 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 									// 时，那么应该休眠1000毫秒，否则保持跟触发它的jobSnapshot状态一样
 									if (JobSnapshotStatus.EXECUTING == lastJobSnapshot.getEnumStatus()
 											|| JobSnapshotStatus.SUSPEND == lastJobSnapshot.getEnumStatus()) {
-										log.info("master check the job["+jobName+"]'s triggered job is running");
+										log.info("master check the job[" + jobName + "]'s triggered job is running");
 										rest(TriggerType.newDispatchTypeByMaster(), jobName);
 									} else if (JobSnapshotStatus.FINISHED == lastJobSnapshot.getEnumStatus()) {
-										log.info("master check the job["+jobName+"]'s triggered job is finished");
+										log.info("master check the job[" + jobName + "]'s triggered job is finished");
 										finish(TriggerType.newDispatchTypeByMaster(), jobName);
 									} else if (JobSnapshotStatus.STOP == lastJobSnapshot.getEnumStatus()) {
-										log.info("master check the job["+jobName+"]'s triggered job is stoped");
+										log.info("master check the job[" + jobName + "]'s triggered job is stoped");
 										stop(TriggerType.newDispatchTypeByMaster(), jobName);
 									}
 								}

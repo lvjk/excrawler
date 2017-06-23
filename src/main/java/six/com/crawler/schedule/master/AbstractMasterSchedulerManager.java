@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import six.com.crawler.rpc.RpcService;
 import six.com.crawler.schedule.AbstractSchedulerManager;
+import six.com.crawler.schedule.SchedulerCommandGroup;
 import six.com.crawler.schedule.TriggerType;
 import six.com.crawler.schedule.worker.AbstractWorkerSchedulerManager;
 
@@ -31,6 +32,10 @@ public abstract class AbstractMasterSchedulerManager extends AbstractSchedulerMa
 
 	protected abstract void doInit();
 
+	
+	@RpcService()
+	public abstract void submitCommand(SchedulerCommandGroup commandGroup);
+	
 	@RpcService()
 	public abstract void execute(TriggerType dispatchType, String jobName);
 	/**
