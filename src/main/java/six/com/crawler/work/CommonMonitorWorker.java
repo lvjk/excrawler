@@ -5,6 +5,8 @@ import java.util.List;
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.JobSnapshotStatus;
 import six.com.crawler.entity.WorkerErrMsg;
+import six.com.crawler.schedule.SchedulerCommand;
+import six.com.crawler.schedule.SchedulerCommandGroup;
 import six.com.crawler.schedule.TriggerType;
 import six.com.crawler.work.exception.WorkerException;
 import six.com.crawler.work.exception.WorkerMonitorException;
@@ -18,7 +20,7 @@ import six.com.crawler.work.space.WorkSpaceData;
  *       监控任务worker
  * 
  */
-public class CommonMonitorWorker extends AbstractMonitorWorker{
+public class CommonMonitorWorker extends AbstractMonitorWorker {
 
 	/**
 	 * 实现监控逻辑,需要循环监控的话，返回true,否则返回false监控任务线程将会结束
@@ -26,47 +28,57 @@ public class CommonMonitorWorker extends AbstractMonitorWorker{
 	 * @return
 	 * @throws WorkerException
 	 */
-	protected boolean doMonitor() throws WorkerException{
-		JobSnapshot jobSnapshot=getManager().getScheduleCache().getJobSnapshot(getTriggerJobName());
-		 //当null == jobSnapshot时表明被监控的任务结束了
-	    if (null == jobSnapshot) {
-	      jobSnapshot = getManager().getJobSnapshotDao().query(getTriggerJobSnapshotId(), getTriggerJobName());
-	      if (null == jobSnapshot) {
-	        throw new WorkerMonitorException("Job info exception!");
-	      }
-	      if (jobSnapshot.getStatus() == JobSnapshotStatus.STOP.value()) {
-	        // 非正常结束
-	        List<WorkerErrMsg> msgs = getManager().getWorkerErrMsgDao().queryByJob(getTriggerJobSnapshotId(),
-	            getTriggerJobName());
-	        if (msgs != null) {
-	          for (int i = 0; i < msgs.size(); i++) {
-	            if (msgs.get(i).getType().equals("worker_init")) {
-	              // 重新调度任务
-	              getManager().getMasterSchedulerManager(result->{}).execute(TriggerType.newDispatchTypeByMaster(),
-	                  getTriggerJobName());
-	              
-	              finish();
-	            }
-	          }
-	        }
-	      }
-	      //返回true
-	      return false;
-	    } else {
-	      //否则返回true，继续监控
-	      return true;
-	    }
+	protected boolean doMonitor() throws WorkerException {
+		JobSnapshot jobSnapshot = getManager().getScheduleCache().getJobSnapshot(getTriggerJobName());
+		// 当null == jobSnapshot时表明被监控的任务结束了
+		if (null == jobSnapshot) {
+			jobSnapshot = getManager().getJobSnapshotDao().query(getTriggerJobSnapshotId(), getTriggerJobName());
+			if (null == jobSnapshot) {
+				throw new WorkerMonitorException("Job info exception!");
+			}
+			if (jobSnapshot.getStatus() == JobSnapshotStatus.STOP.value()) {
+				// 非正常结束
+				List<WorkerErrMsg> msgs = getManager().getWorkerErrMsgDao().queryByJob(getTriggerJobSnapshotId(),
+						getTriggerJobName());
+				if (msgs != null) {
+					for (int i = 0; i < msgs.size(); i++) {
+						if (msgs.get(i).getType().equals("worker_init")) {
+							// 重新调度任务
+							SchedulerCommandGroup commandGroup = new SchedulerCommandGroup();
+
+							SchedulerCommand command1 = new SchedulerCommand();
+							command1.setCommand(SchedulerCommand.FINISH);
+							command1.setJobName(getJob().getName());
+
+							SchedulerCommand command2 = new SchedulerCommand();
+							command2.setCommand(SchedulerCommand.EXECUTE);
+							command2.setJobName(getTriggerJobName());
+
+							commandGroup.setSchedulerCommands(new SchedulerCommand[] { command1, command2 });
+
+							getManager().getMasterSchedulerManager(result -> {
+							}).submitCommand(commandGroup);
+						}
+					}
+				}
+			}
+			// 返回true
+			return false;
+		} else {
+			// 否则返回true，继续监控
+			return true;
+		}
 	};
 
 	@Override
 	protected void onError(Exception t, WorkSpaceData workerData) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	protected void insideDestroy() {
 		// TODO Auto-generated method stub
-		
+
 	}
 }
