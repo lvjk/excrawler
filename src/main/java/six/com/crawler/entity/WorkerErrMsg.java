@@ -69,4 +69,10 @@ public class WorkerErrMsg extends BasePo implements Serializable{
 	public void setMsg(String msg) {
 		this.msg = msg;
 	}
+
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return "jobSnapshotId :"+jobSnapshotId+"\\njobName:"+jobName+"\\nworkerName:"+workerName+"\\nstartTime"+startTime+"\\ntype:"+type+"\\nmsg:"+msg;
+	}
 }
