@@ -2,12 +2,14 @@ package six.com.crawler.work;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import six.com.crawler.entity.JobSnapshot;
 import six.com.crawler.entity.JobSnapshotStatus;
 import six.com.crawler.entity.WorkerErrMsg;
 import six.com.crawler.schedule.SchedulerCommand;
 import six.com.crawler.schedule.SchedulerCommandGroup;
-import six.com.crawler.schedule.TriggerType;
 import six.com.crawler.work.exception.WorkerException;
 import six.com.crawler.work.exception.WorkerMonitorException;
 import six.com.crawler.work.space.WorkSpaceData;
@@ -21,6 +23,8 @@ import six.com.crawler.work.space.WorkSpaceData;
  * 
  */
 public class CommonMonitorWorker extends AbstractMonitorWorker {
+	
+	final static Logger log = LoggerFactory.getLogger(CommonMonitorWorker.class);
 
 	/**
 	 * 实现监控逻辑,需要循环监控的话，返回true,否则返回false监控任务线程将会结束
@@ -36,12 +40,16 @@ public class CommonMonitorWorker extends AbstractMonitorWorker {
 			if (null == jobSnapshot) {
 				throw new WorkerMonitorException("Job info exception!");
 			}
+			
+			log.info("job "+jobSnapshot.getName()+" status is :"+jobSnapshot.getStatus());
 			if (jobSnapshot.getStatus() == JobSnapshotStatus.STOP.value()) {
 				// 非正常结束
 				List<WorkerErrMsg> msgs = getManager().getWorkerErrMsgDao().queryByJob(getTriggerJobSnapshotId(),
 						getTriggerJobName());
+				
 				if (msgs != null) {
 					for (int i = 0; i < msgs.size(); i++) {
+						log.info("Error message info is:"+msgs.get(i).toString());
 						if (msgs.get(i).getType().equals("worker_init")) {
 							// 重新调度任务
 							SchedulerCommandGroup commandGroup = new SchedulerCommandGroup();
