@@ -226,11 +226,10 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 		} else if (SchedulerCommand.GOON.equals(command.getCommand())) {
 			goOn(TriggerType.newDispatchTypeByManual(), command.getJobName());
 		} else if (SchedulerCommand.STOP.equals(command.getCommand())) {
-			JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(command.getCommand());
 			stop(TriggerType.newDispatchTypeByMaster(), command.getJobName());
 			reulst = TimeoutHelper.checkTimeout(() -> {
 				if (getScheduleCache().getJobSnapshot(command.getJobName()) == null ? true : false) {
-					JobSnapshot tempJobSnapshot = getJobSnapshotDao().query(jobSnapshot.getId(), command.getJobName());
+					JobSnapshot tempJobSnapshot = getJobSnapshotDao().query(command.getId(), command.getJobName());
 					if (null != tempJobSnapshot && tempJobSnapshot.getStatus() == JobSnapshotStatus.STOP.value()) {
 						return true;
 					}
@@ -238,11 +237,10 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 				return false;
 			}, timeOut, interval, "check to stop job[" + command.getJobName() + "]");
 		} else if (SchedulerCommand.FINISH.equals(command.getCommand())) {
-			JobSnapshot jobSnapshot = getScheduleCache().getJobSnapshot(command.getCommand());
 			finish(TriggerType.newDispatchTypeByMaster(), command.getJobName());
 			reulst = TimeoutHelper.checkTimeout(() -> {
 				if (getScheduleCache().getJobSnapshot(command.getJobName()) == null ? true : false) {
-					JobSnapshot tempJobSnapshot = getJobSnapshotDao().query(jobSnapshot.getId(), command.getJobName());
+					JobSnapshot tempJobSnapshot = getJobSnapshotDao().query(command.getId(), command.getJobName());
 					if (null != tempJobSnapshot && tempJobSnapshot.getStatus() == JobSnapshotStatus.FINISHED.value()) {
 						return true;
 					}
