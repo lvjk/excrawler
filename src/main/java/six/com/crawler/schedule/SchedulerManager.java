@@ -24,7 +24,7 @@ public interface SchedulerManager {
 	 * 
 	 * @param job
 	 */
-	public void execute(TriggerType dispatchType, String jobName);
+	public String execute(TriggerType dispatchType, String jobName);
 
 	/**
 	 * 暂停任务

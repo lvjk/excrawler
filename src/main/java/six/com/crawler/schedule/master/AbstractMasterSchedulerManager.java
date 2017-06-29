@@ -37,7 +37,7 @@ public abstract class AbstractMasterSchedulerManager extends AbstractSchedulerMa
 	public abstract void submitCommand(SchedulerCommandGroup commandGroup);
 	
 	@RpcService()
-	public abstract void execute(TriggerType dispatchType, String jobName);
+	public abstract String execute(TriggerType dispatchType, String jobName);
 	/**
 	 * 当job's worker结束后,由工作节点调度管理类调用,通知job's worker 结束工作
 	 * 

@@ -5,14 +5,19 @@ package six.com.crawler.schedule.master;
  * @E-mail: 359852326@qq.com
  * @date 创建时间：2017年6月23日 上午11:51:45
  */
-public class TimeoutHelper{
+public class TimeoutHelper {
 
-	public static boolean checkTimeout(Check check, long timeOut, String errMsg) {
+	public static boolean checkTimeout(Check check, long timeOut, long interval, String errMsg) {
 		long endTime, startTime = System.currentTimeMillis();
 		do {
 			if (check.check()) {
 				return true;
 			} else {
+				try {
+					Thread.sleep(interval);
+				} catch (InterruptedException e) {
+				}
+
 				endTime = System.currentTimeMillis();
 				if ((endTime - startTime) < timeOut) {
 					continue;
