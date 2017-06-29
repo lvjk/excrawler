@@ -21,7 +21,7 @@ public class SchedulerCommand implements Serializable{
 	public static final String STOP="stop";
 	public static final String FINISH="finish";
 	
-	
+	private String id;
 
 	public String getCommand() {
 		return command;
@@ -38,6 +38,16 @@ public class SchedulerCommand implements Serializable{
 	public void setJobName(String jobName) {
 		this.jobName = jobName;
 	}
+	
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+
 
 	private String command;
 	private String jobName;

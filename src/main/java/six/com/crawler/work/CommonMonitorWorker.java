@@ -49,6 +49,7 @@ public class CommonMonitorWorker extends AbstractMonitorWorker {
 				
 				if (msgs != null) {
 					for (int i = 0; i < msgs.size(); i++) {
+						msgs.get(i).setType("worker_init");
 						log.info("Error message info is:"+msgs.get(i).toString());
 						if (msgs.get(i).getType().equals("worker_init")) {
 							// 重新调度任务
@@ -57,10 +58,12 @@ public class CommonMonitorWorker extends AbstractMonitorWorker {
 							SchedulerCommand command1 = new SchedulerCommand();
 							command1.setCommand(SchedulerCommand.FINISH);
 							command1.setJobName(getJob().getName());
+							command1.setId(getJobSnapshotId());
 
 							SchedulerCommand command2 = new SchedulerCommand();
 							command2.setCommand(SchedulerCommand.EXECUTE);
 							command2.setJobName(getTriggerJobName());
+							command2.setId(getTriggerJobSnapshotId());
 
 							commandGroup.setSchedulerCommands(new SchedulerCommand[] { command1, command2 });
 
