@@ -190,7 +190,7 @@ public class MasterSchedulerManager extends AbstractMasterSchedulerManager {
 		if (null != commands) {
 			for (int i = 0; i < commands.length;) {
 				SchedulerCommand command = commands[i];
-				if (doCommand(command, 10000, 3000)) {
+				if (doCommand(command, 30000, 3000)) {
 					i++;
 				} else {
 					log.error("execute schedulerCommand failed:" + command.toString());
